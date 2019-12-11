@@ -11,3 +11,4 @@ These EOS's radically change the weak neutrino emission but not the thermal.
 
 There is only one line of sight into each model. Both mass orderings are considered plus the no-oscilaltion case. 
 
+The format of each file is the SNOwBLoBES format.
