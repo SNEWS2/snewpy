@@ -1,5 +1,5 @@
 
-The files in this folder are for Type Pair Instability Supernova models. 
+The files in this folder are for Pair Instability Supernova models. 
 
 The models are described in "Neutrino signal from pair-instability supernovae " 
 Wright, Warren P.; Gilmer, Matthew S.; Fröhlich, Carla; Kneller, James P.
