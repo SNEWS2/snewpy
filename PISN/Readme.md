@@ -9,6 +9,6 @@ https://ui.adsabs.harvard.edu/abs/2017PhRvD..96j3008W/abstract
 There are two different progenitors, P150 and P250, and the neutrino spectra are computed using two different Equations of State. 
 These EOS's radically change the weak neutrino emission but not the thermal. 
 
-There is only one line of sight into each model. Both mass orderings are considered plus the no-oscilaltion case. 
+There is only one line of sight into each model. Both mass orderings are considered plus the no-oscillation case. 
 
 The format of each file is the SNOwBLoBES format.
