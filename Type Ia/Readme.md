@@ -6,8 +6,7 @@ Wright, Warren P.; Nagaraj, Gautam; Kneller, James P.; Scholberg, Kate; Seitenza
 Physical Review D, Volume 94, id.025026 (2016)
 https://ui.adsabs.harvard.edu/abs/2016PhRvD..94b5026W/abstract
 
-There are 30 snapshots in time and for each snapshot there are 8 lines of sight through the explosion plus the no-oscilaltions case.
-Both mass orderings are considered. The format of each data file is the SNOwGLoBES format
+There are 30 snapshots in time and for each snapshot there are 8 lines of sight through the explosion plus the no-oscillations case. Both mass orderings are considered. The format of each data file is the SNOwGLoBES format
 
 
 The GCD model is described in 
@@ -16,5 +15,4 @@ Wright, Warren P.; Kneller, James P.; Ohlmann, Sebastian T.; Röpke, Friedrich K
 Physical Review D, Volume 95, id.043006 (2017)
 https://ui.adsabs.harvard.edu/abs/2017PhRvD..95d3006W/abstract
 
-There are 64 snapshots in time and for each snapshot there are 10 lines of sight through the explosion plus the no-oscilaltions case.
-Both mass orderings are considered. The format of each data file is the SNOwGLoBES format
+There are 64 snapshots in time and for each snapshot there are 10 lines of sight through the explosion plus the no-oscillations case. Both mass orderings are considered. The format of each data file is the SNOwGLoBES format
