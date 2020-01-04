@@ -1,4 +1,4 @@
-CCSN models from O'Connor and Ott, 2013 using 32 stellar models of stellar metallicity with ZAMS masses from 12 to 120 solar masses, assuming two different equations of state.
+CCSN models from O'Connor and Ott, 2013 using 32 stellar models of metallicity with ZAMS masses from 12 to 120 solar masses, assuming two different equations of state.
 
 Data downloaded from [sntheory.org](https://sntheory.org/M1prog) include:
 
