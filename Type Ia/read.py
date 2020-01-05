@@ -38,6 +38,13 @@ tbins = np.arange(1, 31, 4)
 n = len(tbins)
 plt.rcParams['axes.prop_cycle'] = plt.cycler(color=plt.cm.plasma_r(np.linspace(0,1,n)))
 
+flavor = {'NuE':r'$\nu_e$',
+          'NuMu':r'$\nu_\mu$',
+          'NuTau':r'$\nu_\tau$',
+          'aNuE':r'$\bar{\nu}_e$',
+          'aNuMu':r'$\bar{\nu}_\mu$',
+          'aNuTau':r'$\bar{\nu}_\tau$'}
+
 fig, axes = plt.subplots(2, 3, figsize=(11,5),
                          sharex=True, sharey=True,
                          gridspec_kw={'hspace':0, 'wspace':0})
@@ -50,16 +57,23 @@ for tbin in np.arange(1, 31, 4):
     dE = tab.meta['dE']
 
     print(t)
+    first = True
 
-    for ax, fl in zip(axes, ['NuE','NuMu','NuTau','aNuE','aNuMu','aNuTau']):
+    for ax, fl in zip(axes, flavor.keys()):
         energy = 1e3 * tab['E(GeV)']
         flux = tab[fl] / dt / dE
 
         ax.plot(energy, flux, label='{:.3f} s'.format(t))
+
+        if first:
+            ax.text(0.9, 0.9, flavor[fl], transform=ax.transAxes, fontsize=16)
+
         ax.set(xscale='log',
                xlim=(0.2, 50),
                yscale='log',
                ylim=(2e-3, 9e8))
+
+    first = False
 
 axes[2].legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0.)
 
