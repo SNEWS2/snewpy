@@ -26,7 +26,7 @@ import numpy as np
 import scipy
 import math
 
-from SNModelClasses import *
+from models_class import *
 from FlavorTransformation import *
 
 SNModel = Nakazato2013('nakazato-LS220-BH-z0.004-s30.0.fits',AdiabaticMSW_NMO())
