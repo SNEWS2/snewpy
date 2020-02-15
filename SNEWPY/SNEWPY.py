@@ -14,9 +14,6 @@
   GNU General Public License for more details.
 '''
 
-from abc import abstractmethod, ABC
-from enum import Enum
-
 from astropy.table import Table
 
 import matplotlib as mpl
@@ -34,11 +31,13 @@ SNModel = Nakazato2013('nakazato-LS220-BH-z0.004-s30.0.fits',AdiabaticMSW_NMO())
 def OutputInSnowGlobesFormat(SN):
     d=10. *1000.*3.086e+18
     keV=1e3 * 1.60218e-12
+    MeV=1e6 * 1.60218e-12
     GeV=1e9 * 1.60218e-12
+    
     times=SN.get_time()
-        
+    timebin=0.01
+      
     for j in range(0,1000):
-        timebin=0.01
         t=timebin*j
         
         if(t<=times[0] or t>=times[-1]):
@@ -49,15 +48,15 @@ def OutputInSnowGlobesFormat(SN):
         filename  =  SN.filename.split(".fits")[0] + "-t=" + str(t) + "-dt=" + str(timebin) + ".SNOformat.dat" 
         file = open(filename,"w")
 
+        E=np.linspace(0,100,501)*MeV
+        OscillatedSpectra = SN.get_oscillatedspectra(t,E) 
+
         OscillatedFluence={}
         for i in range(0,501):
-            E=i*200.*keV
-            OscillatedSpectra = SN.get_oscillatedspectra(t,E)
-            
             for flavor in Flavor:
-                OscillatedFluence[flavor]=OscillatedSpectra[flavor] * 200.*keV  / (4.*np.pi*d**2)
+                OscillatedFluence[flavor]=OscillatedSpectra[flavor][i] * timebin * 200.*keV  / (4.*np.pi*d**2)
 
-            file.write("{0:.4f}".format(E/GeV))
+            file.write("{0:.4f}".format(E[i]/GeV))
             file.write("\t"+str(OscillatedFluence[Flavor.nu_e]))
             file.write("\t"+str(OscillatedFluence[Flavor.nu_x]/2.))
             file.write("\t"+str(OscillatedFluence[Flavor.nu_x]/2.))
