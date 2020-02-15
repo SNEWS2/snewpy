@@ -74,7 +74,7 @@ def main(options=None):
         tfname = infile.replace('.fits', '.SNOformat.tar.bz2')
 
     with tarfile.open(tfname, 'w:bz2') as tf:
-        d = 10. *1000.*3.086e+18       # fluence to luminosity
+        d = 10. *1000.*3.086e+18       # luminosity to fluence
         keV = 1e3 * 1.60218e-12        # eV to erg
         MeV = 1e6 * 1.60218e-12
         GeV = 1e9 * 1.60218e-12
