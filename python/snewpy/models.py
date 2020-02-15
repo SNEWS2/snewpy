@@ -37,6 +37,23 @@ import tarfile
 
 from snewpy.FlavorTransformation import *
 
+def get_closest(arr, x):
+    """Get index of closest element in an array to input value.
+
+    Parameters
+    ----------
+    arr : list or ndarray
+        Array of values.
+    x : float or int or str
+        Value to search.
+
+    Returns
+    -------
+    idx : int
+        Index of closest element in the array.
+    """
+    return np.abs(np.asarray(arr) - x).argmin()
+
 class Flavor(IntEnum):
     """Enumeration of CCSN Neutrino flavors.
     """
@@ -261,6 +278,8 @@ class SNOwGLoBES:
     def __init__(self, tarfilename):
         """Initialize model from a tar archive.
 
+        Parameters
+        ----------
         tarfilename: str
             Absolute or relative path to tar archive with SNOwGLoBES files.
         """
@@ -276,6 +295,8 @@ class SNOwGLoBES:
         self.time = []
         self.energy = None
         self.flux = {}
+        self.fmin = 1e99
+        self.fmax = -1e99
 
         for nooscfile in noosc:
             with tf.extractfile(nooscfile) as f:
@@ -294,14 +315,36 @@ class SNOwGLoBES:
                 if self.energy is None:
                     self.energy = (data['E(GeV)'].data*1000).tolist()
 
-				for flavor in ['NuE', 'NuMu', 'NuTau', 'aNuE', 'aNuMu', 'aNuTau']:
-					if flavor in self.flux:
-						self.flux[flavor].append(data[flavor].data.tolist())
-					else:
-						self.flux[flavor] = [data[flavor].data.tolist()]
+            for flavor in ['NuE', 'NuMu', 'NuTau', 'aNuE', 'aNuMu', 'aNuTau']:
+                if flavor in self.flux:
+                    self.flux[flavor].append(data[flavor].data.tolist())
+                else:
+                    self.flux[flavor] = [data[flavor].data.tolist()]
 
         # We now have a table with rows=times and columns=energies. Transpose
         # so that rows=energy and cols=time.
         for k, v in self.flux.items():
             self.flux[k] = np.transpose(self.flux[k])
+            self.fmin = np.minimum(self.fmin, np.min(self.flux[k]))
+            self.fmax = np.maximum(self.fmax, np.max(self.flux[k]))
 
+    def get_fluence(self, t):
+        """Return the fluence at a given time t.
+
+        Parameters
+        ----------
+        t : float
+            Time in seconds.
+
+        Returns
+        -------
+        fluence : dict
+            A dictionary giving fluence at time t, keyed by flavor.
+        """
+        idx = get_closest(self.time, t)
+
+        fluence = {}
+        for k, fl in self.flux.items():
+            fluence[k] = fl[:,idx]
+
+        return fluence
