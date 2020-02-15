@@ -13,13 +13,13 @@ import sys
 from distutils.command.sdist import sdist as DistutilsSdist
 from setuptools import setup, find_packages
 #
-from python.snewsmodels._git import get_version, SetVersion
+from python.snewpy._git import get_version, SetVersion
 #
 # Begin setup
 #
 setup_keywords = dict()
 #
-setup_keywords['name'] = 'snewsmodels'
+setup_keywords['name'] = 'snewpy'
 setup_keywords['description'] = 'SNEWS2 supernova simulation package'
 setup_keywords['author'] = 'SNEWS2 Collaboration'
 setup_keywords['author_email'] = 'snews2.0@lists.bnl.gov'
@@ -59,8 +59,8 @@ setup_keywords['install_requires'] = requires
 #
 # Internal data directories.
 #
-#setup_keywords['data_files'] = [('snewsmodels/data/config', glob('data/config/*')),
-#                                ('snewsmodels/data/spectra', glob('data/spectra/*'))]
+#setup_keywords['data_files'] = [('snewpy/data/config', glob('data/config/*')),
+#                                ('snewpy/data/spectra', glob('data/spectra/*'))]
 #
 # Run setup command.
 #

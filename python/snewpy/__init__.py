@@ -1,9 +1,9 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 # -*- coding: utf-8 -*-
 """
-===========
-snewsmodels
-===========
+======
+snewpy
+======
 Front-end for supernova models which provide neutrino luminosity and spectra.
 """
 

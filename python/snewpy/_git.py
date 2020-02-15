@@ -134,8 +134,8 @@ def find_version_directory():
 
     Looks for files in the following places:
 
-    * python/snewsmodels/_version.py
-    * snewsmodels/_version.py
+    * python/snewpy/_version.py
+    * snewpy/_version.py
 
     Returns
     -------
@@ -147,7 +147,7 @@ def find_version_directory():
     IOError
         If no valid directory can be found.
     """
-    packagename='snewsmodels'
+    packagename='snewpy'
     setup_dir = abspath('.')
     if isdir(join(setup_dir, 'python', packagename)):
         version_dir = join(setup_dir, 'python', packagename)
