@@ -5,5 +5,5 @@ Converter script to SNOwGLoBES format.
 """
 
 import sys
-from asteria.scripts.run_asteria import main
+from snewpy.scripts.to_snowglobes import main
 sys.exit(main())

@@ -30,7 +30,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 import math
 
-from FlavorTransformation import *
+from snewpy.FlavorTransformation import *
 
 class Flavor(IntEnum):
     """Enumeration of CCSN Neutrino flavors.
