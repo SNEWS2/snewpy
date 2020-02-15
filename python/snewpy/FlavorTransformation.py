@@ -44,20 +44,20 @@ class AdiabaticMSW_NMO(FlavorTransformation):
     """Adiabatic MSW effect, assuming normal mass ordering."""
 
     def p(self):
-        return pow(np.sin(theta13),2.)
+        return np.sin(theta13)**2
     
     def pbar(self):
-        return pow(np.cos(theta12)*np.cos(theta13),2.)    
+        return (np.cos(theta12)*np.cos(theta13))**2    
 
 
 class AdiabaticMSW_IMO(FlavorTransformation):
     """Adiabatic MSW effect, assuming inverted mass ordering."""
 
     def p(self):
-        return pow(np.sin(theta12)*np.cos(theta13),2.)
+        return (np.sin(theta12)*np.cos(theta13))**2
 
     def pbar(self):
-        return pow(np.sin(theta13),2.)
+        return np.sin(theta13)**2
 
 
 class TwoFlavorDecoherence(FlavorTransformation):
