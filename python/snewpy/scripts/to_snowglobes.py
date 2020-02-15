@@ -2,6 +2,9 @@
 """
 snewpy.scripts.to_snowglobes
 ============================
+
+Convert an arbitrary model to SNOwGLoBES format. Based on SNEWPY.py script by
+E. O'Connor and J. P. Kneller.
 """
 
 import numpy as np
