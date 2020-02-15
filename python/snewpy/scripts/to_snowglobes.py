@@ -17,6 +17,8 @@ import os
 import io
 import tarfile
 
+import logging
+
 from snewpy.models import *
 from snewpy.FlavorTransformation import *
 
@@ -29,15 +31,24 @@ def main(options=None):
                    help='Output tarfile name (if customization desired)')
 
     tbingroup = p.add_mutually_exclusive_group()
-    tbingroup.add_argument('-t', '--deltat', type=float,
-                           help='Time binning used to sample model [sec]')
     tbingroup.add_argument('-n', '--ntbins', type=int,
                            help='Number of bins used to sample model')
+    tbingroup.add_argument('-t', '--deltat', type=float,
+                           help='Time binning used to sample model [sec]')
+
+    p.add_argument('-v', '--verbose', action='store_true', default=False,
+                   help='Activate verbose log for debugging')
 
     if options is None:
         args = p.parse_args()
     else:
         args = p.parse_args(options)
+
+    # Set verbosity of the log.
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
 
     # Load up the model. To do: support more than Nakazato format.
     infile = args.infile[0]
@@ -92,6 +103,7 @@ def main(options=None):
                 s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.nu_x_bar]/2)
                 s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.nu_x_bar]/2)
                 table.append(s)
+                logging.debug(s)
 
             # Encode energy/flux table and output to file in tar archive.
             output = '\n'.join(table).encode('ascii')
@@ -103,6 +115,6 @@ def main(options=None):
             info = tarfile.TarInfo(name=infoname)
             info.size = len(output)
 
-            print('Writing {} to {}'.format(infoname, tfname))
+            logging.info('Time {:g} s; writing {} to {}'.format(t, infoname, tfname))
             tf.addfile(info, io.BytesIO(output))
 
