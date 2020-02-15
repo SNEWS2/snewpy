@@ -41,7 +41,7 @@ class Flavor(IntEnum):
     nu_x_bar = 0
     
     def to_tex(self):
-        """LaTeX-comptable string representations of flavor.
+        """LaTeX-compatible string representations of flavor.
         """
         
         if '_bar' in self.name:
