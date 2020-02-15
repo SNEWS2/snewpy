@@ -1,21 +1,24 @@
+# -*- coding: utf-8 -*-
+"""
+A submodule with classes used for supernova model files stored on disk. Based
+on the models_class.py script started by Navya Uberoi and updated by James
+Kneller.
 
-'''
-  This file is part of SNEWPY.
+The changes, made by James Kneller, are:
 
-  This file is a modified version of the code uploaded by nuberoi.  
-  The changes, made by James Kneller, are:
-      1) The Enum class inherited by the Flavor class was changed to IntEnum 
-      and the assigned values altered so that the flavor enums could be 
-      used as list indicii. The member functions should still work as before.
-      2) Extra member data was added to the SupernovaModel class to store the interpolations
-      of the luminosity, mean energy and pinch parameter as functions of time.
-      3) The SupernovaModel class now requires instantation with a FlavorTransofrmation class.
-      The FlavorTransofrmation class - defined in FlavorTransformation.py - has two members 
-      which return the electron neutrino survival probability p and electron antineutrino survival 
-      probability pbar.
-      4) Extra methods were added to the SupernovaModel class as its descendents 
-      to return the initial and oscillated spectra at a given time and neutrino energy.
-'''
+#. The Enum class inherited by the Flavor class was changed to IntEnum and the
+assigned values altered so that the flavor enums could be used as list indicii.
+The member functions should still work as before.
+#. Extra member data was added to the SupernovaModel class to store the
+interpolations of the luminosity, mean energy and pinch parameter as functions
+of time.
+#. The SupernovaModel class now requires instantation with a
+FlavorTransofrmation class.  The FlavorTransofrmation class - defined in
+FlavorTransformation.py - has two members which return the electron neutrino
+survival probability p and electron antineutrino survival probability pbar.
+#. Extra methods were added to the SupernovaModel class as its descendents to
+return the initial and oscillated spectra at a given time and neutrino energy.
+"""
 
 from abc import abstractmethod, ABC
 from enum import IntEnum
@@ -30,7 +33,26 @@ import numpy as np
 from scipy.interpolate import interp1d
 import math
 
+import tarfile
+
 from snewpy.FlavorTransformation import *
+
+def get_closest(arr, x):
+    """Get index of closest element in an array to input value.
+
+    Parameters
+    ----------
+    arr : list or ndarray
+        Array of values.
+    x : float or int or str
+        Value to search.
+
+    Returns
+    -------
+    idx : int
+        Index of closest element in the array.
+    """
+    return np.abs(np.asarray(arr) - x).argmin()
 
 class Flavor(IntEnum):
     """Enumeration of CCSN Neutrino flavors.
@@ -59,7 +81,6 @@ class Flavor(IntEnum):
     @property
     def is_antineutrino(self):
         return self.value in (Flavor.nu_e_bar.value, Flavor.nu_x_bar.value)
-
 
 
 class SupernovaModel(ABC):
@@ -98,6 +119,7 @@ class SupernovaModel(ABC):
     @abstractmethod
     def get_oscillatedspectra(self,t,E):
         pass
+
 
 class Nakazato2013(SupernovaModel):
     
@@ -159,6 +181,7 @@ class Nakazato2013(SupernovaModel):
         oscillatedspectra[Flavor.nu_x_bar]=(1.-self.FT.p()) * initialspectra[Flavor.nu_e_bar] + (1.+self.FT.pbar()) * initialspectra[Flavor.nu_x_bar]
         return oscillatedspectra
 
+
 class Sukhbold2015(SupernovaModel):
     
     def __init__(self, filename, FlavorTransformation):
@@ -215,6 +238,7 @@ class Sukhbold2015(SupernovaModel):
         oscillatedspectra[Flavor.nu_e_bar]=self.FT.pbar() * initialspectra[Flavor.nu_e_bar] + (1.-self.FT.pbar()) * initialspectra[Flavor.nu_x_bar]
         oscillatedspectra[Flavor.nu_x_bar]=(1.-self.FT.p()) * initialspectra[Flavor.nu_e_bar] + (1.+self.FT.pbar()) * initialspectra[Flavor.nu_x_bar]
         return oscillatedspectra    
+
 '''    
 # class Fornax2019(SupernovaModel):
     
@@ -247,3 +271,80 @@ class Sukhbold2015(SupernovaModel):
 #         return float(self.split('-')[-1].split('.')[0].strip('s'))
 '''
 
+class SNOwGLoBES:
+    """A model that does not inherit from SupernovaModel (yet) and imports a
+    group of SNOwGLoBES files."""
+
+    def __init__(self, tarfilename):
+        """Initialize model from a tar archive.
+
+        Parameters
+        ----------
+        tarfilename: str
+            Absolute or relative path to tar archive with SNOwGLoBES files.
+        """
+        self.tfname = tarfilename
+        tf = tarfile.open(self.tfname)
+
+        # For now just pull out the "NoOsc" files.
+        datafiles = sorted([f.name for f in tf if '.dat' in f.name])
+        noosc = [df for df in datafiles if 'NoOsc' in df]
+        noosc.sort(key=len)
+
+        # Loop through the noosc files and pull out the number fluxes.
+        self.time = []
+        self.energy = None
+        self.flux = {}
+        self.fmin = 1e99
+        self.fmax = -1e99
+
+        for nooscfile in noosc:
+            with tf.extractfile(nooscfile) as f:
+                meta = f.readline()
+                metatext = meta.decode('utf-8')
+                t = float(metatext.split('TBinMid=')[-1].split('sec')[0])
+                dt = float(metatext.split('tBinWidth=')[-1].split('s')[0])
+                dE = float(metatext.split('eBinWidth=')[-1].split('MeV')[0])
+
+                data = Table.read(f, format='ascii.commented_header', header_start=-1)
+                data.meta['t'] = t
+                data.meta['dt'] = dt
+                data.meta['dE'] = dE
+
+                self.time.append(t)
+                if self.energy is None:
+                    self.energy = (data['E(GeV)'].data*1000).tolist()
+
+            for flavor in ['NuE', 'NuMu', 'NuTau', 'aNuE', 'aNuMu', 'aNuTau']:
+                if flavor in self.flux:
+                    self.flux[flavor].append(data[flavor].data.tolist())
+                else:
+                    self.flux[flavor] = [data[flavor].data.tolist()]
+
+        # We now have a table with rows=times and columns=energies. Transpose
+        # so that rows=energy and cols=time.
+        for k, v in self.flux.items():
+            self.flux[k] = np.transpose(self.flux[k])
+            self.fmin = np.minimum(self.fmin, np.min(self.flux[k]))
+            self.fmax = np.maximum(self.fmax, np.max(self.flux[k]))
+
+    def get_fluence(self, t):
+        """Return the fluence at a given time t.
+
+        Parameters
+        ----------
+        t : float
+            Time in seconds.
+
+        Returns
+        -------
+        fluence : dict
+            A dictionary giving fluence at time t, keyed by flavor.
+        """
+        idx = get_closest(self.time, t)
+
+        fluence = {}
+        for k, fl in self.flux.items():
+            fluence[k] = fl[:,idx]
+
+        return fluence
