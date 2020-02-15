@@ -84,6 +84,7 @@ class Flavor(IntEnum):
 
 
 class SupernovaModel(ABC):
+    """Base class defining an interface to a supernova model."""
     
     def __init__(self):
         pass
@@ -114,60 +115,186 @@ class SupernovaModel(ABC):
 
     @abstractmethod
     def get_initialspectra(self, t, E):
+        """Get neutrino spectra/luminosity curves at the source.
+
+        Parameters
+        ----------
+        t : float
+            Time to evaluate spectra.
+        E : float or ndarray
+            Energies to evaluate spectra.
+
+        Returns
+        -------
+        initialspectra : dict
+            Dictionary of neutrino spectra, keyed by neutrino flavor.
+        """
         pass
 
-    def get_oscillatedspectra(self,t,E):
+    def get_oscillatedspectra(self, t, E):
+        """Get neutrino spectra/luminosity curves after oscillation.
+
+        Parameters
+        ----------
+        t : float
+            Time to evaluate initial and oscillated spectra.
+        E : float or ndarray
+            Energies to evaluate the initial and oscillated spectra.
+
+        Returns
+        -------
+        oscillatedspectra : dict
+            Dictionary of oscillated spectra, keyed by neutrino flavor.
+        """
         initialspectra = self.get_initialspectra(t, E)
         oscillatedspectra = {}
-        oscillatedspectra[Flavor.nu_e] = self.FT.p() * initialspectra[Flavor.nu_e] + (1. - self.FT.p()) * initialspectra[Flavor.nu_x]
-        oscillatedspectra[Flavor.nu_x] = (1. - self.FT.p()) * initialspectra[Flavor.nu_e] + (1. + self.FT.p()) * initialspectra[Flavor.nu_x]
-        oscillatedspectra[Flavor.nu_e_bar] = self.FT.pbar() * initialspectra[Flavor.nu_e_bar] + (1. - self.FT.pbar()) * initialspectra[Flavor.nu_x_bar]
-        oscillatedspectra[Flavor.nu_x_bar] = (1. - self.FT.p()) * initialspectra[Flavor.nu_e_bar] + (1. + self.FT.pbar()) * initialspectra[Flavor.nu_x_bar]
+        oscillatedspectra[Flavor.nu_e] = \
+            self.FT.p() * initialspectra[Flavor.nu_e] + \
+            (1. - self.FT.p()) * initialspectra[Flavor.nu_x]
+        oscillatedspectra[Flavor.nu_x] = \
+            (1. - self.FT.p()) * initialspectra[Flavor.nu_e] + \
+            (1. + self.FT.p()) * initialspectra[Flavor.nu_x]
+        oscillatedspectra[Flavor.nu_e_bar] = \
+            self.FT.pbar() * initialspectra[Flavor.nu_e_bar] + \
+            (1. - self.FT.pbar()) * initialspectra[Flavor.nu_x_bar]
+        oscillatedspectra[Flavor.nu_x_bar] = \
+            (1. - self.FT.p()) * initialspectra[Flavor.nu_e_bar] + \
+            (1. + self.FT.pbar()) * initialspectra[Flavor.nu_x_bar]
         return oscillatedspectra    
 
 
 class Nakazato2013(SupernovaModel):
-    
-    def __init__(self, filename, FlavorTransformation):
+    """Set up a model based on simulations from Nakazato et al., ApJ S 205:2,
+    2013 and ApJ 804:75, 2015. See also http://asphwww.ph.noda.tus.ac.jp/snn/.
+    """
+
+    def __init__(self, filename, flavor_xform):
+        """Initialize model.
+
+        Parameters
+        ----------
+        filename : str
+            Absolute or relative path to FITS file with model data.
+        flavor_xform : FlavorTransformation
+            Flavor transformation object with survival probabilities.
+        """
         self.file = Table.read(filename)
         self.filename = filename
         self.luminosity={}
         self.meanE={}
         self.pinch={}
         for flavor in Flavor:
-            self.luminosity[flavor] = interp1d( self.get_time() , self.get_luminosity(flavor) )
-            self.meanE[flavor] = interp1d( self.get_time() , self.get_mean_energy(flavor) )
-            self.pinch[flavor] = interp1d( self.get_time() , self.get_pinch_param(flavor) )
-        self.FT=FlavorTransformation
+            self.luminosity[flavor] = interp1d(self.get_time(), self.get_luminosity(flavor))
+            self.meanE[flavor] = interp1d(self.get_time(), self.get_mean_energy(flavor))
+            self.pinch[flavor] = interp1d(self.get_time(), self.get_pinch_param(flavor))
+        self.FT = flavor_xform
         
     def get_time(self):
+        """Get grid of model times.
+
+        Returns
+        -------
+        time : ndarray
+            Grid of times used in the model.
+        """
         return self.file['TIME']
     
     def get_luminosity(self, flavor):
+        """Get model luminosity L_nu.
+
+        Parameters
+        ----------
+        flavor : Flavor
+            Neutrino flavor type.
+
+        Returns
+        -------
+        luminosity : ndarray
+            Grid of luminosity values (erg/s) for this flavor.
+        """
         if flavor == Flavor.nu_x_bar:
             flavor = Flavor.nu_x
         return self.file['L_{}'.format(flavor.name.upper())]
         
     def get_mean_energy(self, flavor):
+        """Get model mean energy <E_nu>.
+
+        Parameters
+        ----------
+        flavor : Flavor
+            Neutrino flavor type.
+
+        Returns
+        -------
+        energy : ndarray
+            Grid of mean energy versus time.
+        """
         if flavor == Flavor.nu_x_bar:
             flavor = Flavor.nu_x
         return self.file['E_{}'.format(flavor.name.upper())]
     
     def get_pinch_param(self, flavor):
+        """Get spectral pinch parameter alpha(t).
+
+        Parameters
+        ----------
+        flavor : Flavor
+            Neutrino flavor type.
+
+        Returns
+        -------
+        alpha : ndarray
+            Grid of alpha versus time.
+        """
         if (flavor == Flavor.nu_x_bar):
             flavor = Flavor.nu_x
         return self.file['ALPHA_{}'.format(flavor.name.upper())]
     
     def get_EOS(self):
+        """Model equation of state.
+
+        Returns
+        -------
+        eos : str
+            Model equation of state.
+        """
         return self.filename.split('-')[1].upper()
     
     def get_progenitor_mass(self):
+        """Progenitor mass.
+
+        Returns
+        -------
+        mass : float
+            Progenitor mass, in units of solar mass.
+        """
         return float(self.filename.split('-')[-1].strip('s%.0.fits'))
     
     def get_revival_time(self):
+        """Revival time of model explosion; specific to the Nakazato models.
+
+        Returns
+        -------
+        time : float
+            Revival time, in ms.
+        """
         return float(self.filename.split('-')[-2].strip('t_rev%ms'))
 
-    def get_initialspectra(self,t,E):
+    def get_initialspectra(self, t, E):
+        """Get neutrino spectra/luminosity curves after oscillation.
+
+        Parameters
+        ----------
+        t : float
+            Time to evaluate initial and oscillated spectra.
+        E : float or ndarray
+            Energies to evaluate the initial and oscillated spectra.
+
+        Returns
+        -------
+        initialspectra : dict
+            Dictionary of model spectra, keyed by neutrino flavor.
+        """
         initialspectra={}
         for flavor in Flavor:
             L=self.luminosity[flavor](t)
@@ -179,8 +306,20 @@ class Nakazato2013(SupernovaModel):
 
 
 class Sukhbold2015(SupernovaModel):
-    
-    def __init__(self, filename, FlavorTransformation):
+    """Set up a model based on simulations from Sukhbold et al., ApJ 821:38,
+    2016. Models were shared privately by email.
+    """
+
+    def __init__(self, filename, flavor_xform):
+        """Initialize model.
+
+        Parameters
+        ----------
+        filename : str
+            Absolute or relative path to FITS file with model data.
+        flavor_xform : FlavorTransformation
+            Flavor transformation object with survival probabilities.
+        """
         self.file = Table.read(filename)
         self.filename = filename
         self.luminosity = {}
@@ -190,34 +329,105 @@ class Sukhbold2015(SupernovaModel):
             self.luminosity[flavor] = interp1d(self.get_time(), self.get_luminosity(flavor))
             self.meanE[flavor] = interp1d(self.get_time(), self.get_mean_energy(flavor))
             self.pinch[flavor] = interp1d(self.get_time(), self.get_pinch_param(flavor))
-        self.FT = FlavorTransformation
+        self.FT = flavor_xform
             
     def get_time(self):
+        """Get grid of model times.
+
+        Returns
+        -------
+        time : ndarray
+            Grid of times used in the model.
+        """
         return self.file['TIME']
     
     def get_luminosity(self, flavor):
+        """Get model luminosity L_nu.
+
+        Parameters
+        ----------
+        flavor : Flavor
+            Neutrino flavor type.
+
+        Returns
+        -------
+        luminosity : ndarray
+            Grid of luminosity values (erg/s) for this flavor.
+        """
         if flavor == Flavor.nu_x_bar:
             flavor = Flavor.nu_x
         return self.file['L_{}'.format(flavor.name.upper())]
         
     def get_mean_energy(self, flavor):
+        """Get model mean energy <E_nu>.
+
+        Parameters
+        ----------
+        flavor : Flavor
+            Neutrino flavor type.
+
+        Returns
+        -------
+        energy : ndarray
+            Grid of mean energy versus time.
+        """
         if flavor == Flavor.nu_x_bar:
             flavor = Flavor.nu_x
         return self.file['E_{}'.format(flavor.name.upper())]
     
     def get_pinch_param(self, flavor):
+        """Get spectral pinch parameter alpha(t).
+
+        Parameters
+        ----------
+        flavor : Flavor
+            Neutrino flavor type.
+
+        Returns
+        -------
+        alpha : ndarray
+            Grid of alpha versus time.
+        """
         if (flavor == Flavor.nu_x_bar):
             flavor = Flavor.nu_x
         return self.file['ALPHA_{}'.format(flavor.name.upper())]
     
     def get_EOS(self):
+        """Model equation of state.
+
+        Returns
+        -------
+        eos : str
+            Model equation of state.
+        """
         return self.filename.split('-')[1]
     
     def get_progenitor_mass(self):
+        """Progenitor mass.
+
+        Returns
+        -------
+        mass : float
+            Progenitor mass, in units of solar mass.
+        """
         return float(self.split('-')[-1].split('.')[0].strip('s'))
 
     def get_initialspectra(self,t,E):
-        initialspectra={}
+        """Get neutrino spectra/luminosity curves after oscillation.
+
+        Parameters
+        ----------
+        t : float
+            Time to evaluate initial and oscillated spectra.
+        E : float or ndarray
+            Energies to evaluate the initial and oscillated spectra.
+
+        Returns
+        -------
+        initialspectra : dict
+            Dictionary of model spectra, keyed by neutrino flavor.
+        """
+        initialspectra = {}
         for flavor in Flavor:
             L = self.luminosity[flavor](t)
             ME = self.meanE[flavor](t)
