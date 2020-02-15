@@ -1,0 +1,13 @@
+os:
+- linux
+language: python
+sudo: false
+python:
+- 3.5
+- 3.6
+- 3.7
+- 3.8
+install:
+- pip install --upgrade pip
+- pip install -r requirements.txt
+- travis_wait 35 python setup.py install
