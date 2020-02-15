@@ -61,7 +61,6 @@ class Flavor(IntEnum):
         return self.value in (Flavor.nu_e_bar.value, Flavor.nu_x_bar.value)
 
 
-
 class SupernovaModel(ABC):
     
     def __init__(self):
@@ -98,6 +97,7 @@ class SupernovaModel(ABC):
     @abstractmethod
     def get_oscillatedspectra(self,t,E):
         pass
+
 
 class Nakazato2013(SupernovaModel):
     
@@ -159,6 +159,7 @@ class Nakazato2013(SupernovaModel):
         oscillatedspectra[Flavor.nu_x_bar]=(1.-self.FT.p()) * initialspectra[Flavor.nu_e_bar] + (1.+self.FT.pbar()) * initialspectra[Flavor.nu_x_bar]
         return oscillatedspectra
 
+
 class Sukhbold2015(SupernovaModel):
     
     def __init__(self, filename, FlavorTransformation):
@@ -215,6 +216,7 @@ class Sukhbold2015(SupernovaModel):
         oscillatedspectra[Flavor.nu_e_bar]=self.FT.pbar() * initialspectra[Flavor.nu_e_bar] + (1.-self.FT.pbar()) * initialspectra[Flavor.nu_x_bar]
         oscillatedspectra[Flavor.nu_x_bar]=(1.-self.FT.p()) * initialspectra[Flavor.nu_e_bar] + (1.+self.FT.pbar()) * initialspectra[Flavor.nu_x_bar]
         return oscillatedspectra    
+
 '''    
 # class Fornax2019(SupernovaModel):
     
