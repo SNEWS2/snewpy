@@ -52,7 +52,7 @@ def main(options=None):
 
     # Load up the model. To do: support more than Nakazato format.
     infile = args.infile[0]
-    snmodel = Nakazato2013(infile, AdiabaticMSW_NMO())
+    snmodel = Nakazato2013(infile, NoTransformation())
 
     # Subsample the model time. Default to 30 time slices.
     tmin = snmodel.get_time()[0]
@@ -108,7 +108,7 @@ def main(options=None):
             # Encode energy/flux table and output to file in tar archive.
             output = '\n'.join(table).encode('ascii')
 
-            infoname = '{:02d}Tbins/{}-tbin{:02d}.SNOformat.dat'.format(
+            infoname = '{:02d}Tbins/{}-tbin{:02d}.NoOsc.dat'.format(
                            len(times),
                            os.path.basename(infile).replace('.fits', ''),
                            i + 1)
