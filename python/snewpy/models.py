@@ -113,12 +113,17 @@ class SupernovaModel(ABC):
         pass
 
     @abstractmethod
-    def get_initialspectra(self,t,E):
+    def get_initialspectra(self, t, E):
         pass
 
-    @abstractmethod
     def get_oscillatedspectra(self,t,E):
-        pass
+        initialspectra = self.get_initialspectra(t, E)
+        oscillatedspectra = {}
+        oscillatedspectra[Flavor.nu_e] = self.FT.p() * initialspectra[Flavor.nu_e] + (1. - self.FT.p()) * initialspectra[Flavor.nu_x]
+        oscillatedspectra[Flavor.nu_x] = (1. - self.FT.p()) * initialspectra[Flavor.nu_e] + (1. + self.FT.p()) * initialspectra[Flavor.nu_x]
+        oscillatedspectra[Flavor.nu_e_bar] = self.FT.pbar() * initialspectra[Flavor.nu_e_bar] + (1. - self.FT.pbar()) * initialspectra[Flavor.nu_x_bar]
+        oscillatedspectra[Flavor.nu_x_bar] = (1. - self.FT.p()) * initialspectra[Flavor.nu_e_bar] + (1. + self.FT.pbar()) * initialspectra[Flavor.nu_x_bar]
+        return oscillatedspectra    
 
 
 class Nakazato2013(SupernovaModel):
@@ -167,19 +172,10 @@ class Nakazato2013(SupernovaModel):
         for flavor in Flavor:
             L=self.luminosity[flavor](t)
             ME = self.meanE[flavor](t)
-            ME=ME*1e6 * 1.60218e-12            
+            ME = ME*1e6 * 1.60218e-12            
             alpha=self.pinch[flavor](t)       
             initialspectra[flavor] = L / ME * np.float_power(alpha+1.,alpha+1.)/ME/math.gamma(alpha+1.)*np.float_power(E/ME,alpha)*np.exp(-(alpha+1.)*E/ME)
         return initialspectra
-
-    def get_oscillatedspectra(self,t,E):
-        initialspectra=self.get_initialspectra(t,E)
-        oscillatedspectra={}
-        oscillatedspectra[Flavor.nu_e]=self.FT.p() * initialspectra[Flavor.nu_e] + (1.-self.FT.p()) * initialspectra[Flavor.nu_x]
-        oscillatedspectra[Flavor.nu_x]=(1.-self.FT.p()) * initialspectra[Flavor.nu_e] + (1.+self.FT.p()) * initialspectra[Flavor.nu_x]
-        oscillatedspectra[Flavor.nu_e_bar]=self.FT.pbar() * initialspectra[Flavor.nu_e_bar] + (1.-self.FT.pbar()) * initialspectra[Flavor.nu_x_bar]
-        oscillatedspectra[Flavor.nu_x_bar]=(1.-self.FT.p()) * initialspectra[Flavor.nu_e_bar] + (1.+self.FT.pbar()) * initialspectra[Flavor.nu_x_bar]
-        return oscillatedspectra
 
 
 class Sukhbold2015(SupernovaModel):
@@ -187,14 +183,14 @@ class Sukhbold2015(SupernovaModel):
     def __init__(self, filename, FlavorTransformation):
         self.file = Table.read(filename)
         self.filename = filename
-        self.luminosity={}
-        self.meanE={}
-        self.pinch={}
+        self.luminosity = {}
+        self.meanE = {}
+        self.pinch = {}
         for flavor in Flavor:
-            self.luminosity[flavor] = interp1d( self.get_time() , self.get_luminosity(flavor) )
-            self.meanE[flavor] = interp1d( self.get_time() , self.get_mean_energy(flavor) )
-            self.pinch[flavor] = interp1d( self.get_time() , self.get_pinch_param(flavor) )
-        self.FT=FlavorTransformation
+            self.luminosity[flavor] = interp1d(self.get_time(), self.get_luminosity(flavor))
+            self.meanE[flavor] = interp1d(self.get_time(), self.get_mean_energy(flavor))
+            self.pinch[flavor] = interp1d(self.get_time(), self.get_pinch_param(flavor))
+        self.FT = FlavorTransformation
             
     def get_time(self):
         return self.file['TIME']
@@ -223,21 +219,13 @@ class Sukhbold2015(SupernovaModel):
     def get_initialspectra(self,t,E):
         initialspectra={}
         for flavor in Flavor:
-            L=self.luminosity[flavor](t)
+            L = self.luminosity[flavor](t)
             ME = self.meanE[flavor](t)
-            ME=ME*1e6 * astropy.units.eV            
-            alpha=self.pinch[flavor](t)                
+            ME = ME*1e6 * astropy.units.eV            
+            alpha = self.pinch[flavor](t)                
             initialspectra[flavor] = L / ME * np.float_power(alpha+1.,alpha+1.)/ME/math.gamma(alpha+1.)*np.float_power(E/ME,alpha)*np.exp(-(alpha+1.)*E/ME)
         return initialspectra
-    
-    def get_oscillatedspectra(self,t,E):
-        initialspectra=self.get_initialspectra(t,E)
-        oscillatedspectra={}
-        oscillatedspectra[Flavor.nu_e]=self.FT.p() * initialspectra[Flavor.nu_e] + (1.-self.FT.p()) * initialspectra[Flavor.nu_x]
-        oscillatedspectra[Flavor.nu_x]=(1.-self.FT.p()) * initialspectra[Flavor.nu_e] + (1.+self.FT.p()) * initialspectra[Flavor.nu_x]
-        oscillatedspectra[Flavor.nu_e_bar]=self.FT.pbar() * initialspectra[Flavor.nu_e_bar] + (1.-self.FT.pbar()) * initialspectra[Flavor.nu_x_bar]
-        oscillatedspectra[Flavor.nu_x_bar]=(1.-self.FT.p()) * initialspectra[Flavor.nu_e_bar] + (1.+self.FT.pbar()) * initialspectra[Flavor.nu_x_bar]
-        return oscillatedspectra    
+
 
 '''    
 # class Fornax2019(SupernovaModel):
