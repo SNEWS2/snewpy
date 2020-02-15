@@ -1,32 +1,14 @@
-'''
-  Copyright (c) 2020 James Kneller
-
-  This file is part of SNEWPY.
-
-  SNEWPY is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  SNEWPY is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-'''
-
-from astropy.table import Table
-
-import matplotlib as mpl
-import matplotlib.pyplot as plt
+# -*- coding: utf-8 -*-
+"""
+snewpy.scripts.to_snowglobes
+============================
+"""
 
 import numpy as np
-import scipy
-import math
+from argparse import ArgumentParser
 
-from models_class import *
-from FlavorTransformation import *
-
-SNModel = Nakazato2013('nakazato-LS220-BH-z0.004-s30.0.fits',AdiabaticMSW_NMO())
+from snewpy.models_class import *
+from snewpy.FlavorTransformation import *
 
 def OutputInSnowGlobesFormat(SN):
     d=10. *1000.*3.086e+18
@@ -65,6 +47,17 @@ def OutputInSnowGlobesFormat(SN):
             file.write("\t"+str(OscillatedFluence[Flavor.nu_x_bar]/2.)+"\n")
         file.close()
 
-OutputInSnowGlobesFormat(SNModel)
 
+def main(options=None):
+    p = ArgumentParser(description='Convert to SNOwGLoBES format.')
+    p.add_argument('infile', nargs=1,
+                   help='Supernova model input file (Nakazato only).')
 
+    if options is None:
+        args = p.parse_args()
+    else:
+        args = p.parse_args(options)
+
+    SNModel = Nakazato2013(args.infile[0], AdiabaticMSW_NMO())
+
+    OutputInSnowGlobesFormat(SNModel)

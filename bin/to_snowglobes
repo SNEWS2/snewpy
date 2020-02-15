@@ -1,0 +1,9 @@
+#!/usr/bin/env python
+
+"""
+Converter script to SNOwGLoBES format.
+"""
+
+import sys
+from snewpy.scripts.to_snowglobes import main
+sys.exit(main())
