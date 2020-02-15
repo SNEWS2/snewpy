@@ -31,7 +31,9 @@ import matplotlib.pyplot as plt
 
 import numpy as np
 from scipy.interpolate import interp1d
-import math
+from scipy.special import loggamma
+
+import logging
 
 import tarfile
 
@@ -297,11 +299,17 @@ class Nakazato2013(SupernovaModel):
         """
         initialspectra={}
         for flavor in Flavor:
-            L=self.luminosity[flavor](t)
-            ME = self.meanE[flavor](t)
-            ME = ME*1e6 * 1.60218e-12            
-            alpha=self.pinch[flavor](t)       
-            initialspectra[flavor] = L / ME * np.float_power(alpha+1.,alpha+1.)/ME/math.gamma(alpha+1.)*np.float_power(E/ME,alpha)*np.exp(-(alpha+1.)*E/ME)
+            L = self.luminosity[flavor](t)
+            Ea = self.meanE[flavor](t)          # <E_nu(t)>
+            Ea = Ea*1e6 * 1.60218e-12
+            a = self.pinch[flavor](t)           # alpha_nu(t)
+            E[E==0] = np.finfo(float).eps       # Avoid division by zero.
+
+            # For numerical stability, evaluate log PDF then exponentiate.
+            initialspectra[flavor] = \
+                np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a) 
+                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
+
         return initialspectra
 
 
@@ -430,10 +438,16 @@ class Sukhbold2015(SupernovaModel):
         initialspectra = {}
         for flavor in Flavor:
             L = self.luminosity[flavor](t)
-            ME = self.meanE[flavor](t)
-            ME = ME*1e6 * astropy.units.eV            
-            alpha = self.pinch[flavor](t)                
-            initialspectra[flavor] = L / ME * np.float_power(alpha+1.,alpha+1.)/ME/math.gamma(alpha+1.)*np.float_power(E/ME,alpha)*np.exp(-(alpha+1.)*E/ME)
+            Ea = self.meanE[flavor](t)          # <E_nu(t)>
+            Ea = Ea*1e6 * astropy.units.eV
+            a = self.pinch[flavor](t)           # alpha_nu(t)
+            E[E==0] = np.finfo(float).eps       # Avoid division by zero.
+
+            # For numerical stability, evaluate log PDF then exponentiate.
+            initialspectra[flavor] = \
+                np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a) 
+                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
+
         return initialspectra
 
 
@@ -483,6 +497,7 @@ class SNOwGLoBES:
         """
         self.tfname = tarfilename
         tf = tarfile.open(self.tfname)
+        logging.debug('Opening {}'.format(tarfilename))
 
         # For now just pull out the "NoOsc" files.
         datafiles = sorted([f.name for f in tf if '.dat' in f.name])
@@ -498,6 +513,7 @@ class SNOwGLoBES:
 
         for nooscfile in noosc:
             with tf.extractfile(nooscfile) as f:
+                logging.debug('Reading {}'.format(nooscfile))
                 meta = f.readline()
                 metatext = meta.decode('utf-8')
                 t = float(metatext.split('TBinMid=')[-1].split('sec')[0])
