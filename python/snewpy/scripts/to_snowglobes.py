@@ -10,7 +10,7 @@ E. O'Connor and J. P. Kneller.
 import numpy as np
 from argparse import ArgumentParser
 
-from snewpy.models_class import *
+from snewpy.models import *
 from snewpy.FlavorTransformation import *
 
 def OutputInSnowGlobesFormat(SN):
@@ -61,6 +61,6 @@ def main(options=None):
     else:
         args = p.parse_args(options)
 
-    SNModel = Nakazato2013(args.infile[0], AdiabaticMSW_NMO())
+    snmodel = Nakazato2013(args.infile[0], AdiabaticMSW_NMO())
 
-    OutputInSnowGlobesFormat(SNModel)
+    OutputInSnowGlobesFormat(snmodel)
