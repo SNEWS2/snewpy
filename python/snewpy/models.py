@@ -33,6 +33,8 @@ import numpy as np
 from scipy.interpolate import interp1d
 import math
 
+import tarfile
+
 from snewpy.FlavorTransformation import *
 
 class Flavor(IntEnum):
@@ -251,4 +253,55 @@ class Sukhbold2015(SupernovaModel):
 #     def get_progenitor_mass(self):
 #         return float(self.split('-')[-1].split('.')[0].strip('s'))
 '''
+
+class SNOwGLoBES:
+    """A model that does not inherit from SupernovaModel (yet) and imports a
+    group of SNOwGLoBES files."""
+
+    def __init__(self, tarfilename):
+        """Initialize model from a tar archive.
+
+        tarfilename: str
+            Absolute or relative path to tar archive with SNOwGLoBES files.
+        """
+        self.tfname = tarfilename
+        tf = tarfile.open(self.tfname)
+
+        # For now just pull out the "NoOsc" files.
+        datafiles = sorted([f.name for f in tf if '.dat' in f.name])
+        noosc = [df for df in datafiles if 'NoOsc' in df]
+        noosc.sort(key=len)
+
+        # Loop through the noosc files and pull out the number fluxes.
+        self.time = []
+        self.energy = None
+        self.flux = {}
+
+        for nooscfile in noosc:
+            with tf.extractfile(nooscfile) as f:
+                meta = f.readline()
+                metatext = meta.decode('utf-8')
+                t = float(metatext.split('TBinMid=')[-1].split('sec')[0])
+                dt = float(metatext.split('tBinWidth=')[-1].split('s')[0])
+                dE = float(metatext.split('eBinWidth=')[-1].split('MeV')[0])
+
+                data = Table.read(f, format='ascii.commented_header', header_start=-1)
+                data.meta['t'] = t
+                data.meta['dt'] = dt
+                data.meta['dE'] = dE
+
+                self.time.append(t)
+                if self.energy is None:
+                    self.energy = (data['E(GeV)'].data*1000).tolist()
+
+				for flavor in ['NuE', 'NuMu', 'NuTau', 'aNuE', 'aNuMu', 'aNuTau']:
+					if flavor in self.flux:
+						self.flux[flavor].append(data[flavor].data.tolist())
+					else:
+						self.flux[flavor] = [data[flavor].data.tolist()]
+
+        # We now have a table with rows=times and columns=energies. Transpose
+        # so that rows=energy and cols=time.
+        for k, v in self.flux.items():
+            self.flux[k] = np.transpose(self.flux[k])
 
