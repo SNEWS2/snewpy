@@ -440,7 +440,7 @@ class Sukhbold2015(SupernovaModel):
         for flavor in Flavor:
             L = self.luminosity[flavor](t)
             Ea = self.meanE[flavor](t)          # <E_nu(t)>
-            Ea = Ea*1e6 * astropy.units.eV
+            Ea = Ea*1e6
             a = self.pinch[flavor](t)           # alpha_nu(t)
             E[E==0] = np.finfo(float).eps       # Avoid division by zero.
 
