@@ -468,28 +468,13 @@ class Bollig2016(SupernovaModel):
         """
         nue = Table.read(filename+"_"+eos+"_nue",names=["TIME","L_NU_E","E_NU_E","MS_NU_E"],format='ascii')
         nue['ALPHA_NU_E'] = (2.0*nue['E_NU_E']**2 - nue['MS_NU_E'])/(nue['MS_NU_E'] - nue['E_NU_E']**2)
-        nue["TIME"].unit = 's'
         nue["L_NU_E"] *= 1e51
-        nue["L_NU_E"].unit = 'erg / s'
-        nue["E_NU_E"].unit = 'MeV'
-        nue["MS_NU_E"].unit = 'MeV^2'
-        nue['ALPHA_NU_E'].unit = ''
         nuebar = Table.read(filename+"_"+eos+"_nuebar",names=["TIME","L_NU_E_BAR","E_NU_E_BAR","MS_NU_E_BAR"],format='ascii')
         nuebar['ALPHA_NU_E_BAR'] = (2.0*nuebar['E_NU_E_BAR']**2 - nuebar['MS_NU_E_BAR'])/(nuebar['MS_NU_E_BAR'] - nuebar['E_NU_E_BAR']**2)
-        nuebar["TIME"].unit = 's'
         nuebar["L_NU_E_BAR"] *= 1e51
-        nuebar["L_NU_E_BAR"].unit = 'erg / s'
-        nuebar["E_NU_E_BAR"].unit = 'MeV'
-        nuebar["MS_NU_E_BAR"].unit = 'MeV^2'
-        nuebar['ALPHA_NU_E_BAR'].unit = ''
         nux = Table.read(filename+"_"+eos+"_nux",names=["TIME","L_NU_X","E_NU_X","MS_NU_X"],format='ascii')
         nux['ALPHA_NU_X'] = (2.0*nux['E_NU_X']**2 - nux['MS_NU_X'])/(nux['MS_NU_X'] - nux['E_NU_X']**2)
-        nux["TIME"].unit = 's'
-        nux["L_NU_X"].unit = 'erg / s'
         nux["L_NU_X"] *= 1e51
-        nux["E_NU_X"].unit = 'MeV'
-        nux["MS_NU_X"].unit = 'MeV^2'
-        nux['ALPHA_NU_X'].unit = ''
         tmptable = join(nuebar,nux,keys="TIME",join_type="left")
         self.file = join(nue,tmptable,keys="TIME",join_type="left")
         self.filename = filename
