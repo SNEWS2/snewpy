@@ -25,6 +25,7 @@ from enum import IntEnum
 
 import astropy
 from astropy.table import Table
+import astropy.units as u
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -284,24 +285,26 @@ class Nakazato2013(SupernovaModel):
 
     def get_initialspectra(self, t, E):
         """Get neutrino spectra/luminosity curves after oscillation.
-
+        Energy is converted to ergs, and time to seconds
+        
         Parameters
         ----------
         t : float
             Time to evaluate initial and oscillated spectra.
-        E : float or ndarray
+        E : astropy Quantity
             Energies to evaluate the initial and oscillated spectra.
 
         Returns
         -------
         initialspectra : dict
-            Dictionary of model spectra, keyed by neutrino flavor.
+            Dictionary of model spectra, keyed by neutrino flavor, in units of erg/s.
         """
         initialspectra={}
+        E = E.to('erg').value
         for flavor in Flavor:
-            L = self.luminosity[flavor](t)
-            Ea = self.meanE[flavor](t)          # <E_nu(t)>
-            Ea = Ea*1e6 * 1.60218e-12
+            L = self.luminosity[flavor](t)      # Implicitly in units erg/s
+            Ea = self.meanE[flavor](t)          # <E_nu(t)>, implicitly in units MeV
+            Ea = (Ea * u.MeV).to('erg').value    # Energy computations done in ergs
             a = self.pinch[flavor](t)           # alpha_nu(t)
             E[E==0] = np.finfo(float).eps       # Avoid division by zero.
 
@@ -309,6 +312,7 @@ class Nakazato2013(SupernovaModel):
             initialspectra[flavor] = \
                 np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a) 
                        - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
+            initialspectra[flavor] #/= u.erg
 
         return initialspectra
 
@@ -483,7 +487,7 @@ class Sukhbold2015(SupernovaModel):
 #         return float(self.split('-')[-1].split('.')[0].strip('s'))
 '''
 
-class SNOwGLoBES:
+class SNOwGLoBES():
     """A model that does not inherit from SupernovaModel (yet) and imports a
     group of SNOwGLoBES files."""
 
