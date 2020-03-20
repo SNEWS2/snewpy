@@ -297,7 +297,7 @@ class Nakazato2013(SupernovaModel):
         Returns
         -------
         initialspectra : dict
-            Dictionary of model spectra, keyed by neutrino flavor, in units of erg/s.
+            Dictionary of model spectra, keyed by neutrino flavor, in units of 1/(erg.s).
         """
         initialspectra={}
         E = E.to('erg').value
@@ -312,7 +312,7 @@ class Nakazato2013(SupernovaModel):
             initialspectra[flavor] = \
                 np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a) 
                        - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
-            initialspectra[flavor] #/= u.erg
+            initialspectra[flavor] /= (u.erg * u.s)
 
         return initialspectra
 
@@ -426,31 +426,34 @@ class Sukhbold2015(SupernovaModel):
 
     def get_initialspectra(self,t,E):
         """Get neutrino spectra/luminosity curves after oscillation.
+             Energy is converted to ergs, and time to seconds
 
-        Parameters
-        ----------
-        t : float
-            Time to evaluate initial and oscillated spectra.
-        E : float or ndarray
-            Energies to evaluate the initial and oscillated spectra.
+             Parameters
+             ----------
+             t : float
+                 Time to evaluate initial and oscillated spectra.
+             E : astropy Quantity
+                 Energies to evaluate the initial and oscillated spectra.
 
-        Returns
-        -------
-        initialspectra : dict
-            Dictionary of model spectra, keyed by neutrino flavor.
-        """
+             Returns
+             -------
+             initialspectra : dict
+                 Dictionary of model spectra, keyed by neutrino flavor, in units of 1/(erg.s).
+             """
         initialspectra = {}
+        E = E.to('erg').value
         for flavor in Flavor:
-            L = self.luminosity[flavor](t)
-            Ea = self.meanE[flavor](t)          # <E_nu(t)>
-            Ea = Ea*1e6 * astropy.units.eV
-            a = self.pinch[flavor](t)           # alpha_nu(t)
-            E[E==0] = np.finfo(float).eps       # Avoid division by zero.
+            L = self.luminosity[flavor](t)  # Implicitly in units erg/s
+            Ea = self.meanE[flavor](t)  # <E_nu(t)>, implicitly in units MeV
+            Ea = (Ea * u.MeV).to('erg').value  # Energy computations done in ergs
+            a = self.pinch[flavor](t)  # alpha_nu(t)
+            E[E == 0] = np.finfo(float).eps  # Avoid division by zero.
 
             # For numerical stability, evaluate log PDF then exponentiate.
             initialspectra[flavor] = \
-                np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a) 
-                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
+                np.exp(np.log(L) - (2 + a) * np.log(Ea) + (1 + a) * np.log(1 + a)
+                       - loggamma(1 + a) + a * np.log(E) - (1 + a) * (E / Ea))
+            initialspectra[flavor] /= (u.erg * u.s)
 
         return initialspectra
 
@@ -520,9 +523,9 @@ class SNOwGLoBES():
                 logging.debug('Reading {}'.format(nooscfile))
                 meta = f.readline()
                 metatext = meta.decode('utf-8')
-                t = float(metatext.split('TBinMid=')[-1].split('sec')[0])
-                dt = float(metatext.split('tBinWidth=')[-1].split('s')[0])
-                dE = float(metatext.split('eBinWidth=')[-1].split('MeV')[0])
+                t = float(metatext.split('TBinMid=')[-1].split('sec')[0]) # u.s
+                dt = float(metatext.split('tBinWidth=')[-1].split('s')[0]) * u.s
+                dE = float(metatext.split('eBinWidth=')[-1].split('MeV')[0]) * u.MeV
 
                 data = Table.read(f, format='ascii.commented_header', header_start=-1)
                 data.meta['t'] = t
@@ -531,14 +534,16 @@ class SNOwGLoBES():
 
                 self.time.append(t)
                 if self.energy is None:
-                    self.energy = (data['E(GeV)'].data*1000).tolist()
+                    self.energy = (data['E(GeV)'].data*1000).tolist() * u.MeV
 
             for flavor in ['NuE', 'NuMu', 'NuTau', 'aNuE', 'aNuMu', 'aNuTau']:
                 if flavor in self.flux:
                     self.flux[flavor].append(data[flavor].data.tolist())
                 else:
                     self.flux[flavor] = [data[flavor].data.tolist()]
-
+        self.time *= u.s
+        self.dt = dt
+        self.dE = dE
         # We now have a table with rows=times and columns=energies. Transpose
         # so that rows=energy and cols=time.
         for k, v in self.flux.items():
@@ -559,10 +564,35 @@ class SNOwGLoBES():
         fluence : dict
             A dictionary giving fluence at time t, keyed by flavor.
         """
-        idx = get_closest(self.time, t)
+        idx = get_closest(self.time.value, t)
 
         fluence = {}
         for k, fl in self.flux.items():
-            fluence[k] = fl[:,idx]
+            fluence[k] = fl[:,idx] / u.cm**2
+
 
         return fluence
+    
+    def get_luminosity(self, d = 10 * u.kpc):
+        """Compute the luminosity for a given flavor and progenitor distance.
+
+        Parameters
+        ----------
+        d: astropy Quantity
+            Progenitor distance (default is 10 kpc)
+           
+        Returns
+        -------
+        luminosity : dict
+            A dictionary giving luminosity, keyed by flavor.
+        """
+        luminosity = {}
+        E = self.energy 
+        for flavor in ['NuE', 'NuMu', 'NuTau', 'aNuE', 'aNuMu', 'aNuTau']:
+            lum = []
+            for time in self.time.value:
+                Ea = np.average(E.to('erg'), weights = self.get_fluence(time)[flavor])
+                lum.append(np.trapz((self.get_fluence(time)[flavor].value * (4.*np.pi*d.to('cm').value**2) / (self.dt.value * 0.2 * u.MeV.to('erg'))), E.to('erg').value) * Ea.value)
+            luminosity[flavor] = lum * u.erg / u.s
+        
+        return luminosity
