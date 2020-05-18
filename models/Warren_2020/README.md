@@ -1,6 +1,4 @@
-Constraining properties of the next nearby core-collapse supernova with multi-messenger signals: multi-messenger signals
-
-Warren, MacKenzie; Couch, Sean; O'Connor, Evan; Morozova, Viktoriya
+Data from "Constraining properties of the next nearby core-collapse supernova with multi-messenger signals: multi-messenger signals" by Warren, MacKenzie; Couch, Sean; O'Connor, Evan; Morozova, Viktoriya
 
 1D FLASH simulations with STIR, for alpha_lambda = 1.23, 1.25, and 1.27.  Run with SFHo EOS, M1 with 12 energy groups.
 
