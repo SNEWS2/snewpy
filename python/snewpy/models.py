@@ -149,20 +149,21 @@ class SupernovaModel(ABC):
         oscillatedspectra : dict
             Dictionary of oscillated spectra, keyed by neutrino flavor.
         """
+        E = E * u.erg
         initialspectra = self.get_initialspectra(t, E)
         oscillatedspectra = {}
         oscillatedspectra[Flavor.nu_e] = \
-            self.FT.p() * initialspectra[Flavor.nu_e] + \
-            (1. - self.FT.p()) * initialspectra[Flavor.nu_x]
+            self.FT.p() * initialspectra[Flavor.nu_e].value + \
+            (1. - self.FT.p()) * initialspectra[Flavor.nu_x].value
         oscillatedspectra[Flavor.nu_x] = \
-            (1. - self.FT.p()) * initialspectra[Flavor.nu_e] + \
-            (1. + self.FT.p()) * initialspectra[Flavor.nu_x]
+            (1. - self.FT.p()) * initialspectra[Flavor.nu_e].value + \
+            (1. + self.FT.p()) * initialspectra[Flavor.nu_x].value
         oscillatedspectra[Flavor.nu_e_bar] = \
-            self.FT.pbar() * initialspectra[Flavor.nu_e_bar] + \
-            (1. - self.FT.pbar()) * initialspectra[Flavor.nu_x_bar]
+            self.FT.pbar() * initialspectra[Flavor.nu_e_bar].value + \
+            (1. - self.FT.pbar()) * initialspectra[Flavor.nu_x_bar].value
         oscillatedspectra[Flavor.nu_x_bar] = \
-            (1. - self.FT.p()) * initialspectra[Flavor.nu_e_bar] + \
-            (1. + self.FT.pbar()) * initialspectra[Flavor.nu_x_bar]
+            (1. - self.FT.p()) * initialspectra[Flavor.nu_e_bar].value + \
+            (1. + self.FT.pbar()) * initialspectra[Flavor.nu_x_bar].value
         return oscillatedspectra    
 
 
@@ -342,7 +343,7 @@ class Sukhbold2015(SupernovaModel):
             self.meanE[flavor] = interp1d(self.get_time(), self.get_mean_energy(flavor))
             self.pinch[flavor] = interp1d(self.get_time(), self.get_pinch_param(flavor))
         self.FT = flavor_xform
-            
+
     def get_time(self):
         """Get grid of model times.
 
@@ -352,7 +353,7 @@ class Sukhbold2015(SupernovaModel):
             Grid of times used in the model.
         """
         return self.file['TIME']
-    
+
     def get_luminosity(self, flavor):
         """Get model luminosity L_nu.
 
@@ -369,7 +370,7 @@ class Sukhbold2015(SupernovaModel):
         if flavor == Flavor.nu_x_bar:
             flavor = Flavor.nu_x
         return self.file['L_{}'.format(flavor.name.upper())]
-        
+
     def get_mean_energy(self, flavor):
         """Get model mean energy <E_nu>.
 
@@ -386,7 +387,7 @@ class Sukhbold2015(SupernovaModel):
         if flavor == Flavor.nu_x_bar:
             flavor = Flavor.nu_x
         return self.file['E_{}'.format(flavor.name.upper())]
-    
+
     def get_pinch_param(self, flavor):
         """Get spectral pinch parameter alpha(t).
 
@@ -403,7 +404,7 @@ class Sukhbold2015(SupernovaModel):
         if (flavor == Flavor.nu_x_bar):
             flavor = Flavor.nu_x
         return self.file['ALPHA_{}'.format(flavor.name.upper())]
-    
+
     def get_EOS(self):
         """Model equation of state.
 
@@ -412,8 +413,8 @@ class Sukhbold2015(SupernovaModel):
         eos : str
             Model equation of state.
         """
-        return self.filename.split('-')[1]
-    
+        return self.filename.split('-')[1].upper()
+
     def get_progenitor_mass(self):
         """Progenitor mass.
 
@@ -422,24 +423,34 @@ class Sukhbold2015(SupernovaModel):
         mass : float
             Progenitor mass, in units of solar mass.
         """
-        return float(self.split('-')[-1].split('.')[0].strip('s'))
+        return float(self.filename.split('-')[-1].strip('s%.0.fits'))
 
-    def get_initialspectra(self,t,E):
+    def get_revival_time(self):
+        """Revival time of model explosion; specific to the Nakazato models.
+
+        Returns
+        -------
+        time : float
+            Revival time, in ms.
+        """
+        return float(self.filename.split('-')[-2].strip('t_rev%ms'))
+
+    def get_initialspectra(self, t, E):
         """Get neutrino spectra/luminosity curves after oscillation.
-             Energy is converted to ergs, and time to seconds
+        Energy is converted to ergs, and time to seconds
 
-             Parameters
-             ----------
-             t : float
-                 Time to evaluate initial and oscillated spectra.
-             E : astropy Quantity
-                 Energies to evaluate the initial and oscillated spectra.
+        Parameters
+        ----------
+        t : float
+            Time to evaluate initial and oscillated spectra.
+        E : astropy Quantity
+            Energies to evaluate the initial and oscillated spectra.
 
-             Returns
-             -------
-             initialspectra : dict
-                 Dictionary of model spectra, keyed by neutrino flavor, in units of 1/(erg.s).
-             """
+        Returns
+        -------
+        initialspectra : dict
+            Dictionary of model spectra, keyed by neutrino flavor, in units of 1/(erg.s).
+        """
         initialspectra = {}
         E = E.to('erg').value
         for flavor in Flavor:
