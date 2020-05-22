@@ -807,14 +807,14 @@ class Warren2020(SupernovaModel):
 
         table['TIME'] = f['nue_data']['lum'][:, 0] - bounce
         table['L_NU_E'] = f['nue_data']['lum'][:, 1] * 1e51
-        table['L_NU_E_BAR'] = f['anue_data']['lum'][:, 1] * 1e51
-        table['L_NU_X'] = f['numu_data']['lum'][:, 1] * 1e51 / 4.0
+        table['L_NU_E_BAR'] = f['nuae_data']['lum'][:, 1] * 1e51
+        table['L_NU_X'] = f['nux_data']['lum'][:, 1] * 1e51 / 4.0
         table['E_NU_E'] = f['nue_data']['avg_energy'][:, 1]
-        table['E_NU_E_BAR'] = f['anue_data']['avg_energy'][:, 1]
-        table['E_NU_X'] = f['numu_data']['avg_energy'][:, 1]
+        table['E_NU_E_BAR'] = f['nuae_data']['avg_energy'][:, 1]
+        table['E_NU_X'] = f['nux_data']['avg_energy'][:, 1]
         table['RMS_NU_E'] = f['nue_data']['rms_energy'][:, 1]
-        table['RMS_NU_E_BAR'] = f['anue_data']['rms_energy'][:, 1]
-        table['RMS_NU_X'] = f['numu_data']['rms_energy'][:, 1]
+        table['RMS_NU_E_BAR'] = f['nuae_data']['rms_energy'][:, 1]
+        table['RMS_NU_X'] = f['nux_data']['rms_energy'][:, 1]
         table['ALPHA_NU_E'] = (2.0 * table['E_NU_E'] ** 2 - table['RMS_NU_E'] ** 2) / (
                     table['RMS_NU_E'] ** 2 - table['E_NU_E'] ** 2)
         table['ALPHA_NU_E_BAR'] = (2.0 * table['E_NU_E_BAR'] ** 2 - table['RMS_NU_E_BAR'] ** 2) / (
