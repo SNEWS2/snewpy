@@ -156,14 +156,14 @@ class SupernovaModel(ABC):
             self.FT.p() * initialspectra[Flavor.nu_e] + \
             (1. - self.FT.p()) * initialspectra[Flavor.nu_x]
         oscillatedspectra[Flavor.nu_x] = \
-            (1. - self.FT.p()) * initialspectra[Flavor.nu_e] + \
-            (1. + self.FT.p()) * initialspectra[Flavor.nu_x]
+            ( (1. - self.FT.p()) * initialspectra[Flavor.nu_e] + \
+              (1. + self.FT.p()) * initialspectra[Flavor.nu_x] )/2.
         oscillatedspectra[Flavor.nu_e_bar] = \
             self.FT.pbar() * initialspectra[Flavor.nu_e_bar] + \
             (1. - self.FT.pbar()) * initialspectra[Flavor.nu_x_bar]
         oscillatedspectra[Flavor.nu_x_bar] = \
-            (1. - self.FT.p()) * initialspectra[Flavor.nu_e_bar] + \
-            (1. + self.FT.pbar()) * initialspectra[Flavor.nu_x_bar]
+            ( (1. - self.FT.pbar()) * initialspectra[Flavor.nu_e_bar] + \
+              (1. + self.FT.pbar()) * initialspectra[Flavor.nu_x_bar] )/2.
         return oscillatedspectra    
 
 
