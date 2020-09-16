@@ -8,5 +8,4 @@ install:
     - pip install --upgrade pip
     - pip install -r requirements.txt
     - travis_wait 35 python setup.py install
-script:
-    - python setup.py test
+
