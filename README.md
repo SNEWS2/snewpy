@@ -1,30 +1,21 @@
-# supernova_models
-collection of models from the community in common format for use by the SNEWS teams
-
 ## Installation
 
 Run `python setup.py develop` or `python setup.py install --user` to install the modules in your user area and have access to the snewpy package in your Python environment.
 
-## Programs and Scripts
-Modulizable scripts are available in the `python/snewpy/scripts` subfolder and have a corresponding executable file in the `bin` subfolder.
+## SNEWPY
+The SNEWPY code is in the `python/snewpy` subfolder. The master file is snewpy.py. 
+SNEWPY is intended to work with SNOwGLoBES which you can downlaod from https://github.com/SNOwGLoBES/snowglobes
+The purpose of SNEWPY is to create a pipeline from supernova simulations to SNOwGLoBES and then collate 
+the output. The models folder contains the collection of supernova models or neutrino spectra sourced from the community. 
 
-For example, after installing the snewpy package with the commands above, you can run the `to_snowglobes` command from your prompt to convert some supported supernova models to SNOwGLoBES format. The current usage for that command is
+SNEWPY come in three parts: to_snowglobes, run_snowlgobes, and from_snowglobes. 
+to_snowglobes is able to intreface with the diffrent supernova models, convolve them with a 
+prescription for flavor transforamtion, and produce a set of files in SNOwGLoBES format. run_snowglobes then 
+sends that set of files through SNOwGLoBES for all (or some) of the different detectors SNOwGLobES can handle.
+from_snowglobes then collates the output into from SNOwGLoBES into the  observable channels, creates a file with 
+the collated data together with simple figures of the collated data.
 
-```
-usage: to_snowglobes [-h] [-o OUTPUT] [-n NTBINS | -t DELTAT] [-v] infile
+Further details can be found in the documentation in the doc folder
 
-Convert to SNOwGLoBES format.
 
-positional arguments:
-  infile                Supernova model input file (Nakazato only).
 
-optional arguments:
-  -h, --help            show this help message and exit
-  -o OUTPUT, --output OUTPUT
-                        Output tarfile name (if customization desired)
-  -n NTBINS, --ntbins NTBINS
-                        Number of bins used to sample model
-  -t DELTAT, --deltat DELTAT
-                        Time binning used to sample model [sec]
-  -v, --verbose         Activate verbose log for debugging
-```
