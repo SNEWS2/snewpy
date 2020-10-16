@@ -13,6 +13,8 @@ import sys
 from distutils.command.sdist import sdist as DistutilsSdist
 from setuptools import setup, find_packages
 #
+# Git-based version info. Remove?
+#
 from python.snewpy._git import get_version, SetVersion
 #
 # Begin setup
