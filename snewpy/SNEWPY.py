@@ -6,13 +6,13 @@ import run_snowglobes
 import from_snowglobes
 import tarfile
 
-SNOwGLoBES_path = "/nucastro2/amgraf/snowglobes/" #where snowglobes is located
-models_dir = "/nucastro2/amgraf/models/Nakazato_2013/" #where models (aka input for to_snowglobes) is located
+SNOwGLoBES_path = "/location/of/snowglobes/" #where snowglobes is located
+models_dir = "/location/of/models/Nakazato_2013/" #where models (aka input for to_snowglobes) is located
 file_name = 'nakazato-LS220-BH-z0.004-s30.0.fits'
 
 #input necessary for to_snowglobes
 modeltype = 'Nakazato_2013'
-transformation = 'NoTransformation'
+transformation = 'AdiabaticMSW_NMO'
 output = None
 ntbins =  None
 deltat = None
