@@ -3,7 +3,7 @@
 Run `python setup.py develop` or `python setup.py install --user` to install the modules in your user area and have access to the snewpy package in your Python environment.
 
 ## SNEWPY
-The SNEWPY code is in the `python/snewpy` subfolder. The master file is snewpy.py. 
+The SNEWPY code is in the `snewpy` subfolder. The master file is SNEWPY.py. 
 SNEWPY is intended to work with SNOwGLoBES which you can downlaod from https://github.com/SNOwGLoBES/snowglobes
 The purpose of SNEWPY is to create a pipeline from supernova simulations to SNOwGLoBES and then collate 
 the output. The models folder contains the collection of supernova models or neutrino spectra sourced from the community. 
