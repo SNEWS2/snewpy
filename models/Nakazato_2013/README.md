@@ -1,5 +1,5 @@
-CCSN neutrino models from Nakazato et al., 2013 and 2015. Data are public and
-taken from [their website](http://asphwww.ph.noda.tus.ac.jp/snn/).
+CCSN neutrino models from Nakazato et al., 2013 and 2015. Data taken from [the website](http://asphwww.ph.noda.tus.ac.jp/snn/).
+Author has given permission to include the data with SNEWPY. 
 
 The citation for use of the database is: *Supernova Neutrino Light Curves and
 Spectra for Various Progenitor Stars: From Core Collapse to Proto-neutron Star
