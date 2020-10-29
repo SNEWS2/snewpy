@@ -1,4 +1,4 @@
-CCSN models from O'Connor and Ott, 2013 using 32 stellar models of metallicity with ZAMS masses from 12 to 120 solar masses, assuming two different equations of state. The models cover only the pre-explosion phase since the simulations did not explode.
+CCSN models from O'Connor and Ott, 2013 using 32 stellar models of metallicity with ZAMS masses from 12 to 120 solar masses, assuming two different equations of state. The models cover only the pre-explosion phase since the simulations did not explode. Included with SNEWPY with permission of the authors.
 
 Data downloaded from [sntheory.org](https://sntheory.org/M1prog) include:
 
