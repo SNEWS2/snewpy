@@ -3,3 +3,5 @@ Data from O'Connor 2015, black hole forming simulations of a 40 solar mass proge
 Reference: O'Connor ApJS 219 24 2015
 doi:10.1088/0067-0049/219/2/24
 arXiv:1411.7058
+
+Included with SNEWPY with permission of the authors.
