@@ -7,3 +7,5 @@ There are 30 snapshots in time and for each snapshot there are 8 lines of sight 
 The GCD model is described in *Neutrinos from type Ia supernovae: The gravitationally confined detonation scenario* Warren P. Wright, James P. Kneller, Sebastian T. Ohlmann, Friedrich K. Röpke, Kate Scholberg, Ivo R. Seitenzahl, [Phys. Rev. D95 (2017) 043006](https://journals.aps.org/prd/abstract/10.1103/PhysRevD.95.043006), [arXiv:1609.07403](https://arxiv.org/abs/1609.07403).  
 
 There are 64 snapshots in time and for each snapshot there are 10 lines of sight through the explosion. Flavor transformation due to MSW effects and decoherence are included, plus the no-oscillations case. Self-interaction effects do not occur in Type Ia models. Earth matter effects are not included. Both mass orderings are considered. The format of each data file is the SNOwGLoBES format. Flavor transformation due to MSW effects and decoherence are included. Self-interaction effects do not occur in Type Ia models. Earth matter effects are not included.
+
+Included with SNEWPY with permission of the authors.
