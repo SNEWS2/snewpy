@@ -226,12 +226,6 @@ class AdiabaticMSW_NMO(FlavorTransformation):
             Mixing angle 1->3 in PMNS matrix.
         theta23 : astropy.units.quantity.Quantity
             Mixing angle 2->3 in PMNS matrix.
-        
-
-        Returns
-        -------
-        prob: float
-            Transition probability.
         """
         self.De1 = (np.cos(theta12) * np.cos(theta13))**2
         self.De2 = (np.sin(theta12) * np.cos(theta13))**2
