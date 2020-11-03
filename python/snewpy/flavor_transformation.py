@@ -15,42 +15,50 @@ c = 29979245800 # cm/s
 eV = 1.60218e-12 # ergs
 kpc = 1000. * 3.086e+18 # cm
 
+
 class FlavorTransformation(ABC):
     """Generic interface to compute neutrino and antineutrino survival probability."""
 
     @abstractmethod
-    def pee(self):
-        """Electron Neutrino survival probability."""
+    def prob_ee(self):
+        """Electron neutrino survival probability."""
         pass
 
     @abstractmethod
-    def pex(self):
+    def prob_ex(self):
+        """Electron -> flavor X neutrino transition probability."""
         pass
-    
+
     @abstractmethod
-    def pxx(self):
+    def prob_xx(self):
+        """Flavor X neutrino survival probability."""
         pass
-    
+
     @abstractmethod
-    def pxe(self):
+    def prob_xe(self):
+        """Flavor X -> electron neutrino transition probability."""
         pass    
-    
+
     @abstractmethod
-    def peebar(self):
-        """Electron Antineutrino survival probability."""
+    def prob_eebar(self):
+        """Electron antineutrino survival probability."""
         pass    
-    
+
     @abstractmethod
-    def pexbar(self):
+    def prob_exbar(self):
+        """Electron -> flavor X antineutrino transition probability."""
         pass   
-    
+
     @abstractmethod
-    def pxxbar(self):
+    def prob_xxbar(self):
+        """Flavor X -> flavor X antineutrino survival probability."""
         pass
-    
+
     @abstractmethod
-    def pxebar(self):
+    def prob_xebar(self):
+        """Flavor X -> electron antineutrino transition probability."""
         pass    
+
 
 class NoTransformation(FlavorTransformation):
     """Survival probabilities for no oscillation case."""
@@ -58,29 +66,38 @@ class NoTransformation(FlavorTransformation):
     def __init__(self,parameters):
         pass
 
-    def pee(self, t, E):
+    def prob_ee(self, t, E):
+        """Electron neutrino survival probability."""
         return 1.    
-    
-    def pex(self, t, E):
-        return 1. - self.pee(t,E)
 
-    def pxx(self, t, E):
-        return (1. + self.pee(t,E)) / 2.   
-    
-    def pxe(self, t, E):
-        return (1. - self.pee(t,E)) / 2.
-    
-    def peebar(self, t, E):
+    def prob_ex(self, t, E):
+        """Electron -> flavor X neutrino transition probability."""
+        return 1. - self.prob_ee(t,E)
+
+    def prob_xx(self, t, E):
+        """Flavor X neutrino survival probability."""
+        return (1. + self.prob_ee(t,E)) / 2.   
+
+    def prob_xe(self, t, E):
+        """Flavor X -> electron neutrino transition probability."""
+        return (1. - self.prob_ee(t,E)) / 2.
+
+    def prob_eebar(self, t, E):
+        """Electron antineutrino survival probability."""
         return 1.
-    
-    def pexbar(self, t, E):
-        return 1. - self.peebar(t,E)       
-    
-    def pxxbar(self, t, E):
-        return (1. + self.peebar(t,E)) / 2.
-    
-    def pxebar(self, t, E):
-        return (1. - self.peebar(t,E)) / 2.
+
+    def prob_exbar(self, t, E):
+        """Electron -> flavor X antineutrino transition probability."""
+        return 1. - self.prob_eebar(t,E)       
+
+    def prob_xxbar(self, t, E):
+        """Flavor X -> flavor X antineutrino survival probability."""
+        return (1. + self.prob_eebar(t,E)) / 2.
+
+    def prob_xebar(self, t, E):
+        """Flavor X -> electron antineutrino transition probability."""
+        return (1. - self.prob_eebar(t,E)) / 2.
+
 
 class AdiabaticMSW_NMO(FlavorTransformation):
     """Adiabatic MSW effect, assuming normal mass ordering."""
@@ -89,63 +106,81 @@ class AdiabaticMSW_NMO(FlavorTransformation):
         self.De1 = (np.cos(parameters[0]*np.pi/180.)**2)*(np.cos(parameters[1]*np.pi/180.)**2)
         self.De2 = (np.sin(parameters[0]*np.pi/180.)**2)*(np.cos(parameters[1]*np.pi/180.)**2)
         self.De3 = np.sin(parameters[1]*np.pi/180.)**2
-    
-    def pee(self, t, E):
+
+    def prob_ee(self, t, E):
+        """Electron neutrino survival probability."""
         return self.De3
 
-    def pex(self, t, E):
-        return 1. - self.pee(t,E)
+    def prob_ex(self, t, E):
+        """Electron -> flavor X neutrino transition probability."""
+        return 1. - self.prob_ee(t,E)
 
-    def pxx(self, t, E):
-        return (1. + self.pee(t,E)) / 2.   
-    
-    def pxe(self, t, E):
-        return (1. - self.pee(t,E)) / 2.
-    
-    def peebar(self, t, E):
+    def prob_xx(self, t, E):
+        """Flavor X neutrino survival probability."""
+        return (1. + self.prob_ee(t,E)) / 2.   
+
+    def prob_xe(self, t, E):
+        """Flavor X -> electron neutrino transition probability."""
+        return (1. - self.prob_ee(t,E)) / 2.
+
+    def prob_eebar(self, t, E):
+        """Electron antineutrino survival probability."""
         return self.De1  
-    
-    def pexbar(self, t, E):
-        return 1. - self.peebar(t,E)       
-    
-    def pxxbar(self, t, E):
-        return (1. + self.peebar(t,E)) / 2.
-    
-    def pxebar(self, t, E):
-        return (1. - self.peebar(t,E)) / 2.
+
+    def prob_exbar(self, t, E):
+        """Electron -> flavor X antineutrino transition probability."""
+        return 1. - self.prob_eebar(t,E)       
+
+    def prob_xxbar(self, t, E):
+        """Flavor X -> flavor X antineutrino survival probability."""
+        return (1. + self.prob_eebar(t,E)) / 2.
+
+    def prob_xebar(self, t, E):
+        """Flavor X -> electron antineutrino transition probability."""
+        return (1. - self.prob_eebar(t,E)) / 2.
+
 
 class AdiabaticMSW_IMO(FlavorTransformation):
     """Adiabatic MSW effect, assuming inverted mass ordering."""
-    
+
     def __init__(self,parameters):
         self.De1 = (np.cos(parameters[0]*np.pi/180.)**2)*(np.cos(parameters[1]*np.pi/180.)**2)
         self.De2 = (np.sin(parameters[0])**2)*(np.cos(parameters[1]*np.pi/180.)**2)
         self.De3 = np.sin(parameters[1])**2
-    
-    def pee(self, t, E):
+
+    def prob_ee(self, t, E):
+        """Electron neutrino survival probability."""
         return self.De2
 
-    def pex(self, t, E):
-        return 1. - self.pee(t,E)
+    def prob_ex(self, t, E):
+        """Electron -> flavor X neutrino transition probability."""
+        return 1. - self.prob_ee(t,E)
 
-    def pxx(self, t, E):
-        return (1. + self.pee(t,E)) / 2.   
-    
-    def pxe(self, t, E):
-        return (1. - self.pee(t,E)) / 2.
-    
-    def peebar(self, t, E):
+    def prob_xx(self, t, E):
+        """Flavor X neutrino survival probability."""
+        return (1. + self.prob_ee(t,E)) / 2.   
+
+    def prob_xe(self, t, E):
+        """Flavor X -> electron neutrino transition probability."""
+        return (1. - self.prob_ee(t,E)) / 2.
+
+    def prob_eebar(self, t, E):
+        """Electron antineutrino survival probability."""
         return self.De3  
-    
-    def pexbar(self, t, E):
-        return 1. - self.peebar(t,E)       
-    
-    def pxxbar(self, t, E):
-        return (1. + self.peebar(t,E)) / 2.
-    
-    def pxebar(self, t, E):
-        return (1. - self.peebar(t,E)) / 2.
-    
+
+    def prob_exbar(self, t, E):
+        """Electron -> flavor X antineutrino transition probability."""
+        return 1. - self.prob_eebar(t,E)       
+
+    def prob_xxbar(self, t, E):
+        """Flavor X -> flavor X antineutrino survival probability."""
+        return (1. + self.prob_eebar(t,E)) / 2.
+
+    def prob_xebar(self, t, E):
+        """Flavor X -> electron antineutrino transition probability."""
+        return (1. - self.prob_eebar(t,E)) / 2.
+ 
+
 class NonAdiabaticMSWH_NMO(FlavorTransformation):
     """Adiabatic MSW effect, assuming normal mass ordering."""
 
@@ -153,92 +188,119 @@ class NonAdiabaticMSWH_NMO(FlavorTransformation):
         self.De1 = (np.cos(parameters[0]*np.pi/180.)**2)*(np.cos(parameters[1]*np.pi/180.)**2)
         self.De2 = (np.sin(parameters[0])**2)*(np.cos(parameters[1]*np.pi/180.)**2)
         self.De3 = np.sin(parameters[1])**2
-    
-    def pee(self, t, E):
+
+    def prob_ee(self, t, E):
+        """Electron neutrino survival probability."""
         return self.De2
 
-    def pex(self, t, E):
-        return 1. - self.pee(t,E)
+    def prob_ex(self, t, E):
+        """Electron -> flavor X neutrino transition probability."""
+        return 1. - self.prob_ee(t,E)
 
-    def pxx(self, t, E):
-        return (1. + self.pee(t,E)) / 2.   
-    
-    def pxe(self, t, E):
-        return (1. - self.pee(t,E)) / 2.
-    
-    def peebar(self, t, E):
+    def prob_xx(self, t, E):
+        """Flavor X neutrino survival probability."""
+        return (1. + self.prob_ee(t,E)) / 2.   
+
+    def prob_xe(self, t, E):
+        """Flavor X -> electron neutrino transition probability."""
+        return (1. - self.prob_ee(t,E)) / 2.
+
+    def prob_eebar(self, t, E):
+        """Electron antineutrino survival probability."""
         return self.De1  
-    
-    def pexbar(self, t, E):
-        return 1. - self.peebar(t,E)       
-    
-    def pxxbar(self, t, E):
-        return (1. + self.peebar(t,E)) / 2.
-    
-    def pxebar(self, t, E):
-        return (1. - self.peebar(t,E)) / 2.
-    
+
+    def prob_exbar(self, t, E):
+        """Electron -> flavor X antineutrino transition probability."""
+        return 1. - self.prob_eebar(t,E)       
+
+    def prob_xxbar(self, t, E):
+        """Flavor X -> flavor X antineutrino survival probability."""
+        return (1. + self.prob_eebar(t,E)) / 2.
+
+    def prob_xebar(self, t, E):
+        """Flavor X -> electron antineutrino transition probability."""
+        return (1. - self.prob_eebar(t,E)) / 2.
+
+
 class NonAdiabaticMSWH_IMO(FlavorTransformation):
     """Adiabatic MSW effect, assuming inverted mass ordering."""
-    
+
     def __init__(self,parameters):
         self.De1 = (np.cos(parameters[0]*np.pi/180.)**2)*(np.cos(parameters[1]*np.pi/180.)**2)
         self.De2 = (np.sin(parameters[0])**2)*(np.cos(parameters[1]*np.pi/180.)**2)
         self.De3 = np.sin(parameters[1])**2
-    
-    def pee(self, t, E):
+
+    def prob_ee(self, t, E):
+        """Electron neutrino survival probability."""
         return self.De2
 
-    def pex(self, t, E):
-        return 1. - self.pee(t,E)
+    def prob_ex(self, t, E):
+        """Electron -> flavor X neutrino transition probability."""
+        return 1. - self.prob_ee(t,E)
 
-    def pxx(self, t, E):
-        return (1. + self.pee(t,E)) / 2.   
-    
-    def pxe(self, t, E):
-        return (1. - self.pee(t,E)) / 2.
-    
-    def peebar(self, t, E):
+    def prob_xx(self, t, E):
+        """Flavor X neutrino survival probability."""
+        return (1. + self.prob_ee(t,E)) / 2.   
+
+    def prob_xe(self, t, E):
+        """Flavor X -> electron neutrino transition probability."""
+        return (1. - self.prob_ee(t,E)) / 2.
+
+    def prob_eebar(self, t, E):
+        """Electron antineutrino survival probability."""
         return self.De1  
-    
-    def pexbar(self, t, E):
-        return 1. - self.peebar(t,E)       
-    
-    def pxxbar(self, t, E):
-        return (1. + self.peebar(t,E)) / 2.
-    
-    def pxebar(self, t, E):
-        return (1. - self.peebar(t,E)) / 2.
+
+    def prob_exbar(self, t, E):
+        """Electron -> flavor X antineutrino transition probability."""
+        return 1. - self.prob_eebar(t,E)       
+
+    def prob_xxbar(self, t, E):
+        """Flavor X -> flavor X antineutrino survival probability."""
+        return (1. + self.prob_eebar(t,E)) / 2.
+
+    def prob_xebar(self, t, E):
+        """Flavor X -> electron antineutrino transition probability."""
+        return (1. - self.prob_eebar(t,E)) / 2.
        
+
 class TwoFlavorDecoherence(FlavorTransformation):
     """Star-earth transit survival probability: two flavor case."""
 
     def __init__(self,parameters):
         pass
 
-    def pee(self, t, E):
+    def prob_ee(self, t, E):
+        """Electron neutrino survival probability."""
         return 0.5    
-    
-    def pex(self, t, E):
-        return 1. - self.pee(t,E)
 
-    def pxx(self, t, E):
-        return (1. + self.pee(t,E)) / 2.   
-    
-    def pxe(self, t, E):
-        return (1. - self.pee(t,E)) / 2.
-    
-    def peebar(self, t, E):
+    def prob_ex(self, t, E):
+        """Electron -> flavor X neutrino transition probability."""
+        return 1. - self.prob_ee(t,E)
+
+    def prob_xx(self, t, E):
+        """Flavor X neutrino survival probability."""
+        return (1. + self.prob_ee(t,E)) / 2.   
+
+    def prob_xe(self, t, E):
+        """Flavor X -> electron neutrino transition probability."""
+        return (1. - self.prob_ee(t,E)) / 2.
+
+    def prob_eebar(self, t, E):
+        """Electron antineutrino survival probability."""
         return 0.5
-    
-    def pexbar(self, t, E):
-        return 1. - self.peebar(t,E)       
-    
-    def pxxbar(self, t, E):
-        return (1. + self.peebar(t,E)) / 2.
-    
-    def pxebar(self, t, E):
-        return (1. - self.peebar(t,E)) / 2.
+
+    def prob_exbar(self, t, E):
+        """Electron -> flavor X antineutrino transition probability."""
+        return 1. - self.prob_eebar(t,E)       
+
+    def prob_xxbar(self, t, E):
+        """Flavor X -> flavor X antineutrino survival probability."""
+        return (1. + self.prob_eebar(t,E)) / 2.
+
+    def prob_xebar(self, t, E):
+        """Flavor X -> electron antineutrino transition probability."""
+        return (1. - self.prob_eebar(t,E)) / 2.
+
 
 class ThreeFlavorDecoherence(FlavorTransformation):
     """Star-earth transit survival probability: three flavor case."""
@@ -246,33 +308,42 @@ class ThreeFlavorDecoherence(FlavorTransformation):
     def __init__(self,parameters):
         pass
 
-    def pee(self, t, E):
+    def prob_ee(self, t, E):
+        """Electron neutrino survival probability."""
         return 1./3.    
-    
-    def pex(self, t, E):
-        return 1. - self.pee(t,E)
 
-    def pxx(self, t, E):
-        return (1. + self.pee(t,E)) / 2.   
-    
-    def pxe(self, t, E):
-        return (1. - self.pee(t,E)) / 2.  
-    
-    def peebar(self, t, E):
+    def prob_ex(self, t, E):
+        """Electron -> flavor X neutrino transition probability."""
+        return 1. - self.prob_ee(t,E)
+
+    def prob_xx(self, t, E):
+        """Flavor X neutrino survival probability."""
+        return (1. + self.prob_ee(t,E)) / 2.   
+
+    def prob_xe(self, t, E):
+        """Flavor X -> electron neutrino transition probability."""
+        return (1. - self.prob_ee(t,E)) / 2.  
+
+    def prob_eebar(self, t, E):
+        """Electron antineutrino survival probability."""
         return 1./3.
-    
-    def pexbar(self, t, E):
-        return 1. - self.peebar(t,E)       
-    
-    def pxxbar(self, t, E):
-        return (1. + self.peebar(t,E)) / 2.
-    
-    def pxebar(self, t, E):
-        return (1. - self.peebar(t,E)) / 2.
-    
+
+    def prob_exbar(self, t, E):
+        """Electron -> flavor X antineutrino transition probability."""
+        return 1. - self.prob_eebar(t,E)       
+
+    def prob_xxbar(self, t, E):
+        """Flavor X -> flavor X antineutrino survival probability."""
+        return (1. + self.prob_eebar(t,E)) / 2.
+
+    def prob_xebar(self, t, E):
+        """Flavor X -> electron antineutrino transition probability."""
+        return (1. - self.prob_eebar(t,E)) / 2.
+
+
 class NeutrinoDecay_IMO(FlavorTransformation):
     """Decay effect, assuming inverted mass ordering."""
-    
+
     def __init__(self,parameters):
         self.De1 = (np.cos(parameters[0]*np.pi/180.)**2)*(np.cos(parameters[1]*np.pi/180.)**2)
         self.De2 = (np.sin(parameters[0])**2)*(np.cos(parameters[1]*np.pi/180.)**2)
@@ -281,45 +352,54 @@ class NeutrinoDecay_IMO(FlavorTransformation):
         self.m=parameters[3] * eV / (c**2)
         self.tau=parameters[4]
         self.d=parameters[5] * kpc
-    
+
     def getgamma(self, E):
         return m*c/(E*tau)
 
-    def pee(self, t, E):
+    def prob_ee(self, t, E):
+        """Electron neutrino survival probability."""
         pe_array = []
         for energy in E:
             pe_array.append( self.De2*np.exp(-self.getgamma(energ)*d) + self.De3*(1-np.exp(-self.getgamma(energy)*d)) )
         pe_array = np.array(pe_array)
         return pe_array
-    
-    def pex(self, t, E):
+
+    def prob_ex(self, t, E):
+        """Electron -> flavor X neutrino transition probability."""
         return self.De1 + self.De2
-    
-    def pxx(self, t, E):
-        return 1. - self.pex(t,E) / 2.
-    
-    def pxe(self, t, E):
-        return (1. - self.pee(t,E)) /2.
-    
-    def peebar(self, t, E):
+
+    def prob_xx(self, t, E):
+        """Flavor X neutrino survival probability."""
+        return 1. - self.prob_ex(t,E) / 2.
+
+    def prob_xe(self, t, E):
+        """Flavor X -> electron neutrino transition probability."""
+        return (1. - self.prob_ee(t,E)) /2.
+
+    def prob_eebar(self, t, E):
+        """Electron antineutrino survival probability."""
         return self.De3  
-   
-    def pexbar(self, t, E):
+
+    def prob_exbar(self, t, E):
+        """Electron -> flavor X antineutrino transition probability."""
         pxbar_array = []
         for energy in E:
             pxbar_array.append( self.De1 + self.De2*np.exp(-self.getgamma(energy)*d) + self.De3*(1-np.exp(-self.getgamma(energy)*d)) )
         pxbar_array = np.array(pxbar_array)
         return pxbar_array
-    
-    def pxxbar(self, t, E):
-        return 1. - self.pexbar(t,E) / 2.
-   
-    def pxebar(self, t, E):  
-        return (1. - self.peebar(t,E)) / 2.       
+
+    def prob_xxbar(self, t, E):
+        """Flavor X -> flavor X antineutrino survival probability."""
+        return 1. - self.prob_exbar(t,E) / 2.
+
+    def prob_xebar(self, t, E):  
+        """Flavor X -> electron antineutrino transition probability."""
+        return (1. - self.prob_eebar(t,E)) / 2.       
         
+
 class NeutrinoDecay_NMO(FlavorTransformation):
-    """decay effect, assuming normal mass ordering.""" 
-    
+    """Decay effect, assuming normal mass ordering.""" 
+
     def __init__(self,parameters):
         self.De1 = (np.cos(parameters[0]*np.pi/180.)**2)*(np.cos(parameters[1]*np.pi/180.)**2)
         self.De2 = (np.sin(parameters[0])**2)*(np.cos(parameters[1]*np.pi/180.)**2)
@@ -328,39 +408,47 @@ class NeutrinoDecay_NMO(FlavorTransformation):
         self.m=parameters[3] * eV / (c**2)
         self.tau=parameters[4]
         self.d=parameters[5] * kpc
-    
+
     def getgamma(self, E):
         return m*c/(E*tau)
-    
-    def pee(self, t, E):
+
+    def prob_ee(self, t, E):
+        """Electron neutrino survival probability."""
         pe_array = []
         for energy in E:
             pe_array.append( self.De1*(1-np.exp(-self.getgamma(energy)*d)) + self.De3*np.exp(-self.getgamma(energy)*d) ) 
         pe_array = np.array(pe_array)
         return pe_array
-    
-    def pex(self, t, E):
+
+    def prob_ex(self, t, E):
+        """Electron -> flavor X neutrino transition probability."""
         return self.De1 + self.De3
-    
-    def pxx(self, t, E):
-        return 1. - self.pex(t,E) / 2.
-    
-    def pxe(self, t, E):
-        return (1. - self.pee(t,E)) / 2. 
-    
-    def peebar(self, t, E):
+ 
+    def prob_xx(self, t, E):
+        """Flavor X neutrino survival probability."""
+        return 1. - self.prob_ex(t,E) / 2.
+
+    def prob_xe(self, t, E):
+        """Flavor X -> electron neutrino transition probability."""
+        return (1. - self.prob_ee(t,E)) / 2. 
+
+    def prob_eebar(self, t, E):
+        """Electron antineutrino survival probability."""
         return self.De3
-  
-    def pexbar(self, t, E):
+
+    def prob_exbar(self, t, E):
+        """Electron -> flavor X antineutrino transition probability."""
         pxbar_array = []
         for energy in E:
             pxbar_array.append( self.De1*(1-np.exp(-self.getgamma(energy)*d)) + self.De2 + self.De3*np.exp(-self.getgamma(energy)*d) )
         pxbar_array = np.array(pxbar_array)
         return pxbar_array
-    
-    def pxxbar(self, t, E):
-        return 1. - self.pexbar(t,E) / 2.
-    
-    def pxebar(self, t, E):
-        return (1. - self.peebar(t,E)) / 2.
-    
+
+    def prob_xxbar(self, t, E):
+        """Flavor X -> flavor X antineutrino survival probability."""
+        return 1. - self.prob_exbar(t,E) / 2.
+
+    def prob_xebar(self, t, E):
+        """Flavor X -> electron antineutrino transition probability."""
+        return (1. - self.prob_eebar(t,E)) / 2.
+
