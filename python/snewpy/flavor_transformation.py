@@ -261,7 +261,7 @@ class AdiabaticMSW(FlavorTransformation):
         prob: float
             Transition probability.
         """
-        if self.massorder == MassHierarchy.NORMAL:
+        if self.mass_order == MassHierarchy.NORMAL:
             return self.De3
         else:
             return self.De2

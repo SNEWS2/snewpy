@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #from snewpy.FlavorTransformation import *
-from snewpy.flavor_transformation import NoTransformation, AdiabaticMSW_NMO
+from snewpy.flavor_transformation import MassHierarchy, NoTransformation, AdiabaticMSW
 
 from astropy import units as u
 import numpy as np
@@ -29,7 +29,7 @@ def test_noxform():
     assert(xform.prob_xebar(t, E) == 0)
 
 def test_adiabaticmsw_nmo():
-    xform = AdiabaticMSW_NMO(theta12, theta13, theta23)
+    xform = AdiabaticMSW(theta12, theta13, theta23, mh=MassHierarchy.NORMAL)
 
     assert(xform.prob_ee(t, E) == sin(theta13)**2)
     assert(xform.prob_ex(t, E) == 1. - sin(theta13)**2)
