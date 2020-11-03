@@ -3,12 +3,10 @@ from snewpy.FlavorTransformation import *
   
 import astropy.units as u
 
-import numpy as np
-
 def test_mixing_angles():
-    assert(theta12 == np.deg2rad(33.))
-    assert(theta13 == np.deg2rad(9.))
-    assert(theta23 == np.deg2rad(45.))
+    assert(theta12 == 33.44 * u.degree)
+    assert(theta13 ==  8.57 * u.degree)
+    assert(theta23 == 49.0 * u.degree)
 
 def test_noxform():
     xform = NoTransformation()
