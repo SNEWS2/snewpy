@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-#from snewpy.FlavorTransformation import *
-from snewpy.flavor_transformation import MassHierarchy, NoTransformation, AdiabaticMSW, NonAdiabaticMSW
+from snewpy.flavor_transformation import MassHierarchy, NoTransformation, AdiabaticMSW, NonAdiabaticMSW, TwoFlavorDecoherence, ThreeFlavorDecoherence
 
 from astropy import units as u
 import numpy as np
-from numpy import sin, cos
+from numpy import sin, cos, abs
 
 # Dummy time and energy arrays, with proper dimensions.
 t = np.arange(10) * u.s
@@ -90,14 +89,33 @@ def test_nonadiabaticmsw_imo():
     assert(xform.prob_xxbar(t, E) == 0.5*(1. + (cos(theta12)*cos(theta13))**2))
     assert(xform.prob_xebar(t, E) == 0.5*(1. - (cos(theta12)*cos(theta13))**2))
 
-#def test_2fd():
-#    # Two-flavor decoherence.
-#    xform = TwoFlavorDecoherence()
-#    assert(xform.p()==0.5)
-#    assert(xform.pbar()==0.5)
-#
-#def test_3fd():
-#    # Three-flavor decoherence.
-#    xform = ThreeFlavorDecoherence()
-#    assert(xform.p()==1./3)
-#    assert(xform.pbar()==1./3)
+
+def test_2fd():
+    # Two-flavor decoherence.
+    xform = TwoFlavorDecoherence()
+
+    assert(xform.prob_ee(t, E) == 0.5)
+    assert(xform.prob_ex(t, E) == 0.5)
+    assert(xform.prob_xx(t, E) == 0.75)
+    assert(xform.prob_xe(t, E) == 0.25)
+
+    assert(xform.prob_eebar(t, E) == 0.5)
+    assert(xform.prob_exbar(t, E) == 0.5)
+    assert(xform.prob_xxbar(t, E) == 0.75)
+    assert(xform.prob_xebar(t, E) == 0.25)
+
+
+def test_3fd():
+    # Three-flavor decoherence.
+    xform = ThreeFlavorDecoherence()
+
+    assert(xform.prob_ee(t, E) == 1./3)
+    assert(abs(xform.prob_ex(t, E) - 2./3) < 1e-12)
+    assert(abs(xform.prob_xx(t, E) - 2./3) < 1e-12)
+    assert(abs(xform.prob_xe(t, E) - 1./3) < 1e-12)
+
+    assert(xform.prob_eebar(t, E) == 1./3)
+    assert(abs(xform.prob_exbar(t, E) - 2./3) < 1e-12)
+    assert(abs(xform.prob_xxbar(t, E) - 2./3) < 1e-12)
+    assert(abs(xform.prob_xebar(t, E) - 1./3) < 1e-12)
+
