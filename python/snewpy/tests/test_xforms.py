@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
-from snewpy.flavor_transformation import MassHierarchy, NoTransformation, AdiabaticMSW, NonAdiabaticMSW, TwoFlavorDecoherence, ThreeFlavorDecoherence
+from snewpy.flavor_transformation \
+import MassHierarchy, NoTransformation, AdiabaticMSW, NonAdiabaticMSW, \
+       TwoFlavorDecoherence, ThreeFlavorDecoherence, NeutrinoDecay
 
 from astropy import units as u
+from astropy import constants as c
 import numpy as np
 from numpy import sin, cos, abs
 
@@ -13,6 +16,11 @@ E = np.linspace(1,100,21) * u.MeV
 theta12 = 33 * u.deg
 theta13 =  9 * u.deg
 theta23 = 49 * u.deg
+
+# Dummy neutrino decay parameters; see arXiv:1910.01127.
+mass3 = 0.5 * u.eV/c.c**2
+lifetime = 1 * u.day
+distance = 10 * u.kpc
 
 
 def test_noxform():
@@ -119,3 +127,10 @@ def test_3fd():
     assert(abs(xform.prob_xxbar(t, E) - 2./3) < 1e-12)
     assert(abs(xform.prob_xebar(t, E) - 1./3) < 1e-12)
 
+
+def test_nudecay_nmo():
+    # Neutrino decay.
+    xform = NeutrinoDecay(theta12, theta13, theta23, mass3, lifetime, distance,
+                          mh=MassHierarchy.NORMAL)
+
+    assert(True)
