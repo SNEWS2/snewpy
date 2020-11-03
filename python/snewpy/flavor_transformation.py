@@ -72,7 +72,7 @@ class FlavorTransformation(ABC):
 class NoTransformation(FlavorTransformation):
     """Survival probabilities for no oscillation case."""
 
-    def __init__(self,parameters):
+    def __init__(self):
         pass
 
     def prob_ee(self, t, E):
