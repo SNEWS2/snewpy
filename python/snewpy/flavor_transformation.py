@@ -11,6 +11,7 @@ import numpy as np
 from astropy import units as u
 from astropy import constants as c
 
+# Used to convert model parameters in eV and kpc to ergs and cm.
 c = 29979245800 # cm/s
 eV = 1.60218e-12 # ergs
 kpc = 1000. * 3.086e+18 # cm
@@ -102,10 +103,21 @@ class NoTransformation(FlavorTransformation):
 class AdiabaticMSW_NMO(FlavorTransformation):
     """Adiabatic MSW effect, assuming normal mass ordering."""
 
-    def __init__(self,parameters):
-        self.De1 = (np.cos(parameters[0]*np.pi/180.)**2)*(np.cos(parameters[1]*np.pi/180.)**2)
-        self.De2 = (np.sin(parameters[0]*np.pi/180.)**2)*(np.cos(parameters[1]*np.pi/180.)**2)
-        self.De3 = np.sin(parameters[1]*np.pi/180.)**2
+    def __init__(self, theta12, theta13, theta23):
+        """Initialize transformation matrix.
+
+        Parameters
+        ----------
+        theta12 : astropy.units.quantity.Quantity
+            Mixing angle 1->2 in PMNS matrix.
+        theta13 : astropy.units.quantity.Quantity
+            Mixing angle 1->3 in PMNS matrix.
+        theta23 : astropy.units.quantity.Quantity
+            Mixing angle 2->3 in PMNS matrix.
+        """
+        self.De1 = (np.cos(theta12) * np.cos(theta13))**2
+        self.De2 = (np.sin(theta12) * np.cos(theta13))**2
+        self.De3 = np.sin(theta13)**2
 
     def prob_ee(self, t, E):
         """Electron neutrino survival probability."""
@@ -143,10 +155,21 @@ class AdiabaticMSW_NMO(FlavorTransformation):
 class AdiabaticMSW_IMO(FlavorTransformation):
     """Adiabatic MSW effect, assuming inverted mass ordering."""
 
-    def __init__(self,parameters):
-        self.De1 = (np.cos(parameters[0]*np.pi/180.)**2)*(np.cos(parameters[1]*np.pi/180.)**2)
-        self.De2 = (np.sin(parameters[0])**2)*(np.cos(parameters[1]*np.pi/180.)**2)
-        self.De3 = np.sin(parameters[1])**2
+    def __init__(self, theta12, theta13, theta23):
+        """Initialize transformation matrix.
+
+        Parameters
+        ----------
+        theta12 : astropy.units.quantity.Quantity
+            Mixing angle 1->2 in PMNS matrix.
+        theta13 : astropy.units.quantity.Quantity
+            Mixing angle 1->3 in PMNS matrix.
+        theta23 : astropy.units.quantity.Quantity
+            Mixing angle 2->3 in PMNS matrix.
+        """
+        self.De1 = (np.cos(theta12) * np.cos(theta13))**2
+        self.De2 = (np.sin(theta12) * np.cos(theta13))**2
+        self.De3 = np.sin(theta13)**2
 
     def prob_ee(self, t, E):
         """Electron neutrino survival probability."""
@@ -184,10 +207,21 @@ class AdiabaticMSW_IMO(FlavorTransformation):
 class NonAdiabaticMSWH_NMO(FlavorTransformation):
     """Adiabatic MSW effect, assuming normal mass ordering."""
 
-    def __init__(self,parameters):
-        self.De1 = (np.cos(parameters[0]*np.pi/180.)**2)*(np.cos(parameters[1]*np.pi/180.)**2)
-        self.De2 = (np.sin(parameters[0])**2)*(np.cos(parameters[1]*np.pi/180.)**2)
-        self.De3 = np.sin(parameters[1])**2
+    def __init__(self, theta12, theta13, theta23):
+        """Initialize transformation matrix.
+
+        Parameters
+        ----------
+        theta12 : astropy.units.quantity.Quantity
+            Mixing angle 1->2 in PMNS matrix.
+        theta13 : astropy.units.quantity.Quantity
+            Mixing angle 1->3 in PMNS matrix.
+        theta23 : astropy.units.quantity.Quantity
+            Mixing angle 2->3 in PMNS matrix.
+        """
+        self.De1 = (np.cos(theta12) * np.cos(theta13))**2
+        self.De2 = (np.sin(theta12) * np.cos(theta13))**2
+        self.De3 = np.sin(theta13)**2
 
     def prob_ee(self, t, E):
         """Electron neutrino survival probability."""
@@ -225,10 +259,21 @@ class NonAdiabaticMSWH_NMO(FlavorTransformation):
 class NonAdiabaticMSWH_IMO(FlavorTransformation):
     """Adiabatic MSW effect, assuming inverted mass ordering."""
 
-    def __init__(self,parameters):
-        self.De1 = (np.cos(parameters[0]*np.pi/180.)**2)*(np.cos(parameters[1]*np.pi/180.)**2)
-        self.De2 = (np.sin(parameters[0])**2)*(np.cos(parameters[1]*np.pi/180.)**2)
-        self.De3 = np.sin(parameters[1])**2
+    def __init__(self, theta12, theta13, theta23):
+        """Initialize transformation matrix.
+
+        Parameters
+        ----------
+        theta12 : astropy.units.quantity.Quantity
+            Mixing angle 1->2 in PMNS matrix.
+        theta13 : astropy.units.quantity.Quantity
+            Mixing angle 1->3 in PMNS matrix.
+        theta23 : astropy.units.quantity.Quantity
+            Mixing angle 2->3 in PMNS matrix.
+        """
+        self.De1 = (np.cos(theta12) * np.cos(theta13))**2
+        self.De2 = (np.sin(theta12) * np.cos(theta13))**2
+        self.De3 = np.sin(theta13)**2
 
     def prob_ee(self, t, E):
         """Electron neutrino survival probability."""
@@ -266,7 +311,7 @@ class NonAdiabaticMSWH_IMO(FlavorTransformation):
 class TwoFlavorDecoherence(FlavorTransformation):
     """Star-earth transit survival probability: two flavor case."""
 
-    def __init__(self,parameters):
+    def __init__(self):
         pass
 
     def prob_ee(self, t, E):
@@ -305,7 +350,7 @@ class TwoFlavorDecoherence(FlavorTransformation):
 class ThreeFlavorDecoherence(FlavorTransformation):
     """Star-earth transit survival probability: three flavor case."""
 
-    def __init__(self,parameters):
+    def __init__(self):
         pass
 
     def prob_ee(self, t, E):
@@ -344,14 +389,30 @@ class ThreeFlavorDecoherence(FlavorTransformation):
 class NeutrinoDecay_IMO(FlavorTransformation):
     """Decay effect, assuming inverted mass ordering."""
 
-    def __init__(self,parameters):
-        self.De1 = (np.cos(parameters[0]*np.pi/180.)**2)*(np.cos(parameters[1]*np.pi/180.)**2)
-        self.De2 = (np.sin(parameters[0])**2)*(np.cos(parameters[1]*np.pi/180.)**2)
-        self.De3 = np.sin(parameters[1])**2
-        
-        self.m=parameters[3] * eV / (c**2)
-        self.tau=parameters[4]
-        self.d=parameters[5] * kpc
+    def __init__(self, theta12, theta13, theta23, mass, tau, dist):
+        """Initialize transformation matrix.
+
+        Parameters
+        ----------
+        theta12 : astropy.units.quantity.Quantity
+            Mixing angle 1->2 in PMNS matrix.
+        theta13 : astropy.units.quantity.Quantity
+            Mixing angle 1->3 in PMNS matrix.
+        theta23 : astropy.units.quantity.Quantity
+            Mixing angle 2->3 in PMNS matrix.
+        mass : astropy.units.quantity.Quantity
+            Neutrino mass.
+        tau : astropy.units.quantity.Quantity
+            Neutrino decay constant.
+        dist : astropy.units.quantity.Quantity
+            Source distance.
+        """
+        self.De1 = (np.cos(theta12) * np.cos(theta13))**2
+        self.De2 = (np.sin(theta12) * np.cos(theta13))**2
+        self.De3 = np.sin(theta13)**2
+        self.m = mass * eV / (c**2)
+        self.tau = tau
+        self.d = dist * kpc
 
     def getgamma(self, E):
         return m*c/(E*tau)
@@ -400,14 +461,30 @@ class NeutrinoDecay_IMO(FlavorTransformation):
 class NeutrinoDecay_NMO(FlavorTransformation):
     """Decay effect, assuming normal mass ordering.""" 
 
-    def __init__(self,parameters):
-        self.De1 = (np.cos(parameters[0]*np.pi/180.)**2)*(np.cos(parameters[1]*np.pi/180.)**2)
-        self.De2 = (np.sin(parameters[0])**2)*(np.cos(parameters[1]*np.pi/180.)**2)
-        self.De3 = np.sin(parameters[1])**2
-        
-        self.m=parameters[3] * eV / (c**2)
-        self.tau=parameters[4]
-        self.d=parameters[5] * kpc
+    def __init__(self, theta12, theta13, theta23, mass, tau, dist):
+        """Initialize transformation matrix.
+
+        Parameters
+        ----------
+        theta12 : astropy.units.quantity.Quantity
+            Mixing angle 1->2 in PMNS matrix.
+        theta13 : astropy.units.quantity.Quantity
+            Mixing angle 1->3 in PMNS matrix.
+        theta23 : astropy.units.quantity.Quantity
+            Mixing angle 2->3 in PMNS matrix.
+        mass : astropy.units.quantity.Quantity
+            Neutrino mass.
+        tau : astropy.units.quantity.Quantity
+            Neutrino decay constant.
+        dist : astropy.units.quantity.Quantity
+            Source distance.
+        """
+        self.De1 = (np.cos(theta12) * np.cos(theta13))**2
+        self.De2 = (np.sin(theta12) * np.cos(theta13))**2
+        self.De3 = np.sin(theta13)**2
+        self.m = mass * eV / (c**2)
+        self.tau = tau
+        self.d = dist * kpc
 
     def getgamma(self, E):
         return m*c/(E*tau)
