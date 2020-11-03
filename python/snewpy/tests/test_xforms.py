@@ -6,7 +6,7 @@ import MassHierarchy, NoTransformation, AdiabaticMSW, NonAdiabaticMSW, \
 from astropy import units as u
 from astropy import constants as c
 import numpy as np
-from numpy import sin, cos, abs
+from numpy import sin, cos, exp, abs
 
 # Dummy time and energy arrays, with proper dimensions.
 t = np.arange(10) * u.s
@@ -130,8 +130,53 @@ def test_3fd():
 
 def test_nudecay_nmo():
     # Neutrino decay.
-    xform = NeutrinoDecay(theta12, theta13, theta23, mass3, lifetime, distance,
-                          mh=MassHierarchy.NORMAL)
+    xform = NeutrinoDecay(theta12, theta13, theta23, mass3, lifetime, distance, mh=MassHierarchy.NORMAL)
 
-    E = 10*u.MeV
-    assert(xform.gamma(E) == mass3*c.c / (E*lifetime))
+    # Test computation of the decay length.
+    _E = 10*u.MeV
+    assert(xform.gamma(_E) == mass3*c.c / (_E*lifetime))
+
+    De1 = (cos(theta12) * cos(theta13))**2
+    De2 = (sin(theta12) * cos(theta13))**2
+    De3 = sin(theta13)**2
+
+    # Check transition probabilities.
+    prob_ee = np.asarray([De1*(1.-exp(-xform.gamma(_E)*distance)) + De3*exp(-xform.gamma(_E)*distance) for _E in E])
+
+    assert(np.array_equal(xform.prob_ee(t, E), prob_ee))
+    assert(xform.prob_ex(t, E) == De1 + De3)
+    assert(xform.prob_xx(t, E) == 1 - 0.5*(De1 + De3))
+    assert(np.array_equal(xform.prob_xe(t, E), 0.5*(1 - prob_ee)))
+
+    prob_exbar = np.asarray([De1*(1.-exp(-xform.gamma(_E)*distance)) + De2 + De3*exp(-xform.gamma(_E)*distance) for _E in E])
+
+    assert(xform.prob_eebar(t, E) == De3)
+    assert(np.array_equal(xform.prob_exbar(t, E), prob_exbar))
+    assert(np.array_equal(xform.prob_xxbar(t, E), 1. - 0.5*prob_exbar))
+    assert(xform.prob_xebar(t, E) == 0.5*(1. - De3))
+
+
+def test_nudecay_imo():
+    # Neutrino decay.
+    xform = NeutrinoDecay(theta12, theta13, theta23, mass3, lifetime, distance, mh=MassHierarchy.INVERTED)
+
+    De1 = (cos(theta12) * cos(theta13))**2
+    De2 = (sin(theta12) * cos(theta13))**2
+    De3 = sin(theta13)**2
+
+    # Check transition probabilities.
+    prob_ee = np.asarray([De2*exp(-xform.gamma(_E)*distance) +
+                          De3*(1.-exp(-xform.gamma(_E)*distance)) for _E in E])
+
+    assert(np.array_equal(xform.prob_ee(t, E), prob_ee))
+    assert(xform.prob_ex(t, E) == De1 + De2)
+    assert(xform.prob_xx(t, E) == 1 - 0.5*(De1 + De2))
+    assert(np.array_equal(xform.prob_xe(t, E), 0.5*(1 - prob_ee)))
+
+    prob_exbar = np.asarray([De1 + De2*np.exp(-xform.gamma(_E)*distance) +
+                             De3*(1-np.exp(-xform.gamma(_E)*distance)) for _E in E])
+
+    assert(xform.prob_eebar(t, E) == De3)
+    assert(np.array_equal(xform.prob_exbar(t, E), prob_exbar))
+    assert(np.array_equal(xform.prob_xxbar(t, E), 1. - 0.5*prob_exbar))
+    assert(xform.prob_xebar(t, E) == 0.5*(1. - De3))
