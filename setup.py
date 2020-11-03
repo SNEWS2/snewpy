@@ -13,6 +13,8 @@ import sys
 from distutils.command.sdist import sdist as DistutilsSdist
 from setuptools import setup, find_packages
 #
+# Git-based version info. Remove?
+#
 from python.snewpy._git import get_version, SetVersion
 #
 # Begin setup
@@ -47,8 +49,8 @@ setup_keywords['use_2to3'] = False
 setup_keywords['packages'] = find_packages('python')
 setup_keywords['package_dir'] = {'': 'python'}
 setup_keywords['cmdclass'] = {'version': SetVersion, 'sdist': DistutilsSdist}
-setup_keywords['test_suite']='nose2.collector.collector'
-setup_keywords['tests_require']=['nose2', 'nose2[coverage_plugin]>=0.6.5']
+setup_keywords['test_suite']='tests'
+setup_keywords['tests_require']=['pytest']
 
 requires = []
 with open('requirements.txt', 'r') as f:
