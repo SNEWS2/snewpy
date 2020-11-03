@@ -904,7 +904,7 @@ class NeutrinoDecay(FlavorTransformation):
         else:
             for energy in E:
                 pe_array.append(
-                    self.De2*np.exp(-self.gamma(energ)*self.d) +
+                    self.De2*np.exp(-self.gamma(energy)*self.d) +
                     self.De3*(1-np.exp(-self.gamma(energy)*self.d)))
             pe_array = np.array(pe_array)
 
@@ -1001,7 +1001,7 @@ class NeutrinoDecay(FlavorTransformation):
         pxbar_array = []
 
         # NMO case.
-        if self.mass_order == MassHierarchy.Normal:
+        if self.mass_order == MassHierarchy.NORMAL:
             for energy in E:
                 pxbar_array.append(
                     self.De1*(1-np.exp(-self.gamma(energy)*self.d)) +
