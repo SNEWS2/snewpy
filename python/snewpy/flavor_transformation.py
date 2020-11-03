@@ -221,7 +221,7 @@ class NoTransformation(FlavorTransformation):
 
 
 class AdiabaticMSW(FlavorTransformation):
-    """Adiabatic MSW effect, assuming normal mass ordering."""
+    """Adiabatic MSW effect."""
 
     def __init__(self, theta12, theta13, theta23, mh=MassHierarchy.NORMAL):
         """Initialize transformation matrix.
@@ -389,10 +389,10 @@ class AdiabaticMSW(FlavorTransformation):
         return (1. - self.prob_eebar(t,E)) / 2.
 
 
-class NonAdiabaticMSWH_NMO(FlavorTransformation):
-    """Adiabatic MSW effect, assuming normal mass ordering."""
+class NonAdiabaticMSW(FlavorTransformation):
+    """Nonadiabatic MSW effect."""
 
-    def __init__(self, theta12, theta13, theta23):
+    def __init__(self, theta12, theta13, theta23, mh=MassHierarchy.NORMAL):
         """Initialize transformation matrix.
 
         Parameters
@@ -403,16 +403,17 @@ class NonAdiabaticMSWH_NMO(FlavorTransformation):
             Mixing angle 1->3 in PMNS matrix.
         theta23 : astropy.units.quantity.Quantity
             Mixing angle 2->3 in PMNS matrix.
-        
-
-        Returns
-        -------
-        prob: float
-            Transition probability.
+        mh : MassHierarchy
+            MassHierarchy.NORMAL or MassHierarchy.INVERTED.
         """
         self.De1 = (np.cos(theta12) * np.cos(theta13))**2
         self.De2 = (np.sin(theta12) * np.cos(theta13))**2
         self.De3 = np.sin(theta13)**2
+        
+        if type(mh) == MassHierarchy:
+            self.mass_order = mh
+        else:
+            raise TypeError('mh must be of type MassHierarchy')
 
     def prob_ee(self, t, E):
         """Electron neutrino survival probability.
@@ -550,168 +551,6 @@ class NonAdiabaticMSWH_NMO(FlavorTransformation):
         """
         return (1. - self.prob_eebar(t,E)) / 2.
 
-
-class NonAdiabaticMSWH_IMO(FlavorTransformation):
-    """Adiabatic MSW effect, assuming inverted mass ordering."""
-
-    def __init__(self, theta12, theta13, theta23):
-        """Initialize transformation matrix.
-
-        Parameters
-        ----------
-        theta12 : astropy.units.quantity.Quantity
-            Mixing angle 1->2 in PMNS matrix.
-        theta13 : astropy.units.quantity.Quantity
-            Mixing angle 1->3 in PMNS matrix.
-        theta23 : astropy.units.quantity.Quantity
-            Mixing angle 2->3 in PMNS matrix.
-        
-
-        Returns
-        -------
-        prob: float
-            Transition probability.
-        """
-        self.De1 = (np.cos(theta12) * np.cos(theta13))**2
-        self.De2 = (np.sin(theta12) * np.cos(theta13))**2
-        self.De3 = np.sin(theta13)**2
-
-    def prob_ee(self, t, E):
-        """Electron neutrino survival probability.
-
-        Parameters
-        ----------
-        t : float or ndarray
-            List of times.
-        E : float or ndarray
-            List of energies.
-
-        Returns
-        -------
-        prob: float
-            Transition probability.
-        """
-        return self.De2
-
-    def prob_ex(self, t, E):
-        """Electron -> flavor X neutrino transition probability.
-
-        Parameters
-        ----------
-        t : float or ndarray
-            List of times.
-        E : float or ndarray
-            List of energies.
-
-        Returns
-        -------
-        prob: float
-            Transition probability.
-        """
-        return 1. - self.prob_ee(t,E)
-
-    def prob_xx(self, t, E):
-        """Flavor X neutrino survival probability.
-
-        Parameters
-        ----------
-        t : float or ndarray
-            List of times.
-        E : float or ndarray
-            List of energies.
-
-        Returns
-        -------
-        prob: float
-            Transition probability.
-        """
-        return (1. + self.prob_ee(t,E)) / 2.   
-
-    def prob_xe(self, t, E):
-        """Flavor X -> electron neutrino transition probability.
-
-        Parameters
-        ----------
-        t : float or ndarray
-            List of times.
-        E : float or ndarray
-            List of energies.
-
-        Returns
-        -------
-        prob: float
-            Transition probability.
-        """
-        return (1. - self.prob_ee(t,E)) / 2.
-
-    def prob_eebar(self, t, E):
-        """Electron antineutrino survival probability.
-
-        Parameters
-        ----------
-        t : float or ndarray
-            List of times.
-        E : float or ndarray
-            List of energies.
-
-        Returns
-        -------
-        prob: float
-            Transition probability.
-        """
-        return self.De1  
-
-    def prob_exbar(self, t, E):
-        """Electron -> flavor X antineutrino transition probability.
-
-        Parameters
-        ----------
-        t : float or ndarray
-            List of times.
-        E : float or ndarray
-            List of energies.
-
-        Returns
-        -------
-        prob: float
-            Transition probability.
-        """
-        return 1. - self.prob_eebar(t,E)       
-
-    def prob_xxbar(self, t, E):
-        """Flavor X -> flavor X antineutrino survival probability.
-
-        Parameters
-        ----------
-        t : float or ndarray
-            List of times.
-        E : float or ndarray
-            List of energies.
-
-        Returns
-        -------
-        prob: float
-            Transition probability.
-        """
-        return (1. + self.prob_eebar(t,E)) / 2.
-
-    def prob_xebar(self, t, E):
-        """Flavor X -> electron antineutrino transition probability.
-
-        Parameters
-        ----------
-        t : float or ndarray
-            List of times.
-        E : float or ndarray
-            List of energies.
-
-        Returns
-        -------
-        prob: float
-            Transition probability.
-        """
-        return (1. - self.prob_eebar(t,E)) / 2.
-       
 
 class TwoFlavorDecoherence(FlavorTransformation):
     """Star-earth transit survival probability: two flavor case."""
@@ -728,11 +567,6 @@ class TwoFlavorDecoherence(FlavorTransformation):
             List of times.
         E : float or ndarray
             List of energies.
-
-        Returns
-        -------
-        prob: float
-            Transition probability.
         """
         return 0.5    
 
@@ -871,11 +705,6 @@ class ThreeFlavorDecoherence(FlavorTransformation):
             List of times.
         E : float or ndarray
             List of energies.
-
-        Returns
-        -------
-        prob: float
-            Transition probability.
         """
         return 1./3.    
 
