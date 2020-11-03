@@ -18,6 +18,11 @@ def test_adiabaticmsw_nmo():
     assert(xform.p()==sin(theta13)**2 and
            xform.pbar()==(cos(theta12)*cos(theta13))**2)
 
+def test_adiabaticmsw_imo():
+    xform = AdiabaticMSW_IMO()
+    assert(xform.p()==(sin(theta12)*cos(theta13))**2 and
+           xform.pbar()==sin(theta13)**2)
+
 def test_2fd():
     xform = TwoFlavorDecoherence()
     assert(xform.p()==0.5 and xform.pbar()==0.5)
