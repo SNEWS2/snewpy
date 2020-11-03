@@ -6,6 +6,7 @@ http://www.nu-fit.org/.
 """
 
 from abc import abstractmethod, ABC
+from enum import Enum
 
 import numpy as np
 from astropy import units as u
@@ -15,6 +16,13 @@ from astropy import constants as c
 c = 29979245800 # cm/s
 eV = 1.60218e-12 # ergs
 kpc = 1000. * 3.086e+18 # cm
+
+
+class MassHierarchy(Enum):
+    """Neutrino mass ordering: normal or inverted.
+    """
+    NORMAL = 1
+    INVERTED = 2
 
 
 class FlavorTransformation(ABC):
@@ -212,10 +220,10 @@ class NoTransformation(FlavorTransformation):
         return (1. - self.prob_eebar(t,E)) / 2.
 
 
-class AdiabaticMSW_NMO(FlavorTransformation):
+class AdiabaticMSW(FlavorTransformation):
     """Adiabatic MSW effect, assuming normal mass ordering."""
 
-    def __init__(self, theta12, theta13, theta23):
+    def __init__(self, theta12, theta13, theta23, mh=MassHierarchy.NORMAL):
         """Initialize transformation matrix.
 
         Parameters
@@ -226,10 +234,17 @@ class AdiabaticMSW_NMO(FlavorTransformation):
             Mixing angle 1->3 in PMNS matrix.
         theta23 : astropy.units.quantity.Quantity
             Mixing angle 2->3 in PMNS matrix.
+        mh : MassHierarchy
+            MassHierarchy.NORMAL or MassHierarchy.INVERTED.
         """
         self.De1 = (np.cos(theta12) * np.cos(theta13))**2
         self.De2 = (np.sin(theta12) * np.cos(theta13))**2
         self.De3 = np.sin(theta13)**2
+        
+        if type(mh) == MassHierarchy:
+            self.mass_order = mh
+        else:
+            raise TypeError('mh must be of type MassHierarchy')
 
     def prob_ee(self, t, E):
         """Electron neutrino survival probability.
@@ -246,7 +261,10 @@ class AdiabaticMSW_NMO(FlavorTransformation):
         prob: float
             Transition probability.
         """
-        return self.De3
+        if self.massorder == MassHierarchy.NORMAL:
+            return self.De3
+        else:
+            return self.De2
 
     def prob_ex(self, t, E):
         """Electron -> flavor X neutrino transition probability.
@@ -314,7 +332,10 @@ class AdiabaticMSW_NMO(FlavorTransformation):
         prob: float
             Transition probability.
         """
-        return self.De1  
+        if self.mass_order == MassHierarchy.NORMAL:
+            return self.De1  
+        else:
+            return self.De3
 
     def prob_exbar(self, t, E):
         """Electron -> flavor X antineutrino transition probability.
