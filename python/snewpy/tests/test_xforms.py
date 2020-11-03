@@ -133,4 +133,5 @@ def test_nudecay_nmo():
     xform = NeutrinoDecay(theta12, theta13, theta23, mass3, lifetime, distance,
                           mh=MassHierarchy.NORMAL)
 
-    assert(True)
+    E = 10*u.MeV
+    assert(xform.gamma(E) == mass3*c.c / (E*lifetime))

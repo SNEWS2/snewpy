@@ -874,7 +874,7 @@ class NeutrinoDecay(FlavorTransformation):
         Gamma : float
             Decay width of the m3, in units of 1/length.
         """
-        return m*c.c / (E*tau)
+        return self.m*c.c / (E*self.tau)
 
     def prob_ee(self, t, E):
         """Electron neutrino survival probability.
