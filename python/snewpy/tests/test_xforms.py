@@ -16,6 +16,7 @@ theta13 =  9 * u.deg
 theta23 = 49 * u.deg
 
 def test_noxform():
+    # No transformations.
     xform = NoTransformation()
 
     assert(xform.prob_ee(t, E) == 1)
@@ -29,6 +30,7 @@ def test_noxform():
     assert(xform.prob_xebar(t, E) == 0)
 
 def test_adiabaticmsw_nmo():
+    # Adiabatic MSW: normal mass ordering.
     xform = AdiabaticMSW(theta12, theta13, theta23, mh=MassHierarchy.NORMAL)
 
     assert(xform.prob_ee(t, E) == sin(theta13)**2)
@@ -40,6 +42,20 @@ def test_adiabaticmsw_nmo():
     assert(xform.prob_exbar(t, E) == 1. - (cos(theta12)*cos(theta13))**2)
     assert(xform.prob_xxbar(t, E) == 0.5*(1. + (cos(theta12)*cos(theta13))**2))
     assert(xform.prob_xebar(t, E) == 0.5*(1. - (cos(theta12)*cos(theta13))**2))
+
+def test_adiabaticmsw_imo():
+    # Adiabatic MSW: inverted mass ordering.
+    xform = AdiabaticMSW(theta12, theta13, theta23, mh=MassHierarchy.INVERTED)
+
+    assert(xform.prob_ee(t, E) == (sin(theta12)*cos(theta13))**2)
+    assert(xform.prob_ex(t, E) == 1. - (sin(theta12)*cos(theta13))**2)
+    assert(xform.prob_xx(t, E) == 0.5*(1. + (sin(theta12)*cos(theta13))**2))
+    assert(xform.prob_xe(t, E) == 0.5*(1. - (sin(theta12)*cos(theta13))**2))
+
+    assert(xform.prob_eebar(t, E) == sin(theta13)**2)
+    assert(xform.prob_exbar(t, E) == 1. - sin(theta13)**2)
+    assert(xform.prob_xxbar(t, E) == 0.5*(1. + sin(theta13)**2))
+    assert(xform.prob_xebar(t, E) == 0.5*(1. - sin(theta13)**2))
 
 #def test_mixing_angles():
 #    assert(theta12 == 33.44 * u.degree)
