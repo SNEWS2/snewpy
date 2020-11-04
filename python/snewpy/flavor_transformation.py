@@ -25,7 +25,7 @@ class MixingParameters:
     """Best-fit parameters of the PMNS matrix and mass differences, assuming
     three neutrino flavors. See www.nu-fit.org for current global fits.
     """
-    def __init__(self, mh):
+    def __init__(self, mh=MassHierarchy.NORMAL):
         """Initialize the neutrino mixing parameters.
 
         Parameters
@@ -437,28 +437,30 @@ class AdiabaticMSW(FlavorTransformation):
 class NonAdiabaticMSW(FlavorTransformation):
     """Nonadiabatic MSW effect."""
 
-    def __init__(self, theta12, theta13, theta23, mh=MassHierarchy.NORMAL):
+    def __init__(self, mix_angles=None, mh=MassHierarchy.NORMAL):
         """Initialize transformation matrix.
 
         Parameters
         ----------
-        theta12 : astropy.units.quantity.Quantity
-            Mixing angle 1->2 in PMNS matrix.
-        theta13 : astropy.units.quantity.Quantity
-            Mixing angle 1->3 in PMNS matrix.
-        theta23 : astropy.units.quantity.Quantity
-            Mixing angle 2->3 in PMNS matrix.
+        mix_angles : tuple or None
+            If not None, override default mixing angles using tuple (theta12, theta13, theta23).
         mh : MassHierarchy
             MassHierarchy.NORMAL or MassHierarchy.INVERTED.
         """
-        self.De1 = (np.cos(theta12) * np.cos(theta13))**2
-        self.De2 = (np.sin(theta12) * np.cos(theta13))**2
-        self.De3 = np.sin(theta13)**2
-        
         if type(mh) == MassHierarchy:
             self.mass_order = mh
         else:
             raise TypeError('mh must be of type MassHierarchy')
+
+        if mix_angles is not None:
+            theta12, theta13, theta23 = mix_angles
+        else:
+            pars = MixingParameters(mh)
+            theta12, theta13, theta23 = pars.get_mixing_angles()
+
+        self.De1 = (np.cos(theta12) * np.cos(theta13))**2
+        self.De2 = (np.sin(theta12) * np.cos(theta13))**2
+        self.De3 = np.sin(theta13)**2
 
     def prob_ee(self, t, E):
         """Electron neutrino survival probability.
@@ -878,18 +880,13 @@ class NeutrinoDecay(FlavorTransformation):
     lightest neutrino of mass m1. For a description and typical parameters,
     see A. de Gouvêa et al., PRD 101:043013, 2020, arXiv:1910.01127.
     """
-
-    def __init__(self, theta12, theta13, theta23, mass, tau, dist, mh):
+    def __init__(self, mix_angles=None, mass=1*u.eV/c.c**2, tau=1*u.day, dist=10*u.kpc, mh=MassHierarchy.NORMAL):
         """Initialize transformation matrix.
 
         Parameters
         ----------
-        theta12 : astropy.units.quantity.Quantity
-            Mixing angle 1->2 in PMNS matrix.
-        theta13 : astropy.units.quantity.Quantity
-            Mixing angle 1->3 in PMNS matrix.
-        theta23 : astropy.units.quantity.Quantity
-            Mixing angle 2->3 in PMNS matrix.
+        mix_angles : tuple or None
+            If not None, override default mixing angles using tuple (theta12, theta13, theta23).
         mass : astropy.units.quantity.Quantity
             Mass m3 of the heaviest neutrino; expect in eV/c^2.
         tau : astropy.units.quantity.Quantity
@@ -899,17 +896,24 @@ class NeutrinoDecay(FlavorTransformation):
         mh : MassHierarchy
             MassHierarchy.NORMAL or MassHierarchy.INVERTED.
         """
-        self.De1 = (np.cos(theta12) * np.cos(theta13))**2
-        self.De2 = (np.sin(theta12) * np.cos(theta13))**2
-        self.De3 = np.sin(theta13)**2
-        self.m = mass
-        self.tau = tau
-        self.d = dist
-        
         if type(mh) == MassHierarchy:
             self.mass_order = mh
         else:
             raise TypeError('mh must be of type MassHierarchy')
+
+        if mix_angles is not None:
+            theta12, theta13, theta23 = mix_angles
+        else:
+            pars = MixingParameters(mh)
+            theta12, theta13, theta23 = pars.get_mixing_angles()
+
+        self.De1 = (np.cos(theta12) * np.cos(theta13))**2
+        self.De2 = (np.sin(theta12) * np.cos(theta13))**2
+        self.De3 = np.sin(theta13)**2
+
+        self.m = mass
+        self.tau = tau
+        self.d = dist
 
     def gamma(self, E):
         """Decay width of the m3 in the nu3 restframe.
