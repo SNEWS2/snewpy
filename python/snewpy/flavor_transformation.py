@@ -877,9 +877,9 @@ class ThreeFlavorDecoherence(FlavorTransformation):
 
 
 class NeutrinoDecay(FlavorTransformation):
-    """Decay effect, where the heaviest neutrino of mass m3 decays to the
-    lightest neutrino of mass m1. For a description and typical parameters,
-    see A. de Gouvêa et al., PRD 101:043013, 2020, arXiv:1910.01127.
+    """Decay effect, where the heaviest neutrino decays to the lightest
+    neutrino. For a description and typical parameters, see A. de Gouvêa et al.,
+    PRD 101:043013, 2020, arXiv:1910.01127.
     """
     def __init__(self, mix_angles=None, mass=1*u.eV/c.c**2, tau=1*u.day, dist=10*u.kpc, mh=MassHierarchy.NORMAL):
         """Initialize transformation matrix.
@@ -889,7 +889,7 @@ class NeutrinoDecay(FlavorTransformation):
         mix_angles : tuple or None
             If not None, override default mixing angles using tuple (theta12, theta13, theta23).
         mass : astropy.units.quantity.Quantity
-            Mass m3 of the heaviest neutrino; expect in eV/c^2.
+            Mass of the heaviest neutrino; expect in eV/c^2.
         tau : astropy.units.quantity.Quantity
             Lifetime of the heaviest neutrino.
         dist : astropy.units.quantity.Quantity
@@ -917,7 +917,7 @@ class NeutrinoDecay(FlavorTransformation):
         self.d = dist
 
     def gamma(self, E):
-        """Decay width of the m3 in the nu3 restframe.
+        """Decay width of the heaviest neutrino mass.
 
         Parameters
         ----------
@@ -927,7 +927,7 @@ class NeutrinoDecay(FlavorTransformation):
         Returns
         -------
         Gamma : float
-            Decay width of the m3, in units of 1/length.
+            Decay width of the neutrino mass, in units of 1/length.
         """
         return self.m*c.c / (E*self.tau)
 
