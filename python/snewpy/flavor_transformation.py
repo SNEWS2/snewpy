@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Simple supernova oscillation physics.
+"""Supernova oscillation physics for flavors e, X, e-bar, X-bar.
 
 For measured mixing angles and latest global analysis results, visit
 http://www.nu-fit.org/.
