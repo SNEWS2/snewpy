@@ -13,11 +13,59 @@ from astropy import units as u
 from astropy import constants as c
 
 
+
 class MassHierarchy(Enum):
     """Neutrino mass ordering: normal or inverted.
     """
     NORMAL = 1
     INVERTED = 2
+
+
+class MixingParameters:
+    """Best-fit parameters of the PMNS matrix and mass differences, assuming
+    three neutrino flavors. See www.nu-fit.org for current global fits.
+    """
+    def __init__(self, mh):
+        """Initialize the neutrino mixing parameters.
+
+        Parameters
+        ----------
+        mh : MassHierarchy
+            Desired mass ordering: NORMAL or INVERTED.
+        """
+        if type(mh) == MassHierarchy:
+            self.mass_order = mh
+        else:
+            raise TypeError('mh must be of type MassHierarchy')
+
+        # Values from JHEP 09 (2020) 178 [arXiv:2007.14792] and www.nu-fit.org.
+        # The reported precision is not significant given current uncertainties
+        # on these parameters, but is useful for comparing to the table of
+        # parameters presented on nu-fit.org.
+        if self.mass_order == MassHierarchy.NORMAL:
+            self.theta12 = 33.44 * u.deg
+            self.theta13 =  8.57 * u.deg
+            self.theta23 = 49.20 * u.deg
+            self.deltaCP = 197 * u.deg
+            self.dm21_2  = 7.42e-5 * u.eV**2
+            self.dm31_2  = 2.517e-3 * u.eV**2
+        else:
+            self.theta12 = 33.45 * u.deg
+            self.theta13 =  8.60 * u.deg
+            self.theta23 = 49.30 * u.deg
+            self.deltaCP = 282 * u.deg
+            self.dm21_2  = 7.42e-5 * u.eV**2
+            self.dm32_2  = -2.498e-3 * u.eV**2
+
+    def get_mixing_angles(self):
+        """Mixing angles of the PMNS matrix.
+        
+        Returns
+        -------
+        angles : tuple
+            Angles theta12, theta13, theta23.
+        """
+        return (self.theta12, self.theta13, self.theta23)
 
 
 class FlavorTransformation(ABC):
@@ -218,28 +266,30 @@ class NoTransformation(FlavorTransformation):
 class AdiabaticMSW(FlavorTransformation):
     """Adiabatic MSW effect."""
 
-    def __init__(self, theta12, theta13, theta23, mh=MassHierarchy.NORMAL):
+    def __init__(self, mix_angles=None, mh=MassHierarchy.NORMAL):
         """Initialize transformation matrix.
 
         Parameters
         ----------
-        theta12 : astropy.units.quantity.Quantity
-            Mixing angle 1->2 in PMNS matrix.
-        theta13 : astropy.units.quantity.Quantity
-            Mixing angle 1->3 in PMNS matrix.
-        theta23 : astropy.units.quantity.Quantity
-            Mixing angle 2->3 in PMNS matrix.
+        mix_angles : tuple or None
+            If not None, override default mixing angles using tuple (theta12, theta13, theta23).
         mh : MassHierarchy
             MassHierarchy.NORMAL or MassHierarchy.INVERTED.
         """
-        self.De1 = (np.cos(theta12) * np.cos(theta13))**2
-        self.De2 = (np.sin(theta12) * np.cos(theta13))**2
-        self.De3 = np.sin(theta13)**2
-        
         if type(mh) == MassHierarchy:
             self.mass_order = mh
         else:
             raise TypeError('mh must be of type MassHierarchy')
+
+        if mix_angles is not None:
+            theta12, theta13, theta23 = mix_angles
+        else:
+            pars = MixingParameters(mh)
+            theta12, theta13, theta23 = pars.get_mixing_angles()
+
+        self.De1 = (np.cos(theta12) * np.cos(theta13))**2
+        self.De2 = (np.sin(theta12) * np.cos(theta13))**2
+        self.De3 = np.sin(theta13)**2
 
     def prob_ee(self, t, E):
         """Electron neutrino survival probability.
