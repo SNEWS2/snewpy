@@ -13,7 +13,6 @@ from astropy import units as u
 from astropy import constants as c
 
 
-
 class MassHierarchy(Enum):
     """Neutrino mass ordering: normal or inverted.
     """
@@ -39,23 +38,25 @@ class MixingParameters:
             raise TypeError('mh must be of type MassHierarchy')
 
         # Values from JHEP 09 (2020) 178 [arXiv:2007.14792] and www.nu-fit.org.
-        # The reported precision is not significant given current uncertainties
-        # on these parameters, but is useful for comparing to the table of
+        # The reported precision is not significant given current
+        # uncertainties, but is useful for comparing to the table of
         # parameters presented on nu-fit.org.
         if self.mass_order == MassHierarchy.NORMAL:
+            # Note: in NH, the mass splittings are: m1..m2..............m3.
             self.theta12 = 33.44 * u.deg
             self.theta13 =  8.57 * u.deg
             self.theta23 = 49.20 * u.deg
             self.deltaCP = 197 * u.deg
             self.dm21_2  = 7.42e-5 * u.eV**2
-            self.dm31_2  = 2.517e-3 * u.eV**2
+            self.dm32_2  = 2.517e-3 * u.eV**2
         else:
+            # Note: in IH, the mass splittings are: m3..............m1..m2.
             self.theta12 = 33.45 * u.deg
             self.theta13 =  8.60 * u.deg
             self.theta23 = 49.30 * u.deg
             self.deltaCP = 282 * u.deg
             self.dm21_2  = 7.42e-5 * u.eV**2
-            self.dm32_2  = -2.498e-3 * u.eV**2
+            self.dm31_2  = -2.498e-3 * u.eV**2
 
     def get_mixing_angles(self):
         """Mixing angles of the PMNS matrix.
