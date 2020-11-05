@@ -25,7 +25,7 @@ class FlavorTransformation(ABC):
 
     @abstractmethod
     def prob_ex(self):
-        """Electron -> flavor X neutrino transition probability.
+        """X -> e neutrino transition probability.
         """
         pass
 
@@ -37,7 +37,7 @@ class FlavorTransformation(ABC):
 
     @abstractmethod
     def prob_xe(self):
-        """Flavor X -> electron neutrino transition probability.
+        """e -> X neutrino transition probability.
         """
         pass    
 
@@ -49,19 +49,19 @@ class FlavorTransformation(ABC):
 
     @abstractmethod
     def prob_exbar(self):
-        """Electron -> flavor X antineutrino transition probability.
+        """X -> e antineutrino transition probability.
         """
         pass   
 
     @abstractmethod
     def prob_xxbar(self):
-        """Flavor X -> flavor X antineutrino survival probability.
+        """X -> X antineutrino survival probability.
         """
         pass
 
     @abstractmethod
     def prob_xebar(self):
-        """Flavor X -> electron antineutrino transition probability.
+        """e -> X antineutrino transition probability.
         """
         pass    
 
@@ -90,7 +90,7 @@ class NoTransformation(FlavorTransformation):
         return 1.    
 
     def prob_ex(self, t, E):
-        """Electron -> flavor X neutrino transition probability.
+        """X -> e neutrino transition probability.
 
         Parameters
         ----------
@@ -124,7 +124,7 @@ class NoTransformation(FlavorTransformation):
         return (1. + self.prob_ee(t,E)) / 2.   
 
     def prob_xe(self, t, E):
-        """Flavor X -> electron neutrino transition probability.
+        """e -> X neutrino transition probability.
 
         Parameters
         ----------
@@ -158,7 +158,7 @@ class NoTransformation(FlavorTransformation):
         return 1.
 
     def prob_exbar(self, t, E):
-        """Electron -> flavor X antineutrino transition probability.
+        """X -> e antineutrino transition probability.
 
         Parameters
         ----------
@@ -175,7 +175,7 @@ class NoTransformation(FlavorTransformation):
         return 1. - self.prob_eebar(t,E)       
 
     def prob_xxbar(self, t, E):
-        """Flavor X -> flavor X antineutrino survival probability.
+        """X -> X antineutrino survival probability.
 
         Parameters
         ----------
@@ -192,7 +192,7 @@ class NoTransformation(FlavorTransformation):
         return (1. + self.prob_eebar(t,E)) / 2.
 
     def prob_xebar(self, t, E):
-        """Flavor X -> electron antineutrino transition probability.
+        """e -> X antineutrino transition probability.
 
         Parameters
         ----------
@@ -258,7 +258,7 @@ class AdiabaticMSW(FlavorTransformation):
             return self.De2
 
     def prob_ex(self, t, E):
-        """Electron -> flavor X neutrino transition probability.
+        """X -> e neutrino transition probability.
 
         Parameters
         ----------
@@ -292,7 +292,7 @@ class AdiabaticMSW(FlavorTransformation):
         return (1. + self.prob_ee(t,E)) / 2.   
 
     def prob_xe(self, t, E):
-        """Flavor X -> electron neutrino transition probability.
+        """e -> X neutrino transition probability.
 
         Parameters
         ----------
@@ -329,7 +329,7 @@ class AdiabaticMSW(FlavorTransformation):
             return self.De3
 
     def prob_exbar(self, t, E):
-        """Electron -> flavor X antineutrino transition probability.
+        """X -> e antineutrino transition probability.
 
         Parameters
         ----------
@@ -346,7 +346,7 @@ class AdiabaticMSW(FlavorTransformation):
         return 1. - self.prob_eebar(t,E)       
 
     def prob_xxbar(self, t, E):
-        """Flavor X -> flavor X antineutrino survival probability.
+        """X -> X antineutrino survival probability.
 
         Parameters
         ----------
@@ -363,7 +363,7 @@ class AdiabaticMSW(FlavorTransformation):
         return (1. + self.prob_eebar(t,E)) / 2.
 
     def prob_xebar(self, t, E):
-        """Flavor X -> electron antineutrino transition probability.
+        """e -> X antineutrino transition probability.
 
         Parameters
         ----------
@@ -426,7 +426,7 @@ class NonAdiabaticMSW(FlavorTransformation):
         return self.De2
 
     def prob_ex(self, t, E):
-        """Electron -> flavor X neutrino transition probability.
+        """X -> e neutrino transition probability.
 
         Parameters
         ----------
@@ -460,7 +460,7 @@ class NonAdiabaticMSW(FlavorTransformation):
         return (1. + self.prob_ee(t,E)) / 2.   
 
     def prob_xe(self, t, E):
-        """Flavor X -> electron neutrino transition probability.
+        """e -> X neutrino transition probability.
 
         Parameters
         ----------
@@ -494,7 +494,7 @@ class NonAdiabaticMSW(FlavorTransformation):
         return self.De1  
 
     def prob_exbar(self, t, E):
-        """Electron -> flavor X antineutrino transition probability.
+        """X -> e antineutrino transition probability.
 
         Parameters
         ----------
@@ -511,7 +511,7 @@ class NonAdiabaticMSW(FlavorTransformation):
         return 1. - self.prob_eebar(t,E)       
 
     def prob_xxbar(self, t, E):
-        """Flavor X -> flavor X antineutrino survival probability.
+        """X -> X antineutrino survival probability.
 
         Parameters
         ----------
@@ -528,7 +528,7 @@ class NonAdiabaticMSW(FlavorTransformation):
         return (1. + self.prob_eebar(t,E)) / 2.
 
     def prob_xebar(self, t, E):
-        """Flavor X -> electron antineutrino transition probability.
+        """e -> X antineutrino transition probability.
 
         Parameters
         ----------
@@ -564,7 +564,7 @@ class TwoFlavorDecoherence(FlavorTransformation):
         return 0.5    
 
     def prob_ex(self, t, E):
-        """Electron -> flavor X neutrino transition probability.
+        """X -> e neutrino transition probability.
 
         Parameters
         ----------
@@ -598,7 +598,7 @@ class TwoFlavorDecoherence(FlavorTransformation):
         return (1. + self.prob_ee(t,E)) / 2.   
 
     def prob_xe(self, t, E):
-        """Flavor X -> electron neutrino transition probability.
+        """e -> X neutrino transition probability.
 
         Parameters
         ----------
@@ -632,7 +632,7 @@ class TwoFlavorDecoherence(FlavorTransformation):
         return 0.5
 
     def prob_exbar(self, t, E):
-        """Electron -> flavor X antineutrino transition probability.
+        """X -> e antineutrino transition probability.
 
         Parameters
         ----------
@@ -649,7 +649,7 @@ class TwoFlavorDecoherence(FlavorTransformation):
         return 1. - self.prob_eebar(t,E)       
 
     def prob_xxbar(self, t, E):
-        """Flavor X -> flavor X antineutrino survival probability.
+        """X -> X antineutrino survival probability.
 
         Parameters
         ----------
@@ -666,7 +666,7 @@ class TwoFlavorDecoherence(FlavorTransformation):
         return (1. + self.prob_eebar(t,E)) / 2.
 
     def prob_xebar(self, t, E):
-        """Flavor X -> electron antineutrino transition probability.
+        """e -> X antineutrino transition probability.
 
         Parameters
         ----------
@@ -702,7 +702,7 @@ class ThreeFlavorDecoherence(FlavorTransformation):
         return 1./3.    
 
     def prob_ex(self, t, E):
-        """Electron -> flavor X neutrino transition probability.
+        """X -> e neutrino transition probability.
 
         Parameters
         ----------
@@ -736,7 +736,7 @@ class ThreeFlavorDecoherence(FlavorTransformation):
         return (1. + self.prob_ee(t,E)) / 2.   
 
     def prob_xe(self, t, E):
-        """Flavor X -> electron neutrino transition probability.
+        """e -> X neutrino transition probability.
 
         Parameters
         ----------
@@ -770,7 +770,7 @@ class ThreeFlavorDecoherence(FlavorTransformation):
         return 1./3.
 
     def prob_exbar(self, t, E):
-        """Electron -> flavor X antineutrino transition probability.
+        """X -> e antineutrino transition probability.
 
         Parameters
         ----------
@@ -787,7 +787,7 @@ class ThreeFlavorDecoherence(FlavorTransformation):
         return 1. - self.prob_eebar(t,E)       
 
     def prob_xxbar(self, t, E):
-        """Flavor X -> flavor X antineutrino survival probability.
+        """X -> X antineutrino survival probability.
 
         Parameters
         ----------
@@ -804,7 +804,7 @@ class ThreeFlavorDecoherence(FlavorTransformation):
         return (1. + self.prob_eebar(t,E)) / 2.
 
     def prob_xebar(self, t, E):
-        """Flavor X -> electron antineutrino transition probability.
+        """e -> X antineutrino transition probability.
 
         Parameters
         ----------
@@ -911,7 +911,7 @@ class NeutrinoDecay(FlavorTransformation):
         return pe_array
 
     def prob_ex(self, t, E):
-        """Electron -> flavor X neutrino transition probability.
+        """X -> e neutrino transition probability.
 
         Parameters
         ----------
@@ -950,7 +950,7 @@ class NeutrinoDecay(FlavorTransformation):
         return 1. - self.prob_ex(t,E) / 2.
 
     def prob_xe(self, t, E):
-        """Flavor X -> electron neutrino transition probability.
+        """e -> X neutrino transition probability.
 
         Parameters
         ----------
@@ -984,7 +984,7 @@ class NeutrinoDecay(FlavorTransformation):
         return self.De3  
 
     def prob_exbar(self, t, E):
-        """Electron -> flavor X antineutrino transition probability.
+        """X -> e antineutrino transition probability.
 
         Parameters
         ----------
@@ -1018,7 +1018,7 @@ class NeutrinoDecay(FlavorTransformation):
         return pxbar_array
 
     def prob_xxbar(self, t, E):
-        """Flavor X -> flavor X antineutrino survival probability.
+        """X -> X antineutrino survival probability.
 
         Parameters
         ----------
@@ -1035,7 +1035,7 @@ class NeutrinoDecay(FlavorTransformation):
         return 1. - self.prob_exbar(t,E) / 2.
 
     def prob_xebar(self, t, E):  
-        """Flavor X -> electron antineutrino transition probability.
+        """e -> X antineutrino transition probability.
 
         Parameters
         ----------
