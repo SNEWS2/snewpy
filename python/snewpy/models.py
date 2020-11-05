@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-A submodule with classes used for supernova model files stored on disk. Based
-on the models_class.py script started by Navya Uberoi and updated by Jim Kneller.
-Updated summer 2020 by Jim Kneller & Arkin Worlikar
+A submodule with classes used for supernova model files stored on disk. It
+assumes models are available in a format usable by the AstroPy unified table
+reader; see https://docs.astropy.org/en/stable/index.html for details.
+
+Based on the ASTERIA (https://github.com/IceCubeOpenSource/ASTERIA) models
+developed by Navya Uberoi and Spencer Griswold.
+
+Updated summer 2020 by Jim Kneller & Arkin Worlikar.
 """
 
 from abc import abstractmethod, ABC
@@ -133,12 +138,19 @@ class Nakazato_2013(SupernovaModel):
             Flavor transformation object with survival probabilities.
         """
         # Store model metadata.
-        self.progenitor_mass = float(filename.split('-')[-1].strip('s%.fits')) * u.Msun
-        self.revival_time = float(filename.split('-')[-2].strip('t_rev%ms')) * u.ms
-        self.metallicity = float(filename.split('-')[-3].strip('z%'))
-        self.EOS = filename.split('-')[-4].upper()
+        if 't_rev' in filename:
+            self.progenitor_mass = float(filename.split('-')[-1].strip('s%.fits')) * u.Msun
+            self.revival_time = float(filename.split('-')[-2].strip('t_rev%ms')) * u.ms
+            self.metallicity = float(filename.split('-')[-3].strip('z%'))
+            self.EOS = filename.split('-')[-4].upper()
+        # No revival time because the explosion "failed" (BH formation).
+        else:
+            self.progenitor_mass = float(filename.split('-')[-1].strip('s%.fits')) * u.Msun
+            self.metallicity = float(filename.split('-')[-2].strip('z%'))
+            self.revival_time = 0 * u.ms
+            self.EOS = filename.split('-')[-4].upper()
 
-        # Read FITS table using astropy reader.
+        # Read FITS table using the astropy reader.
         simtab = Table.read(filename)
         self.fitsfile = os.path.basename(filename)
 
@@ -172,14 +184,14 @@ class Nakazato_2013(SupernovaModel):
         return self.time
     
     def get_initialspectra(self, t, E):
-        """Get neutrino spectra/luminosity curves after oscillation.
+        """Get neutrino spectra/luminosity at the source.
 
         Parameters
         ----------
-        t : float or astropy.units.quantity.Quantity
-            Time to evaluate initial and oscillated spectra.
-        E : float or ndarray
-            Energies to evaluate the initial and oscillated spectra.
+        t : float or astropy.Quantity
+            Time to evaluate initial spectra.
+        E : float or ndarray of astropy.Quantity
+            Energies to evaluate the initial spectra.
 
         Returns
         -------
@@ -187,19 +199,25 @@ class Nakazato_2013(SupernovaModel):
             Dictionary of model spectra, keyed by neutrino flavor.
         """
         initialspectra = {}
-        for flavor in Flavor:
-            L = np.interp(t, self.time, self.luminosity[flavor])
 
-            # <E_nu(t)>, alpha_nu(t)
-            Ea = np.interp(t, self.time, self.meanE[flavor])
-#            Ea = Ea*1e6 * 1.60218e-12
+        # Avoid division by zero in energy PDF below.
+        E[E==0] = np.finfo(float).eps * E.unit
+
+        # Estimate L(t), <E_nu(t)> and alpha(t). Express all energies in erg.
+        E = E.to('erg').value
+
+        for flavor in Flavor:
+            # Use np.interp rather than scipy.interpolate.interp1d because it
+            # can handle dimensional units (astropy.Quantity).
+            L  = np.interp(t, self.time, self.luminosity[flavor].to('erg/s'))
+            Ea = np.interp(t, self.time, self.meanE[flavor].to('erg'))
             a  = np.interp(t, self.time, self.pinch[flavor])
-            E[E==0] = np.finfo(float).eps       # Avoid division by zero.
 
             # For numerical stability, evaluate log PDF and then exponentiate.
             initialspectra[flavor] = \
                 np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a) 
                        - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
+
         return initialspectra
 
     def __repr__(self):
@@ -362,6 +380,7 @@ class Sukhbold_2015(SupernovaModel):
                        - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
 
         return initialspectra
+
 
 class Bollig_2016(SupernovaModel):
     """Set up a model based on simulations from Bollig et al. (2016). Models were taken, with permission from the Garching Supernova Archive
@@ -530,6 +549,7 @@ class Bollig_2016(SupernovaModel):
 
         return initialspectra
 
+
 class OConnor_2015(SupernovaModel):
     """Set up a model based on the black hole formation simulation in O'Connor (2015). 
     """
@@ -690,6 +710,7 @@ class OConnor_2015(SupernovaModel):
                        - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
 
         return initialspectra
+
 
 class Warren_2020(SupernovaModel):
     "Set up a model based on simulations from Warren et al. (2020)"
