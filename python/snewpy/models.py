@@ -96,18 +96,22 @@ class SupernovaModel(ABC):
         """
         initialspectra = self.get_initialspectra(t, E)
         oscillatedspectra = {}
+
         oscillatedspectra[Flavor.NU_E] = \
-            self.FT.pee( t, E ) * initialspectra[Flavor.NU_E] + \
-            self.FT.pex( t, E ) * initialspectra[Flavor.NU_X]
+            self.FT.prob_ee(t, E) * initialspectra[Flavor.NU_E] + \
+            self.FT.prob_ex(t, E) * initialspectra[Flavor.NU_X]
+
         oscillatedspectra[Flavor.NU_X] = \
-            self.FT.pxe( t, E ) * initialspectra[Flavor.NU_E] + \
-            self.FT.pxx( t, E ) * initialspectra[Flavor.NU_X] 
+            self.FT.prob_xe(t, E) * initialspectra[Flavor.NU_E] + \
+            self.FT.prob_xx(t, E) * initialspectra[Flavor.NU_X] 
+
         oscillatedspectra[Flavor.NU_E_BAR] = \
-            self.FT.peebar( t, E ) * initialspectra[Flavor.NU_E_BAR] + \
-            self.FT.pexbar( t, E ) * initialspectra[Flavor.NU_X_BAR]
+            self.FT.prob_eebar(t, E) * initialspectra[Flavor.NU_E_BAR] + \
+            self.FT.prob_exbar(t, E) * initialspectra[Flavor.NU_X_BAR]
+
         oscillatedspectra[Flavor.NU_X_BAR] = \
-            self.FT.pxebar( t, E ) * initialspectra[Flavor.NU_E_BAR] + \
-            self.FT.pxxbar( t, E ) * initialspectra[Flavor.NU_X_BAR] 
+            self.FT.prob_xebar(t, E) * initialspectra[Flavor.NU_E_BAR] + \
+            self.FT.prob_xxbar(t, E) * initialspectra[Flavor.NU_X_BAR] 
 
         return oscillatedspectra    
 
