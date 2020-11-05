@@ -6,14 +6,14 @@ http://www.nu-fit.org/.
 """
 
 from abc import abstractmethod, ABC
-from enum import Enum
+from enum import IntEnum
 
 import numpy as np
 from astropy import units as u
 from astropy import constants as c
 
 
-class MassHierarchy(Enum):
+class MassHierarchy(IntEnum):
     """Neutrino mass ordering: normal or inverted.
     """
     NORMAL = 1
