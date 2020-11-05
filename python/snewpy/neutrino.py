@@ -26,8 +26,8 @@ class Flavor(IntEnum):
         """
         
         if '_bar' in self.name:
-            return r'$\overline{{\nu}}_{0}$'.format(self.name[3])
-        return r'$\{0}$'.format(self.name)
+            return r'$\overline{{\nu}}_{0}$'.format(self.name[3].lower())
+        return r'$\{0}$'.format(self.name.lower())
 
     @property
     def is_electron(self):
