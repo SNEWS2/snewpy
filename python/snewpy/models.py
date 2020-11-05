@@ -131,15 +131,29 @@ class Nakazato_2013(SupernovaModel):
         flavor_xform : FlavorTransformation
             Flavor transformation object with survival probabilities.
         """
-        self.file = Table.read(filename)
         self.filename = filename
-        self.luminosity={}
-        self.meanE={}
-        self.pinch={}
+
+        # Read FITS table using astropy reader.
+        simtab = Table.read(filename)
+
+        # Get grid of model times.
+        self.time = simtab['TIME'].to('s')
+
+        # Set up dictionary of luminosity, mean energy and shape parameter
+        # alpha, keyed by neutrino flavor (NU_E, NU_X, NU_E_BAR, NU_X_BAR).
+        self.luminosity = {}
+        self.meanE = {}
+        self.pinch = {}
+
+        # Store dicts as an interp1d function.
         for flavor in Flavor:
-            self.luminosity[flavor] = interp1d(self.get_time(), self.get_luminosity(flavor))
-            self.meanE[flavor] = interp1d(self.get_time(), self.get_mean_energy(flavor))
-            self.pinch[flavor] = interp1d(self.get_time(), self.get_pinch_param(flavor))
+            # Note: file only contains NU_E, NU_E_BAR, and NU_X, so double up
+            # the use of NU_X for NU_X_BAR.
+            _flav = Flavor.NU_X if flavor == Flavor.NU_X_BAR else flavor
+
+            self.luminosity[flavor] = interp1d(self.get_time(), simtab['L_{}'.format(_flav.name)].to('erg/s'))
+            self.meanE[flavor] = interp1d(self.get_time(), simtab['E_{}'.format(_flav.name)].to('MeV'))
+            self.pinch[flavor] = interp1d(self.get_time(), simtab['ALPHA_{}'.format(_flav.name)]))
         self.FT = flavor_xform
         
     def get_time(self):
@@ -150,58 +164,7 @@ class Nakazato_2013(SupernovaModel):
         time : ndarray
             Grid of times used in the model.
         """
-        return self.file['TIME']
-    
-    def get_luminosity(self, flavor):
-        """Get model luminosity L_nu.
-
-        Parameters
-        ----------
-        flavor : Flavor
-            Neutrino flavor type.
-
-        Returns
-        -------
-        luminosity : ndarray
-            Grid of luminosity values (erg/s) for this flavor.
-        """
-        if flavor == Flavor.NU_X_BAR:
-            flavor = Flavor.NU_X
-        return self.file['L_{}'.format(flavor.name.upper())]
-        
-    def get_mean_energy(self, flavor):
-        """Get model mean energy <E_nu>.
-
-        Parameters
-        ----------
-        flavor : Flavor
-            Neutrino flavor type.
-
-        Returns
-        -------
-        energy : ndarray
-            Grid of mean energy versus time.
-        """
-        if flavor == Flavor.NU_X_BAR:
-            flavor = Flavor.NU_X
-        return self.file['E_{}'.format(flavor.name.upper())]
-    
-    def get_pinch_param(self, flavor):
-        """Get spectral pinch parameter alpha(t).
-
-        Parameters
-        ----------
-        flavor : Flavor
-            Neutrino flavor type.
-
-        Returns
-        -------
-        alpha : ndarray
-            Grid of alpha versus time.
-        """
-        if (flavor == Flavor.NU_X_BAR):
-            flavor = Flavor.NU_X
-        return self.file['ALPHA_{}'.format(flavor.name.upper())]
+        return self.time
     
     def get_EOS(self):
         """Model equation of state.
@@ -256,7 +219,7 @@ class Nakazato_2013(SupernovaModel):
             a = self.pinch[flavor](t)           # alpha_nu(t)
             E[E==0] = np.finfo(float).eps       # Avoid division by zero.
 
-            # For numerical stability, evaluate log PDF then exponentiate.
+            # For numerical stability, evaluate log PDF and then exponentiate.
             initialspectra[flavor] = \
                 np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a) 
                        - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
