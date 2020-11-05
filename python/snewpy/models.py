@@ -25,7 +25,9 @@ import re
 import tarfile
 import h5py
 
-from snewpy.flavor_transformation import *
+from .neutrino import Flavor
+from .flavor_transformation import *
+
 
 def get_closest(arr, x):
     """Get index of closest element in an array to input value.
@@ -43,35 +45,6 @@ def get_closest(arr, x):
         Index of closest element in the array.
     """
     return np.abs(np.asarray(arr) - x).argmin()
-
-
-class Flavor(IntEnum):
-    """Enumeration of CCSN Neutrino flavors.
-    """
-    NU_E = 2
-    NU_E_BAR = 1
-    NU_X = 3
-    NU_X_BAR = 0
-    
-    def to_tex(self):
-        """LaTeX-compatible string representations of flavor.
-        """
-        
-        if '_bar' in self.name:
-            return r'$\overline{{\nu}}_{0}$'.format(self.name[3])
-        return r'$\{0}$'.format(self.name)
-
-    @property
-    def is_electron(self):
-        return self.value in (Flavor.NU_E.value, Flavor.NU_E_BAR.value)
-
-    @property
-    def is_neutrino(self):
-        return self.value in (Flavor.NU_E.value, Flavor.NU_X.value)
-
-    @property
-    def is_antineutrino(self):
-        return self.value in (Flavor.NU_E_BAR.value, Flavor.NU_X_BAR.value)
 
 
 class SupernovaModel(ABC):
