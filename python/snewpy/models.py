@@ -206,6 +206,10 @@ class Nakazato_2013(SupernovaModel):
         # Estimate L(t), <E_nu(t)> and alpha(t). Express all energies in erg.
         E = E.to('erg').value
 
+        # Make sure input time uses the same units as the model time grid, or
+        # the interpolation will not work correctly.
+        t = t.to(self.time.unit)
+
         for flavor in Flavor:
             # Use np.interp rather than scipy.interpolate.interp1d because it
             # can handle dimensional units (astropy.Quantity).
