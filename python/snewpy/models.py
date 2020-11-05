@@ -85,15 +85,17 @@ class SupernovaModel(ABC):
         """
         pass
 
-    def get_oscillatedspectra(self, t, E ):
+    def get_oscillatedspectra(self, t, E, flavor_xform):
         """Get neutrino spectra after applying oscillation.
 
         Parameters
         ----------
-        t : float
+        t : astropy.Quantity
             Time to evaluate initial and oscillated spectra.
-        E : float or ndarray
+        E : astropy.Quantity or ndarray
             Energies to evaluate the initial and oscillated spectra.
+        flavor_xform : FlavorTransformation
+            An instance from the flavor_transformation module.
 
         Returns
         -------
@@ -104,20 +106,20 @@ class SupernovaModel(ABC):
         oscillatedspectra = {}
 
         oscillatedspectra[Flavor.NU_E] = \
-            self.FT.prob_ee(t, E) * initialspectra[Flavor.NU_E] + \
-            self.FT.prob_ex(t, E) * initialspectra[Flavor.NU_X]
+            flavor_xform.prob_ee(t, E) * initialspectra[Flavor.NU_E] + \
+            flavor_xform.prob_ex(t, E) * initialspectra[Flavor.NU_X]
 
         oscillatedspectra[Flavor.NU_X] = \
-            self.FT.prob_xe(t, E) * initialspectra[Flavor.NU_E] + \
-            self.FT.prob_xx(t, E) * initialspectra[Flavor.NU_X] 
+            flavor_xform.prob_xe(t, E) * initialspectra[Flavor.NU_E] + \
+            flavor_xform.prob_xx(t, E) * initialspectra[Flavor.NU_X] 
 
         oscillatedspectra[Flavor.NU_E_BAR] = \
-            self.FT.prob_eebar(t, E) * initialspectra[Flavor.NU_E_BAR] + \
-            self.FT.prob_exbar(t, E) * initialspectra[Flavor.NU_X_BAR]
+            flavor_xform.prob_eebar(t, E) * initialspectra[Flavor.NU_E_BAR] + \
+            flavor_xform.prob_exbar(t, E) * initialspectra[Flavor.NU_X_BAR]
 
         oscillatedspectra[Flavor.NU_X_BAR] = \
-            self.FT.prob_xebar(t, E) * initialspectra[Flavor.NU_E_BAR] + \
-            self.FT.prob_xxbar(t, E) * initialspectra[Flavor.NU_X_BAR] 
+            flavor_xform.prob_xebar(t, E) * initialspectra[Flavor.NU_E_BAR] + \
+            flavor_xform.prob_xxbar(t, E) * initialspectra[Flavor.NU_X_BAR] 
 
         return oscillatedspectra    
 
@@ -127,15 +129,13 @@ class Nakazato_2013(SupernovaModel):
     2013 and ApJ 804:75, 2015. See also http://asphwww.ph.noda.tus.ac.jp/snn/.
     """
 
-    def __init__(self, filename, flavor_xform):
+    def __init__(self, filename):
         """Initialize model.
 
         Parameters
         ----------
         filename : str
             Absolute or relative path to FITS file with model data.
-        flavor_xform : FlavorTransformation
-            Flavor transformation object with survival probabilities.
         """
         # Store model metadata.
         if 't_rev' in filename:
@@ -171,7 +171,6 @@ class Nakazato_2013(SupernovaModel):
             self.luminosity[flavor] = simtab['L_{}'.format(_flav.name)].to('erg/s')
             self.meanE[flavor] = simtab['E_{}'.format(_flav.name)].to('MeV')
             self.pinch[flavor] = simtab['ALPHA_{}'.format(_flav.name)]
-        self.FT = flavor_xform
 
     def get_time(self):
         """Get grid of model times.
@@ -253,15 +252,13 @@ class Sukhbold_2015(SupernovaModel):
     """Set up a model based on simulations from Sukhbold et al., ApJ 821:38,2016. Models were shared privately by email.
     """
 
-    def __init__(self, filename, flavor_xform):
+    def __init__(self, filename):
         """Initialize model.
 
         Parameters
         ----------
         filename : str
             Absolute or relative path to FITS file with model data.
-        flavor_xform : FlavorTransformation
-            Flavor transformation object with survival probabilities.
         """
         self.file = Table.read(filename)
         self.filename = filename
@@ -272,7 +269,6 @@ class Sukhbold_2015(SupernovaModel):
             self.luminosity[flavor] = interp1d(self.get_time(), self.get_luminosity(flavor))
             self.meanE[flavor] = interp1d(self.get_time(), self.get_mean_energy(flavor))
             self.pinch[flavor] = interp1d(self.get_time(), self.get_pinch_param(flavor))
-        self.FT = flavor_xform
             
     def get_time(self):
         """Get grid of model times.
@@ -395,11 +391,9 @@ class Bollig_2016(SupernovaModel):
         Parameters
         ----------
         filename : str
-        Absolute or relative path to file prefix, we add nue/nuebar/nux
-        flavor_xform : FlavorTransformation
-        Flavor transformation object with survival probabilities.
+            Absolute or relative path to file prefix, we add nue/nuebar/nux
         eos : string
-        Equation of state used in simulation
+            Equation of state used in simulation
         """
         nue = Table.read(filename+"_"+eos+"_nue",names=["TIME","L_NU_E","E_NU_E","MS_NU_E"],format='ascii')
         nue['ALPHA_NU_E'] = (2.0*nue['E_NU_E']**2 - nue['MS_NU_E'])/(nue['MS_NU_E'] - nue['E_NU_E']**2)
@@ -563,11 +557,9 @@ class OConnor_2015(SupernovaModel):
         Parameters
         ----------
         filename : str
-        Absolute or relative path to file prefix, we add nue/nuebar/nux
-        flavor_xform : FlavorTransformation
-        Flavor transformation object with survival probabilities.
+            Absolute or relative path to file prefix, we add nue/nuebar/nux
         eos : string
-        Equation of state used in simulation
+            Equation of state used in simulation
         """
         table = Table.read(filename,names=["TIME","L_NU_E","L_NU_E_BAR","L_NU_X","E_NU_E","E_NU_E_BAR","E_NU_X","RMS_NU_E","RMS_NU_E_BAR","RMS_NU_X"],format='ascii')
         table['ALPHA_NU_E'] = (2.0*table['E_NU_E']**2 - table['RMS_NU_E']**2)/(table['RMS_NU_E']**2 - table['E_NU_E']**2)
@@ -719,17 +711,15 @@ class OConnor_2015(SupernovaModel):
 class Warren_2020(SupernovaModel):
     "Set up a model based on simulations from Warren et al. (2020)"
 
-    def __init__(self, filename, flavor_xform, eos = 'LS220'):
+    def __init__(self, filename, eos='LS220'):
         """Initialize model.
 
-            Parameters
-            ----------
-            filename : str
-                Absolute or relative path to file prefix, we add nue/nuebar/nux
-            flavor_xform : FlavorTransformation
-                Flavor transformation object with survival probabilities.
-            eos : string
-                Equation of state used in simulation
+        Parameters
+        ----------
+        filename : str
+            Absolute or relative path to file prefix, we add nue/nuebar/nux
+        eos : string
+            Equation of state used in simulation
         """
         f = h5py.File(filename, 'r')
         table = Table()
@@ -765,7 +755,6 @@ class Warren_2020(SupernovaModel):
             self.luminosity[flavor] = interp1d(self.get_time(), self.get_luminosity(flavor))
             self.meanE[flavor] = interp1d(self.get_time(), self.get_mean_energy(flavor))
             self.pinch[flavor] = interp1d(self.get_time(), self.get_pinch_param(flavor))
-        self.FT = flavor_xform
 
     def get_time(self):
         """Get grid of model times.
@@ -900,15 +889,13 @@ class Janka(SupernovaModel):
     """Set up a model based on simulations from Janka, I'll have to update this descriptioin later because I dont know where this is from
     """
 
-    def __init__(self, filename, flavor_xform):
+    def __init__(self, filename):
         """Initialize model.
 
         Parameters
         ----------
         filename : str
             Absolute or relative path to FITS file with model data.
-        flavor_xform : FlavorTransformation
-            Flavor transformation object with survival probabilities.
         """
         self.file = Table.read(filename)
         self.filename = filename
@@ -919,7 +906,6 @@ class Janka(SupernovaModel):
             self.luminosity[flavor] = interp1d(self.get_time(), self.get_luminosity(flavor))
             self.meanE[flavor] = interp1d(self.get_time(), self.get_mean_energy(flavor))
             self.pinch[flavor] = interp1d(self.get_time(), self.get_pinch_param(flavor))
-        self.FT = flavor_xform
             
     def get_time(self):
         """Get grid of model times.
