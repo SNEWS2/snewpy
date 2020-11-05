@@ -25,7 +25,7 @@ class Flavor(IntEnum):
         """LaTeX-compatible string representations of flavor.
         """
         
-        if '_bar' in self.name:
+        if '_BAR' in self.name:
             return r'$\overline{{\nu}}_{0}$'.format(self.name[3].lower())
         return r'$\{0}$'.format(self.name.lower())
 
