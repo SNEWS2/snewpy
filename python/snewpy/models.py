@@ -1,29 +1,15 @@
 # -*- coding: utf-8 -*-
 """
 A submodule with classes used for supernova model files stored on disk. Based
-on the models_class.py script started by Navya Uberoi and updated by James
-Kneller.
-
-The changes, made by James Kneller, are:
-
-#. The Enum class inherited by the Flavor class was changed to IntEnum and the
-assigned values altered so that the flavor enums could be used as list indicii.
-The member functions should still work as before.
-#. Extra member data was added to the SupernovaModel class to store the
-interpolations of the luminosity, mean energy and pinch parameter as functions
-of time.
-#. The SupernovaModel class now requires instantation with a
-FlavorTransofrmation class.  The FlavorTransofrmation class - defined in
-FlavorTransformation.py - has two members which return the electron neutrino
-survival probability p and electron antineutrino survival probability pbar.
-#. Extra methods were added to the SupernovaModel class as its descendents to
-return the initial and oscillated spectra at a given time and neutrino energy.
+on the models_class.py script started by Navya Uberoi and updated by Jim Kneller.
+Updated summer 2020 by Jim Kneller & Arkin Worlikar
 """
 
 from abc import abstractmethod, ABC
 from enum import IntEnum
 
 import astropy
+from astropy.io import ascii
 from astropy.table import Table, join
 
 import matplotlib as mpl
@@ -39,7 +25,7 @@ import re
 import tarfile
 import h5py
 
-from snewpy.FlavorTransformation import *
+from snewpy.flavor_transformation import *
 
 def get_closest(arr, x):
     """Get index of closest element in an array to input value.
@@ -95,31 +81,15 @@ class SupernovaModel(ABC):
     
     @abstractmethod
     def get_time(self):
-        pass
-    
-    @abstractmethod
-    def get_mean_energy(self, flavor):
-        pass
-    
-    @abstractmethod
-    def get_luminosity(self, flavor):
-        pass
-    
-    @abstractmethod
-    def get_pinch_param(self, flavor):
-        pass
-    
-    @abstractmethod
-    def get_EOS(self):
-        pass
-    
-    @abstractmethod
-    def get_progenitor_mass(self):
+        """Returns
+        -------
+            returns array of snapshot times from the simulation
+        """
         pass
 
     @abstractmethod
     def get_initialspectra(self, t, E):
-        """Get neutrino spectra/luminosity curves at the source.
+        """Get neutrino spectra at the source.
 
         Parameters
         ----------
@@ -135,8 +105,8 @@ class SupernovaModel(ABC):
         """
         pass
 
-    def get_oscillatedspectra(self, t, E):
-        """Get neutrino spectra/luminosity curves after oscillation.
+    def get_oscillatedspectra(self, t, E ):
+        """Get neutrino spectra after applying oscillation.
 
         Parameters
         ----------
@@ -153,21 +123,22 @@ class SupernovaModel(ABC):
         initialspectra = self.get_initialspectra(t, E)
         oscillatedspectra = {}
         oscillatedspectra[Flavor.nu_e] = \
-            self.FT.p() * initialspectra[Flavor.nu_e] + \
-            (1. - self.FT.p()) * initialspectra[Flavor.nu_x]
+            self.FT.pee( t, E ) * initialspectra[Flavor.nu_e] + \
+            self.FT.pex( t, E ) * initialspectra[Flavor.nu_x]
         oscillatedspectra[Flavor.nu_x] = \
-            ( (1. - self.FT.p()) * initialspectra[Flavor.nu_e] + \
-              (1. + self.FT.p()) * initialspectra[Flavor.nu_x] )/2.
+            self.FT.pxe( t, E ) * initialspectra[Flavor.nu_e] + \
+            self.FT.pxx( t, E ) * initialspectra[Flavor.nu_x] 
         oscillatedspectra[Flavor.nu_e_bar] = \
-            self.FT.pbar() * initialspectra[Flavor.nu_e_bar] + \
-            (1. - self.FT.pbar()) * initialspectra[Flavor.nu_x_bar]
+            self.FT.peebar( t, E ) * initialspectra[Flavor.nu_e_bar] + \
+            self.FT.pexbar( t, E ) * initialspectra[Flavor.nu_x_bar]
         oscillatedspectra[Flavor.nu_x_bar] = \
-            ( (1. - self.FT.pbar()) * initialspectra[Flavor.nu_e_bar] + \
-              (1. + self.FT.pbar()) * initialspectra[Flavor.nu_x_bar] )/2.
+            self.FT.pxebar( t, E ) * initialspectra[Flavor.nu_e_bar] + \
+            self.FT.pxxbar( t, E ) * initialspectra[Flavor.nu_x_bar] 
+
         return oscillatedspectra    
 
 
-class Nakazato2013(SupernovaModel):
+class Nakazato_2013(SupernovaModel):
     """Set up a model based on simulations from Nakazato et al., ApJ S 205:2,
     2013 and ApJ 804:75, 2015. See also http://asphwww.ph.noda.tus.ac.jp/snn/.
     """
@@ -311,13 +282,11 @@ class Nakazato2013(SupernovaModel):
             initialspectra[flavor] = \
                 np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a) 
                        - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
-
         return initialspectra
 
 
-class Sukhbold2015(SupernovaModel):
-    """Set up a model based on simulations from Sukhbold et al., ApJ 821:38,
-    2016. Models were shared privately by email.
+class Sukhbold_2015(SupernovaModel):
+    """Set up a model based on simulations from Sukhbold et al., ApJ 821:38,2016. Models were shared privately by email.
     """
 
     def __init__(self, filename, flavor_xform):
@@ -441,7 +410,7 @@ class Sukhbold2015(SupernovaModel):
         for flavor in Flavor:
             L = self.luminosity[flavor](t)
             Ea = self.meanE[flavor](t)          # <E_nu(t)>
-            Ea = Ea*1e6
+            Ea = Ea*1e6 * 1.60218e-12
             a = self.pinch[flavor](t)           # alpha_nu(t)
             E[E==0] = np.finfo(float).eps       # Avoid division by zero.
 
@@ -452,7 +421,7 @@ class Sukhbold2015(SupernovaModel):
 
         return initialspectra
 
-class Bollig2016(SupernovaModel):
+class Bollig_2016(SupernovaModel):
     """Set up a model based on simulations from Bollig et al. (2016). Models were taken, with permission from the Garching Supernova Archive
     """
     def __init__(self, filename, FlavorTransformation, eos="LS220"):
@@ -606,9 +575,9 @@ class Bollig2016(SupernovaModel):
         initialspectra = {}
         for flavor in Flavor:
             L = self.luminosity[flavor](t)
-            L=L*6.242e11
+           
             Ea = self.meanE[flavor](t)          # <E_nu(t)>
-            Ea = Ea*1e6
+            Ea = Ea*1e6 * 1.60218e-12
             a = self.pinch[flavor](t)           # alpha_nu(t)
             E[E==0] = np.finfo(float).eps       # Avoid division by zero.
 
@@ -619,9 +588,8 @@ class Bollig2016(SupernovaModel):
 
         return initialspectra
 
-class OConnor2015(SupernovaModel):
-    """Set up a model based on the black hole formation simulation in
-    O'Connor (2015). 
+class OConnor_2015(SupernovaModel):
+    """Set up a model based on the black hole formation simulation in O'Connor (2015). 
     """
     def __init__(self, filename, FlavorTransformation, eos="LS220"):
         """Initialize model.
@@ -769,9 +737,8 @@ class OConnor2015(SupernovaModel):
         initialspectra = {}
         for flavor in Flavor:
             L = self.luminosity[flavor](t)
-            L=L*6.242e11
             Ea = self.meanE[flavor](t)          # <E_nu(t)>
-            Ea = Ea*1e6
+            Ea = Ea*1e6 * 1.60218e-12
             a = self.pinch[flavor](t)           # alpha_nu(t)
             E[E==0] = np.finfo(float).eps       # Avoid division by zero.
 
@@ -782,7 +749,7 @@ class OConnor2015(SupernovaModel):
 
         return initialspectra
 
-class Warren2020(SupernovaModel):
+class Warren_2020(SupernovaModel):
     "Set up a model based on simulations from Warren et al. (2020)"
 
     def __init__(self, filename, flavor_xform, eos = 'LS220'):
@@ -949,9 +916,9 @@ class Warren2020(SupernovaModel):
         initialspectra = {}
         for flavor in Flavor:
             L = self.luminosity[flavor](t)
-            L = L * 6.242e11
+          
             Ea = self.meanE[flavor](t)  # <E_nu(t)>
-            Ea = Ea * 1e6
+            Ea = Ea*1e6 * 1.60218e-12
             a = self.pinch[flavor](t)  # alpha_nu(t)
             E[E == 0] = np.finfo(float).eps  # Avoid division by zero.
 
@@ -962,8 +929,143 @@ class Warren2020(SupernovaModel):
 
         return initialspectra
 
+class Janka(SupernovaModel):
+    """Set up a model based on simulations from Janka, I'll have to update this descriptioin later because I dont know where this is from
+    """
 
-'''    
+    def __init__(self, filename, flavor_xform):
+        """Initialize model.
+
+        Parameters
+        ----------
+        filename : str
+            Absolute or relative path to FITS file with model data.
+        flavor_xform : FlavorTransformation
+            Flavor transformation object with survival probabilities.
+        """
+        self.file = Table.read(filename)
+        self.filename = filename
+        self.luminosity = {}
+        self.meanE = {}
+        self.pinch = {}
+        for flavor in Flavor:
+            self.luminosity[flavor] = interp1d(self.get_time(), self.get_luminosity(flavor))
+            self.meanE[flavor] = interp1d(self.get_time(), self.get_mean_energy(flavor))
+            self.pinch[flavor] = interp1d(self.get_time(), self.get_pinch_param(flavor))
+        self.FT = flavor_xform
+            
+    def get_time(self):
+        """Get grid of model times.
+
+        Returns
+        -------
+        time : ndarray
+            Grid of times used in the model.
+        """
+        return self.file['TIME']
+    
+    def get_luminosity(self, flavor):
+        """Get model luminosity L_nu.
+
+        Parameters
+        ----------
+        flavor : Flavor
+            Neutrino flavor type.
+
+        Returns
+        -------
+        luminosity : ndarray
+            Grid of luminosity values (erg/s) for this flavor.
+        """
+        if flavor == Flavor.nu_x_bar:
+            flavor = Flavor.nu_x
+        return self.file['L_{}'.format(flavor.name.upper())]
+        
+    def get_mean_energy(self, flavor):
+        """Get model mean energy <E_nu>.
+
+        Parameters
+        ----------
+        flavor : Flavor
+            Neutrino flavor type.
+
+        Returns
+        -------
+        energy : ndarray
+            Grid of mean energy versus time.
+        """
+        if flavor == Flavor.nu_x_bar:
+            flavor = Flavor.nu_x
+        return self.file['E_{}'.format(flavor.name.upper())]
+    
+    def get_pinch_param(self, flavor):
+        """Get spectral pinch parameter alpha(t).
+
+        Parameters
+        ----------
+        flavor : Flavor
+            Neutrino flavor type.
+
+        Returns
+        -------
+        alpha : ndarray
+            Grid of alpha versus time.
+        """
+        if (flavor == Flavor.nu_x_bar):
+            flavor = Flavor.nu_x
+        return self.file['ALPHA_{}'.format(flavor.name.upper())]
+    
+    def get_EOS(self):
+        """Model equation of state.
+
+        Returns
+        -------
+        eos : str
+            Model equation of state.
+        """
+        return self.filename.split('-')[1]
+    
+    def get_progenitor_mass(self):
+        """Progenitor mass.
+
+        Returns
+        -------
+        mass : float
+            Progenitor mass, in units of solar mass.
+        """
+        return float(self.split('-')[-1].split('.')[0].strip('s'))
+
+    def get_initialspectra(self,t,E):
+        """Get neutrino spectra/luminosity curves after oscillation.
+
+        Parameters
+        ----------
+        t : float
+            Time to evaluate initial and oscillated spectra.
+        E : float or ndarray
+            Energies to evaluate the initial and oscillated spectra.
+
+        Returns
+        -------
+        initialspectra : dict
+            Dictionary of model spectra, keyed by neutrino flavor."""
+    
+        initialspectra = {}
+        for flavor in Flavor:
+            L = self.luminosity[flavor](t)
+            Ea = self.meanE[flavor](t)          # <E_nu(t)>
+            Ea = Ea*1e6 * 1.60218e-12
+            a = self.pinch[flavor](t)           # alpha_nu(t)
+            E[E==0] = np.finfo(float).eps       # Avoid division by zero.
+
+            # For numerical stability, evaluate log PDF then exponentiate.
+            initialspectra[flavor] = \
+                np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a) 
+                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
+
+        return initialspectra
+
+'''
 # class Fornax2019(SupernovaModel):
     
 #     def __init__(self, filename):
@@ -993,11 +1095,69 @@ class Warren2020(SupernovaModel):
     
 #     def get_progenitor_mass(self):
 #         return float(self.split('-')[-1].split('.')[0].strip('s'))
+
+class OConnor_2013(SupernovaModel):
+       
+    eos = 'LS220'
+    mass = 30
+    def __init__(self, filename, FlavorTransformation):
+        spectra_tuple = get_spectra(mass, eos)
+        self.eos = eos
+        self.luminosity = get_luminosity
+        self.meanE = spectra_list(2)
+        self.luminosity = get_luminosity(mass, eos)
+        self.
+    
+    def get_luminosity(mass, eos):
+        # Open luminosity file.
+        tf = tarfile.open('{}_timeseries.tar.gz'.format(eos))
+    
+        # Extract luminosity data.
+        dataname = 's{:d}_{}_timeseries.dat'.format(mass, eos)
+        datafile = tf.extractfile(dataname)
+        lumdata = ascii.read(datafile, names=['t', 'Le', 'Lae', 'Lx',
+                                              'Ee_avg', 'Eae_avg', 'Ex_avg',
+                                              'Ee_rms', 'Eae_rms', 'Ex_rms'])
+        return lumdata
+    
+    
+    def get_spectra(mass, eos):
+        # Open spectra file.
+        tf = tarfile.open('{}_timeseries_spectra.tar.gz'.format(eos))
+    
+        # Extract luminosity data.
+        dataname = 's{:d}_{}_timeseries_spectra.dat'.format(mass, eos)
+        datafile = tf.extractfile(dataname)
+    
+        t = []
+        E = []
+        spectra = []
+    
+        for line in datafile:
+            tokens = [float(x) for x in line.strip().split()]
+            if len(tokens) == 1:
+                if t:
+                    E = _E
+                    spectra.append(Table([_Fe, _Fae, _Fx],
+                                         names=['Fe', 'Fae', 'Fx'],
+                                         meta={'t' : t[-1]}))
+                t.append(tokens[0])
+                _E, _Fe, _Fae, _Fx = [[] for _ in range(4)]
+            elif len(tokens) == 4:
+                _E.append(tokens[0])
+                _Fe.append(tokens[1])
+                _Fae.append(tokens[2])
+                _Fx.append(tokens[3])
+    
+        spectra.append(Table([_Fe, _Fae, _Fx],
+                             names=['Fe', 'Fae', 'Fx'],
+                             meta={'t' : t[-1]}))
+    
+        return t, E, spectra
 '''
 
 class SNOwGLoBES:
-    """A model that does not inherit from SupernovaModel (yet) and imports a
-    group of SNOwGLoBES files."""
+    """A model that does not inherit from SupernovaModel (yet) and imports a group of SNOwGLoBES files."""
 
     def __init__(self, tarfilename):
         """Initialize model from a tar archive.
@@ -1009,7 +1169,6 @@ class SNOwGLoBES:
         """
         self.tfname = tarfilename
         tf = tarfile.open(self.tfname)
-        logging.debug('Opening {}'.format(tarfilename))
 
         # For now just pull out the "NoOsc" files.
         datafiles = sorted([f.name for f in tf if '.dat' in f.name])
