@@ -19,6 +19,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 from scipy.special import loggamma
 
+import os
 import logging
 import re
 
@@ -132,12 +133,14 @@ class Nakazato_2013(SupernovaModel):
             Flavor transformation object with survival probabilities.
         """
         # Store model metadata.
-        self.EOS = filename.split('-')[1].upper()
-        self.progenitor_mass = float(filename.split('-')[-1].strip('s%.0.fits')) * u.Msun
+        self.progenitor_mass = float(filename.split('-')[-1].strip('s%.fits')) * u.Msun
         self.revival_time = float(filename.split('-')[-2].strip('t_rev%ms')) * u.ms
+        self.metallicity = float(filename.split('-')[-3].strip('z%'))
+        self.EOS = filename.split('-')[-4].upper()
 
         # Read FITS table using astropy reader.
         simtab = Table.read(filename)
+        self.fitsfile = os.path.basename(filename)
 
         # Get grid of model times.
         self.time = simtab['TIME'].to('s')
@@ -148,15 +151,14 @@ class Nakazato_2013(SupernovaModel):
         self.meanE = {}
         self.pinch = {}
 
-        # Store dicts as an interp1d function.
         for flavor in Flavor:
             # Note: file only contains NU_E, NU_E_BAR, and NU_X, so double up
             # the use of NU_X for NU_X_BAR.
             _flav = Flavor.NU_X if flavor == Flavor.NU_X_BAR else flavor
 
-            self.luminosity[flavor] = interp1d(self.get_time(), simtab['L_{}'.format(_flav.name)].to('erg/s'))
-            self.meanE[flavor] = interp1d(self.get_time(), simtab['E_{}'.format(_flav.name)].to('MeV'))
-            self.pinch[flavor] = interp1d(self.get_time(), simtab['ALPHA_{}'.format(_flav.name)])
+            self.luminosity[flavor] = simtab['L_{}'.format(_flav.name)].to('erg/s')
+            self.meanE[flavor] = simtab['E_{}'.format(_flav.name)].to('MeV')
+            self.pinch[flavor] = simtab['ALPHA_{}'.format(_flav.name)]
         self.FT = flavor_xform
 
     def get_time(self):
@@ -174,7 +176,7 @@ class Nakazato_2013(SupernovaModel):
 
         Parameters
         ----------
-        t : float
+        t : float or astropy.units.quantity.Quantity
             Time to evaluate initial and oscillated spectra.
         E : float or ndarray
             Energies to evaluate the initial and oscillated spectra.
@@ -184,12 +186,14 @@ class Nakazato_2013(SupernovaModel):
         initialspectra : dict
             Dictionary of model spectra, keyed by neutrino flavor.
         """
-        initialspectra={}
+        initialspectra = {}
         for flavor in Flavor:
-            L = self.luminosity[flavor](t)
-            Ea = self.meanE[flavor](t)          # <E_nu(t)>
-            Ea = Ea*1e6 * 1.60218e-12
-            a = self.pinch[flavor](t)           # alpha_nu(t)
+            L = np.interp(t, self.time, self.luminosity[flavor])
+
+            # <E_nu(t)>, alpha_nu(t)
+            Ea = np.interp(t, self.time, self.meanE[flavor])
+#            Ea = Ea*1e6 * 1.60218e-12
+            a  = np.interp(t, self.time, self.pinch[flavor])
             E[E==0] = np.finfo(float).eps       # Avoid division by zero.
 
             # For numerical stability, evaluate log PDF and then exponentiate.
@@ -197,6 +201,30 @@ class Nakazato_2013(SupernovaModel):
                 np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a) 
                        - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
         return initialspectra
+
+    def __repr__(self):
+        """Default representation of the model.
+        """
+        mod = 'Nakazato_2013 Model: {}\n'.format(self.fitsfile)
+        s = ['Progenitor mass : {}'.format(self.progenitor_mass),
+             'Metallicity     : {}'.format(self.metallicity),
+             'Revival time    : {}'.format(self.revival_time),
+             'Eq. of state    : {}'.format(self.EOS)
+             ]
+        return mod + '\n'.join(s)
+        
+    def _repr_markdown_(self):
+        """Markdown representation of the model, for Jupyter notebooks.
+        """
+        mod = '**Nakazato_2013 Model**: {}\n\n'.format(self.fitsfile)
+        s = ['|Parameter|Value|',
+             '|:---------|:-----:|',
+             '|Progenitor mass | ${0.value:g}$ {0.unit:latex}|'.format(self.progenitor_mass),
+             '|Metallicity | ${:g}$|'.format(self.metallicity),
+             '|Revival time | ${0.value:g}$ {0.unit:latex}|'.format(self.revival_time),
+             '|EOS | {}|'.format(self.EOS)
+             ]
+        return mod + '\n'.join(s)
 
 
 class Sukhbold_2015(SupernovaModel):
