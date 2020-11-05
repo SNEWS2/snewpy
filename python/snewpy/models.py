@@ -131,7 +131,10 @@ class Nakazato_2013(SupernovaModel):
         flavor_xform : FlavorTransformation
             Flavor transformation object with survival probabilities.
         """
-        self.filename = filename
+        # Store model metadata.
+        self.EOS = filename.split('-')[1].upper()
+        self.progenitor_mass = float(filename.split('-')[-1].strip('s%.0.fits')) * u.Msun
+        self.revival_time = float(filename.split('-')[-2].strip('t_rev%ms')) * u.ms
 
         # Read FITS table using astropy reader.
         simtab = Table.read(filename)
@@ -153,9 +156,9 @@ class Nakazato_2013(SupernovaModel):
 
             self.luminosity[flavor] = interp1d(self.get_time(), simtab['L_{}'.format(_flav.name)].to('erg/s'))
             self.meanE[flavor] = interp1d(self.get_time(), simtab['E_{}'.format(_flav.name)].to('MeV'))
-            self.pinch[flavor] = interp1d(self.get_time(), simtab['ALPHA_{}'.format(_flav.name)]))
+            self.pinch[flavor] = interp1d(self.get_time(), simtab['ALPHA_{}'.format(_flav.name)])
         self.FT = flavor_xform
-        
+
     def get_time(self):
         """Get grid of model times.
 
@@ -166,36 +169,6 @@ class Nakazato_2013(SupernovaModel):
         """
         return self.time
     
-    def get_EOS(self):
-        """Model equation of state.
-
-        Returns
-        -------
-        eos : str
-            Model equation of state.
-        """
-        return self.filename.split('-')[1].upper()
-    
-    def get_progenitor_mass(self):
-        """Progenitor mass.
-
-        Returns
-        -------
-        mass : float
-            Progenitor mass, in units of solar mass.
-        """
-        return float(self.filename.split('-')[-1].strip('s%.0.fits'))
-    
-    def get_revival_time(self):
-        """Revival time of model explosion; specific to the Nakazato models.
-
-        Returns
-        -------
-        time : float
-            Revival time, in ms.
-        """
-        return float(self.filename.split('-')[-2].strip('t_rev%ms'))
-
     def get_initialspectra(self, t, E):
         """Get neutrino spectra/luminosity curves after oscillation.
 
