@@ -44,13 +44,14 @@ def get_closest(arr, x):
     """
     return np.abs(np.asarray(arr) - x).argmin()
 
+
 class Flavor(IntEnum):
     """Enumeration of CCSN Neutrino flavors.
     """
-    nu_e = 2
-    nu_e_bar = 1
-    nu_x = 3
-    nu_x_bar = 0
+    NU_E = 2
+    NU_E_BAR = 1
+    NU_X = 3
+    NU_X_BAR = 0
     
     def to_tex(self):
         """LaTeX-compatible string representations of flavor.
@@ -62,15 +63,15 @@ class Flavor(IntEnum):
 
     @property
     def is_electron(self):
-        return self.value in (Flavor.nu_e.value, Flavor.nu_e_bar.value)
+        return self.value in (Flavor.NU_E.value, Flavor.NU_E_BAR.value)
 
     @property
     def is_neutrino(self):
-        return self.value in (Flavor.nu_e.value, Flavor.nu_x.value)
+        return self.value in (Flavor.NU_E.value, Flavor.NU_X.value)
 
     @property
     def is_antineutrino(self):
-        return self.value in (Flavor.nu_e_bar.value, Flavor.nu_x_bar.value)
+        return self.value in (Flavor.NU_E_BAR.value, Flavor.NU_X_BAR.value)
 
 
 class SupernovaModel(ABC):
@@ -122,18 +123,18 @@ class SupernovaModel(ABC):
         """
         initialspectra = self.get_initialspectra(t, E)
         oscillatedspectra = {}
-        oscillatedspectra[Flavor.nu_e] = \
-            self.FT.pee( t, E ) * initialspectra[Flavor.nu_e] + \
-            self.FT.pex( t, E ) * initialspectra[Flavor.nu_x]
-        oscillatedspectra[Flavor.nu_x] = \
-            self.FT.pxe( t, E ) * initialspectra[Flavor.nu_e] + \
-            self.FT.pxx( t, E ) * initialspectra[Flavor.nu_x] 
-        oscillatedspectra[Flavor.nu_e_bar] = \
-            self.FT.peebar( t, E ) * initialspectra[Flavor.nu_e_bar] + \
-            self.FT.pexbar( t, E ) * initialspectra[Flavor.nu_x_bar]
-        oscillatedspectra[Flavor.nu_x_bar] = \
-            self.FT.pxebar( t, E ) * initialspectra[Flavor.nu_e_bar] + \
-            self.FT.pxxbar( t, E ) * initialspectra[Flavor.nu_x_bar] 
+        oscillatedspectra[Flavor.NU_E] = \
+            self.FT.pee( t, E ) * initialspectra[Flavor.NU_E] + \
+            self.FT.pex( t, E ) * initialspectra[Flavor.NU_X]
+        oscillatedspectra[Flavor.NU_X] = \
+            self.FT.pxe( t, E ) * initialspectra[Flavor.NU_E] + \
+            self.FT.pxx( t, E ) * initialspectra[Flavor.NU_X] 
+        oscillatedspectra[Flavor.NU_E_BAR] = \
+            self.FT.peebar( t, E ) * initialspectra[Flavor.NU_E_BAR] + \
+            self.FT.pexbar( t, E ) * initialspectra[Flavor.NU_X_BAR]
+        oscillatedspectra[Flavor.NU_X_BAR] = \
+            self.FT.pxebar( t, E ) * initialspectra[Flavor.NU_E_BAR] + \
+            self.FT.pxxbar( t, E ) * initialspectra[Flavor.NU_X_BAR] 
 
         return oscillatedspectra    
 
@@ -187,8 +188,8 @@ class Nakazato_2013(SupernovaModel):
         luminosity : ndarray
             Grid of luminosity values (erg/s) for this flavor.
         """
-        if flavor == Flavor.nu_x_bar:
-            flavor = Flavor.nu_x
+        if flavor == Flavor.NU_X_BAR:
+            flavor = Flavor.NU_X
         return self.file['L_{}'.format(flavor.name.upper())]
         
     def get_mean_energy(self, flavor):
@@ -204,8 +205,8 @@ class Nakazato_2013(SupernovaModel):
         energy : ndarray
             Grid of mean energy versus time.
         """
-        if flavor == Flavor.nu_x_bar:
-            flavor = Flavor.nu_x
+        if flavor == Flavor.NU_X_BAR:
+            flavor = Flavor.NU_X
         return self.file['E_{}'.format(flavor.name.upper())]
     
     def get_pinch_param(self, flavor):
@@ -221,8 +222,8 @@ class Nakazato_2013(SupernovaModel):
         alpha : ndarray
             Grid of alpha versus time.
         """
-        if (flavor == Flavor.nu_x_bar):
-            flavor = Flavor.nu_x
+        if (flavor == Flavor.NU_X_BAR):
+            flavor = Flavor.NU_X
         return self.file['ALPHA_{}'.format(flavor.name.upper())]
     
     def get_EOS(self):
@@ -333,8 +334,8 @@ class Sukhbold_2015(SupernovaModel):
         luminosity : ndarray
             Grid of luminosity values (erg/s) for this flavor.
         """
-        if flavor == Flavor.nu_x_bar:
-            flavor = Flavor.nu_x
+        if flavor == Flavor.NU_X_BAR:
+            flavor = Flavor.NU_X
         return self.file['L_{}'.format(flavor.name.upper())]
         
     def get_mean_energy(self, flavor):
@@ -350,8 +351,8 @@ class Sukhbold_2015(SupernovaModel):
         energy : ndarray
             Grid of mean energy versus time.
         """
-        if flavor == Flavor.nu_x_bar:
-            flavor = Flavor.nu_x
+        if flavor == Flavor.NU_X_BAR:
+            flavor = Flavor.NU_X
         return self.file['E_{}'.format(flavor.name.upper())]
     
     def get_pinch_param(self, flavor):
@@ -367,8 +368,8 @@ class Sukhbold_2015(SupernovaModel):
         alpha : ndarray
             Grid of alpha versus time.
         """
-        if (flavor == Flavor.nu_x_bar):
-            flavor = Flavor.nu_x
+        if (flavor == Flavor.NU_X_BAR):
+            flavor = Flavor.NU_X
         return self.file['ALPHA_{}'.format(flavor.name.upper())]
     
     def get_EOS(self):
@@ -482,8 +483,8 @@ class Bollig_2016(SupernovaModel):
         luminosity : ndarray
             Grid of luminosity values (erg/s) for this flavor.
         """
-        if flavor == Flavor.nu_x_bar:
-            flavor = Flavor.nu_x
+        if flavor == Flavor.NU_X_BAR:
+            flavor = Flavor.NU_X
         return self.file['L_{}'.format(flavor.name.upper())]
 
     def get_mean_energy(self, flavor):
@@ -499,8 +500,8 @@ class Bollig_2016(SupernovaModel):
         energy : ndarray
             Grid of mean energy versus time.
         """
-        if flavor == Flavor.nu_x_bar:
-            flavor = Flavor.nu_x
+        if flavor == Flavor.NU_X_BAR:
+            flavor = Flavor.NU_X
         return self.file['E_{}'.format(flavor.name.upper())]
 
     def get_meansq_energy(self, flavor):
@@ -516,8 +517,8 @@ class Bollig_2016(SupernovaModel):
         energy : ndarray
             Grid of mean squared energy versus time.
         """
-        if flavor == Flavor.nu_x_bar:
-            flavor = Flavor.nu_x
+        if flavor == Flavor.NU_X_BAR:
+            flavor = Flavor.NU_X
         return self.file['MS_{}'.format(flavor.name.upper())]
 
     def get_pinch_param(self, flavor):
@@ -533,8 +534,8 @@ class Bollig_2016(SupernovaModel):
         alpha : ndarray
             Grid of alpha versus time.
         """
-        if (flavor == Flavor.nu_x_bar):
-            flavor = Flavor.nu_x
+        if (flavor == Flavor.NU_X_BAR):
+            flavor = Flavor.NU_X
         return self.file['ALPHA_{}'.format(flavor.name.upper())]
 
     def get_EOS(self):
@@ -644,8 +645,8 @@ class OConnor_2015(SupernovaModel):
         luminosity : ndarray
             Grid of luminosity values (erg/s) for this flavor.
         """
-        if flavor == Flavor.nu_x_bar:
-            flavor = Flavor.nu_x
+        if flavor == Flavor.NU_X_BAR:
+            flavor = Flavor.NU_X
         return self.file['L_{}'.format(flavor.name.upper())]
 
     def get_mean_energy(self, flavor):
@@ -661,8 +662,8 @@ class OConnor_2015(SupernovaModel):
         energy : ndarray
             Grid of mean energy versus time.
         """
-        if flavor == Flavor.nu_x_bar:
-            flavor = Flavor.nu_x
+        if flavor == Flavor.NU_X_BAR:
+            flavor = Flavor.NU_X
         return self.file['E_{}'.format(flavor.name.upper())]
 
     def get_rootmeansq_energy(self, flavor):
@@ -678,8 +679,8 @@ class OConnor_2015(SupernovaModel):
         energy : ndarray
             Grid of mean squared energy versus time.
         """
-        if flavor == Flavor.nu_x_bar:
-            flavor = Flavor.nu_x
+        if flavor == Flavor.NU_X_BAR:
+            flavor = Flavor.NU_X
         return self.file['RMS_{}'.format(flavor.name.upper())]
 
     def get_pinch_param(self, flavor):
@@ -695,8 +696,8 @@ class OConnor_2015(SupernovaModel):
         alpha : ndarray
             Grid of alpha versus time.
         """
-        if (flavor == Flavor.nu_x_bar):
-            flavor = Flavor.nu_x
+        if (flavor == Flavor.NU_X_BAR):
+            flavor = Flavor.NU_X
         return self.file['ALPHA_{}'.format(flavor.name.upper())]
 
     def get_EOS(self):
@@ -823,8 +824,8 @@ class Warren_2020(SupernovaModel):
         luminosity : ndarray
             Grid of luminosity values (erg/s) for this flavor.
         """
-        if flavor == Flavor.nu_x_bar:
-            flavor = Flavor.nu_x
+        if flavor == Flavor.NU_X_BAR:
+            flavor = Flavor.NU_X
         return self.file['L_{}'.format(flavor.name.upper())]
 
     def get_mean_energy(self, flavor):
@@ -840,8 +841,8 @@ class Warren_2020(SupernovaModel):
         energy : ndarray
             Grid of mean energy versus time.
         """
-        if flavor == Flavor.nu_x_bar:
-            flavor = Flavor.nu_x
+        if flavor == Flavor.NU_X_BAR:
+            flavor = Flavor.NU_X
         return self.file['E_{}'.format(flavor.name.upper())]
 
     def get_rootmeansq_energy(self, flavor):
@@ -857,8 +858,8 @@ class Warren_2020(SupernovaModel):
         energy : ndarray
             Grid of mean squared energy versus time.
         """
-        if flavor == Flavor.nu_x_bar:
-            flavor = Flavor.nu_x
+        if flavor == Flavor.NU_X_BAR:
+            flavor = Flavor.NU_X
         return self.file['RMS_{}'.format(flavor.name.upper())]
 
     def get_pinch_param(self, flavor):
@@ -874,8 +875,8 @@ class Warren_2020(SupernovaModel):
         alpha : ndarray
             Grid of alpha versus time.
         """
-        if (flavor == Flavor.nu_x_bar):
-            flavor = Flavor.nu_x
+        if (flavor == Flavor.NU_X_BAR):
+            flavor = Flavor.NU_X
         return self.file['ALPHA_{}'.format(flavor.name.upper())]
 
     def get_EOS(self):
@@ -977,8 +978,8 @@ class Janka(SupernovaModel):
         luminosity : ndarray
             Grid of luminosity values (erg/s) for this flavor.
         """
-        if flavor == Flavor.nu_x_bar:
-            flavor = Flavor.nu_x
+        if flavor == Flavor.NU_X_BAR:
+            flavor = Flavor.NU_X
         return self.file['L_{}'.format(flavor.name.upper())]
         
     def get_mean_energy(self, flavor):
@@ -994,8 +995,8 @@ class Janka(SupernovaModel):
         energy : ndarray
             Grid of mean energy versus time.
         """
-        if flavor == Flavor.nu_x_bar:
-            flavor = Flavor.nu_x
+        if flavor == Flavor.NU_X_BAR:
+            flavor = Flavor.NU_X
         return self.file['E_{}'.format(flavor.name.upper())]
     
     def get_pinch_param(self, flavor):
@@ -1011,8 +1012,8 @@ class Janka(SupernovaModel):
         alpha : ndarray
             Grid of alpha versus time.
         """
-        if (flavor == Flavor.nu_x_bar):
-            flavor = Flavor.nu_x
+        if (flavor == Flavor.NU_X_BAR):
+            flavor = Flavor.NU_X
         return self.file['ALPHA_{}'.format(flavor.name.upper())]
     
     def get_EOS(self):
@@ -1076,18 +1077,18 @@ class Janka(SupernovaModel):
 #         return self.file['TIME']
     
 #     def get_luminosity(self, flavor):
-#         if flavor == Flavor.nu_x_bar:
-#             flavor = Flavor.nu_x
+#         if flavor == Flavor.NU_X_BAR:
+#             flavor = Flavor.NU_X
 #         return self.file['L_{}'.format(flavor.name.upper())]
         
 #     def get_mean_energy(self, flavor):
-#         if flavor == Flavor.nu_x_bar:
-#             flavor = Flavor.nu_x
+#         if flavor == Flavor.NU_X_BAR:
+#             flavor = Flavor.NU_X
 #         return self.file['E_{}'.format(flavor.name.upper())]
     
 #     def get_pinch_param(self, flavor):
-#         if (flavor == Flavor.nu_x_bar):
-#             flavor = Flavor.nu_x
+#         if (flavor == Flavor.NU_X_BAR):
+#             flavor = Flavor.NU_X
 #         return self.file['ALPHA_{}'.format(flavor.name.upper())]
     
 #     def get_EOS(self):
