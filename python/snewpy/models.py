@@ -260,15 +260,27 @@ class Sukhbold_2015(SupernovaModel):
         filename : str
             Absolute or relative path to FITS file with model data.
         """
-        self.file = Table.read(filename)
-        self.filename = filename
+        # Store model metadata.
+        self.progenitor_mass = float(filename.split('-')[-1].strip('z%.fits')) * u.Msun
+        self.EOS = filename.split('-')[-2]
+
+        # Read FITS table using the astropy unified Table reader.
+        simtab = Table.read(filename)
+        self.fitsfile = os.path.basename(filename)
+
+        # Get grid of model times.
+        self.time = simtab['TIME'].to('s')
+
+        # Set up dictionary of luminosity, mean energy, and shape parameter,
+        # keyed by neutrino flavor (NU_E, NU_X, NU_E_BAR, NU_X_BAR).
         self.luminosity = {}
         self.meanE = {}
         self.pinch = {}
+
         for flavor in Flavor:
-            self.luminosity[flavor] = interp1d(self.get_time(), self.get_luminosity(flavor))
-            self.meanE[flavor] = interp1d(self.get_time(), self.get_mean_energy(flavor))
-            self.pinch[flavor] = interp1d(self.get_time(), self.get_pinch_param(flavor))
+            self.luminosity[flavor] = simtab['L_{}'.format(flavor.name)].to('erg/s')
+            self.meanE[flavor] = simtab['E_{}'.format(flavor.name)].to('MeV')
+            self.pinch[flavor] = simtab['ALPHA_{}'.format(flavor.name)]
             
     def get_time(self):
         """Get grid of model times.
@@ -278,88 +290,17 @@ class Sukhbold_2015(SupernovaModel):
         time : ndarray
             Grid of times used in the model.
         """
-        return self.file['TIME']
+        return self.time
     
-    def get_luminosity(self, flavor):
-        """Get model luminosity L_nu.
-
-        Parameters
-        ----------
-        flavor : Flavor
-            Neutrino flavor type.
-
-        Returns
-        -------
-        luminosity : ndarray
-            Grid of luminosity values (erg/s) for this flavor.
-        """
-        if flavor == Flavor.NU_X_BAR:
-            flavor = Flavor.NU_X
-        return self.file['L_{}'.format(flavor.name.upper())]
-        
-    def get_mean_energy(self, flavor):
-        """Get model mean energy <E_nu>.
-
-        Parameters
-        ----------
-        flavor : Flavor
-            Neutrino flavor type.
-
-        Returns
-        -------
-        energy : ndarray
-            Grid of mean energy versus time.
-        """
-        if flavor == Flavor.NU_X_BAR:
-            flavor = Flavor.NU_X
-        return self.file['E_{}'.format(flavor.name.upper())]
-    
-    def get_pinch_param(self, flavor):
-        """Get spectral pinch parameter alpha(t).
-
-        Parameters
-        ----------
-        flavor : Flavor
-            Neutrino flavor type.
-
-        Returns
-        -------
-        alpha : ndarray
-            Grid of alpha versus time.
-        """
-        if (flavor == Flavor.NU_X_BAR):
-            flavor = Flavor.NU_X
-        return self.file['ALPHA_{}'.format(flavor.name.upper())]
-    
-    def get_EOS(self):
-        """Model equation of state.
-
-        Returns
-        -------
-        eos : str
-            Model equation of state.
-        """
-        return self.filename.split('-')[1]
-    
-    def get_progenitor_mass(self):
-        """Progenitor mass.
-
-        Returns
-        -------
-        mass : float
-            Progenitor mass, in units of solar mass.
-        """
-        return float(self.split('-')[-1].split('.')[0].strip('s'))
-
     def get_initialspectra(self,t,E):
         """Get neutrino spectra/luminosity curves after oscillation.
 
         Parameters
         ----------
-        t : float
-            Time to evaluate initial and oscillated spectra.
-        E : float or ndarray
-            Energies to evaluate the initial and oscillated spectra.
+        t : astropy.Quantity
+            Time to evaluate initial spectra.
+        E : astropy.Quantity or ndarray
+            Energies to evaluate the initial spectra.
 
         Returns
         -------
@@ -367,12 +308,21 @@ class Sukhbold_2015(SupernovaModel):
             Dictionary of model spectra, keyed by neutrino flavor.
         """
         initialspectra = {}
+
+        # Avoid division by zero in energy PDF below.
+        E[E==0] = np.finfo(float).eps * E.unit
+
+        # Estimate L(t), <E_nu(t)>, and alpha(t). Express all energies in erg.
+        E = E.to('erg').value
+
+        # Make sure input time uses the same units as the global time grid or
+        # the interpolation will not work properly.
+        t = t.to(self.time.unit)
+
         for flavor in Flavor:
-            L = self.luminosity[flavor](t)
-            Ea = self.meanE[flavor](t)          # <E_nu(t)>
-            Ea = Ea*1e6 * 1.60218e-12
-            a = self.pinch[flavor](t)           # alpha_nu(t)
-            E[E==0] = np.finfo(float).eps       # Avoid division by zero.
+            L  = np.interp(t, self.time, self.luminosity[flavor].to('erg/s'))
+            Ea = np.interp(t, self.time, self.meanE[flavor].to('erg'))
+            a  = np.interp(t, self.time, self.pinch[flavor])
 
             # For numerical stability, evaluate log PDF then exponentiate.
             initialspectra[flavor] = \
@@ -380,6 +330,26 @@ class Sukhbold_2015(SupernovaModel):
                        - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
 
         return initialspectra
+
+    def __repr__(self):
+        """Default representation of the model.
+        """
+        mod = 'Sukhbold_2015 Model: {}\n'.format(self.fitsfile)
+        s = ['Progenitor mass : {}'.format(self.progenitor_mass),
+             'Eq. of state    : {}'.format(self.EOS)
+             ]
+        return mod + '\n'.join(s)
+
+    def _repr_markdown_(self):
+        """Markdown representation of the model, for Jupyter notebooks.
+        """
+        mod = '**Sukhbold_2015 Model**: {}\n\n'.format(self.fitsfile)
+        s = ['|Parameter|Value|',
+             '|:---------|:-----:|',
+             '|Progenitor mass | ${0.value:g}$ {0.unit:latex}|'.format(self.progenitor_mass),
+             '|EOS | {}|'.format(self.EOS)
+             ]
+        return mod + '\n'.join(s)
 
 
 class Bollig_2016(SupernovaModel):
