@@ -921,96 +921,96 @@ class Janka(SupernovaModel):
 
         return initialspectra
 
-'''
+
 # class Fornax2019(SupernovaModel):
-    
+#     
 #     def __init__(self, filename):
 #         self.file = Table.read(filename)
 #         self.filename = filename
-        
+#         
 #     def get_time(self):
 #         return self.file['TIME']
-    
+#     
 #     def get_luminosity(self, flavor):
 #         if flavor == Flavor.NU_X_BAR:
 #             flavor = Flavor.NU_X
 #         return self.file['L_{}'.format(flavor.name.upper())]
-        
+#         
 #     def get_mean_energy(self, flavor):
 #         if flavor == Flavor.NU_X_BAR:
 #             flavor = Flavor.NU_X
 #         return self.file['E_{}'.format(flavor.name.upper())]
-    
+#     
 #     def get_pinch_param(self, flavor):
 #         if (flavor == Flavor.NU_X_BAR):
 #             flavor = Flavor.NU_X
 #         return self.file['ALPHA_{}'.format(flavor.name.upper())]
-    
+#     
 #     def get_EOS(self):
 #         return self.filename.split('-')[1]
-    
+#     
 #     def get_progenitor_mass(self):
 #         return float(self.split('-')[-1].split('.')[0].strip('s'))
+# 
+# class OConnor_2013(SupernovaModel):
+#        
+#     eos = 'LS220'
+#     mass = 30
+#     def __init__(self, filename, FlavorTransformation):
+#         spectra_tuple = get_spectra(mass, eos)
+#         self.eos = eos
+#         self.luminosity = get_luminosity
+#         self.meanE = spectra_list(2)
+#         self.luminosity = get_luminosity(mass, eos)
+#         self.
+#     
+#     def get_luminosity(mass, eos):
+#         # Open luminosity file.
+#         tf = tarfile.open('{}_timeseries.tar.gz'.format(eos))
+#     
+#         # Extract luminosity data.
+#         dataname = 's{:d}_{}_timeseries.dat'.format(mass, eos)
+#         datafile = tf.extractfile(dataname)
+#         lumdata = ascii.read(datafile, names=['t', 'Le', 'Lae', 'Lx',
+#                                               'Ee_avg', 'Eae_avg', 'Ex_avg',
+#                                               'Ee_rms', 'Eae_rms', 'Ex_rms'])
+#         return lumdata
+#     
+#     
+#     def get_spectra(mass, eos):
+#         # Open spectra file.
+#         tf = tarfile.open('{}_timeseries_spectra.tar.gz'.format(eos))
+#     
+#         # Extract luminosity data.
+#         dataname = 's{:d}_{}_timeseries_spectra.dat'.format(mass, eos)
+#         datafile = tf.extractfile(dataname)
+#     
+#         t = []
+#         E = []
+#         spectra = []
+#     
+#         for line in datafile:
+#             tokens = [float(x) for x in line.strip().split()]
+#             if len(tokens) == 1:
+#                 if t:
+#                     E = _E
+#                     spectra.append(Table([_Fe, _Fae, _Fx],
+#                                          names=['Fe', 'Fae', 'Fx'],
+#                                          meta={'t' : t[-1]}))
+#                 t.append(tokens[0])
+#                 _E, _Fe, _Fae, _Fx = [[] for _ in range(4)]
+#             elif len(tokens) == 4:
+#                 _E.append(tokens[0])
+#                 _Fe.append(tokens[1])
+#                 _Fae.append(tokens[2])
+#                 _Fx.append(tokens[3])
+#     
+#         spectra.append(Table([_Fe, _Fae, _Fx],
+#                              names=['Fe', 'Fae', 'Fx'],
+#                              meta={'t' : t[-1]}))
+#     
+#         return t, E, spectra
 
-class OConnor_2013(SupernovaModel):
-       
-    eos = 'LS220'
-    mass = 30
-    def __init__(self, filename, FlavorTransformation):
-        spectra_tuple = get_spectra(mass, eos)
-        self.eos = eos
-        self.luminosity = get_luminosity
-        self.meanE = spectra_list(2)
-        self.luminosity = get_luminosity(mass, eos)
-        self.
-    
-    def get_luminosity(mass, eos):
-        # Open luminosity file.
-        tf = tarfile.open('{}_timeseries.tar.gz'.format(eos))
-    
-        # Extract luminosity data.
-        dataname = 's{:d}_{}_timeseries.dat'.format(mass, eos)
-        datafile = tf.extractfile(dataname)
-        lumdata = ascii.read(datafile, names=['t', 'Le', 'Lae', 'Lx',
-                                              'Ee_avg', 'Eae_avg', 'Ex_avg',
-                                              'Ee_rms', 'Eae_rms', 'Ex_rms'])
-        return lumdata
-    
-    
-    def get_spectra(mass, eos):
-        # Open spectra file.
-        tf = tarfile.open('{}_timeseries_spectra.tar.gz'.format(eos))
-    
-        # Extract luminosity data.
-        dataname = 's{:d}_{}_timeseries_spectra.dat'.format(mass, eos)
-        datafile = tf.extractfile(dataname)
-    
-        t = []
-        E = []
-        spectra = []
-    
-        for line in datafile:
-            tokens = [float(x) for x in line.strip().split()]
-            if len(tokens) == 1:
-                if t:
-                    E = _E
-                    spectra.append(Table([_Fe, _Fae, _Fx],
-                                         names=['Fe', 'Fae', 'Fx'],
-                                         meta={'t' : t[-1]}))
-                t.append(tokens[0])
-                _E, _Fe, _Fae, _Fx = [[] for _ in range(4)]
-            elif len(tokens) == 4:
-                _E.append(tokens[0])
-                _Fe.append(tokens[1])
-                _Fae.append(tokens[2])
-                _Fx.append(tokens[3])
-    
-        spectra.append(Table([_Fe, _Fae, _Fx],
-                             names=['Fe', 'Fae', 'Fx'],
-                             meta={'t' : t[-1]}))
-    
-        return t, E, spectra
-'''
 
 class SNOwGLoBES:
     """A model that does not inherit from SupernovaModel (yet) and imports a group of SNOwGLoBES files."""
