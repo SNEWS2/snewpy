@@ -353,40 +353,71 @@ class Sukhbold_2015(SupernovaModel):
 
 
 class Bollig_2016(SupernovaModel):
-    """Set up a model based on simulations from Bollig et al. (2016). Models were taken, with permission from the Garching Supernova Archive
+    """Set up a model based on simulations from Bollig et al. (2016). Models were taken, with permission, from the Garching Supernova Archive.
     """
-    def __init__(self, filename, FlavorTransformation, eos="LS220"):
+    def __init__(self, filename, eos='LS220'):
         """Initialize model.
 
         Parameters
         ----------
         filename : str
-            Absolute or relative path to file prefix, we add nue/nuebar/nux
+            Absolute or relative path to file prefix, we add nue/nuebar/nux.
         eos : string
-            Equation of state used in simulation
+            Equation of state used in simulation.
         """
-        nue = Table.read(filename+"_"+eos+"_nue",names=["TIME","L_NU_E","E_NU_E","MS_NU_E"],format='ascii')
-        nue['ALPHA_NU_E'] = (2.0*nue['E_NU_E']**2 - nue['MS_NU_E'])/(nue['MS_NU_E'] - nue['E_NU_E']**2)
-        nue["L_NU_E"] *= 1e51
-        nuebar = Table.read(filename+"_"+eos+"_nuebar",names=["TIME","L_NU_E_BAR","E_NU_E_BAR","MS_NU_E_BAR"],format='ascii')
-        nuebar['ALPHA_NU_E_BAR'] = (2.0*nuebar['E_NU_E_BAR']**2 - nuebar['MS_NU_E_BAR'])/(nuebar['MS_NU_E_BAR'] - nuebar['E_NU_E_BAR']**2)
-        nuebar["L_NU_E_BAR"] *= 1e51
-        nux = Table.read(filename+"_"+eos+"_nux",names=["TIME","L_NU_X","E_NU_X","MS_NU_X"],format='ascii')
-        nux['ALPHA_NU_X'] = (2.0*nux['E_NU_X']**2 - nux['MS_NU_X'])/(nux['MS_NU_X'] - nux['E_NU_X']**2)
-        nux["L_NU_X"] *= 1e51
-        tmptable = join(nuebar,nux,keys="TIME",join_type="left")
-        self.file = join(nue,tmptable,keys="TIME",join_type="left")
-        self.filename = filename
-        self.shortname = "Bollig2016_"+filename.split('/')[-1]
-        self.eos = eos
-        self.luminosity={}
-        self.meanE={}
-        self.pinch={}
+        self.time = {}
+        self.luminosity = {}
+        self.meanE = {}
+        self.pinch = {}
+
+        # Store model metadata.
+        self.filename = os.path.basename(filename)
+        self.EOS = eos
+        self.progenitor_mass = float(self.filename.strip('s%c')) * u.Msun
+
+        # Read through the several ASCII files for the chosen simulation and
+        # merge the data into one giant table.
+        mergtab = None
         for flavor in Flavor:
-            self.luminosity[flavor] = interp1d( self.get_time() , self.get_luminosity(flavor) )
-            self.meanE[flavor] = interp1d( self.get_time() , self.get_mean_energy(flavor) )
-            self.pinch[flavor] = interp1d( self.get_time() , self.get_pinch_param(flavor) )
-        self.FT=FlavorTransformation
+            _flav = Flavor.NU_X if flavor == Flavor.NU_X_BAR else flavor
+            _sfx = _flav.name.replace('_', '').lower()
+            _filename = '{}_{}_{}'.format(filename, eos, _sfx)
+            _lname  = 'L_{}'.format(flavor.name)
+            _ename  = 'E_{}'.format(flavor.name)
+            _e2name = 'E2_{}'.format(flavor.name)
+            _aname  = 'ALPHA_{}'.format(flavor.name)
+
+            simtab = Table.read(_filename,
+                                names=['TIME', _lname, _ename, _e2name],
+                                format='ascii')
+            simtab['TIME'].unit = 's'
+            simtab[_lname].unit = '1e51 erg/s'
+            simtab[_aname] = (2*simtab[_ename]**2 - simtab[_e2name]) / (simtab[_e2name] - simtab[_ename]**2)
+            simtab[_ename].unit = 'MeV'
+            del simtab[_e2name]
+
+            if mergtab is None:
+                mergtab = simtab
+            else:
+                mergtab = join(mergtab, simtab, keys='TIME', join_type='left')
+                mergtab[_lname].fill_value = 0.
+                mergtab[_ename].fill_value = 0.
+                mergtab[_aname].fill_value = 0.
+        simtab = mergtab.filled()
+
+        self.time = simtab['TIME'].to('s')
+
+        for flavor in Flavor:
+            # Set the dictionary of luminosity, mean energy, and shape
+            # parameter keyed by NU_E, NU_X, NU_E_BAR, NU_X_BAR.
+            _lname  = 'L_{}'.format(flavor.name)
+            self.luminosity[flavor] = simtab[_lname].to('erg/s')
+
+            _ename  = 'E_{}'.format(flavor.name)
+            self.meanE[flavor] = simtab[_ename].to('MeV')
+
+            _aname  = 'ALPHA_{}'.format(flavor.name)
+            self.pinch[flavor] = simtab[_aname]
 
     def get_time(self):
         """Get grid of model times.
@@ -396,95 +427,7 @@ class Bollig_2016(SupernovaModel):
         time : ndarray
             Grid of times used in the model.
         """
-        return self.file['TIME']
-
-    def get_luminosity(self, flavor):
-        """Get model luminosity L_nu.
-
-        Parameters
-        ----------
-        flavor : Flavor
-            Neutrino flavor type.
-
-        Returns
-        -------
-        luminosity : ndarray
-            Grid of luminosity values (erg/s) for this flavor.
-        """
-        if flavor == Flavor.NU_X_BAR:
-            flavor = Flavor.NU_X
-        return self.file['L_{}'.format(flavor.name.upper())]
-
-    def get_mean_energy(self, flavor):
-        """Get model mean energy <E_nu>.
-
-        Parameters
-        ----------
-        flavor : Flavor
-            Neutrino flavor type.
-
-        Returns
-        -------
-        energy : ndarray
-            Grid of mean energy versus time.
-        """
-        if flavor == Flavor.NU_X_BAR:
-            flavor = Flavor.NU_X
-        return self.file['E_{}'.format(flavor.name.upper())]
-
-    def get_meansq_energy(self, flavor):
-        """Get model mean squared energy <E_nu^2>.
-
-        Parameters
-        ----------
-        flavor : Flavor
-            Neutrino flavor type.
-
-        Returns
-        -------
-        energy : ndarray
-            Grid of mean squared energy versus time.
-        """
-        if flavor == Flavor.NU_X_BAR:
-            flavor = Flavor.NU_X
-        return self.file['MS_{}'.format(flavor.name.upper())]
-
-    def get_pinch_param(self, flavor):
-        """Get spectral pinch parameter alpha(t).
-
-        Parameters
-        ----------
-        flavor : Flavor
-            Neutrino flavor type.
-
-        Returns
-        -------
-        alpha : ndarray
-            Grid of alpha versus time.
-        """
-        if (flavor == Flavor.NU_X_BAR):
-            flavor = Flavor.NU_X
-        return self.file['ALPHA_{}'.format(flavor.name.upper())]
-
-    def get_EOS(self):
-        """Model equation of state.
-
-        Returns
-        -------
-        eos : str
-            Model equation of state.
-        """
-        return self.eos
-
-    def get_progenitor_mass(self):
-        """Progenitor mass.
-
-        Returns
-        -------
-        mass : float
-            Progenitor mass, in units of solar mass. This strips other model information, use filename for full model
-        """
-        return re.sub("[^0123456789\.]","",filename)
+        return self.time
 
     def get_initialspectra(self,t,E):
         """Get neutrino spectra/luminosity curves before oscillation.
@@ -492,9 +435,9 @@ class Bollig_2016(SupernovaModel):
         Parameters
         ----------
         t : float
-            Time to evaluate initial and oscillated spectra.
+            Time to evaluate initial spectra.
         E : float or ndarray
-            Energies to evaluate the initial and oscillated spectra.
+            Energies to evaluate the initial spectra.
 
         Returns
         -------
@@ -502,20 +445,50 @@ class Bollig_2016(SupernovaModel):
             Dictionary of model spectra, keyed by neutrino flavor.
         """
         initialspectra = {}
-        for flavor in Flavor:
-            L = self.luminosity[flavor](t)
-           
-            Ea = self.meanE[flavor](t)          # <E_nu(t)>
-            Ea = Ea*1e6 * 1.60218e-12
-            a = self.pinch[flavor](t)           # alpha_nu(t)
-            E[E==0] = np.finfo(float).eps       # Avoid division by zero.
 
-            # For numerical stability, evaluate log PDF then exponentiate.
+        # Avoid division by zero in energy PDF below.
+        E[E==0] = np.finfo(float).eps * E.unit
+
+        # Estimate L(t), <E_nu(t)> and alpha(t). Express all energies in erg.
+        E = E.to('erg').value
+
+        # Make sure input time uses the same units as the model time grid, or
+        # the interpolation will not work correctly.
+        t = t.to(self.time.unit)
+
+        for flavor in Flavor:
+            # Use np.interp rather than scipy.interpolate.interp1d because it
+            # can handle dimensional units (astropy.Quantity).
+            L  = np.interp(t, self.time, self.luminosity[flavor].to('erg/s'))
+            Ea = np.interp(t, self.time, self.meanE[flavor].to('erg'))
+            a  = np.interp(t, self.time, self.pinch[flavor])
+
+            # For numerical stability, evaluate log PDF and then exponentiate.
             initialspectra[flavor] = \
                 np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a)
                        - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
 
         return initialspectra
+
+    def __repr__(self):
+        """Default representation of the model.
+        """
+        mod = 'Bollig_2016 Model: {}\n'.format(self.filename)
+        s = ['Progenitor mass : {}'.format(self.progenitor_mass),
+             'Eq. of state    : {}'.format(self.EOS)
+             ]
+        return mod + '\n'.join(s)
+
+    def _repr_markdown_(self):
+        """Markdown representation of the model, for Jupyter notebooks.
+        """
+        mod = '**Bollig_2016 Model**: {}\n\n'.format(self.filename)
+        s = ['|Parameter|Value|',
+             '|:---------|:-----:|',
+             '|Progenitor mass | ${0.value:g}$ {0.unit:latex}|'.format(self.progenitor_mass),
+             '|EOS | {}|'.format(self.EOS)
+             ]
+        return mod + '\n'.join(s)
 
 
 class OConnor_2015(SupernovaModel):
