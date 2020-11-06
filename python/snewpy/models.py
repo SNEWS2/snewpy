@@ -514,7 +514,7 @@ class OConnor_2015(SupernovaModel):
         simtab['ALPHA_NU_E_BAR'] = (2.0*simtab['E_NU_E_BAR']**2 - simtab['RMS_NU_E_BAR']**2)/(simtab['RMS_NU_E_BAR']**2 - simtab['E_NU_E_BAR']**2)
         simtab['ALPHA_NU_X'] = (2.0*simtab['E_NU_X']**2 - simtab['RMS_NU_X']**2)/(simtab['RMS_NU_X']**2 - simtab['E_NU_X']**2)
 
-		# SYB: double-check on this factor of 4. Should be factor of 2?
+        # SYB: double-check on this factor of 4. Should be factor of 2?
         simtab['L_NU_X'] /= 4.0
 
         self.filename = 'OConnor2015_s40WH07_LS220'
@@ -612,7 +612,7 @@ class OConnor_2015(SupernovaModel):
 
 
 class Warren_2020(SupernovaModel):
-    "Set up a model based on simulations from Warren et al. (2020)"
+    """Set up a model based on simulations from Warren et al. (2020)."""
 
     def __init__(self, filename, eos='LS220'):
         """Initialize model.
@@ -624,40 +624,53 @@ class Warren_2020(SupernovaModel):
         eos : string
             Equation of state used in simulation
         """
+        # Read data from HDF5 files, then store.
         f = h5py.File(filename, 'r')
-        table = Table()
+        simtab = Table()
 
         for i in range(len(f['nue_data']['lum'])):
             if f['sim_data']['shock_radius'][i][1] > 0.00001:
                 bounce = f['sim_data']['shock_radius'][i][0]
                 break
 
-        table['TIME'] = f['nue_data']['lum'][:, 0] - bounce
-        table['L_NU_E'] = f['nue_data']['lum'][:, 1] * 1e51
-        table['L_NU_E_BAR'] = f['nuae_data']['lum'][:, 1] * 1e51
-        table['L_NU_X'] = f['nux_data']['lum'][:, 1] * 1e51 / 4.0
-        table['E_NU_E'] = f['nue_data']['avg_energy'][:, 1]
-        table['E_NU_E_BAR'] = f['nuae_data']['avg_energy'][:, 1]
-        table['E_NU_X'] = f['nux_data']['avg_energy'][:, 1]
-        table['RMS_NU_E'] = f['nue_data']['rms_energy'][:, 1]
-        table['RMS_NU_E_BAR'] = f['nuae_data']['rms_energy'][:, 1]
-        table['RMS_NU_X'] = f['nux_data']['rms_energy'][:, 1]
-        table['ALPHA_NU_E'] = (2.0 * table['E_NU_E'] ** 2 - table['RMS_NU_E'] ** 2) / (
-                    table['RMS_NU_E'] ** 2 - table['E_NU_E'] ** 2)
-        table['ALPHA_NU_E_BAR'] = (2.0 * table['E_NU_E_BAR'] ** 2 - table['RMS_NU_E_BAR'] ** 2) / (
-                    table['RMS_NU_E_BAR'] ** 2 - table['E_NU_E_BAR'] ** 2)
-        table['ALPHA_NU_X'] = (2.0 * table['E_NU_X'] ** 2 - table['RMS_NU_X'] ** 2) / (
-                    table['RMS_NU_X'] ** 2 - table['E_NU_X'] ** 2)
-        self.file = table
-        self.filename = filename
-        self.eos = eos
+        simtab['TIME'] = f['nue_data']['lum'][:, 0] - bounce
+        simtab['L_NU_E'] = f['nue_data']['lum'][:, 1] * 1e51
+        simtab['L_NU_E_BAR'] = f['nuae_data']['lum'][:, 1] * 1e51
+        simtab['L_NU_X'] = f['nux_data']['lum'][:, 1] * 1e51 / 4.0
+        simtab['E_NU_E'] = f['nue_data']['avg_energy'][:, 1]
+        simtab['E_NU_E_BAR'] = f['nuae_data']['avg_energy'][:, 1]
+        simtab['E_NU_X'] = f['nux_data']['avg_energy'][:, 1]
+        simtab['RMS_NU_E'] = f['nue_data']['rms_energy'][:, 1]
+        simtab['RMS_NU_E_BAR'] = f['nuae_data']['rms_energy'][:, 1]
+        simtab['RMS_NU_X'] = f['nux_data']['rms_energy'][:, 1]
+
+        simtab['ALPHA_NU_E'] = (2.0 * simtab['E_NU_E'] ** 2 - simtab['RMS_NU_E'] ** 2) / (simtab['RMS_NU_E'] ** 2 - simtab['E_NU_E'] ** 2)
+        simtab['ALPHA_NU_E_BAR'] = (2.0 * simtab['E_NU_E_BAR'] ** 2 - simtab['RMS_NU_E_BAR'] ** 2) / (simtab['RMS_NU_E_BAR'] ** 2 - simtab['E_NU_E_BAR'] ** 2)
+        simtab['ALPHA_NU_X'] = (2.0 * simtab['E_NU_X'] ** 2 - simtab['RMS_NU_X'] ** 2) / (simtab['RMS_NU_X'] ** 2 - simtab['E_NU_X'] ** 2)
+
+        # Set model metadata.
+        self.filename = os.path.basename(filename)
+        self.EOS = eos
+        self.progenitor_mass = float(filename.split('_')[-1].strip('m%.h5')) * u.Msun
+        self.turbmixing_param = float(filename.split('_')[-2].strip('a%'))
+
+        # Get grid of model times.
+        self.time = simtab['TIME'] * u.s
+
+        # Set up dictionary of luminosity, mean energy and shape parameter
+        # alpha, keyed by neutrino flavor (NU_E, NU_X, NU_E_BAR, NU_X_BAR).
         self.luminosity = {}
         self.meanE = {}
         self.pinch = {}
+
         for flavor in Flavor:
-            self.luminosity[flavor] = interp1d(self.get_time(), self.get_luminosity(flavor))
-            self.meanE[flavor] = interp1d(self.get_time(), self.get_mean_energy(flavor))
-            self.pinch[flavor] = interp1d(self.get_time(), self.get_pinch_param(flavor))
+            # Note: file only contains NU_E, NU_E_BAR, and NU_X, so double up
+            # the use of NU_X for NU_X_BAR.
+            _flav = Flavor.NU_X if flavor == Flavor.NU_X_BAR else flavor
+
+            self.luminosity[flavor] = simtab['L_{}'.format(_flav.name)] * u.erg/u.s
+            self.meanE[flavor] = simtab['E_{}'.format(_flav.name)] * u.MeV
+            self.pinch[flavor] = simtab['ALPHA_{}'.format(_flav.name)]
 
     def get_time(self):
         """Get grid of model times.
@@ -667,95 +680,7 @@ class Warren_2020(SupernovaModel):
         time : ndarray
             Grid of times used in the model.
         """
-        return self.file['TIME']
-
-    def get_luminosity(self, flavor):
-        """Get model luminosity L_nu.
-
-        Parameters
-        ----------
-        flavor : Flavor
-            Neutrino flavor type.
-
-        Returns
-        -------
-        luminosity : ndarray
-            Grid of luminosity values (erg/s) for this flavor.
-        """
-        if flavor == Flavor.NU_X_BAR:
-            flavor = Flavor.NU_X
-        return self.file['L_{}'.format(flavor.name.upper())]
-
-    def get_mean_energy(self, flavor):
-        """Get model mean energy <E_nu>.
-
-        Parameters
-        ----------
-        flavor : Flavor
-            Neutrino flavor type.
-
-        Returns
-        -------
-        energy : ndarray
-            Grid of mean energy versus time.
-        """
-        if flavor == Flavor.NU_X_BAR:
-            flavor = Flavor.NU_X
-        return self.file['E_{}'.format(flavor.name.upper())]
-
-    def get_rootmeansq_energy(self, flavor):
-        """Get model mean squared energy <E_nu^2>.
-
-        Parameters
-        ----------
-        flavor : Flavor
-            Neutrino flavor type.
-
-        Returns
-        -------
-        energy : ndarray
-            Grid of mean squared energy versus time.
-        """
-        if flavor == Flavor.NU_X_BAR:
-            flavor = Flavor.NU_X
-        return self.file['RMS_{}'.format(flavor.name.upper())]
-
-    def get_pinch_param(self, flavor):
-        """Get spectral pinch parameter alpha(t).
-
-        Parameters
-        ----------
-        flavor : Flavor
-            Neutrino flavor type.
-
-        Returns
-        -------
-        alpha : ndarray
-            Grid of alpha versus time.
-        """
-        if (flavor == Flavor.NU_X_BAR):
-            flavor = Flavor.NU_X
-        return self.file['ALPHA_{}'.format(flavor.name.upper())]
-
-    def get_EOS(self):
-        """Model equation of state.
-
-        Returns
-        -------
-        eos : str
-            Model equation of state.
-        """
-        return self.eos
-
-    def get_progenitor_mass(self):
-        """Progenitor mass.
-
-        Returns
-        -------
-        mass : float
-            Progenitor mass, in units of solar mass. This strips other model information, use filename for full model
-        """
-        return float(self.filename.split('_')[3].strip('m').strip('.h5'))
+        return self.time
 
     def get_initialspectra(self, t, E):
         """Get neutrino spectra/luminosity curves before oscillation.
@@ -773,20 +698,53 @@ class Warren_2020(SupernovaModel):
             Dictionary of model spectra, keyed by neutrino flavor.
         """
         initialspectra = {}
-        for flavor in Flavor:
-            L = self.luminosity[flavor](t)
-          
-            Ea = self.meanE[flavor](t)  # <E_nu(t)>
-            Ea = Ea*1e6 * 1.60218e-12
-            a = self.pinch[flavor](t)  # alpha_nu(t)
-            E[E == 0] = np.finfo(float).eps  # Avoid division by zero.
 
-            # For numerical stability, evaluate log PDF then exponentiate.
+        # Avoid division by zero in energy PDF below.
+        E[E==0] = np.finfo(float).eps * E.unit
+
+        # Estimate L(t), <E_nu(t)> and alpha(t). Express all energies in erg.
+        E = E.to('erg').value
+
+        # Make sure input time uses the same units as the model time grid, or
+        # the interpolation will not work correctly.
+        t = t.to(self.time.unit)
+
+        for flavor in Flavor:
+            # Use np.interp rather than scipy.interpolate.interp1d because it
+            # can handle dimensional units (astropy.Quantity).
+            L  = np.interp(t, self.time, self.luminosity[flavor].to('erg/s'))
+            Ea = np.interp(t, self.time, self.meanE[flavor].to('erg'))
+            a  = np.interp(t, self.time, self.pinch[flavor])
+
+            # For numerical stability, evaluate log PDF and then exponentiate.
             initialspectra[flavor] = \
-                np.exp(np.log(L) - (2 + a) * np.log(Ea) + (1 + a) * np.log(1 + a)
-                       - loggamma(1 + a) + a * np.log(E) - (1 + a) * (E / Ea))
+                np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a)
+                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
 
         return initialspectra
+
+    def __repr__(self):
+        """Default representation of the model.
+        """
+        mod = 'Warren_2020 Model: {}\n'.format(self.filename)
+        s = ['Progenitor mass : {}'.format(self.progenitor_mass),
+             'Turb. mix param : {}'.format(self.turbmixing_param),
+             'Eq. of state    : {}'.format(self.EOS)
+             ]
+        return mod + '\n'.join(s)
+
+    def _repr_markdown_(self):
+        """Markdown representation of the model, for Jupyter notebooks.
+        """
+        mod = '**Warren_2020 Model**: {}\n\n'.format(self.filename)
+        s = ['|Parameter|Value|',
+             '|:---------|:-----:|',
+             '|Progenitor mass | ${0.value:g}$ {0.unit:latex}|'.format(self.progenitor_mass),
+             '|Turb. mixing param. | {}|'.format(self.turbmixing_param),
+             '|EOS | {}|'.format(self.EOS)
+             ]
+        return mod + '\n'.join(s)
+
 
 class Janka(SupernovaModel):
     """Set up a model based on simulations from Janka, I'll have to update this descriptioin later because I dont know where this is from
