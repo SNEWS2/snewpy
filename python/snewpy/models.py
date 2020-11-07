@@ -746,6 +746,120 @@ class Warren_2020(SupernovaModel):
         return mod + '\n'.join(s)
 
 
+class Kuroda_2020(SupernovaModel):
+    """Set up a model based on simulations from Kuroda et al. (2020)."""
+
+    def __init__(self, filename, eos='LS220'):
+        """Initialize model.
+
+        Parameters
+        ----------
+        filename : str
+            Absolute or relative path to file prefix, we add nue/nuebar/nux
+        eos : string
+            Equation of state used in simulation
+        """
+        # Load up model metadata.
+        self.filename = filename
+        self.EOS = eos
+
+        # Read ASCII data.
+        simtab = Table.read(filename, format='ascii')
+
+        # Get grid of model times.
+        self.time = (simtab['Tpb[ms]'] * u.ms).to('s')
+
+        # Set up dictionary of luminosity, mean energy and shape parameter
+        # alpha, keyed by neutrino flavor (NU_E, NU_X, NU_E_BAR, NU_X_BAR).
+        self.luminosity = {}
+        self.meanE = {}
+        self.pinch = {}
+
+        for flavor in Flavor:
+            # Note: file only contains NU_E, NU_E_BAR, and NU_X, so double up
+            # the use of NU_X for NU_X_BAR.
+            _flav = Flavor.NU_X if flavor == Flavor.NU_X_BAR else flavor
+            if _flav.is_neutrino:
+                _fkey = _flav.name.lower()
+            else:
+                _fkey = _flav.name.strip('%_BAR').lower().replace('_', '_a')
+
+            self.luminosity[flavor] = simtab['<L{}>'.format(_fkey)] * 1e51 * u.erg/u.s
+            self.meanE[flavor] = simtab['<E{}>'.format(_fkey)] * u.MeV
+
+            # There is no pinch parameter so use alpha=2.0.
+            self.pinch[flavor] = np.full_like(self.meanE[flavor].value, 2.)
+
+    def get_time(self):
+        """Get grid of model times.
+
+        Returns
+        -------
+        time : ndarray
+            Grid of times used in the model.
+        """
+        return self.time
+
+    def get_initialspectra(self, t, E):
+        """Get neutrino spectra/luminosity curves before oscillation.
+
+        Parameters
+        ----------
+        t : float
+            Time to evaluate initial and oscillated spectra.
+        E : float or ndarray
+            Energies to evaluate the initial and oscillated spectra.
+
+        Returns
+        -------
+        initialspectra : dict
+            Dictionary of model spectra, keyed by neutrino flavor.
+        """
+        initialspectra = {}
+
+        # Avoid division by zero in energy PDF below.
+        E[E==0] = np.finfo(float).eps * E.unit
+
+        # Estimate L(t), <E_nu(t)> and alpha(t). Express all energies in erg.
+        E = E.to('erg').value
+
+        # Make sure input time uses the same units as the model time grid, or
+        # the interpolation will not work correctly.
+        t = t.to(self.time.unit)
+
+        for flavor in Flavor:
+            # Use np.interp rather than scipy.interpolate.interp1d because it
+            # can handle dimensional units (astropy.Quantity).
+            L  = np.interp(t, self.time, self.luminosity[flavor].to('erg/s'))
+            Ea = np.interp(t, self.time, self.meanE[flavor].to('erg'))
+            a  = np.interp(t, self.time, self.pinch[flavor])
+
+            # For numerical stability, evaluate log PDF and then exponentiate.
+            initialspectra[flavor] = \
+                np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a)
+                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
+
+        return initialspectra
+
+    def __repr__(self):
+        """Default representation of the model.
+        """
+        mod = 'Kuroda_2020 Model: {}\n'.format(self.filename)
+        s = ['Eq. of state    : {}'.format(self.EOS)
+             ]
+        return mod + '\n'.join(s)
+
+    def _repr_markdown_(self):
+        """Markdown representation of the model, for Jupyter notebooks.
+        """
+        mod = '**Kuroda_2020 Model**: {}\n\n'.format(self.filename)
+        s = ['|Parameter|Value|',
+             '|:---------|:-----:|',
+             '|EOS | {}|'.format(self.EOS)
+             ]
+        return mod + '\n'.join(s)
+
+
 class Janka(SupernovaModel):
     """Set up a model based on simulations from Janka, I'll have to update this descriptioin later because I dont know where this is from
     """
