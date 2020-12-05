@@ -1051,3 +1051,365 @@ class NeutrinoDecay(FlavorTransformation):
         """
         return (1. - self.prob_eebar(t,E)) / 2.       
         
+class AdiabaticMSWes(FlavorTransformation):
+    
+    def __init__(self, mix_angles, mh=MassHierarchy.NORMAL):
+        """Initialize transformation matrix.
+
+        Parameters
+        ----------
+        mix_angles : tuple
+        mh : MassHierarchy
+            MassHierarchy.NORMAL or MassHierarchy.INVERTED.
+        """
+        if type(mh) == MassHierarchy:
+            self.mass_order = mh
+        else:
+            raise TypeError('mh must be of type MassHierarchy')
+
+        theta12, theta13, theta23, theta14 = mix_angles
+
+        self.De1 = (np.cos(theta12) * np.cos(theta13) * np.cos(theta14))**2
+        self.De2 = (np.sin(theta12) * np.cos(theta13) * np.cos(theta14))**2
+        self.De3 = (np.sin(theta13) * np.cos(theta14))**2
+        self.De4 = (np.sin(theta14))**2
+        self.Ds1 = (np.cos(theta12) * np.cos(theta13) * np.sin(theta14))**2
+        self.Ds2 = (np.sin(theta12) * np.cos(theta13) * np.sin(theta14))**2
+        self.Ds3 = (np.sin(theta13) * np.sin(theta14))**2
+        self.Ds4 = (np.cos(theta14))**2
+    
+    def prob_ee(self, t, E):
+        """e -> e neutrino transition probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """
+        return self.De4       
+        
+    def prob_ex(self, t, E):
+        """x -> e neutrino transition probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """       
+        if self.mass_order == MassHierarchy.NORMAL:
+            return self.De1 + self.De2
+        else:
+            return self.De1 + self.De3     
+        
+    def prob_xx(self, t, E):
+        """x -> x neutrino transition probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """        
+        if self.mass_order == MassHierarchy.NORMAL:
+            return ( 2 - self.De1 - self.De2 - self.Ds1 - self.Ds2 ) / 2 
+        else:
+            return ( 2 - self.De1 - self.De3 - self.Ds1 - self.Ds3 ) / 2          
+        
+    def prob_xe(self, t, E):
+        """e -> x neutrino transition probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """        
+        return 0         
+    
+    def prob_eebar(self, t, E):
+        """e -> e antineutrino transition probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """        
+        return self.De3        
+        
+    def prob_exbar(self, t, E):
+        """x -> e antineutrino transition probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """        
+        if self.mass_order == MassHierarchy.NORMAL:
+            return self.De1 + self.De4
+        else:
+            return self.De1 + self.De2   
+        
+    def prob_xxbar(self, t, E):
+        """x -> x antineutrino transition probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """        
+        if self.mass_order == MassHierarchy.NORMAL:
+            return ( 1 - self.De3 - self.Ds3 ) / 2
+        else:
+            return ( 2 - self.De1 - self.De2 - self.Ds1 - self.Ds2 ) / 2     
+        
+    def prob_xebar(self, t, E):
+        """e -> x antineutrino transition probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """        
+        if self.mass_order == MassHierarchy.NORMAL:
+            return ( 1 - self.De1 - self.Ds1 ) / 2
+        else:
+            return ( 1 - self.De3 - self.Ds3 ) / 2        
+
+class NonAdiabaticMSWes(FlavorTransformation):
+    
+    def __init__(self, mix_angles=None,mh=MassHierarchy.NORMAL):
+        """Initialize transformation matrix.
+
+        Parameters
+        ----------
+        mix_angles : tuple
+        mh : MassHierarchy
+            MassHierarchy.NORMAL or MassHierarchy.INVERTED.
+        """
+        if type(mh) == MassHierarchy:
+            self.mass_order = mh
+        else:
+            raise TypeError('mh must be of type MassHierarchy')
+
+        theta12, theta13, theta23, theta14 = mix_angles
+
+        self.De1 = (np.cos(theta12) * np.cos(theta13) * np.cos(theta14))**2
+        self.De2 = (np.sin(theta12) * np.cos(theta13) * np.cos(theta14))**2
+        self.De3 = (np.sin(theta13) * np.cos(theta14))**2
+        self.De4 = (np.sin(theta14))**2
+        self.Ds1 = (np.cos(theta12) * np.cos(theta13) * np.sin(theta14))**2
+        self.Ds2 = (np.sin(theta12) * np.cos(theta13) * np.sin(theta14))**2
+        self.Ds3 = (np.sin(theta13) * np.sin(theta14))**2
+        self.Ds4 = (np.cos(theta14))**2
+    
+    def prob_ee(self, t, E):
+        """e -> e neutrino transition probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """                
+        if self.mass_order == MassHierarchy.NORMAL:
+            return self.De3
+        else:
+            return self.De2        
+        
+    def prob_ex(self, t, E):
+        """x -> e neutrino transition probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """                
+        if self.mass_order == MassHierarchy.NORMAL:
+            return self.De1 + self.De2
+        else:
+            return self.De1 + self.De3        
+        
+    def prob_xx(self, t, E):
+        """x -> x neutrino transition probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """               
+        if self.mass_order == MassHierarchy.NORMAL:
+            return ( 2 - self.De1 - self.De2 - self.Ds1 - self.Ds2 ) / 2 
+        else:
+            return ( 2 - self.De1 - self.De3 - self.Ds1 - self.Ds3 ) / 2         
+        
+    def prob_xe(self, t, E):
+        """e -> x neutrino transition probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """                
+        if self.mass_order == MassHierarchy.NORMAL:
+            return (1 - self.De3 - self.Ds3)/2
+        else:
+            return (1 - self.De2 - self.Ds2) / 2        
+    
+    def prob_eebar(self, t, E):
+        """e -> e antineutrino transition probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """               
+        self.De3        
+        
+    def prob_exbar(self, t, E):
+        """x -> e antineutrino transition probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """        
+        if self.mass_order == MassHierarchy.NORMAL:
+            return self.De1 + self.De4
+        else:
+            return self.De1 + self.De2        
+        
+    def prob_xxbar(self, t, E):
+        """x -> x antineutrino transition probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """        
+        if self.mass_order == MassHierarchy.NORMAL:
+            return ( 1 - self.De3 - self.Ds3 ) / 2
+        else:
+            return ( 2 - self.De1 - self.De2 - self.Ds1 - self.Ds2 ) / 2        
+        
+    def prob_xebar(self, t, E):
+        """e -> x antineutrino transition probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """        
+        if self.mass_order == MassHierarchy.NORMAL:
+            return ( 1 - self.De1 - self.Ds1 ) / 2
+        else:
+            return ( 1 - self.De3 - self.Ds3 ) / 2        
+    
