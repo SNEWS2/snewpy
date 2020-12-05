@@ -87,7 +87,7 @@ def main(options=None):
             osc_fluence = {}
             table = []
 
-            table.append('# GCD@TBinMid={:g}sec@(tBinWidth={:g}s)(eBinWidth=0.2MeV) Flux in Number Neutrinos per cm^2'.format(t, dt))
+            table.append('# TBinMid={:g}sec@(tBinWidth={:g}s)(eBinWidth=0.2MeV) Fluence in Number Neutrinos per cm^2'.format(t, dt))
             table.append('# E(GeV)            NuE               NuMu NuTau             aNuE              aNuMu             aNuTau')
 
             # Generate energy + number flux table.
