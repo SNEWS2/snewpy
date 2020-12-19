@@ -1167,7 +1167,7 @@ class AdiabaticMSWes(FlavorTransformation):
         prob : float or ndarray
             Transition probability.
         """        
-       if self.mass_order == MassHierarchy.NORMAL:
+        if self.mass_order == MassHierarchy.NORMAL:
             return self.De1
         else:
             return self.De3
