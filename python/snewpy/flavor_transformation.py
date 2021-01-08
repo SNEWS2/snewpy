@@ -548,8 +548,30 @@ class NonAdiabaticMSW(FlavorTransformation):
 class TwoFlavorDecoherence(FlavorTransformation):
     """Star-earth transit survival probability: two flavor case."""
 
-    def __init__(self):
-        pass
+    def __init__(self, mix_angles=None, mh=MassHierarchy.NORMAL):
+        """Initialize transformation matrix.
+
+        Parameters
+        ----------
+        mix_angles : tuple or None
+            If not None, override default mixing angles using tuple (theta12, theta13, theta23).
+        mh : MassHierarchy
+            MassHierarchy.NORMAL or MassHierarchy.INVERTED.
+        """
+        if type(mh) == MassHierarchy:
+            self.mass_order = mh
+        else:
+            raise TypeError('mh must be of type MassHierarchy')
+
+        if mix_angles is not None:
+            theta12, theta13, theta23 = mix_angles
+        else:
+            pars = MixingParameters(mh)
+            theta12, theta13, theta23 = pars.get_mixing_angles()
+
+        self.De1 = (np.cos(theta12) * np.cos(theta13))**2
+        self.De2 = (np.sin(theta12) * np.cos(theta13))**2
+        self.De3 = np.sin(theta13)**2
 
     def prob_ee(self, t, E):
         """Electron neutrino survival probability.
@@ -561,7 +583,10 @@ class TwoFlavorDecoherence(FlavorTransformation):
         E : float or ndarray
             List of energies.
         """
-        return 0.5    
+        if self.mass_order == MassHierarchy.NORMAL:
+            return (self.De2+self.De3)/2.    
+        else:
+            return self.De2
 
     def prob_ex(self, t, E):
         """X -> e neutrino transition probability.
@@ -629,7 +654,10 @@ class TwoFlavorDecoherence(FlavorTransformation):
         prob : float or ndarray
             Transition probability.
         """
-        return 0.5
+        if self.mass_order == MassHierarchy.NORMAL:
+            return self.De1
+        else:
+            return (self.De1+self.De3)/2
 
     def prob_exbar(self, t, E):
         """X -> e antineutrino transition probability.
@@ -1050,6 +1078,8 @@ class NeutrinoDecay(FlavorTransformation):
             Transition probability.
         """
         return (1. - self.prob_eebar(t,E)) / 2.       
+    
+    
         
 class AdiabaticMSWes(FlavorTransformation):
     
@@ -1230,11 +1260,13 @@ class AdiabaticMSWes(FlavorTransformation):
         if self.mass_order == MassHierarchy.NORMAL:
             return ( 1 - self.De1 - self.Ds1 ) / 2
         else:
-            return ( 1 - self.De3 - self.Ds3 ) / 2        
+            return ( 1 - self.De3 - self.Ds3 ) / 2     
+        
+        
 
 class NonAdiabaticMSWes(FlavorTransformation):
     
-    def __init__(self, mix_angles=None,mh=MassHierarchy.NORMAL):
+    def __init__(self, mix_angles, mh=MassHierarchy.NORMAL):
         """Initialize transformation matrix.
 
         Parameters
