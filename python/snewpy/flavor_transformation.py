@@ -208,6 +208,133 @@ class NoTransformation(FlavorTransformation):
         """
         return (1. - self.prob_eebar(t,E)) / 2.
 
+    
+class CompleteExchange(FlavorTransformation):
+    """Survival probabilities for the case when the electron flavors are completely exchanged with the x flavor."""
+
+    def __init__(self):
+        pass
+
+    def prob_ee(self, t, E):
+        """Electron neutrino survival probability.
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """
+        return 0.    
+
+    def prob_ex(self, t, E):
+        """X -> e neutrino transition probability.
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """
+        return 1. - self.prob_ee(t,E)
+
+    def prob_xx(self, t, E):
+        """Flavor X neutrino survival probability.
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """
+        return (1. + self.prob_ee(t,E)) / 2.   
+
+    def prob_xe(self, t, E):
+        """e -> X neutrino transition probability.
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """
+        return (1. - self.prob_ee(t,E)) / 2.
+
+    def prob_eebar(self, t, E):
+        """Electron antineutrino survival probability.
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """
+        return 0.
+
+    def prob_exbar(self, t, E):
+        """X -> e antineutrino transition probability.
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """
+        return 1. - self.prob_eebar(t,E)       
+
+    def prob_xxbar(self, t, E):
+        """X -> X antineutrino survival probability.
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """
+        return (1. + self.prob_eebar(t,E)) / 2.
+
+    def prob_xebar(self, t, E):
+        """e -> X antineutrino transition probability.
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """
+        return (1. - self.prob_eebar(t,E)) / 2.
+
 
 class AdiabaticMSW(FlavorTransformation):
     """Adiabatic MSW effect."""
@@ -380,7 +507,7 @@ class AdiabaticMSW(FlavorTransformation):
         return (1. - self.prob_eebar(t,E)) / 2.
 
 
-class NonAdiabaticMSW(FlavorTransformation):
+class NonAdiabaticMSWH(FlavorTransformation):
     """Nonadiabatic MSW effect."""
 
     def __init__(self, mix_angles=None, mh=MassHierarchy.NORMAL):
