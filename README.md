@@ -1,5 +1,8 @@
 # SNEWPy: Supernova Neutrino Early Warning Models for Python
-collection of models from the community in common format for use by the SNEWS teams
+
+[![DOI](https://zenodo.org/badge/221705586.svg)](https://zenodo.org/badge/latestdoi/221705586)
+
+Collection of models from the community in common format for use by the SNEWS teams
 
 ## Installation
 
