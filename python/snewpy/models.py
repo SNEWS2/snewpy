@@ -215,11 +215,13 @@ class Nakazato_2013(SupernovaModel):
             L  = np.interp(t, self.time, self.luminosity[flavor].to('erg/s'))
             Ea = np.interp(t, self.time, self.meanE[flavor].to('erg'))
             a  = np.interp(t, self.time, self.pinch[flavor])
-
+            
+#             print(Ea)
+#             print(E)
             # For numerical stability, evaluate log PDF and then exponentiate.
             initialspectra[flavor] = \
-                np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a) 
-                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
+                np.exp(np.log(L.value) - (2+a)*np.log(Ea.value) + (1+a)*np.log(1+a) 
+                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea.value))
 
         return initialspectra
 
@@ -326,8 +328,8 @@ class Sukhbold_2015(SupernovaModel):
 
             # For numerical stability, evaluate log PDF then exponentiate.
             initialspectra[flavor] = \
-                np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a) 
-                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
+                np.exp(np.log(L.value) - (2+a)*np.log(Ea.value) + (1+a)*np.log(1+a) 
+                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea.value))
 
         return initialspectra
 
@@ -465,8 +467,8 @@ class Bollig_2016(SupernovaModel):
 
             # For numerical stability, evaluate log PDF and then exponentiate.
             initialspectra[flavor] = \
-                np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a)
-                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
+                np.exp(np.log(L.value) - (2+a)*np.log(Ea.value) + (1+a)*np.log(1+a)
+                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea.value))
 
         return initialspectra
 
@@ -585,8 +587,8 @@ class OConnor_2015(SupernovaModel):
 
             # For numerical stability, evaluate log PDF and then exponentiate.
             initialspectra[flavor] = \
-                np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a)
-                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
+                np.exp(np.log(L.value) - (2+a)*np.log(Ea.value) + (1+a)*np.log(1+a)
+                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea.value))
 
         return initialspectra
 
@@ -718,8 +720,8 @@ class Warren_2020(SupernovaModel):
 
             # For numerical stability, evaluate log PDF and then exponentiate.
             initialspectra[flavor] = \
-                np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a)
-                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
+                np.exp(np.log(L.value) - (2+a)*np.log(Ea.value) + (1+a)*np.log(1+a)
+                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea.value))
 
         return initialspectra
 
@@ -836,8 +838,8 @@ class Kuroda_2020(SupernovaModel):
 
             # For numerical stability, evaluate log PDF and then exponentiate.
             initialspectra[flavor] = \
-                np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a)
-                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
+                np.exp(np.log(L.value) - (2+a)*np.log(Ea.value) + (1+a)*np.log(1+a)
+                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea.value))
 
         return initialspectra
 
@@ -988,8 +990,8 @@ class Janka(SupernovaModel):
 
             # For numerical stability, evaluate log PDF then exponentiate.
             initialspectra[flavor] = \
-                np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a) 
-                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
+                np.exp(np.log(L.value) - (2+a)*np.log(Ea.value) + (1+a)*np.log(1+a) 
+                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea.value))
 
         return initialspectra
 
