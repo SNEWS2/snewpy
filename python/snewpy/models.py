@@ -16,6 +16,7 @@ from enum import IntEnum
 import astropy
 from astropy.io import ascii
 from astropy.table import Table, join
+from astropy.units.quantity import Quantity
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -33,6 +34,24 @@ import h5py
 
 from .neutrino import Flavor
 from .flavor_transformation import *
+
+
+def get_value(x):
+    """If quantity x has is an astropy Quantity with units, return just the
+    value.
+
+    Parameters
+    ----------
+    x : Quantity, float, or ndarray
+        Input quantity.
+
+    Returns
+    -------
+    value : float or ndarray
+    """
+    if type(x) == Quantity:
+        return x.value
+    return x
 
 
 def get_closest(arr, x):
@@ -212,16 +231,14 @@ class Nakazato_2013(SupernovaModel):
         for flavor in Flavor:
             # Use np.interp rather than scipy.interpolate.interp1d because it
             # can handle dimensional units (astropy.Quantity).
-            L  = np.interp(t, self.time, self.luminosity[flavor].to('erg/s'))
-            Ea = np.interp(t, self.time, self.meanE[flavor].to('erg'))
+            L  = get_value(np.interp(t, self.time, self.luminosity[flavor].to('erg/s')))
+            Ea = get_value(np.interp(t, self.time, self.meanE[flavor].to('erg')))
             a  = np.interp(t, self.time, self.pinch[flavor])
-            
-#             print(Ea)
-#             print(E)
+
             # For numerical stability, evaluate log PDF and then exponentiate.
             initialspectra[flavor] = \
-                np.exp(np.log(L.value) - (2+a)*np.log(Ea.value) + (1+a)*np.log(1+a) 
-                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea.value))
+                np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a) 
+                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
 
         return initialspectra
 
@@ -322,14 +339,14 @@ class Sukhbold_2015(SupernovaModel):
         t = t.to(self.time.unit)
 
         for flavor in Flavor:
-            L  = np.interp(t, self.time, self.luminosity[flavor].to('erg/s'))
-            Ea = np.interp(t, self.time, self.meanE[flavor].to('erg'))
+            L  = get_value(np.interp(t, self.time, self.luminosity[flavor].to('erg/s')))
+            Ea = get_value(np.interp(t, self.time, self.meanE[flavor].to('erg')))
             a  = np.interp(t, self.time, self.pinch[flavor])
 
             # For numerical stability, evaluate log PDF then exponentiate.
             initialspectra[flavor] = \
-                np.exp(np.log(L.value) - (2+a)*np.log(Ea.value) + (1+a)*np.log(1+a) 
-                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea.value))
+                np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a) 
+                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
 
         return initialspectra
 
@@ -461,14 +478,14 @@ class Bollig_2016(SupernovaModel):
         for flavor in Flavor:
             # Use np.interp rather than scipy.interpolate.interp1d because it
             # can handle dimensional units (astropy.Quantity).
-            L  = np.interp(t, self.time, self.luminosity[flavor].to('erg/s'))
-            Ea = np.interp(t, self.time, self.meanE[flavor].to('erg'))
+            L  = get_value(np.interp(t, self.time, self.luminosity[flavor].to('erg/s')))
+            Ea = get_value(np.interp(t, self.time, self.meanE[flavor].to('erg')))
             a  = np.interp(t, self.time, self.pinch[flavor])
 
             # For numerical stability, evaluate log PDF and then exponentiate.
             initialspectra[flavor] = \
-                np.exp(np.log(L.value) - (2+a)*np.log(Ea.value) + (1+a)*np.log(1+a)
-                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea.value))
+                np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a)
+                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
 
         return initialspectra
 
@@ -581,14 +598,14 @@ class OConnor_2015(SupernovaModel):
         for flavor in Flavor:
             # Use np.interp rather than scipy.interpolate.interp1d because it
             # can handle dimensional units (astropy.Quantity).
-            L  = np.interp(t, self.time, self.luminosity[flavor].to('erg/s'))
-            Ea = np.interp(t, self.time, self.meanE[flavor].to('erg'))
+            L  = get_value(np.interp(t, self.time, self.luminosity[flavor].to('erg/s')))
+            Ea = get_value(np.interp(t, self.time, self.meanE[flavor].to('erg')))
             a  = np.interp(t, self.time, self.pinch[flavor])
 
             # For numerical stability, evaluate log PDF and then exponentiate.
             initialspectra[flavor] = \
-                np.exp(np.log(L.value) - (2+a)*np.log(Ea.value) + (1+a)*np.log(1+a)
-                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea.value))
+                np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a)
+                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
 
         return initialspectra
 
@@ -714,14 +731,14 @@ class Warren_2020(SupernovaModel):
         for flavor in Flavor:
             # Use np.interp rather than scipy.interpolate.interp1d because it
             # can handle dimensional units (astropy.Quantity).
-            L  = np.interp(t, self.time, self.luminosity[flavor].to('erg/s'))
-            Ea = np.interp(t, self.time, self.meanE[flavor].to('erg'))
+            L  = get_value(np.interp(t, self.time, self.luminosity[flavor].to('erg/s')))
+            Ea = get_value(np.interp(t, self.time, self.meanE[flavor].to('erg')))
             a  = np.interp(t, self.time, self.pinch[flavor])
 
             # For numerical stability, evaluate log PDF and then exponentiate.
             initialspectra[flavor] = \
-                np.exp(np.log(L.value) - (2+a)*np.log(Ea.value) + (1+a)*np.log(1+a)
-                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea.value))
+                np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a)
+                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
 
         return initialspectra
 
@@ -832,14 +849,14 @@ class Kuroda_2020(SupernovaModel):
         for flavor in Flavor:
             # Use np.interp rather than scipy.interpolate.interp1d because it
             # can handle dimensional units (astropy.Quantity).
-            L  = np.interp(t, self.time, self.luminosity[flavor].to('erg/s'))
-            Ea = np.interp(t, self.time, self.meanE[flavor].to('erg'))
+            L  = get_value(np.interp(t, self.time, self.luminosity[flavor].to('erg/s')))
+            Ea = get_value(np.interp(t, self.time, self.meanE[flavor].to('erg')))
             a  = np.interp(t, self.time, self.pinch[flavor])
 
             # For numerical stability, evaluate log PDF and then exponentiate.
             initialspectra[flavor] = \
-                np.exp(np.log(L.value) - (2+a)*np.log(Ea.value) + (1+a)*np.log(1+a)
-                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea.value))
+                np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a)
+                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
 
         return initialspectra
 
@@ -990,8 +1007,8 @@ class Janka(SupernovaModel):
 
             # For numerical stability, evaluate log PDF then exponentiate.
             initialspectra[flavor] = \
-                np.exp(np.log(L.value) - (2+a)*np.log(Ea.value) + (1+a)*np.log(1+a) 
-                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea.value))
+                np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a) 
+                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
 
         return initialspectra
 
