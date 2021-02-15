@@ -485,7 +485,6 @@ class Bollig_2016(SupernovaModel):
             # For numerical stability, evaluate log PDF and then exponentiate.
             initialspectra[flavor] = \
                 np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a)
-                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
                        - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea)) / (u.erg * u.s)
 
         return initialspectra
