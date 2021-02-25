@@ -32,7 +32,7 @@ parameters = mixing_parameters
 
 #Running the modules
 
-outfile = to_snowglobes.generate(models_dir, file_name, modeltype, transformation, parameters, d, output, ntbins, deltat) #runs to_snowglobes
+outfile = to_snowglobes.generate_time_series(models_dir, file_name, modeltype, transformation, parameters, d, output, ntbins, deltat) #runs to_snowglobes
 
 #outfile = "ezyzip.zip"
 

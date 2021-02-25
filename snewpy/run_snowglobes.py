@@ -247,6 +247,7 @@ def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input = all):  #function fo
             try:
                 EFF_FILE = open(EffFile)
             except IOError:
+                GLOBESFILE.write("\n>\n\n")
                 continue
             else:
                 for line in EFF_FILE:
@@ -281,7 +282,7 @@ def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input = all):  #function fo
             print("Applying channel weighting factors to output")
 
             apply_weights("unsmeared", FluxNameStem, ChannelFileName, ExpConfigName)
-            apply_weights("events_u", FluxNameStem, ChannelFileName, ExpConfigName)
+            apply_weights("smeared", FluxNameStem, ChannelFileName, ExpConfigName)
     
         return "Complete"
         
@@ -294,8 +295,8 @@ def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input = all):  #function fo
         #formats for naming of the files
         if smearing == "unsmeared":
             smear_input = "" # snowglobes1.2 does not insert "_unsmeared" into its output filenames
-        elif smearing == "events_u":
-            smear_input = ""
+        elif smearing == "smeared":
+            smear_input = "_smeared"
         else:
             print("Invalid smearing input")
         
@@ -377,9 +378,9 @@ def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input = all):  #function fo
             if format_globes_for_supernova(IndividualFluxFile, "water", "wc100kt15prct", "weight") == "Complete":
                 os.system('echo "Finished {0}||wc100kt15prct"'.format(IndividualFluxFile))
                 print('')
-            if format_globes_for_supernova(IndividualFluxFile, "water", "hyperk30prct", "weight") == "Complete": #not working
-                os.system('echo "Finished {0}||hyperk30prct"'.format(IndividualFluxFile))
-                print('')
+            #if format_globes_for_supernova(IndividualFluxFile, "water", "hyperk30prct", "weight") == "Complete": #not working
+                #os.system('echo "Finished {0}||hyperk30prct"'.format(IndividualFluxFile))
+                #print('')
             if format_globes_for_supernova(IndividualFluxFile, "argon", "ar40kt", "weight") == "Complete":
                 os.system('echo "Finished {0}||ar40kt"'.format(IndividualFluxFile))
                 print('')
@@ -392,15 +393,15 @@ def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input = all):  #function fo
             #if format_globes_for_supernova(IndividualFluxFile, "argon", "ar40kt_he", "weight") == "Complete":
                 #os.system('echo "Finished {0}||ar40kt_he"'.format(IndividualFluxFile))
                 #print('')
-            """if format_globes_for_supernova(IndividualFluxFile, "scint", "scint20kt", "weight") == "Complete":
+            if format_globes_for_supernova(IndividualFluxFile, "scint", "scint20kt", "weight") == "Complete":
                 os.system('echo "Finished {0}||scint20kt"'.format(IndividualFluxFile))
                 print('')
-            if format_globes_for_supernova(IndividualFluxFile, "scint", "novaND", "weight") == "Complete":
+            if format_globes_for_supernova(IndividualFluxFile, "nova_soup", "novaND", "weight") == "Complete":
                 os.system('echo "Finished {0}||novaND"'.format(IndividualFluxFile))
                 print('')
-            if format_globes_for_supernova(IndividualFluxFile, "scint", "novaFD", "weight") == "Complete":
+            if format_globes_for_supernova(IndividualFluxFile, "nova_soup", "novaFD", "weight") == "Complete":
                 os.system('echo "Finished {0}||novaFD"'.format(IndividualFluxFile))
-                print('')"""
+                print('')
             fluxes_list.append(IndividualFluxFile)
             print('\n'*3)
             print("Calculations are " + percentage_done + "% completed.")
@@ -408,11 +409,13 @@ def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input = all):  #function fo
         else: #This is called if you choose to input a single detector in SNEWPY.py, and just run that one
             print("Running inputted detector")
             print(detector_input)
-            if detector_input in ("icecube", "wc100kt30prct", "wc100kt30prct_he", "wc100kt15prct", "hyperk30prct"):
+            if detector_input in ("icecube", "wc100kt30prct", "wc100kt30prct_he", "wc100kt15prct", "hyperk30prct", "km3net"):
                 detector_material = "water"
             elif detector_input in  ("ar40kt_he", "ar40kt"):
                 detector_material = "argon"
-            elif detector_input in ("novaND", "novaFD", "scint20kt"):
+            elif detector_input in ("novaND", "novaFD"):
+                detector_material = "nova_soup"
+            elif detector_input in ("scint20kt"):
                 detector_material = "scint"
             elif detector_input in ("halo1", "halo2"):
                 detector_material = "lead"

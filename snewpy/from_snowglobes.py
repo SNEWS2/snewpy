@@ -8,6 +8,7 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 import fnmatch
 import logging
+import numpy as np
 
 logging.getLogger().setLevel(logging.CRITICAL)
 
@@ -15,9 +16,9 @@ logging.getLogger().setLevel(logging.CRITICAL)
 # Written & modulized Summer 2020
 # Takes in input flux files and configures and runs supernova (which outputs calculated rates)
             
-def collate(Branch, Model_Path, Tarball, detector_input = all):
+def collate(Branch, Model_Path, Tarball, detector_input = all, skip_plots=False, return_tables=False):
     #Determines type of input file
-    
+
     if ".tar.bz2" in str(Tarball):
         outputnamestem = Tarball[0:str(Tarball).rfind(".tar.bz2")]
         tar = tarfile.open(Model_Path+Tarball)
@@ -49,9 +50,8 @@ def collate(Branch, Model_Path, Tarball, detector_input = all):
             FluxFileNameStems.append( str(IndividualFile)[0:ExtensionFound] ) # gets rid of extension at the end of flux files            
         else:
             continue
-             
-    
-    smearvals = ["_unsmeared_w", "_unsmeared_u", "nts_w", "nts_u"]
+
+    smearvals = ["_smeared_w", "_smeared_u", "nts_w", "nts_u"]
     #weightvals = ["_weighted", "unweighted"]
 
     #Add_funct sums up relevant files from output generated above
@@ -60,22 +60,22 @@ def collate(Branch, Model_Path, Tarball, detector_input = all):
         
         #Defining different variables for the combinatoric iterations
         #And reformatting some variables for different naming uses
-        if smear == "_unsmeared_w" or smear == "nts_w":
+        if smear == "_smeared_w" or smear == "nts_w":
             weight_value = "weighted"
         else:
             weight_value = "unweighted"
         
-        if smear == "_unsmeared_w" or smear == "_unsmeared_u":
-            smear_value = "unsmeared"
-            smear_title = "interaction"
-            x_label = "Neutrino Energy (GeV)"
-            y_label = "Interaction Events"
-        else:       
+        if smear == "_smeared_w" or smear == "_smeared_u":
             smear_value = "smeared"
             smear_title = "detected"
             x_label = "Detected Energy (GeV)"
             y_label = "Events"
-            
+        else:
+            smear_value = "unsmeared"
+            smear_title = "interaction"
+            x_label = "Neutrino Energy (GeV)"
+            y_label = "Interaction Events"
+
         if detector == "ar40kt_eve":
             detector_label = "ar40kt"
             detector_label2 = "ar40kt"
@@ -156,7 +156,6 @@ def collate(Branch, Model_Path, Tarball, detector_input = all):
             new_dict = {}
             for key in compile_dict:
                 new_dict[key] = compile_dict[key][r]
-
             
             if arg[r] == "_ibd":                #Color labels on graph determined by name, given from value passed through flux details
                 name = "Inverse Beta Decay"
@@ -191,8 +190,10 @@ def collate(Branch, Model_Path, Tarball, detector_input = all):
                 new_f = open(condensed_file,"w")
                 if len(arg) == 4:  
                     new_f.write("Energy(GeV)            {0}                    {1}                    {2}                {3}".format(arg[0], arg[1], arg[2], arg[3]))
-                else:
+                elif len(arg) == 5:
                     new_f.write("Energy(GeV)            {0}                    {1}                    {2}                {3}                    {4}".format(arg[0], arg[1], arg[2], arg[3], arg[4]))
+                else:
+                    new_f.write("Energy(GeV)            {0}                    {1}                    {2}                {3}                    {4}                    {5}".format(arg[0], arg[1], arg[2], arg[3], arg[4], arg[5]))
                 new_f.write("\n")
                 new_f.write("-"*100)
                 new_f.write("\n") 
@@ -217,27 +218,32 @@ def collate(Branch, Model_Path, Tarball, detector_input = all):
                                 i +=1
                         if len(arg) == 4:
                             new_f.write("{0}{1}{2}{3}{4}{5}".format(key, first_space, value[0], value[1], value[2], value[3]))
-                        else:
+                        elif len(arg) == 5:
                             new_f.write("{0}{1}{2}{3}{4}{5}{6}".format(key, first_space, value[0], value[1], value[2], value[3], value[4])) #for normal, next is for spreadsheet counting
+                        else:
+                            new_f.write("{0}{1}{2}{3}{4}{5}{6}{7}".format(key, first_space, value[0], value[1], value[2], value[3], value[4], value[5])) #for normal, next is for spreadsheet counting
                     new_f.write('\n')
                 new_f.close()
                 
                 #Creates the plots
-                all_values = list(new_dict.values())
-                max_val = max(all_values) #ensures only values greater than 0.1 show up on the plot and legend
-                if max_val > 0.1:
-                    plt.plot(list(new_dict.keys()), list(new_dict.values()), linewidth = 1, drawstyle = 'steps', color = colors[r], label = name)
+                if (skip_plots is False):
+                    all_values = list(new_dict.values())
+                    max_val = max(all_values) #ensures only values greater than 0.1 show up on the plot and legend
+                    if max_val > 0.1:
+                        plt.plot(list(new_dict.keys()), list(new_dict.values()), linewidth = 1, drawstyle = 'steps', color = colors[r], label = name)
             r += 1
-        axes = plt.gca()
-        axes.set_xlim([None,0.10])
-        axes.set_ylim([0.10, None]) 
-        axes.set_yscale('log')
-        plt.legend(bbox_to_anchor = (0.5, 0.5, 0.5, 0.5), loc='best', borderaxespad=0)        #formats complete graph
-        plt.ylabel (y_label)
-        plt.xlabel (x_label)
-        plt.title (str(flux).capitalize() + " " + str(detector_label).capitalize() + " " + str(weight_value).capitalize() + " " + str(smear_title).capitalize() + " Events")
-        plt.savefig("out/{0}_{1}_{2}_{3}_log_plot.png".format(flux, detector, smear_value, weight_value), dpi = 300, bbox_inches = 'tight')
-        plt.clf()
+
+        if (skip_plots is False):
+            axes = plt.gca()
+            axes.set_xlim([None,0.10])
+            axes.set_ylim([0.10, None]) 
+            axes.set_yscale('log')
+            plt.legend(bbox_to_anchor = (0.5, 0.5, 0.5, 0.5), loc='best', borderaxespad=0)        #formats complete graph
+            plt.ylabel (y_label)
+            plt.xlabel (x_label)
+            plt.title (str(flux).capitalize() + " " + str(detector_label).capitalize() + " " + str(weight_value).capitalize() + " " + str(smear_title).capitalize() + " Events")
+            plt.savefig("out/{0}_{1}_{2}_{3}_log_plot.png".format(flux, detector, smear_value, weight_value), dpi = 300, bbox_inches = 'tight')
+            plt.clf()
 
     #flux details                 # detector, smeared/unsmeared, *arg reaction placeholders
     
@@ -247,7 +253,7 @@ def collate(Branch, Model_Path, Tarball, detector_input = all):
         for single_flux in FluxFileNameStems:
             for smearval in smearvals:
                 add_funct (str(single_flux), "wc100kt15prct", smearval, "_nc_", "_e_", "_ibd", "nue_O16", "nuebar_O16") #everything after smearval corresponds to a *arg value
-                add_funct (str(single_flux), "wc100kt30prct_eve", smearval, "_nc_", "_e_", "_ibd", "nue_O16", "nuebar_O16")
+                add_funct (str(single_flux), "wc100kt30prct", smearval, "_nc_", "_e_", "_ibd", "nue_O16", "nuebar_O16")
                 add_funct (str(single_flux), "wc100kt30prct_he", smearval, "_nc_", "_e_", "_ibd", "nue_O16", "nuebar_O16")
                 add_funct (str(single_flux), "halo1", smearval, "_nc_", "_e_", "Pb208_1n", "Pb208_2n") 
                 add_funct (str(single_flux), "halo2", smearval, "_nc_", "_e_", "Pb208_1n", "Pb208_2n")
@@ -255,10 +261,10 @@ def collate(Branch, Model_Path, Tarball, detector_input = all):
                 add_funct (str(single_flux), "ar40kt_he", smearval, "_nc_", "_e_", "nue_Ar40", "nuebar_Ar40")
                 add_funct (str(single_flux), "icecube", smearval, "_nc_", "_e_", "_ibd", "nue_O16", "nuebar_O16")
                 add_funct (str(single_flux), "hyperk30prct", smearval, "_nc_", "_e_", "_ibd", "nue_O16", "nuebar_O16")
-                add_funct (str(single_flux), "scint20kt", smearval, "_nc_", "_e_", "_ibd", "nue_C12", "nuebar_C12") # add , "nue_C13" at end
-                add_funct (str(single_flux), "novaND", smearval, "_nc_", "_e_", "_ibd", "nue_C12", "nuebar_C12") # add , "nue_C13" at end
-                add_funct (str(single_flux), "novaFD", smearval, "_nc_", "_e_", "_ibd", "nue_C12", "nuebar_C12") # add , "nue_C13" at end
-            
+                add_funct (str(single_flux), "scint20kt", smearval, "_nc_", "_e_", "_ibd", "nue_C12", "nuebar_C12","nue_C13")
+                add_funct (str(single_flux), "novaND", smearval, "_nc_", "_e_", "_ibd", "nue_C12", "nuebar_C12")
+                add_funct (str(single_flux), "novaFD", smearval, "_nc_", "_e_", "_ibd", "nue_C12", "nuebar_C12")
+
             flux_position = FluxFileNameStems.index(single_flux) + 1
             total_fluxes = len(FluxFileNameStems)
             plot_percent_calc = (flux_position/total_fluxes)*100
@@ -270,13 +276,15 @@ def collate(Branch, Model_Path, Tarball, detector_input = all):
         for single_flux in FluxFileNameStems:
             for smearval in smearvals:
                 print("Running inputted detector")
-                if detector_input in ("wc100kt15prct", "wc100kt30prct_eve", "wc100kt30prct_he", "icecube", "hyperk30prct"):
+                if detector_input in ("wc100kt15prct", "wc100kt30prct", "wc100kt30prct_he", "icecube", "hyperk30prct", "km3net"):
                     sum_categories = ["_nc_", "_e_", "_ibd", "nue_O16", "nuebar_O16"]
                 elif detector_input in ("halo1", "halo2"):
                     sum_categories = ["_nc_", "_e_", "Pb208_1n", "Pb208_2n"]
-                elif detector_input in ("ar40kt_eve", "ar40kt_he"):
+                elif detector_input in ("ar40kt", "ar40kt_he"):
                     sum_categories = ["_nc_", "_e_", "nue_Ar40", "nuebar_Ar40"]
-                elif detector_input in ("novaND", "novaFD", "scint20kt"):
+                elif detector_input in ("scint20kt"):
+                    sum_categories = ["_nc_", "_e_", "_ibd", "nue_C12", "nuebar_C12", "nue_C13"]
+                elif detector_input in ("novaND", "novaFD"):
                     sum_categories = ["_nc_", "_e_", "_ibd", "nue_C12", "nuebar_C12"]
                 else:
                     print("Unanticipated value for detector input")
@@ -298,17 +306,25 @@ def collate(Branch, Model_Path, Tarball, detector_input = all):
 
     #Now create tarball output
     #Makes a tarfile with the condensed data files and plots
-    tar=tarfile.open(Model_Path + outputnamestem + "SNOprocessed.tar.gz", "w:gz")
+    tar=tarfile.open(Model_Path + outputnamestem + "_SNOprocessed.tar.gz", "w:gz")
     for file in os.listdir(Branch + "out"):
         if "Collated" in str(file):
-            tar.add(Branch + "out/" + file)
+            tar.add(Branch + "out/" + file,arcname=outputnamestem+'_SNOprocessed/'+file)
         elif ".png" in str(file):
-            tar.add(Branch + "out/" + file)
+            tar.add(Branch + "out/" + file,arcname=outputnamestem+'_SNOprocessed/'+file)
         else:
             continue
     tar.close()
 
-
+    if (return_tables is True):
+        returned_tables = {}
+        for file in os.listdir(Branch + "out"):
+            if "Collated" in str(file):
+                returned_tables[file] = {}
+                fstream = open(Branch + "out/"+file, 'r')
+                returned_tables[file]['header'] = fstream.readline()
+                fstream.close()
+                returned_tables[file]['data'] = np.loadtxt(Branch + "out/" + file,skiprows=2,unpack=True)
     
     #Removes the folders generated by run_snowglobes
     for folder in os.listdir(Branch + "out"):
@@ -330,3 +346,5 @@ def collate(Branch, Model_Path, Tarball, detector_input = all):
     except OSError:
         print("")
 
+    if (return_tables is True):
+        return returned_tables
