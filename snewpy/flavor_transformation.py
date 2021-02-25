@@ -117,8 +117,8 @@ class AdiabaticMSW_IMO(FlavorTransformation):
     
     def __init__(self,parameters):
         self.De1 = (np.cos(parameters[0]*np.pi/180.)**2)*(np.cos(parameters[1]*np.pi/180.)**2)
-        self.De2 = (np.sin(parameters[0])**2)*(np.cos(parameters[1]*np.pi/180.)**2)
-        self.De3 = np.sin(parameters[1])**2
+        self.De2 = (np.sin(parameters[0]*np.pi/180.)**2)*(np.cos(parameters[1]*np.pi/180.)**2)
+        self.De3 = np.sin(parameters[1]*np.pi/180.)**2
     
     def pee(self, t, E):
         return self.De2
@@ -149,8 +149,8 @@ class NonAdiabaticMSWH_NMO(FlavorTransformation):
 
     def __init__(self,parameters):
         self.De1 = (np.cos(parameters[0]*np.pi/180.)**2)*(np.cos(parameters[1]*np.pi/180.)**2)
-        self.De2 = (np.sin(parameters[0])**2)*(np.cos(parameters[1]*np.pi/180.)**2)
-        self.De3 = np.sin(parameters[1])**2
+        self.De2 = (np.sin(parameters[0]*np.pi/180.)**2)*(np.cos(parameters[1]*np.pi/180.)**2)
+        self.De3 = np.sin(parameters[1]*np.pi/180.)**2
     
     def pee(self, t, E):
         return self.De2
@@ -181,8 +181,8 @@ class NonAdiabaticMSWH_IMO(FlavorTransformation):
     
     def __init__(self,parameters):
         self.De1 = (np.cos(parameters[0]*np.pi/180.)**2)*(np.cos(parameters[1]*np.pi/180.)**2)
-        self.De2 = (np.sin(parameters[0])**2)*(np.cos(parameters[1]*np.pi/180.)**2)
-        self.De3 = np.sin(parameters[1])**2
+        self.De2 = (np.sin(parameters[0]*np.pi/180.)**2)*(np.cos(parameters[1]*np.pi/180.)**2)
+        self.De3 = np.sin(parameters[1]*np.pi/180.)**2
     
     def pee(self, t, E):
         return self.De2
@@ -273,8 +273,8 @@ class NeutrinoDecay_IMO(FlavorTransformation):
     
     def __init__(self,parameters):
         self.De1 = (np.cos(parameters[0]*np.pi/180.)**2)*(np.cos(parameters[1]*np.pi/180.)**2)
-        self.De2 = (np.sin(parameters[0])**2)*(np.cos(parameters[1]*np.pi/180.)**2)
-        self.De3 = np.sin(parameters[1])**2
+        self.De2 = (np.sin(parameters[0]*np.pi/180.)**2)*(np.cos(parameters[1]*np.pi/180.)**2)
+        self.De3 = np.sin(parameters[1]*np.pi/180.)**2
         
         self.m=parameters[3] * eV / (c**2)
         self.tau=parameters[4]
@@ -320,8 +320,8 @@ class NeutrinoDecay_NMO(FlavorTransformation):
     
     def __init__(self,parameters):
         self.De1 = (np.cos(parameters[0]*np.pi/180.)**2)*(np.cos(parameters[1]*np.pi/180.)**2)
-        self.De2 = (np.sin(parameters[0])**2)*(np.cos(parameters[1]*np.pi/180.)**2)
-        self.De3 = np.sin(parameters[1])**2
+        self.De2 = (np.sin(parameters[0]*np.pi/180.)**2)*(np.cos(parameters[1]*np.pi/180.)**2)
+        self.De3 = np.sin(parameters[1]*np.pi/180.)**2
         
         self.m=parameters[3] * eV / (c**2)
         self.tau=parameters[4]
