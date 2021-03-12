@@ -1012,6 +1012,81 @@ class Janka(SupernovaModel):
 
         return initialspectra
 
+class Fornax_2019():
+    '''A bare-bones version of the class based on the 3D model simulations by Burrows et al. (2019)'''
+    def __init__(self, filename):
+        self.spectra = {}  
+        self.luminosity = {}
+        self.energy = {}
+
+        for i, flavor in enumerate(Flavor):
+            if flavor == Flavor.NU_X_BAR:
+                i = 2
+            file = filename + '_inu{}.dat'.format(i)
+            ebin_names = ['E{:02d}'.format(e-2) for e in range(2, 14)]
+            lbin_names = ['lum{:02d}'.format(l-14) for l in range(14, 26)]
+            colnames = ['time'] + ebin_names + lbin_names
+            # Read the file. The first column is time,
+            # columns 2-13 are the bin energy for each of the twelve bins,
+            # and columns 14-25 are the spectra in each bin (in 1050 erg s−1 MeV−1)
+            # for each time.
+            spectrum = ascii.read(file, names=colnames)
+            spectrum.meta['type'] = flavor.name
+            
+            # Set up correct units.
+#             spectrum['time'].unit = 's'
+#             for ebin in ebin_names:
+#                 spectrum[ebin].unit = 'MeV'
+#             for lbin in lbin_names:
+#                 spectrum[lbin].unit = '1e50 * erg / (s * MeV)'
+
+            self.spectra[flavor.name] = spectrum
+            self.energy[flavor.name] = [spectrum[e] for e in spectrum.columns[1:13]] * u.MeV
+            self.luminosity[flavor.name] = [spectrum[l] * 1e50 for l in spectrum.columns[13:]] * u.erg / (u.s * u.MeV)
+
+        self.time = np.array(spectrum['time']) * u.s
+        
+        # Mass of progenitor
+        tokens = filename.split('_')
+        self.mass = 0.
+        for t in tokens:
+            if 'M' in t:
+                self.mass = float(t[:-1]) * u.M_sun
+
+    def get_time(self):
+        return self.time
+    
+    def get_mass(self):
+        return self.mass
+    
+    def get_luminosity_bins(self):
+        return self.luminosity
+    
+    def get_energy_bins(self):
+        return self.energy
+    
+    def get_initialspectra(self, t, E):
+        initialspectra = {}
+
+        # Avoid division by zero in energy PDF below.
+        E[E==0] = np.finfo(float).eps * E.unit
+
+        # Express all energies in erg.
+        E = E.to('erg').value
+
+        # Make sure input time uses the same units as the model time grid, or
+        # the interpolation will not work correctly.
+        t = t.to(self.time.unit)
+        
+        for flavor in Flavor:
+            lum = []
+            ene = []
+            for i in range(12):
+                lum.append(np.interp(t, self.time, self.luminosity[flavor.name][i].to(1/u.s)).value)
+                ene.append(np.interp(t, self.time, self.energy[flavor.name][i].to('erg')).value)
+            initialspectra[flavor.name] = np.interp(E, ene, lum) / u.s
+        
+        return initialspectra
 
 # class Fornax2019(SupernovaModel):
 #     
