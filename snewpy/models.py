@@ -137,7 +137,124 @@ class SupernovaModel(ABC):
 
         return oscillatedspectra    
 
+class Analytic3Species(SupernovaModel):
+    """Allow to generate an analytic model given total luminosity,
+    average energy, and rms or pinch, for each species.
+    """
 
+    def __init__(self, filename, flavor_xform):
+        """Initialize model.
+
+        Parameters
+        ----------
+        filename : str
+            Absolute or relative path to file with model data.
+        flavor_xform : FlavorTransformation
+            Flavor transformation object with survival probabilities.
+        """
+
+        self.file = Table.read(filename,format='ascii')
+        self.filename=filename
+        self.luminosity = {}
+        self.meanE = {}
+        self.pinch = {}
+        for flavor in Flavor:
+            self.luminosity[flavor] = interp1d(self.get_time(), self.get_luminosity(flavor))
+            self.meanE[flavor] = interp1d(self.get_time(), self.get_mean_energy(flavor))
+            self.pinch[flavor] = interp1d(self.get_time(), self.get_pinch_param(flavor))
+        self.FT = flavor_xform
+
+    def get_time(self):
+        """Get grid of model times.
+
+        Returns
+        -------
+        time : ndarray
+            Grid of times used in the model.
+        """
+        return self.file['TIME']
+
+    def get_luminosity(self, flavor):
+        """Get model luminosity L_nu.
+
+        Parameters
+        ----------
+        flavor : Flavor
+            Neutrino flavor type.
+
+        Returns
+        -------
+        luminosity : ndarray
+            Grid of luminosity values (erg/s) for this flavor.
+        """
+        if flavor == Flavor.nu_x_bar:
+            flavor = Flavor.nu_x
+        return self.file['L_{}'.format(flavor.name.upper())]
+        
+    def get_mean_energy(self, flavor):
+        """Get model mean energy <E_nu>.
+
+        Parameters
+        ----------
+        flavor : Flavor
+            Neutrino flavor type.
+
+        Returns
+        -------
+        energy : ndarray
+            Grid of mean energy versus time.
+        """
+        if flavor == Flavor.nu_x_bar:
+            flavor = Flavor.nu_x
+        return self.file['E_{}'.format(flavor.name.upper())]
+    
+    def get_pinch_param(self, flavor):
+        """Get spectral pinch parameter alpha(t).
+
+        Parameters
+        ----------
+        flavor : Flavor
+            Neutrino flavor type.
+
+        Returns
+        -------
+        alpha : ndarray
+            Grid of alpha versus time.
+        """
+        if (flavor == Flavor.nu_x_bar):
+            flavor = Flavor.nu_x
+        return self.file['ALPHA_{}'.format(flavor.name.upper())]
+        
+    def get_initialspectra(self, t, E):
+        """Get neutrino spectra/luminosity curves after oscillation.
+
+        Parameters
+        ----------
+        t : float
+            Time to evaluate initial and oscillated spectra.
+        E : float or ndarray
+            Energies to evaluate the initial and oscillated spectra.
+
+        Returns
+        -------
+        initialspectra : dict
+            Dictionary of model spectra, keyed by neutrino flavor.
+        """
+        initialspectra={}
+        for flavor in Flavor:
+            L = self.luminosity[flavor](t)
+            Ea = self.meanE[flavor](t)          # <E_nu(t)>
+            Ea = Ea*1e6 * 1.60218e-12
+            a = self.pinch[flavor](t)           # alpha_nu(t)
+            E[E==0] = np.finfo(float).eps       # Avoid division by zero.
+
+            # For numerical stability, evaluate log PDF then exponentiate.
+            initialspectra[flavor] = \
+                np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a) 
+                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea))
+        return initialspectra
+        
+    
 class Nakazato_2013(SupernovaModel):
     """Set up a model based on simulations from Nakazato et al., ApJ S 205:2,
     2013 and ApJ 804:75, 2015. See also http://asphwww.ph.noda.tus.ac.jp/snn/.
