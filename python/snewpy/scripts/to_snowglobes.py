@@ -20,7 +20,7 @@ import tarfile
 import logging
 
 from snewpy.models import *
-from snewpy.FlavorTransformation import *
+from snewpy.flavor_transformation import *
 
 def main(options=None):
     # Parse command-line arguments.
