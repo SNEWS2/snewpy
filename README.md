@@ -13,6 +13,6 @@ Run `python setup.py develop` or `python setup.py install --user` to install the
 To interface with the SNOwGLoBES software the user will need to install the software which can be found at https://github.com/SNOwGLoBES/snowglobes
 SNOwGLoBES requires that the GLoBES libraries to be installed which can be found at https://www.mpi-hd.mpg.de/personalhomes/globes/
 
-## Programs and Scripts
+## Usage
 The core code is found in `python/snewpy'. Example scripts which show how the software can be used are available in the `python/snewpy/scripts` subfolder.
 
