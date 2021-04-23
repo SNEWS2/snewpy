@@ -26,7 +26,7 @@ authors:
  - name: Navya Uberoi
     affiliation: 1
  - name: Arkin Worlikar
-    affiliation: 46
+    affiliation: 6
 
 affiliations:
  - name: University of Rochester,\\ Rochester, NY, USA
@@ -44,7 +44,7 @@ affiliations:
 
  
 date: 21 April 2021
-bibliography: references.bib
+#bibliography: references.bib
 
 # Optional fields if submitting to a AAS journal too, see this blog post:
 # https://blog.joss.theoj.org/2018/12/a-new-collaboration-with-aas-publishing
