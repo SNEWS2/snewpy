@@ -3,8 +3,8 @@ from __future__ import unicode_literals
 import os
 import tarfile
 import zipfile
-import matplotlib as mpl
-mpl.use('Agg')
+#import matplotlib as mpl
+#mpl.use('Agg')
 import matplotlib.pyplot as plt
 import fnmatch
 import logging
@@ -16,9 +16,9 @@ logging.getLogger().setLevel(logging.CRITICAL)
 # Written & modulized Summer 2020
 # Takes in input flux files and configures and runs supernova (which outputs calculated rates)
             
-def collate(Branch, Model_Path, Tarball, detector_input = all, skip_plots=False, return_tables=False):
+def collate(Branch, Model_Path, Tarball, file_name, detector_input = all, skip_plots=True, return_tables=True):
     #Determines type of input file
-
+    print(file_name)
     if ".tar.bz2" in str(Tarball):
         outputnamestem = Tarball[0:str(Tarball).rfind(".tar.bz2")]
         tar = tarfile.open(Model_Path+Tarball)
@@ -57,7 +57,9 @@ def collate(Branch, Model_Path, Tarball, detector_input = all, skip_plots=False,
     #Add_funct sums up relevant files from output generated above
     def add_funct(flux, detector, smear, *arg):
         homebase = Branch + "out/"
-        
+        result=0
+        #f = open("output_"+detector+flux+".txt", "a")
+        #print(f)
         #Defining different variables for the combinatoric iterations
         #And reformatting some variables for different naming uses
         if smear == "_smeared_w" or smear == "nts_w":
@@ -76,13 +78,13 @@ def collate(Branch, Model_Path, Tarball, detector_input = all, skip_plots=False,
             x_label = "Neutrino Energy (GeV)"
             y_label = "Interaction Events"
 
-        if detector == "ar40kt_eve":
+        if detector == "ar40kt":
             detector_label = "ar40kt"
             detector_label2 = "ar40kt"
         elif detector == "ar40kt_he":
             detector_label = "ar40kt he"
             detector_label2 = "ar40kt_he"
-        elif detector == "wc100kt30prct_eve":
+        elif detector == "wc100kt30prct":
             detector_label = "wc100kt30prct"
             detector_label2 = "wc100kt30prct"
         elif detector == "wc100kt30prct_he":
@@ -91,7 +93,7 @@ def collate(Branch, Model_Path, Tarball, detector_input = all, skip_plots=False,
         else:
             detector_label = detector
             detector_label2 = detector
-
+        print(detector)
         colors = [ "k", "r", "g", "y", "b", "m", "c"]        #colors of graphed values
         compile_dict = {}
         
@@ -232,7 +234,10 @@ def collate(Branch, Model_Path, Tarball, detector_input = all, skip_plots=False,
                     if max_val > 0.1:
                         plt.plot(list(new_dict.keys()), list(new_dict.values()), linewidth = 1, drawstyle = 'steps', color = colors[r], label = name)
             r += 1
-
+            #The result is the total number of expected events for the detector, summed over all energy bins and interaction channels
+            result += sum(list(new_dict.values()))
+            print(detector, name, sum(list(new_dict.values())), result )
+            
         if (skip_plots is False):
             axes = plt.gca()
             axes.set_xlim([None,0.10])
@@ -244,38 +249,42 @@ def collate(Branch, Model_Path, Tarball, detector_input = all, skip_plots=False,
             plt.title (str(flux).capitalize() + " " + str(detector_label).capitalize() + " " + str(weight_value).capitalize() + " " + str(smear_title).capitalize() + " Events")
             plt.savefig("out/{0}_{1}_{2}_{3}_log_plot.png".format(flux, detector, smear_value, weight_value), dpi = 300, bbox_inches = 'tight')
             plt.clf()
-
+        return result
     #flux details                 # detector, smeared/unsmeared, *arg reaction placeholders
     
     #The driver, runs through the addition function for every detector
     #The values at the end correspond to the different categories that each file is being summed into
     if detector_input == all:
+    
         for single_flux in FluxFileNameStems:
             for smearval in smearvals:
+            
                 add_funct (str(single_flux), "wc100kt15prct", smearval, "_nc_", "_e_", "_ibd", "nue_O16", "nuebar_O16") #everything after smearval corresponds to a *arg value
-                add_funct (str(single_flux), "wc100kt30prct", smearval, "_nc_", "_e_", "_ibd", "nue_O16", "nuebar_O16")
+                water_data = add_funct (str(single_flux), "wc100kt30prct", smearval, "_nc_", "_e_", "_ibd", "nue_O16", "nuebar_O16")
                 add_funct (str(single_flux), "wc100kt30prct_he", smearval, "_nc_", "_e_", "_ibd", "nue_O16", "nuebar_O16")
                 add_funct (str(single_flux), "halo1", smearval, "_nc_", "_e_", "Pb208_1n", "Pb208_2n") 
                 add_funct (str(single_flux), "halo2", smearval, "_nc_", "_e_", "Pb208_1n", "Pb208_2n")
-                add_funct (str(single_flux), "ar40kt_eve", smearval,"_nc_", "_e_", "nue_Ar40", "nuebar_Ar40")
+                ar_data = add_funct (str(single_flux), "ar40kt", smearval,"_nc_", "_e_", "nue_Ar40", "nuebar_Ar40")
                 add_funct (str(single_flux), "ar40kt_he", smearval, "_nc_", "_e_", "nue_Ar40", "nuebar_Ar40")
-                add_funct (str(single_flux), "icecube", smearval, "_nc_", "_e_", "_ibd", "nue_O16", "nuebar_O16")
+                ICdata = add_funct (str(single_flux), "icecube", smearval, "_nc_", "_e_", "_ibd", "nue_O16", "nuebar_O16")
                 add_funct (str(single_flux), "hyperk30prct", smearval, "_nc_", "_e_", "_ibd", "nue_O16", "nuebar_O16")
-                add_funct (str(single_flux), "scint20kt", smearval, "_nc_", "_e_", "_ibd", "nue_C12", "nuebar_C12","nue_C13")
+                JUNO_data = add_funct (str(single_flux), "scint20kt", smearval, "_nc_", "_e_", "_ibd", "nue_C12", "nuebar_C12","nue_C13")
                 add_funct (str(single_flux), "novaND", smearval, "_nc_", "_e_", "_ibd", "nue_C12", "nuebar_C12")
                 add_funct (str(single_flux), "novaFD", smearval, "_nc_", "_e_", "_ibd", "nue_C12", "nuebar_C12")
-
-            flux_position = FluxFileNameStems.index(single_flux) + 1
-            total_fluxes = len(FluxFileNameStems)
-            plot_percent_calc = (flux_position/total_fluxes)*100
-            plot_percentage_done = str(round(plot_percent_calc,2))
-            print('\n'*3)
-            print("Plots are " + plot_percentage_done + "% completed.")
-            print('\n'*3)
+            
     else: #if just one detector is inputted in SNEWPY.py
+        data_list = []
+        #Output file to be used by snewpdag, containing the edge of the time bins and the number of events in the time bin
+        fout = open("./newpy_output_"+detector_input+"_"+file_name+"_1msbin.txt", "a")
+        t=0
         for single_flux in FluxFileNameStems:
+            print(single_flux,detector_input)
             for smearval in smearvals:
+                #This is done because we are interested only on the deteced number of events, smeared and weighted in snowglobes
+                if smearval!='_smeared_w':
+                    continue
                 print("Running inputted detector")
+                
                 if detector_input in ("wc100kt15prct", "wc100kt30prct", "wc100kt30prct_he", "icecube", "hyperk30prct", "km3net"):
                     sum_categories = ["_nc_", "_e_", "_ibd", "nue_O16", "nuebar_O16"]
                 elif detector_input in ("halo1", "halo2"):
@@ -290,18 +299,19 @@ def collate(Branch, Model_Path, Tarball, detector_input = all, skip_plots=False,
                     print("Unanticipated value for detector input")
                 argList1 = [str(single_flux), detector_input, smearval]
                 argList1.extend(sum_categories)
-                add_funct(*argList1)
-
+                data = add_funct(*argList1)
 
                 flux_position = FluxFileNameStems.index(single_flux) + 1
                 total_fluxes = len(FluxFileNameStems)
                 plot_percent_calc = (flux_position/total_fluxes)*100
                 plot_percentage_done = str(round(plot_percent_calc,2))
+            data_list.append(data)
+            print(t/1000.+0.001, "\t", data, file=fout)
+            print(t/1000.+0.001, "\t", data)
             print('\n'*3)
             print("Plots are " + plot_percentage_done + "% completed.")
             print('\n'*3)
-
-
+            t+=1
     #Now delete all unnecessary files created originally
 
     #Now create tarball output

@@ -25,7 +25,7 @@ from flavor_transformation import *
 def generate_time_series(model_path, model_file, model_type, transformation_type, transformation_parameters, d, output_filename, ntbins, deltat):
 
     # Chooses model format. model_format_dict associates the model format name with it's class
-    model_class_dict = {'Nakazato_2013':Nakazato_2013, 'Sukhbold_2015':Sukhbold_2015, 'Bollig_2016':Bollig_2016, 'OConnor_2015':OConnor_2015, 'Janka':Janka, 'Warren_2020':Warren_2020, 'Analytic3Species':Analytic3Species}
+    model_class_dict = {'Nakazato_2013':Nakazato_2013, 'Sukhbold_2015':Sukhbold_2015, 'Bollig_2016':Bollig_2016, 'OConnor_2015':OConnor_2015, 'Janka':Janka, 'Warren_2020':Warren_2020}
     model_class = model_class_dict[model_type]
     
     # chooses flavor transformation, works in the same way as model_format
@@ -37,15 +37,17 @@ def generate_time_series(model_path, model_file, model_type, transformation_type
     # Subsample the model time. Default to 30 time slices.
     tmin = snmodel.get_time()[0]
     tmax = snmodel.get_time()[-1]
+    print('start', tmin, 'stop', tmax)
     if deltat is not None:
         dt = deltat
     elif ntbins is not None:
         dt = (tmax - tmin) / (ntbins+1)
     else:
-        ntbins=30
-        dt = (tmax - tmin) / (ntbins+1)
-
-    tedges = np.arange(tmin, tmax, dt)
+        dt= 0.001
+        ntbins=int((tmax - tmin)/dt)
+        #dt = (tmax - tmin) / (ntbins+1)
+    print(ntbins,dt)
+    tedges = np.arange(tmin, tmax+dt, dt)
     times = 0.5*(tedges[1:] + tedges[:-1])
     
     # Generate output.
@@ -100,17 +102,17 @@ def generate_time_series(model_path, model_file, model_type, transformation_type
             output = '\n'.join(table).encode('ascii')
 
             extension = ".dat"
-            filename = model_file.replace('.fits', '.tbin{:01d}.'.format(i+1) + transformation_type + '.{:.3f},{:.3f},{:01d}-{:.1f}kpc{}'.format(tmin,tmax,ntbins,d,extension) )
+            filename = model_file.replace('.fits', '.tbin{:01d}.'.format(i+1) + transformation_type + '.{:.3f},{:.3f},{:01d}-{:.1f}kpc{}'.format(t,dt,ntbins,d,extension) )
             info = tarfile.TarInfo(name=filename)
             info.size = len(output)
             tf.addfile(info, io.BytesIO(output))
-
+            print(t, filename)
     return tfname
 
 def generate_fluence(model_path, model_file, model_type, transformation_type, transformation_parameters, d, output_filename, tstart=None, tend=None):
 
     # Chooses model format. model_format_dict associates the model format name with it's class
-    model_class_dict = {'Nakazato_2013':Nakazato_2013, 'Sukhbold_2015':Sukhbold_2015, 'Bollig_2016':Bollig_2016, 'OConnor_2015':OConnor_2015, 'Janka':Janka, 'Warren_2020':Warren_2020, 'Analytic3Species':Analytic3Species}
+    model_class_dict = {'Nakazato_2013':Nakazato_2013, 'Sukhbold_2015':Sukhbold_2015, 'Bollig_2016':Bollig_2016, 'OConnor_2015':OConnor_2015, 'Janka':Janka, 'Warren_2020':Warren_2020}
     model_class = model_class_dict[model_type]
 
     # chooses flavor transformation, works in the same way as model_format
