@@ -19,8 +19,11 @@ import tarfile
 
 import logging
 
-from models import *
-from flavor_transformation import *
+from snewpy.models import *
+from .neutrino import MassHierarchy
+from snewpy.flavor_transformation import *
+from astropy import units as u
+
 
 def generate_time_series(model_path, model_file, model_type, transformation_type, transformation_parameters, d, output_filename, ntbins, deltat):
 
@@ -29,10 +32,10 @@ def generate_time_series(model_path, model_file, model_type, transformation_type
     model_class = model_class_dict[model_type]
     
     # chooses flavor transformation, works in the same way as model_format
-    flavor_transformation_dict = {'NoTransformation':NoTransformation, 'AdiabaticMSW_NMO':AdiabaticMSW_NMO, 'AdiabaticMSW_IMO':AdiabaticMSW_IMO, 'NonAdiabaticMSWH_NMO':NonAdiabaticMSWH_NMO, 'NonAdiabaticMSWH_IMO':NonAdiabaticMSWH_IMO, 'TwoFlavorDecoherence':TwoFlavorDecoherence, 'ThreeFlavorDecoherence':ThreeFlavorDecoherence, 'NeutrinoDecay_NMO':NeutrinoDecay_NMO, 'NeutrinoDecay_IMO':NeutrinoDecay_IMO}
+    flavor_transformation_dict = {'NoTransformation':NoTransformation, 'AdiabaticMSW_NMO':AdiabaticMSW(mh=MassHierarchy.NORMAL), 'AdiabaticMSW_IMO':AdiabaticMSW(mh=MassHierarchy.INVERTED), 'NonAdiabaticMSWH_NMO':NonAdiabaticMSWH(mh=MassHierarchy.NORMAL), 'NonAdiabaticMSWH_IMO':NonAdiabaticMSWH(mh=MassHierarchy.INVERTED), 'TwoFlavorDecoherence':TwoFlavorDecoherence, 'ThreeFlavorDecoherence':ThreeFlavorDecoherence, 'NeutrinoDecay_NMO':NeutrinoDecay(mh=MassHierarchy.NORMAL), 'NeutrinoDecay_IMO':NeutrinoDecay(mh=MassHierarchy.INVERTED)}
     flavor_transformation = flavor_transformation_dict[transformation_type]
 
-    snmodel = model_class(model_path+model_file, flavor_transformation(transformation_parameters))
+    snmodel = model_class(model_path+model_file)
 
     # Subsample the model time. Default to 30 time slices.
     tmin = snmodel.get_time()[0]
@@ -62,18 +65,15 @@ def generate_time_series(model_path, model_file, model_type, transformation_type
 
     with tarfile.open(model_path + tfname, 'w:bz2') as tf:
         #creates file in tar archive that gives information on parameters
-        output = '\n'.join(map(str,transformation_parameters)).encode('ascii')
+        output = '\n'.join(map(str,transformation_type)).encode('ascii')
         tf.addfile(tarfile.TarInfo(name='parameterinfo'), io.BytesIO(output))        
-        
-        keV = 1e3 * 1.60218e-12        # eV to erg
-        MeV = 1e6 * 1.60218e-12
-        GeV = 1e9 * 1.60218e-12
 
-        energy = np.linspace(0, 100, 501) * MeV
+        MeV = 1.60218e-6 * u.erg
+        energy = np.linspace(0, 100, 501) * MeV #1MeV
         
         # Loop over sampled times.
         for i, t in enumerate(times):
-            osc_spectra = snmodel.get_oscillatedspectra(t, energy)
+            osc_spectra = snmodel.get_oscillatedspectra(t, energy,flavor_transformation)
             
             osc_fluence = {}
             table = []
@@ -84,15 +84,15 @@ def generate_time_series(model_path, model_file, model_type, transformation_type
             # Generate energy + number flux table.
             for j, E in enumerate(energy):
                 for flavor in Flavor:
-                    osc_fluence[flavor] = osc_spectra[flavor][j] * dt * 200.*keV  / (4.*np.pi*(d*1000*3.086e+18)**2)
+                    osc_fluence[flavor] = osc_spectra[flavor][j] * dt * 0.2 * MeV / (4.*np.pi*(d*1000*3.086e+18)**2)
 
-                s = '{:17.8E}'.format(E/GeV)
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.nu_e])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.nu_x])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.nu_x])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.nu_e_bar])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.nu_x_bar])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.nu_x_bar])
+                s = '{:17.8E}'.format(E/(1e3 * MeV))
+                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_E])
+                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_X])
+                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_X])
+                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_E_BAR])
+                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_X_BAR])
+                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_X_BAR])
                 table.append(s)
                 logging.debug(s)
 
@@ -107,28 +107,28 @@ def generate_time_series(model_path, model_file, model_type, transformation_type
 
     return tfname
 
-def generate_fluence(model_path, model_file, model_type, transformation_type, transformation_parameters, d, output_filename, tstart=None, tend=None):
+def generate_fluence(model_path, model_file, model_type, transformation_type, d, output_filename, tstart=None, tend=None):
 
     # Chooses model format. model_format_dict associates the model format name with it's class
     model_class_dict = {'Nakazato_2013':Nakazato_2013, 'Sukhbold_2015':Sukhbold_2015, 'Bollig_2016':Bollig_2016, 'OConnor_2015':OConnor_2015, 'Janka':Janka, 'Warren_2020':Warren_2020, 'Analytic3Species':Analytic3Species}
     model_class = model_class_dict[model_type]
 
     # chooses flavor transformation, works in the same way as model_format
-    flavor_transformation_dict = {'NoTransformation':NoTransformation, 'AdiabaticMSW_NMO':AdiabaticMSW_NMO, 'AdiabaticMSW_IMO':AdiabaticMSW_IMO, 'NonAdiabaticMSWH_NMO':NonAdiabaticMSWH_NMO, 'NonAdiabaticMSWH_IMO':NonAdiabaticMSWH_IMO, 'TwoFlavorDecoherence':TwoFlavorDecoherence, 'ThreeFlavorDecoherence':ThreeFlavorDecoherence, 'NeutrinoDecay_NMO':NeutrinoDecay_NMO, 'NeutrinoDecay_IMO':NeutrinoDecay_IMO}
+    flavor_transformation_dict = {'NoTransformation':NoTransformation, 'AdiabaticMSW_NMO':AdiabaticMSW(mh=MassHierarchy.NORMAL), 'AdiabaticMSW_IMO':AdiabaticMSW(mh=MassHierarchy.INVERTED), 'NonAdiabaticMSWH_NMO':NonAdiabaticMSWH(mh=MassHierarchy.NORMAL), 'NonAdiabaticMSWH_IMO':NonAdiabaticMSWH(mh=MassHierarchy.INVERTED), 'TwoFlavorDecoherence':TwoFlavorDecoherence, 'ThreeFlavorDecoherence':ThreeFlavorDecoherence, 'NeutrinoDecay_NMO':NeutrinoDecay(mh=MassHierarchy.NORMAL), 'NeutrinoDecay_IMO':NeutrinoDecay(mh=MassHierarchy.INVERTED)}
     flavor_transformation = flavor_transformation_dict[transformation_type]
 
-    snmodel = model_class(model_path+model_file, flavor_transformation(transformation_parameters))
+    snmodel = model_class(model_path+model_file)
 
     #set the timings up
     #default if inputs are None: full time window of the model
     if tstart is None:
         tstart = snmodel.get_time()[0]
         tend = snmodel.get_time()[-1]
-
-    if hasattr(tstart,"__len__"):
+        
+    if hasattr(float(tstart/u.s),"__len__"):
         t0 = tstart[0]
         t1 = tend[-1]
-        nbin = len(tstart)
+        nbin = len(float(tstart/u.s))
     else:
         t0 = tstart
         t1 = tend
@@ -137,18 +137,16 @@ def generate_fluence(model_path, model_file, model_type, transformation_type, tr
     times = 0.5*(tstart + tend)
 
     model_times = snmodel.get_time()
-    model_tstart = np.zeros(len(model_times))
-    model_tend = np.zeros(len(model_times))
+    model_tstart = model_times*1.0
+    model_tend = model_times*1.0
+
     model_tstart[0] = model_times[0]
     for i in range(1,len(model_times),1):
         model_tstart[i] = 0.5*(model_times[i]+model_times[i-1])
         model_tend[i-1] = model_tstart[i]
     model_tend[len(model_times)-1] = model_times[-1]
-
-    print(model_tend)
-    type(tstart)
     
-    if hasattr(tstart,"__len__"):
+    if hasattr(float(tstart/u.s),"__len__"):
         starting_index = np.zeros(len(times),dtype=np.int8)
         ending_index = np.zeros(len(times),dtype=np.int8)
         for i in range(len(tstart)):
@@ -172,19 +170,16 @@ def generate_fluence(model_path, model_file, model_type, transformation_type, tr
 
     with tarfile.open(model_path + tfname, 'w:bz2') as tf:
         #creates file in tar archive that gives information on parameters
-        output = '\n'.join(map(str,transformation_parameters)).encode('ascii')
+        output = '\n'.join(map(str,transformation_type)).encode('ascii')
         tf.addfile(tarfile.TarInfo(name='parameterinfo'), io.BytesIO(output))
 
-        keV = 1e3 * 1.60218e-12        # eV to erg
-        MeV = 1e6 * 1.60218e-12
-        GeV = 1e9 * 1.60218e-12
-
+        MeV = 1.60218e-6 * u.erg
         energy = np.linspace(0, 100, 501) * MeV
 
         # Loop over sampled times.
         for i in range(nbin):
 
-            if hasattr(tstart,"__len__"):
+            if hasattr(float(tstart/u.s),"__len__"):
                 ta = tstart[i]
                 tb = tend[i]
                 t = times[i]
@@ -197,20 +192,21 @@ def generate_fluence(model_path, model_file, model_type, transformation_type, tr
 
             #first time bin of model in requested interval
             print(i,starting_index[i],starting_index[i])
-            osc_spectra = snmodel.get_oscillatedspectra(model_times[starting_index[i]], energy)
+            osc_spectra = snmodel.get_oscillatedspectra(model_times[starting_index[i]], energy,flavor_transformation)
+
             for flavor in Flavor:
                 osc_spectra[flavor] *= (model_tend[starting_index[i]]-ta)
             test_dt = (model_tend[starting_index[i]]-ta)
 
             #intermediate time bins of model in requested interval
             for j in range(starting_index[i]+1,ending_index[i],1):
-                temp_spectra = snmodel.get_oscillatedspectra(model_times[j], energy)
+                temp_spectra = snmodel.get_oscillatedspectra(model_times[j], energy,flavor_transformation)
                 for flavor in Flavor:
                     osc_spectra[flavor] += temp_spectra[flavor]*(model_tend[j]-model_tstart[j])
                 test_dt += (model_tend[j]-model_tstart[j])
 
             #last time bin of model in requested interval
-            temp_spectra = snmodel.get_oscillatedspectra(model_times[ending_index[i]], energy)
+            temp_spectra = snmodel.get_oscillatedspectra(model_times[ending_index[i]], energy,flavor_transformation)
             for flavor in Flavor:
                 osc_spectra[flavor] += temp_spectra[flavor]*(tb-model_tstart[ending_index[i]])
             test_dt += (tb-model_tstart[ending_index[i]])
@@ -228,15 +224,15 @@ def generate_fluence(model_path, model_file, model_type, transformation_type, tr
             # Generate energy + number flux table.
             for j, E in enumerate(energy):
                 for flavor in Flavor:
-                    osc_fluence[flavor] = osc_spectra[flavor][j] * dt * 200.*keV  / (4.*np.pi*(d*1000*3.086e+18)**2)
+                    osc_fluence[flavor] = osc_spectra[flavor][j] * dt * 0.2 * MeV  / (4.*np.pi*(d*1000*3.086e+18)**2)
 
-                s = '{:17.8E}'.format(E/GeV)
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.nu_e])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.nu_x])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.nu_x])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.nu_e_bar])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.nu_x_bar])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.nu_x_bar])
+                s = '{:17.8E}'.format(E/(1e3 * MeV))
+                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_E])
+                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_X])
+                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_X])
+                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_E_BAR])
+                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_X_BAR])
+                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_X_BAR])
                 table.append(s)
                 logging.debug(s)
 
