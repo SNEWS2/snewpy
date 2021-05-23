@@ -650,6 +650,10 @@ class OConnor_2015(SupernovaModel):
                                     'RMS_NU_E','RMS_NU_E_BAR','RMS_NU_X'],
                      format='ascii')
 
+        header = ascii.read(simtab.meta['comments'], delimiter='=',format='no_header', names=['key', 'val'])
+        tbounce = float(header['val'][0])
+        simtab['TIME'] -= tbounce
+        
         simtab['ALPHA_NU_E'] = (2.0*simtab['E_NU_E']**2 - simtab['RMS_NU_E']**2)/(simtab['RMS_NU_E']**2 - simtab['E_NU_E']**2)
         simtab['ALPHA_NU_E_BAR'] = (2.0*simtab['E_NU_E_BAR']**2 - simtab['RMS_NU_E_BAR']**2)/(simtab['RMS_NU_E_BAR']**2 - simtab['E_NU_E_BAR']**2)
         simtab['ALPHA_NU_X'] = (2.0*simtab['E_NU_X']**2 - simtab['RMS_NU_X']**2)/(simtab['RMS_NU_X']**2 - simtab['E_NU_X']**2)
