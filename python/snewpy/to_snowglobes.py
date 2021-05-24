@@ -28,7 +28,7 @@ from astropy import units as u
 def generate_time_series(model_path, model_file, model_type, transformation_type, transformation_parameters, d, output_filename, ntbins, deltat):
 
     # Chooses model format. model_format_dict associates the model format name with it's class
-    model_class_dict = {'Nakazato_2013':Nakazato_2013, 'Sukhbold_2015':Sukhbold_2015, 'Bollig_2016':Bollig_2016, 'OConnor_2015':OConnor_2015, 'Janka':Janka, 'Warren_2020':Warren_2020, 'Analytic3Species':Analytic3Species}
+    model_class_dict = {'Nakazato_2013':Nakazato_2013, 'Sukhbold_2015':Sukhbold_2015, 'Bollig_2016':Bollig_2016, 'OConnor_2015':OConnor_2015, 'Janka':Janka, 'Warren_2020':Warren_2020, 'Analytic3Species':Analytic3Species, 'Zha_2021':Zha_2021}
     model_class = model_class_dict[model_type]
     
     # chooses flavor transformation, works in the same way as model_format
@@ -110,7 +110,7 @@ def generate_time_series(model_path, model_file, model_type, transformation_type
 def generate_fluence(model_path, model_file, model_type, transformation_type, d, output_filename, tstart=None, tend=None):
 
     # Chooses model format. model_format_dict associates the model format name with it's class
-    model_class_dict = {'Nakazato_2013':Nakazato_2013, 'Sukhbold_2015':Sukhbold_2015, 'Bollig_2016':Bollig_2016, 'OConnor_2015':OConnor_2015, 'Janka':Janka, 'Warren_2020':Warren_2020, 'Analytic3Species':Analytic3Species}
+    model_class_dict = {'Nakazato_2013':Nakazato_2013, 'Sukhbold_2015':Sukhbold_2015, 'Bollig_2016':Bollig_2016, 'OConnor_2015':OConnor_2015, 'Janka':Janka, 'Warren_2020':Warren_2020, 'Analytic3Species':Analytic3Species, 'Zha_2021':Zha_2021}
     model_class = model_class_dict[model_type]
 
     # chooses flavor transformation, works in the same way as model_format
@@ -124,12 +124,13 @@ def generate_fluence(model_path, model_file, model_type, transformation_type, d,
     if tstart is None:
         tstart = snmodel.get_time()[0]
         tend = snmodel.get_time()[-1]
-        
-    if hasattr(float(tstart/u.s),"__len__"):
-        t0 = tstart[0]
-        t1 = tend[-1]
-        nbin = len(float(tstart/u.s))
-    else:
+
+    try:
+        if len(tstart/u.s) > 0:
+            t0 = tstart[0]
+            t1 = tend[-1]
+            nbin = len(tstart/u.s)
+    except:
         t0 = tstart
         t1 = tend
         nbin = 1
@@ -146,7 +147,7 @@ def generate_fluence(model_path, model_file, model_type, transformation_type, d,
         model_tend[i-1] = model_tstart[i]
     model_tend[len(model_times)-1] = model_times[-1]
     
-    if hasattr(float(tstart/u.s),"__len__"):
+    if nbin>1:
         starting_index = np.zeros(len(times),dtype=np.int8)
         ending_index = np.zeros(len(times),dtype=np.int8)
         for i in range(len(tstart)):
@@ -179,7 +180,7 @@ def generate_fluence(model_path, model_file, model_type, transformation_type, d,
         # Loop over sampled times.
         for i in range(nbin):
 
-            if hasattr(float(tstart/u.s),"__len__"):
+            if nbin > 1:
                 ta = tstart[i]
                 tb = tend[i]
                 t = times[i]
@@ -191,29 +192,27 @@ def generate_fluence(model_path, model_file, model_type, transformation_type, d,
                 dt = tb-ta
 
             #first time bin of model in requested interval
-            print(i,starting_index[i],starting_index[i])
             osc_spectra = snmodel.get_oscillatedspectra(model_times[starting_index[i]], energy,flavor_transformation)
 
-            for flavor in Flavor:
-                osc_spectra[flavor] *= (model_tend[starting_index[i]]-ta)
-            test_dt = (model_tend[starting_index[i]]-ta)
-
-            #intermediate time bins of model in requested interval
-            for j in range(starting_index[i]+1,ending_index[i],1):
-                temp_spectra = snmodel.get_oscillatedspectra(model_times[j], energy,flavor_transformation)
+            if dt < model_tend[starting_index[i]]-ta:
+                continue
+            else:
                 for flavor in Flavor:
-                    osc_spectra[flavor] += temp_spectra[flavor]*(model_tend[j]-model_tstart[j])
-                test_dt += (model_tend[j]-model_tstart[j])
+                    osc_spectra[flavor] *= (model_tend[starting_index[i]]-ta)
 
-            #last time bin of model in requested interval
-            temp_spectra = snmodel.get_oscillatedspectra(model_times[ending_index[i]], energy,flavor_transformation)
-            for flavor in Flavor:
-                osc_spectra[flavor] += temp_spectra[flavor]*(tb-model_tstart[ending_index[i]])
-            test_dt += (tb-model_tstart[ending_index[i]])
+                #intermediate time bins of model in requested interval
+                for j in range(starting_index[i]+1,ending_index[i],1):
+                    temp_spectra = snmodel.get_oscillatedspectra(model_times[j], energy,flavor_transformation)
+                    for flavor in Flavor:
+                        osc_spectra[flavor] += temp_spectra[flavor]*(model_tend[j]-model_tstart[j])
 
+                #last time bin of model in requested interval
+                temp_spectra = snmodel.get_oscillatedspectra(model_times[ending_index[i]], energy,flavor_transformation)
+                for flavor in Flavor:
+                    osc_spectra[flavor] += temp_spectra[flavor]*(tb-model_tstart[ending_index[i]])
 
-            for flavor in Flavor:
-                osc_spectra[flavor] /= (tb-ta)
+                for flavor in Flavor:
+                    osc_spectra[flavor] /= (tb-ta)
 
             osc_fluence = {}
             table = []
