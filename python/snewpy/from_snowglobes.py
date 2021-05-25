@@ -16,7 +16,7 @@ logging.getLogger().setLevel(logging.CRITICAL)
 # Written & modulized Summer 2020
 # Takes in input flux files and configures and runs supernova (which outputs calculated rates)
             
-def collate(Branch, Model_Path, Tarball, detector_input = all, skip_plots=False, return_tables=False):
+def collate(Branch, Model_Path, Tarball, detector_input = all, skip_plots=False, return_tables=False, verbose=False):
     #Determines type of input file
 
     if ".tar.bz2" in str(Tarball):
@@ -94,14 +94,14 @@ def collate(Branch, Model_Path, Tarball, detector_input = all, skip_plots=False,
 
         colors = [ "k", "r", "g", "y", "b", "m", "c"]        #colors of graphed values
         compile_dict = {}
-        
+
         #Splits values from each file into Energy and Events, then sums appropriate ones
         for input_val in arg:
             flux_filenames = os.listdir(homebase)
             final_dict= {}    
             temp_dict = {}
             for afile in flux_filenames:                #Does the actual summing of essential values in each file
-                name_iteration = "{0}*{1}*{2}*{3}*".format(flux, input_val, detector, smear)
+                name_iteration = "{0}_*{1}*{2}*{3}*".format(flux, input_val, detector, smear)
                 if fnmatch.fnmatch(afile, name_iteration): # and "Collated" not in str(afile):
                     fileinsides = open("{0}/{1}".format(homebase, afile)) #fine
                     lines = fileinsides.readlines()
@@ -148,6 +148,7 @@ def collate(Branch, Model_Path, Tarball, detector_input = all, skip_plots=False,
             for k, v in list(final_dict.items()):
                 compile_dict[k].append(v)  #This is the dictionary with energy bins and lists of events corresponding to interaction type
         r = 0
+
         if detector_input == all: #aka all detectors are being run, not a specific one
             relevant_list = arg
         else:
@@ -157,11 +158,11 @@ def collate(Branch, Model_Path, Tarball, detector_input = all, skip_plots=False,
             for key in compile_dict:
                 new_dict[key] = compile_dict[key][r]
             
-            if arg[r] == "_ibd":                #Color labels on graph determined by name, given from value passed through flux details
+            if arg[r] == "ibd":                #Color labels on graph determined by name, given from value passed through flux details
                 name = "Inverse Beta Decay"
             elif arg[r] == "_e_":
                 name = r'${\nu}_x+e^-$'
-            elif arg[r] == "_nc_":
+            elif arg[r] == "nc_":
                 name = "Neutral Current"
             elif arg[r] == "Pb208_1n":
                 name = r'${}^{208}Pb$' + " 1n"
@@ -183,6 +184,7 @@ def collate(Branch, Model_Path, Tarball, detector_input = all, skip_plots=False,
                 name = r'$\bar{{\nu}_e}$' + " " + r'${}^{40}Ar$'
             else:
                 print("Invalid Input")
+
             if sum(new_dict.values()) != 0:         #plotting each color of bars individually
                 
                 #Creates the condensed data file & applies formatting
@@ -252,54 +254,54 @@ def collate(Branch, Model_Path, Tarball, detector_input = all, skip_plots=False,
     if detector_input == all:
         for single_flux in FluxFileNameStems:
             for smearval in smearvals:
-                add_funct (str(single_flux), "wc100kt15prct", smearval, "_nc_", "_e_", "_ibd", "nue_O16", "nuebar_O16") #everything after smearval corresponds to a *arg value
-                add_funct (str(single_flux), "wc100kt30prct", smearval, "_nc_", "_e_", "_ibd", "nue_O16", "nuebar_O16")
-                add_funct (str(single_flux), "wc100kt30prct_he", smearval, "_nc_", "_e_", "_ibd", "nue_O16", "nuebar_O16")
-                add_funct (str(single_flux), "halo1", smearval, "_nc_", "_e_", "Pb208_1n", "Pb208_2n") 
-                add_funct (str(single_flux), "halo2", smearval, "_nc_", "_e_", "Pb208_1n", "Pb208_2n")
-                add_funct (str(single_flux), "ar40kt_eve", smearval,"_nc_", "_e_", "nue_Ar40", "nuebar_Ar40")
-                add_funct (str(single_flux), "ar40kt_he", smearval, "_nc_", "_e_", "nue_Ar40", "nuebar_Ar40")
-                add_funct (str(single_flux), "icecube", smearval, "_nc_", "_e_", "_ibd", "nue_O16", "nuebar_O16")
-                add_funct (str(single_flux), "hyperk30prct", smearval, "_nc_", "_e_", "_ibd", "nue_O16", "nuebar_O16")
-                add_funct (str(single_flux), "scint20kt", smearval, "_nc_", "_e_", "_ibd", "nue_C12", "nuebar_C12","nue_C13")
-                add_funct (str(single_flux), "novaND", smearval, "_nc_", "_e_", "_ibd", "nue_C12", "nuebar_C12")
-                add_funct (str(single_flux), "novaFD", smearval, "_nc_", "_e_", "_ibd", "nue_C12", "nuebar_C12")
+                add_funct (str(single_flux), "wc100kt15prct", smearval, "nc_", "_e_", "ibd", "nue_O16", "nuebar_O16") #everything after smearval corresponds to a *arg value
+                add_funct (str(single_flux), "wc100kt30prct", smearval, "nc_", "_e_", "ibd", "nue_O16", "nuebar_O16")
+                add_funct (str(single_flux), "wc100kt30prct_he", smearval, "nc_", "_e_", "ibd", "nue_O16", "nuebar_O16")
+                add_funct (str(single_flux), "halo1", smearval, "nc_", "_e_", "Pb208_1n", "Pb208_2n") 
+                add_funct (str(single_flux), "halo2", smearval, "nc_", "_e_", "Pb208_1n", "Pb208_2n")
+                add_funct (str(single_flux), "ar40kt_eve", smearval,"nc_", "_e_", "nue_Ar40", "nuebar_Ar40")
+                add_funct (str(single_flux), "ar40kt_he", smearval, "nc_", "_e_", "nue_Ar40", "nuebar_Ar40")
+                add_funct (str(single_flux), "icecube", smearval, "nc_", "_e_", "ibd", "nue_O16", "nuebar_O16")
+                add_funct (str(single_flux), "hyperk30prct", smearval, "nc_", "_e_", "ibd", "nue_O16", "nuebar_O16")
+                add_funct (str(single_flux), "scint20kt", smearval, "nc_", "_e_", "ibd", "nue_C12", "nuebar_C12","nue_C13")
+                add_funct (str(single_flux), "novaND", smearval, "nc_", "_e_", "ibd", "nue_C12", "nuebar_C12")
+                add_funct (str(single_flux), "novaFD", smearval, "nc_", "_e_", "ibd", "nue_C12", "nuebar_C12")
 
             flux_position = FluxFileNameStems.index(single_flux) + 1
             total_fluxes = len(FluxFileNameStems)
             plot_percent_calc = (flux_position/total_fluxes)*100
             plot_percentage_done = str(round(plot_percent_calc,2))
-            print('\n'*3)
-            print("Plots are " + plot_percentage_done + "% completed.")
-            print('\n'*3)
+            if (verbose): print('\n'*3)
+            if (verbose): print("Plots are " + plot_percentage_done + "% completed.")
+            if (verbose): print('\n'*3)
     else: #if just one detector is inputted in SNEWPY.py
         for single_flux in FluxFileNameStems:
             for smearval in smearvals:
-                print("Running inputted detector")
+                if (verbose):  print("Running inputted detector")
                 if detector_input in ("wc100kt15prct", "wc100kt30prct", "wc100kt30prct_he", "icecube", "hyperk30prct", "km3net"):
-                    sum_categories = ["_nc_", "_e_", "_ibd", "nue_O16", "nuebar_O16"]
+                    sum_categories = ["nc_", "_e_", "ibd", "nue_O16", "nuebar_O16"]
                 elif detector_input in ("halo1", "halo2"):
-                    sum_categories = ["_nc_", "_e_", "Pb208_1n", "Pb208_2n"]
+                    sum_categories = ["nc_", "_e_", "Pb208_1n", "Pb208_2n"]
                 elif detector_input in ("ar40kt", "ar40kt_he"):
-                    sum_categories = ["_nc_", "_e_", "nue_Ar40", "nuebar_Ar40"]
+                    sum_categories = ["nc_", "_e_", "nue_Ar40", "nuebar_Ar40"]
                 elif detector_input in ("scint20kt"):
-                    sum_categories = ["_nc_", "_e_", "_ibd", "nue_C12", "nuebar_C12", "nue_C13"]
+                    sum_categories = ["nc_", "_e_", "ibd", "nue_C12", "nuebar_C12", "nue_C13"]
                 elif detector_input in ("novaND", "novaFD"):
-                    sum_categories = ["_nc_", "_e_", "_ibd", "nue_C12", "nuebar_C12"]
+                    sum_categories = ["nc_", "_e_", "ibd", "nue_C12", "nuebar_C12"]
                 else:
                     print("Unanticipated value for detector input")
                 argList1 = [str(single_flux), detector_input, smearval]
                 argList1.extend(sum_categories)
                 add_funct(*argList1)
 
-
+                
                 flux_position = FluxFileNameStems.index(single_flux) + 1
                 total_fluxes = len(FluxFileNameStems)
                 plot_percent_calc = (flux_position/total_fluxes)*100
                 plot_percentage_done = str(round(plot_percent_calc,2))
-            print('\n'*3)
-            print("Plots are " + plot_percentage_done + "% completed.")
-            print('\n'*3)
+            if (verbose): print('\n'*3)
+            if (verbose): print("Plots are " + plot_percentage_done + "% completed.")
+            if (verbose): print('\n'*3)
 
 
     #Now delete all unnecessary files created originally
