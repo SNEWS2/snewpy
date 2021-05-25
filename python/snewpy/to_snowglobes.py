@@ -148,8 +148,8 @@ def generate_fluence(model_path, model_file, model_type, transformation_type, d,
     model_tend[len(model_times)-1] = model_times[-1]
     
     if nbin>1:
-        starting_index = np.zeros(len(times),dtype=np.int8)
-        ending_index = np.zeros(len(times),dtype=np.int8)
+        starting_index = np.zeros(len(times),dtype=np.int64)
+        ending_index = np.zeros(len(times),dtype=np.int64)
         for i in range(len(tstart)):
             starting_index[i] = next(j for j, t in enumerate(model_tend) if t>tstart[i])
             ending_index[i] = next(j for j, t in enumerate(model_tend) if t>=tend[i])
@@ -157,6 +157,7 @@ def generate_fluence(model_path, model_file, model_type, transformation_type, d,
         starting_index = [next(j for j, t in enumerate(model_tend) if t>tstart)]
         ending_index = [next(j for j, t in enumerate(model_tend) if t>=tend)]
 
+    
     # Generate output.
     if output_filename is not None:
         tfname = output_filename+'.tar.bz2'
@@ -195,7 +196,7 @@ def generate_fluence(model_path, model_file, model_type, transformation_type, d,
             osc_spectra = snmodel.get_oscillatedspectra(model_times[starting_index[i]], energy,flavor_transformation)
 
             if dt < model_tend[starting_index[i]]-ta:
-                continue
+                dt=dt
             else:
                 for flavor in Flavor:
                     osc_spectra[flavor] *= (model_tend[starting_index[i]]-ta)
