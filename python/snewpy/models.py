@@ -784,6 +784,12 @@ class Zha_2021(SupernovaModel):
         # SYB: double-check on this factor of 4. Should be factor of 2?
         simtab['L_NU_X'] /= 4.0
 
+        #prevent neagative lums
+        simtab['L_NU_E'][simtab['L_NU_E'] < 0] = 1
+        simtab['L_NU_E_BAR'][simtab['L_NU_E_BAR'] < 0] = 1
+        simtab['L_NU_X'][simtab['L_NU_X'] < 0] = 1
+
+        
         basename =os.path.basename(filename)[:-4]
         
         self.filename = 'Zha2021_'+basename
