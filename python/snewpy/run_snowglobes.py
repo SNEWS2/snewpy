@@ -20,22 +20,22 @@ from subprocess import call
 def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input = all, verbose=False):  #function for entire file  
     #Extracts data from tarfile and sets up lists of paths and fluxfilenames for later use
 
-    if tarfile.is_tarfile(Models_Path+Tarball): #extracts tarfile
+    if tarfile.is_tarfile(Models_Path+"/"+Tarball): #extracts tarfile
         if (verbose): print("Valid Tar file")
-        tar = tarfile.open(Models_Path+Tarball)
+        tar = tarfile.open(Models_Path+"/"+Tarball)
         TarballFileNames = tar.getnames()
-        tar.extractall(path = SNOwGLoBESdir + "fluxes")
+        tar.extractall(path = SNOwGLoBESdir + "/fluxes")
         tar.close()
         if (verbose): print("Tar file data extracted")
-    elif zipfile.is_zipfile(Models_Path+Tarball): #extracts zipfile
+    elif zipfile.is_zipfile(Models_Path+"/"+Tarball): #extracts zipfile
         if (verbose): print("Valid Zip file")
-        zip = zipfile.ZipFile(Models_Path+Tarball)
+        zip = zipfile.ZipFile(Models_Path+"/"+Tarball)
         TarballFileNames = zip.namelist()
         for fileName in TarballFileNames:
             if str(fileName)[0] == "." or str(fileName)[0] == "_":
                 continue
             else:        
-                zip.extract(fileName, path = SNOwGLoBESdir + "fluxes")
+                zip.extract(fileName, path = SNOwGLoBESdir + "/fluxes")
                 if (verbose): print("zipfile extracted")
         zip.close()
         if (verbose): print("Zip file data extracted")
@@ -44,7 +44,7 @@ def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input = all, verbose=False)
        
     #Creates a new out folder, effectively cleaning out the old one
         
-    out_folder = "{0}out".format(SNOwGLoBESdir)     
+    out_folder = "{0}/out".format(SNOwGLoBESdir)     
     try:
         os.mkdir(out_folder)
     except OSError as e:
@@ -81,15 +81,15 @@ def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input = all, verbose=False)
 
     def format_globes_for_supernova(FluxNameStem, ChannelName, ExpConfigName, NoWeight = 1, extension = extension): #this function runs supernova
         ExeName = "bin/supernova" #Supernova
-        ChannelFileName = "{0}channels/channels_{1}.dat".format(SNOwGLoBESdir, ChannelName)
+        ChannelFileName = "{0}/channels/channels_{1}.dat".format(SNOwGLoBESdir, ChannelName)
 
-        GlobesFileName = "{0}supernova.glb".format(SNOwGLoBESdir)
+        GlobesFileName = "{0}/supernova.glb".format(SNOwGLoBESdir)
         GLOBESFILE = open(GlobesFileName, 'w')
         GLOBESFILE.truncate(0)
 
         # Write PREAMBLE to GLOBESFILE
 
-        PREAMBLE = open("{0}glb/preamble.glb".format(SNOwGLoBESdir))
+        PREAMBLE = open("{0}/glb/preamble.glb".format(SNOwGLoBESdir))
 
         for line in PREAMBLE:
 
@@ -100,13 +100,13 @@ def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input = all, verbose=False)
         # Checks FluxFileNamePath existence
 
         FluxFileNamePath = "fluxes/" + FluxNameStem + extension
-        if not os.path.isfile(SNOwGLoBESdir+FluxFileNamePath): 
+        if not os.path.isfile(SNOwGLoBESdir+"/"+FluxFileNamePath): 
             print(("Flux file name {0} not found".format(FluxFileNamePath)))
             return "Incomplete"
 
         # Write modified FLUX to GLOBESFILE; replace the flux file name with the input argument
 
-        FLUX = open("{0}glb/flux.glb".format(SNOwGLoBESdir))
+        FLUX = open("{0}/glb/flux.glb".format(SNOwGLoBESdir))
 
         for line in FLUX:
             if "flux_file" in line: line = "        @flux_file=  \"{0}\"\n".format(FluxFileNamePath)
@@ -134,14 +134,14 @@ def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input = all, verbose=False)
             TempArray = clean_line.split(' ')
             ChanName = TempArray[0];
 
-            GLOBESFILE.write("include \"{0}smear/smear_{1}_{2}.dat\"\n".format(SNOwGLoBESdir, ChanName, ExpConfigName))
+            GLOBESFILE.write("include \"{0}/smear/smear_{1}_{2}.dat\"\n".format(SNOwGLoBESdir, ChanName, ExpConfigName))
 
         CHANFILE.close()
         
         # Checks DetectorFileNamePath existence
 
         DetectorFileName = "detector_configurations.dat"
-        DetectorFileNamePath = "{0}{1}".format(SNOwGLoBESdir, DetectorFileName)
+        DetectorFileNamePath = "{0}/{1}".format(SNOwGLoBESdir, DetectorFileName)
 
         if not os.path.isfile(DetectorFileNamePath):
             print(("Detector file name {0} not found".format(DetectorFileName)))
@@ -181,7 +181,7 @@ def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input = all, verbose=False)
 
         # Writes modified DETECTOR to GLOBESFILE; replace the mass with the calculated TargetMass 
 
-        DETECTOR = open("{0}glb/detector.glb".format(SNOwGLoBESdir))
+        DETECTOR = open("{0}/glb/detector.glb".format(SNOwGLoBESdir))
 
         for line in DETECTOR:
 
@@ -210,7 +210,7 @@ def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input = all, verbose=False)
             ChanName = TempArray[0]
 
             GLOBESFILE.write("cross(#{0})<\n".format(ChanName))
-            GLOBESFILE.write("      @cross_file= \"{0}xscns/xs_{1}.dat\"\n".format(SNOwGLoBESdir, ChanName))
+            GLOBESFILE.write("      @cross_file= \"{0}/xscns/xs_{1}.dat\"\n".format(SNOwGLoBESdir, ChanName))
             GLOBESFILE.write(">\n")
 
         CHANFILE.close()
@@ -243,7 +243,7 @@ def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input = all, verbose=False)
     
             # Get the post-smearing efficiencies by channel
     
-            EffFile = "{0}effic/effic_{1}_{2}.dat".format(SNOwGLoBESdir, ChanName, ExpConfigName)
+            EffFile = "{0}/effic/effic_{1}_{2}.dat".format(SNOwGLoBESdir, ChanName, ExpConfigName)
             try:
                 EFF_FILE = open(EffFile)
             except IOError:
@@ -262,7 +262,7 @@ def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input = all, verbose=False)
 
         # Writes POSTAMBLE to GLOBESFILE
 
-        POSTAMBLE = open("{0}glb/postamble.glb".format(SNOwGLoBESdir))
+        POSTAMBLE = open("{0}/glb/postamble.glb".format(SNOwGLoBESdir))
 
         for line in POSTAMBLE:
     
@@ -319,8 +319,8 @@ def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input = all, verbose=False)
 
             # Writes modified UNWEIGHT to WEIGHTED
 
-            UnweightFileName = "{0}out/{1}_{2}_{3}_events{4}_unweighted.dat".format(SNOwGLoBESdir, FluxNameStem, ChanName, ExpConfigName, smear_input)
-            WeightedFileName = "{0}out/{1}_{2}_{3}_events{4}_weighted.dat".format(SNOwGLoBESdir, FluxNameStem, ChanName, ExpConfigName, smear_input)
+            UnweightFileName = "{0}/out/{1}_{2}_{3}_events{4}_unweighted.dat".format(SNOwGLoBESdir, FluxNameStem, ChanName, ExpConfigName, smear_input)
+            WeightedFileName = "{0}/out/{1}_{2}_{3}_events{4}_weighted.dat".format(SNOwGLoBESdir, FluxNameStem, ChanName, ExpConfigName, smear_input)
 
             UNWEIGHT = open(UnweightFileName)
             

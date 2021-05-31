@@ -35,7 +35,7 @@ def generate_time_series(model_path, model_file, model_type, transformation_type
     flavor_transformation_dict = {'NoTransformation':NoTransformation, 'AdiabaticMSW_NMO':AdiabaticMSW(mh=MassHierarchy.NORMAL), 'AdiabaticMSW_IMO':AdiabaticMSW(mh=MassHierarchy.INVERTED), 'NonAdiabaticMSWH_NMO':NonAdiabaticMSWH(mh=MassHierarchy.NORMAL), 'NonAdiabaticMSWH_IMO':NonAdiabaticMSWH(mh=MassHierarchy.INVERTED), 'TwoFlavorDecoherence':TwoFlavorDecoherence, 'ThreeFlavorDecoherence':ThreeFlavorDecoherence, 'NeutrinoDecay_NMO':NeutrinoDecay(mh=MassHierarchy.NORMAL), 'NeutrinoDecay_IMO':NeutrinoDecay(mh=MassHierarchy.INVERTED)}
     flavor_transformation = flavor_transformation_dict[transformation_type]
 
-    snmodel = model_class(model_path+model_file)
+    snmodel = model_class(model_path+"/"+model_file)
 
     # Subsample the model time. Default to 30 time slices.
     tmin = snmodel.get_time()[0]
@@ -117,7 +117,7 @@ def generate_fluence(model_path, model_file, model_type, transformation_type, d,
     flavor_transformation_dict = {'NoTransformation':NoTransformation, 'AdiabaticMSW_NMO':AdiabaticMSW(mh=MassHierarchy.NORMAL), 'AdiabaticMSW_IMO':AdiabaticMSW(mh=MassHierarchy.INVERTED), 'NonAdiabaticMSWH_NMO':NonAdiabaticMSWH(mh=MassHierarchy.NORMAL), 'NonAdiabaticMSWH_IMO':NonAdiabaticMSWH(mh=MassHierarchy.INVERTED), 'TwoFlavorDecoherence':TwoFlavorDecoherence, 'ThreeFlavorDecoherence':ThreeFlavorDecoherence, 'NeutrinoDecay_NMO':NeutrinoDecay(mh=MassHierarchy.NORMAL), 'NeutrinoDecay_IMO':NeutrinoDecay(mh=MassHierarchy.INVERTED)}
     flavor_transformation = flavor_transformation_dict[transformation_type]
 
-    snmodel = model_class(model_path+model_file)
+    snmodel = model_class(model_path+"/"+model_file)
 
     #set the timings up
     #default if inputs are None: full time window of the model
