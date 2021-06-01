@@ -42,24 +42,13 @@ def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input = all, verbose=False)
     else:
         print("Invalid Tarfile") #doesn't accept anything other than tar and zip files
        
-    #Creates a new out folder, effectively cleaning out the old one
+    #Creates a new out folder if one does not exist
         
     out_folder = "{0}/out".format(SNOwGLoBESdir)     
     try:
         os.mkdir(out_folder)
     except OSError as e:
-        try:
-            shutil.rmtree(out_folder, ignore_errors = False)
-        except OSError as e:
-                print("Error: out folder could not be removed")
-        else:
-            if (verbose): print("Out folder removed")
-            try:
-                os.mkdir(out_folder)
-            except OSError as e:
-                print("Error: out folder was not completely removed")
-            else:
-                if (verbose): print("New out folder generated.")
+        if (verbose): print("out folder already exists")
     else:
         if (verbose): print("out folder made")
         
