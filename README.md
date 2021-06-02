@@ -21,10 +21,10 @@ This is a walkthrough to install GLoBES and SNOwGLoBES locally in the users home
 	cd ~/
 	mkdir opt
 	cd opt
-	wget https://www.mpi-hd.mpg.de/personalhomes/globes/download/globes-3.2.16.tar.gz
-	tar -zxf globes-3.2.16.tar.gz
-	cd globes-3.2.16/
-	./configure --prefix=~/opt/globes-3.2.16-install  --disable-binary
+	wget https://www.mpi-hd.mpg.de/personalhomes/globes/download/globes-3.2.17.tar.gz
+	tar -zxf globes-3.2.17.tar.gz
+	cd globes-3.2.17/
+	./configure --prefix=~/opt/globes-3.2.17-install  --disable-binary
 	make
 	make install
 	cd ~/opt/globes-3.2.16-install
