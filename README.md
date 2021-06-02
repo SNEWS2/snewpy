@@ -13,6 +13,34 @@ Run `python setup.py develop` or `python setup.py install --user` to install the
 To interface with the SNOwGLoBES software the user will need to install the software which can be found at https://github.com/SNOwGLoBES/snowglobes
 SNOwGLoBES requires that the GLoBES libraries to be installed which can be found at https://www.mpi-hd.mpg.de/personalhomes/globes/
 
+Here we provide a skeleton outline to install these tools.
+
+This is a walkthrough to install GLoBES and SNOwGLoBES locally in the users home
+(particularly ~/opt) directory, it is in bash notation
+
+	cd ~/
+	mkdir opt
+	cd opt
+	wget https://www.mpi-hd.mpg.de/personalhomes/globes/download/globes-3.2.16.tar.gz
+	tar -zxf globes-3.2.16.tar.gz
+	cd globes-3.2.16/
+	./configure --prefix=~/opt/globes-3.2.16-install  --disable-binary
+	make
+	make install
+	cd ~/opt/globes-3.2.16-install
+	export GLB_DIR=${PWD}
+	cd ..
+
+	git clone git@github.com:SNOwGLoBES/snowglobes.git
+	cd snowglobes
+	export SNOWGLOBES=${PWD}
+	cd src
+	make
+	make install
+
+
 ## Usage
-The core code is found in `python/snewpy'. Example scripts which show how the software can be used are available in the `python/snewpy/scripts` subfolder.
+The core code is found in `python/snewpy'. Example scripts which show
+how the software can be used are available in the
+`python/snewpy/scripts` subfolder as well as notebooks in doc/nb
 
