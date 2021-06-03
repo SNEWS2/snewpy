@@ -31,7 +31,7 @@ This is a walkthrough to install GLoBES and SNOwGLoBES locally in the users home
 	export GLB_DIR=${PWD}
 	cd ..
 
-	git clone git@github.com:SNOwGLoBES/snowglobes.git
+	git clone https://github.com/SNOwGLoBES/snowglobes.git
 	cd snowglobes
 	export SNOWGLOBES=${PWD}
 	cd src
