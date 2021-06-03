@@ -16,18 +16,18 @@ SNOwGLoBES requires that the GLoBES libraries to be installed which can be found
 Here we provide a skeleton outline to install these tools.
 
 This is a walkthrough to install GLoBES and SNOwGLoBES locally in the users home
-(particularly ~/opt) directory, it is in bash notation
+(i.e. /path/to/home/ == ~/ particularly this installs in ~/opt/) directory, it is in bash notation
 
-	cd ~/
+	cd /path/to/home/
 	mkdir opt
 	cd opt
 	wget https://www.mpi-hd.mpg.de/personalhomes/globes/download/globes-3.2.17.tar.gz
 	tar -zxf globes-3.2.17.tar.gz
 	cd globes-3.2.17/
-	./configure --prefix=~/opt/globes-3.2.17-install  --disable-binary
+	./configure --prefix=/path/to/home/opt/globes-3.2.17-install  --disable-binary
 	make
 	make install
-	cd ~/opt/globes-3.2.16-install
+	cd /path/to/home/opt/globes-3.2.16-install
 	export GLB_DIR=${PWD}
 	cd ..
 
