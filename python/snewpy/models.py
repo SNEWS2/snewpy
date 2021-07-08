@@ -25,6 +25,9 @@ import numpy as np
 from scipy.interpolate import interp1d
 from scipy.special import loggamma
 
+import photospline
+from photospline import glam_fit, ndsparse, bspline, SplineTable
+
 import os
 import logging
 import re
@@ -1087,6 +1090,55 @@ class Fornax_2019():
             initialspectra[flavor.name] = np.interp(E, ene, lum) / u.s
         
         return initialspectra
+
+class FornaxModel(SupernovaModel):
+    """A subclass to read in spline tables computed from Fornax_2019 Model."""
+    
+    def __init__(self, mass):
+        self.spline = {}
+        self.luminosity = {}
+        ifile = '../../models/Fornax_2019/data/lum_spec_{}M_inu0.dat'.format(mass)
+        spectrum = ascii.read(ifile)
+        self.time = np.array(spectrum['col1'])
+        
+        for flavor in Flavor:
+            file = 'fornax-splinefit-{}-{}M.fits'.format(flavor.name, mass)
+            newspline = SplineTable(file)
+            self.spline[flavor.name] = newspline
+            logE = np.linspace(0, 2, 13)
+            logEC = 0.5*(logE[:-1] + logE[1:])
+            self.luminosity[flavor.name] = newspline.grideval([logEC,self.time])
+
+    def get_time(self):
+        """Returns
+        -------
+            returns array of snapshot times from the simulation
+        """
+        return self.time
+
+    def get_initialspectra(self, j, E):
+        """Get neutrino spectra at the source.
+        Parameters
+        ----------
+        t : float
+            Time to evaluate spectra.
+        E : float or ndarray
+            Energies to evaluate spectra.
+        Returns
+        -------
+        initialspectra : dict
+            Dictionary of neutrino spectra, keyed by neutrino flavor.
+        """
+        initialspectra = {}
+        t = self.time
+        logE = np.log10(E)
+        
+        for flavor in Flavor:
+            newspline = self.spline[flavor.name]
+            initialspectra[flavor.name] = newspline.grideval([logE,t[j]])[:,0]
+        
+        return initialspectra
+    
 
 # class Fornax2019(SupernovaModel):
 #     
