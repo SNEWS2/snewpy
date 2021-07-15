@@ -6,7 +6,7 @@ name: SNEWPy Test Suite
 # events but only for the master branch
 on:
   push:
-    branches: [ main, JostMigenda/GitHubActions ]
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
