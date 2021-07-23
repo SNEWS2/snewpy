@@ -877,7 +877,8 @@ class Zha_2021(SupernovaModel):
 
 
 class Warren_2020(SupernovaModel):
-    """Set up a model based on simulations from Warren et al. (2020)."""
+    """Set up a model based on simulations from Warren et al., ApJ 898:139, 2020.
+    Neutrino fluxes available at https://doi.org/10.5281/zenodo.3667908."""
 
     def __init__(self, filename, eos='LS220'):
         """Initialize model.
@@ -901,7 +902,7 @@ class Warren_2020(SupernovaModel):
         simtab['TIME'] = f['nue_data']['lum'][:, 0] - bounce
         simtab['L_NU_E'] = f['nue_data']['lum'][:, 1] * 1e51
         simtab['L_NU_E_BAR'] = f['nuae_data']['lum'][:, 1] * 1e51
-        simtab['L_NU_X'] = f['nux_data']['lum'][:, 1] * 1e51 / 4.0
+        simtab['L_NU_X'] = f['nux_data']['lum'][:, 1] * 1e51
         simtab['E_NU_E'] = f['nue_data']['avg_energy'][:, 1]
         simtab['E_NU_E_BAR'] = f['nuae_data']['avg_energy'][:, 1]
         simtab['E_NU_X'] = f['nux_data']['avg_energy'][:, 1]
