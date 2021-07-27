@@ -94,10 +94,10 @@ class SupernovaModel(ABC):
 
         Parameters
         ----------
-        t : float
-            Time to evaluate spectra.
-        E : float or ndarray
-            Energies to evaluate spectra.
+        t : astropy.Quantity
+            Time to evaluate initial spectra.
+        E : astropy.Quantity or ndarray of astropy.Quantity
+            Energies to evaluate the initial spectra.
 
         Returns
         -------
@@ -113,7 +113,7 @@ class SupernovaModel(ABC):
         ----------
         t : astropy.Quantity
             Time to evaluate initial and oscillated spectra.
-        E : astropy.Quantity or ndarray
+        E : astropy.Quantity or ndarray of astropy.Quantity
             Energies to evaluate the initial and oscillated spectra.
         flavor_xform : FlavorTransformation
             An instance from the flavor_transformation module.
@@ -192,10 +192,10 @@ class Analytic3Species(SupernovaModel):
 
         Parameters
         ----------
-        t : float
-            Time to evaluate initial and oscillated spectra.
-        E : float or ndarray
-            Energies to evaluate the initial and oscillated spectra.
+        t : astropy.Quantity
+            Time to evaluate initial spectra.
+        E : astropy.Quantity or ndarray of astropy.Quantity
+            Energies to evaluate the initial spectra.
 
         Returns
         -------
@@ -304,9 +304,9 @@ class Nakazato_2013(SupernovaModel):
 
         Parameters
         ----------
-        t : float or astropy.Quantity
+        t : astropy.Quantity
             Time to evaluate initial spectra.
-        E : float or ndarray of astropy.Quantity
+        E : astropy.Quantity or ndarray of astropy.Quantity
             Energies to evaluate the initial spectra.
 
         Returns
@@ -416,7 +416,7 @@ class Sukhbold_2015(SupernovaModel):
         ----------
         t : astropy.Quantity
             Time to evaluate initial spectra.
-        E : astropy.Quantity or ndarray
+        E : astropy.Quantity or ndarray of astropy.Quantity
             Energies to evaluate the initial spectra.
 
         Returns
@@ -551,9 +551,9 @@ class Bollig_2016(SupernovaModel):
 
         Parameters
         ----------
-        t : float
+        t : astropy.Quantity
             Time to evaluate initial spectra.
-        E : float or ndarray
+        E : astropy.Quantity or ndarray of astropy.Quantity
             Energies to evaluate the initial spectra.
 
         Returns
@@ -678,10 +678,10 @@ class OConnor_2015(SupernovaModel):
 
         Parameters
         ----------
-        t : float
-            Time to evaluate initial and oscillated spectra.
-        E : float or ndarray
-            Energies to evaluate the initial and oscillated spectra.
+        t : astropy.Quantity
+            Time to evaluate initial spectra.
+        E : astropy.Quantity or ndarray of astropy.Quantity
+            Energies to evaluate the initial spectra.
 
         Returns
         -------
@@ -809,10 +809,10 @@ class Zha_2021(SupernovaModel):
 
         Parameters
         ----------
-        t : float
-            Time to evaluate initial and oscillated spectra.
-        E : float or ndarray
-            Energies to evaluate the initial and oscillated spectra.
+        t : astropy.Quantity
+            Time to evaluate initial spectra.
+        E : astropy.Quantity or ndarray of astropy.Quantity
+            Energies to evaluate the initial spectra.
 
         Returns
         -------
@@ -942,10 +942,10 @@ class Warren_2020(SupernovaModel):
 
         Parameters
         ----------
-        t : float
-            Time to evaluate initial and oscillated spectra.
-        E : float or ndarray
-            Energies to evaluate the initial and oscillated spectra.
+        t : astropy.Quantity
+            Time to evaluate initial spectra.
+        E : astropy.Quantity or ndarray of astropy.Quantity
+            Energies to evaluate the initial spectra.
 
         Returns
         -------
@@ -1060,10 +1060,10 @@ class Kuroda_2020(SupernovaModel):
 
         Parameters
         ----------
-        t : float
-            Time to evaluate initial and oscillated spectra.
-        E : float or ndarray
-            Energies to evaluate the initial and oscillated spectra.
+        t : astropy.Quantity
+            Time to evaluate initial spectra.
+        E : astropy.Quantity or ndarray of astropy.Quantity
+            Energies to evaluate the initial spectra.
 
         Returns
         -------
@@ -1164,10 +1164,10 @@ class Fornax_2021_2D(SupernovaModel):
 
         Parameters
         ----------
-        t : float
-            Time to evaluate initial and oscillated spectra.
-        E : float or ndarray
-            Energies to evaluate the initial and oscillated spectra.
+        t : astropy.Quantity
+            Time to evaluate initial spectra.
+        E : astropy.Quantity or ndarray of astropy.Quantity
+            Energies to evaluate the initial spectra.
 
         Returns
         -------
