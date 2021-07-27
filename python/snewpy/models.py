@@ -1259,223 +1259,121 @@ class Janka(SupernovaModel):
         return initialspectra
 
 
-class Fornax_2019():
-    '''A bare-bones version of the class based on the 3D model simulations by Burrows et al. (2019)'''
+class Fornax_2021_2D(SupernovaModel):
+    """Model based on axisymmetric simulations from A. Burrows and D.  Vartanyan, Nature 589:29, 2021. Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.2d/.
+    """
+
     def __init__(self, filename):
-        self.spectra = {}
+        """Initialize model.
+
+        Parameters
+        ----------
+        filename : str
+            Absolute or relative path to FITS file with model data.
+        """
+        # Set up model metadata.
+        self.progenitor_mass = float(filename.split('_')[-3][:-1]) * u.Msun
+
+        # Conversion of flavor to key name in the model HDF5 file.
+        self._flavorkeys = { Flavor.NU_E : 'nu0',
+                             Flavor.NU_E_BAR : 'nu1',
+                             Flavor.NU_X : 'nu2',
+                             Flavor.NU_X_BAR : 'nu2' }
+
+        # Open HDF5 data file.
+        self._h5file = h5py.File(filename, 'r')
+
+        # Get grid of model times.
+        self.time = self._h5file['nu0'].attrs['time'] * u.s
+
+        # Compute luminosity by integrating over model energy bins.
         self.luminosity = {}
-        self.energy = {}
+        for flavor in Flavor:
+            key = self._flavorkeys[flavor]
+            dE = np.asarray(self._h5file[key]['degroup'])
+            n = len(dE[0])
+            dLdE = np.zeros((len(self.time), n), dtype=float)
+            for i in range(n):
+                dLdE[:,i] = self._h5file[key]["g{}".format(i)]
 
-        for i, flavor in enumerate(Flavor):
-            if flavor == Flavor.NU_X_BAR:
-                i = 2
-            file = filename + '_inu{}.dat'.format(i)
-            ebin_names = ['E{:02d}'.format(e-2) for e in range(2, 14)]
-            lbin_names = ['lum{:02d}'.format(l-14) for l in range(14, 26)]
-            colnames = ['time'] + ebin_names + lbin_names
-            # Read the file. The first column is time,
-            # columns 2-13 are the bin energy for each of the twelve bins,
-            # and columns 14-25 are the spectra in each bin (in 1050 erg s−1 MeV−1)
-            # for each time.
-            spectrum = ascii.read(file, names=colnames)
-            spectrum.meta['type'] = flavor.name
-
-            # Set up correct units.
-#             spectrum['time'].unit = 's'
-#             for ebin in ebin_names:
-#                 spectrum[ebin].unit = 'MeV'
-#             for lbin in lbin_names:
-#                 spectrum[lbin].unit = '1e50 * erg / (s * MeV)'
-
-            self.spectra[flavor.name] = spectrum
-            self.energy[flavor.name] = [spectrum[e] for e in spectrum.columns[1:13]] * u.MeV
-            self.luminosity[flavor.name] = [spectrum[l] * 1e50 for l in spectrum.columns[13:]] * u.erg / (u.s * u.MeV)
-
-        self.time = np.array(spectrum['time']) * u.s
-
-        # Mass of progenitor
-        tokens = filename.split('_')
-        self.mass = 0.
-        for t in tokens:
-            if 'M' in t:
-                self.mass = float(t[:-1]) * u.M_sun
+            # Note factor of 0.5 in nu_x and nu_x_bar.
+            factor = 1e50*u.erg/u.s if flavor.is_electron else 0.5*1e50*u.erg/u.s
+            self.luminosity[flavor] = np.sum(dLdE*dE, axis=1) * factor
 
     def get_time(self):
         return self.time
 
-    def get_mass(self):
-        return self.mass
-
-    def get_luminosity_bins(self):
-        return self.luminosity
-
-    def get_energy_bins(self):
-        return self.energy
-
     def get_initialspectra(self, t, E):
+        """Get neutrino spectra/luminosity curves after oscillation.
+
+        Parameters
+        ----------
+        t : float
+            Time to evaluate initial and oscillated spectra.
+        E : float or ndarray
+            Energies to evaluate the initial and oscillated spectra.
+
+        Returns
+        -------
+        initialspectra : dict
+            Dictionary of model spectra, keyed by neutrino flavor.
+        """
         initialspectra = {}
 
-        # Avoid division by zero in energy PDF below.
-        E[E==0] = np.finfo(float).eps * E.unit
+        # Avoid "division by zero" in retrieval of the spectrum.
+        E[E == 0] = np.finfo(float).eps * E.unit
+        logE = np.log10(E.to('MeV').value)
 
-        # Express all energies in erg.
-        E = E.to('erg').value
-
-        # Make sure input time uses the same units as the model time grid, or
-        # the interpolation will not work correctly.
+        # Make sure the input time uses the same units as the model time grid.
+        # Convert input time to a time index.
         t = t.to(self.time.unit)
+        j = (np.abs(t - self.time)).argmin()
 
         for flavor in Flavor:
-            lum = []
-            ene = []
-            for i in range(12):
-                lum.append(np.interp(t, self.time, self.luminosity[flavor.name][i].to(1/u.s)).value)
-                ene.append(np.interp(t, self.time, self.energy[flavor.name][i].to('erg')).value)
-            initialspectra[flavor.name] = np.interp(E, ene, lum) / u.s
+            key = self._flavorkeys[flavor]
+
+            # Energy in units of MeV.
+            _E = self._h5file[key]['egroup'][j]
+
+            # Pad log(E) array with values where flux is fixed to zero.
+            _logE = np.log10(_E)
+            _dlogE = np.diff(_logE)
+            _logEbins = np.insert(_logE, 0, np.log10(np.finfo(float).eps))
+            _logEbins = np.append(_logEbins, _logE[-1] + _dlogE[-1])
+
+            # Spectrum in units of 1e50 erg/s/MeV.
+            # Pad with values where flux is fixed to zero.
+            _dLdE = np.asarray([0.] + [self._h5file[key]['g{}'.format(i)][j] for i in range(12)] + [0.])
+
+            # Linear interpolation in flux.
+            factor = 1e50*u.MeV
+            if not flavor.is_electron:
+                # Model flavors (internally) are nu_e, nu_e_bar, and nu_x, which stands
+                # for nu_mu(_bar) and nu_tau(_bar), making the flux 4x higher than nu_e and nu_e_bar.
+                # Since we separate NU_X and NU_X_BAR here, multiply by 2x, not 4x.
+                factor *= 0.5
+
+            initialspectra[flavor] = np.interp(logE, _logEbins, _dLdE) * factor
 
         return initialspectra
 
+    def __repr__(self):
+        """Default representation of the model.
+        """
+        mod = 'Fornax 2D Model: {}\n'.format(self._h5file.filename)
+        s = ['Progenitor mass : {}'.format(self.progenitor_mass)
+            ]
+        return mod + '\n'.join(s)
 
-if usephotospline:
-    # Temporary fix to elegantly disable this model if photospline is not available (July 2021).
-
-    class FornaxModel(SupernovaModel):
-        """A subclass to read in spline tables computed from Fornax_2019 Model."""
-
-        def __init__(self, mass):
-            self.spline = {}
-            self.luminosity = {}
-            ifile = '../../models/Fornax_2019/data/lum_spec_{}M_inu0.dat'.format(mass)
-            spectrum = ascii.read(ifile)
-            self.time = np.array(spectrum['col1'])
-
-            for flavor in Flavor:
-                file = 'fornax-splinefit-{}-{}M.fits'.format(flavor.name, mass)
-                newspline = SplineTable(file)
-                self.spline[flavor.name] = newspline
-                logE = np.linspace(0, 2, 13)
-                logEC = 0.5*(logE[:-1] + logE[1:])
-                self.luminosity[flavor.name] = newspline.grideval([logEC,self.time])
-
-        def get_time(self):
-            """Returns
-            -------
-                returns array of snapshot times from the simulation
-            """
-            return self.time
-
-        def get_initialspectra(self, j, E):
-            """Get neutrino spectra at the source.
-            Parameters
-            ----------
-            t : float
-                Time to evaluate spectra.
-            E : float or ndarray
-                Energies to evaluate spectra.
-            Returns
-            -------
-            initialspectra : dict
-                Dictionary of neutrino spectra, keyed by neutrino flavor.
-            """
-            initialspectra = {}
-            t = self.time
-            logE = np.log10(E)
-
-            for flavor in Flavor:
-                newspline = self.spline[flavor.name]
-                initialspectra[flavor.name] = newspline.grideval([logE,t[j]])[:,0]
-
-            return initialspectra
-
-
-# class Fornax2019(SupernovaModel):
-#     
-#     def __init__(self, filename):
-#         self.file = Table.read(filename)
-#         self.filename = filename
-#         
-#     def get_time(self):
-#         return self.file['TIME']
-#     
-#     def get_luminosity(self, flavor):
-#         if flavor == Flavor.NU_X_BAR:
-#             flavor = Flavor.NU_X
-#         return self.file['L_{}'.format(flavor.name.upper())]
-#         
-#     def get_mean_energy(self, flavor):
-#         if flavor == Flavor.NU_X_BAR:
-#             flavor = Flavor.NU_X
-#         return self.file['E_{}'.format(flavor.name.upper())]
-#     
-#     def get_pinch_param(self, flavor):
-#         if (flavor == Flavor.NU_X_BAR):
-#             flavor = Flavor.NU_X
-#         return self.file['ALPHA_{}'.format(flavor.name.upper())]
-#     
-#     def get_EOS(self):
-#         return self.filename.split('-')[1]
-#     
-#     def get_progenitor_mass(self):
-#         return float(self.split('-')[-1].split('.')[0].strip('s'))
-# 
-# class OConnor_2013(SupernovaModel):
-#        
-#     eos = 'LS220'
-#     mass = 30
-#     def __init__(self, filename, FlavorTransformation):
-#         spectra_tuple = get_spectra(mass, eos)
-#         self.eos = eos
-#         self.luminosity = get_luminosity
-#         self.meanE = spectra_list(2)
-#         self.luminosity = get_luminosity(mass, eos)
-#         self.
-#     
-#     def get_luminosity(mass, eos):
-#         # Open luminosity file.
-#         tf = tarfile.open('{}_timeseries.tar.gz'.format(eos))
-#     
-#         # Extract luminosity data.
-#         dataname = 's{:d}_{}_timeseries.dat'.format(mass, eos)
-#         datafile = tf.extractfile(dataname)
-#         lumdata = ascii.read(datafile, names=['t', 'Le', 'Lae', 'Lx',
-#                                               'Ee_avg', 'Eae_avg', 'Ex_avg',
-#                                               'Ee_rms', 'Eae_rms', 'Ex_rms'])
-#         return lumdata
-#     
-#     
-#     def get_spectra(mass, eos):
-#         # Open spectra file.
-#         tf = tarfile.open('{}_timeseries_spectra.tar.gz'.format(eos))
-#     
-#         # Extract luminosity data.
-#         dataname = 's{:d}_{}_timeseries_spectra.dat'.format(mass, eos)
-#         datafile = tf.extractfile(dataname)
-#     
-#         t = []
-#         E = []
-#         spectra = []
-#     
-#         for line in datafile:
-#             tokens = [float(x) for x in line.strip().split()]
-#             if len(tokens) == 1:
-#                 if t:
-#                     E = _E
-#                     spectra.append(Table([_Fe, _Fae, _Fx],
-#                                          names=['Fe', 'Fae', 'Fx'],
-#                                          meta={'t' : t[-1]}))
-#                 t.append(tokens[0])
-#                 _E, _Fe, _Fae, _Fx = [[] for _ in range(4)]
-#             elif len(tokens) == 4:
-#                 _E.append(tokens[0])
-#                 _Fe.append(tokens[1])
-#                 _Fae.append(tokens[2])
-#                 _Fx.append(tokens[3])
-#     
-#         spectra.append(Table([_Fe, _Fae, _Fx],
-#                              names=['Fe', 'Fae', 'Fx'],
-#                              meta={'t' : t[-1]}))
-#     
-#         return t, E, spectra
+    def _repr_markdown_(self):
+        """Markdown representation of the model, for Jupyter notebooks.
+        """
+        mod = '**Fornax 2D Model**: {}\n\n'.format(self._h5file.filename)
+        s = ['|Parameter|Value|',
+             '|:---------|:-----:|',
+             '|Progenitor mass | ${0.value:g}$ {0.unit:latex}|'.format(self.progenitor_mass),
+            ]
+        return mod + '\n'.join(s)
 
 
 class SNOwGLoBES:
