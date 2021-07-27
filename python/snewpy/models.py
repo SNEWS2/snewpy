@@ -31,16 +31,6 @@ import re
 import logging
 logging.basicConfig(level=logging.INFO)
 
-# Conditional import of photospline while we determine whether to make it a
-# strong dependency of snewpy (July 2021).
-try:
-    import photospline
-    from photospline import glam_fit, ndsparse, bspline, SplineTable
-    usephotospline = True
-except ImportError as e:
-    usephotospline = False
-    logging.warning(e)
-
 import tarfile
 import h5py
 
