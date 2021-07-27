@@ -89,7 +89,7 @@ class SupernovaModel(ABC):
         pass
 
     @abstractmethod
-    def get_initialspectra(self, t, E):
+    def get_initialspectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra at the source.
 
         Parameters
@@ -98,6 +98,8 @@ class SupernovaModel(ABC):
             Time to evaluate initial spectra.
         E : astropy.Quantity or ndarray of astropy.Quantity
             Energies to evaluate the initial spectra.
+        flavors: iterable of snewpy.neutrino.Flavor
+            Return spectra for these flavors only (default: all)
 
         Returns
         -------
@@ -187,7 +189,7 @@ class Analytic3Species(SupernovaModel):
         """
         return self.time
     
-    def get_initialspectra(self, t, E):
+    def get_initialspectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity curves after oscillation.
 
         Parameters
@@ -196,6 +198,8 @@ class Analytic3Species(SupernovaModel):
             Time to evaluate initial spectra.
         E : astropy.Quantity or ndarray of astropy.Quantity
             Energies to evaluate the initial spectra.
+        flavors: iterable of snewpy.neutrino.Flavor
+            Return spectra for these flavors only (default: all)
 
         Returns
         -------
@@ -214,7 +218,7 @@ class Analytic3Species(SupernovaModel):
         # the interpolation will not work correctly.
         t = t.to(self.time.unit)
 
-        for flavor in Flavor:
+        for flavor in flavors:
             # Use np.interp rather than scipy.interpolate.interp1d because it
             # can handle dimensional units (astropy.Quantity).
             L  = get_value(np.interp(t, self.time, self.luminosity[flavor].to('erg/s')))
@@ -299,7 +303,7 @@ class Nakazato_2013(SupernovaModel):
         """
         return self.time
     
-    def get_initialspectra(self, t, E):
+    def get_initialspectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity at the source.
 
         Parameters
@@ -308,6 +312,8 @@ class Nakazato_2013(SupernovaModel):
             Time to evaluate initial spectra.
         E : astropy.Quantity or ndarray of astropy.Quantity
             Energies to evaluate the initial spectra.
+        flavors: iterable of snewpy.neutrino.Flavor
+            Return spectra for these flavors only (default: all)
 
         Returns
         -------
@@ -326,7 +332,7 @@ class Nakazato_2013(SupernovaModel):
         # the interpolation will not work correctly.
         t = t.to(self.time.unit)
 
-        for flavor in Flavor:
+        for flavor in flavors:
             # Use np.interp rather than scipy.interpolate.interp1d because it
             # can handle dimensional units (astropy.Quantity).
             L  = get_value(np.interp(t, self.time, self.luminosity[flavor].to('erg/s')))
@@ -409,7 +415,7 @@ class Sukhbold_2015(SupernovaModel):
         """
         return self.time
     
-    def get_initialspectra(self,t,E):
+    def get_initialspectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity curves after oscillation.
 
         Parameters
@@ -418,6 +424,8 @@ class Sukhbold_2015(SupernovaModel):
             Time to evaluate initial spectra.
         E : astropy.Quantity or ndarray of astropy.Quantity
             Energies to evaluate the initial spectra.
+        flavors: iterable of snewpy.neutrino.Flavor
+            Return spectra for these flavors only (default: all)
 
         Returns
         -------
@@ -436,7 +444,7 @@ class Sukhbold_2015(SupernovaModel):
         # the interpolation will not work properly.
         t = t.to(self.time.unit)
 
-        for flavor in Flavor:
+        for flavor in flavors:
             L  = get_value(np.interp(t, self.time, self.luminosity[flavor].to('erg/s')))
             Ea = get_value(np.interp(t, self.time, self.meanE[flavor].to('erg')))
             a  = np.interp(t, self.time, self.pinch[flavor])
@@ -546,7 +554,7 @@ class Bollig_2016(SupernovaModel):
         """
         return self.time
 
-    def get_initialspectra(self,t,E):
+    def get_initialspectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity curves before oscillation.
 
         Parameters
@@ -555,6 +563,8 @@ class Bollig_2016(SupernovaModel):
             Time to evaluate initial spectra.
         E : astropy.Quantity or ndarray of astropy.Quantity
             Energies to evaluate the initial spectra.
+        flavors: iterable of snewpy.neutrino.Flavor
+            Return spectra for these flavors only (default: all)
 
         Returns
         -------
@@ -573,7 +583,7 @@ class Bollig_2016(SupernovaModel):
         # the interpolation will not work correctly.
         t = t.to(self.time.unit)
 
-        for flavor in Flavor:
+        for flavor in flavors:
             # Use np.interp rather than scipy.interpolate.interp1d because it
             # can handle dimensional units (astropy.Quantity).
             L  = get_value(np.interp(t, self.time, self.luminosity[flavor].to('erg/s')))
@@ -673,7 +683,7 @@ class OConnor_2015(SupernovaModel):
         """
         return self.time
 
-    def get_initialspectra(self,t,E):
+    def get_initialspectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity curves before oscillation.
 
         Parameters
@@ -682,6 +692,8 @@ class OConnor_2015(SupernovaModel):
             Time to evaluate initial spectra.
         E : astropy.Quantity or ndarray of astropy.Quantity
             Energies to evaluate the initial spectra.
+        flavors: iterable of snewpy.neutrino.Flavor
+            Return spectra for these flavors only (default: all)
 
         Returns
         -------
@@ -700,7 +712,7 @@ class OConnor_2015(SupernovaModel):
         # the interpolation will not work correctly.
         t = t.to(self.time.unit)
 
-        for flavor in Flavor:
+        for flavor in flavors:
             # Use np.interp rather than scipy.interpolate.interp1d because it
             # can handle dimensional units (astropy.Quantity).
             L  = get_value(np.interp(t, self.time, self.luminosity[flavor].to('erg/s')))
@@ -804,7 +816,7 @@ class Zha_2021(SupernovaModel):
         """
         return self.time
 
-    def get_initialspectra(self,t,E):
+    def get_initialspectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity curves before oscillation.
 
         Parameters
@@ -813,6 +825,8 @@ class Zha_2021(SupernovaModel):
             Time to evaluate initial spectra.
         E : astropy.Quantity or ndarray of astropy.Quantity
             Energies to evaluate the initial spectra.
+        flavors: iterable of snewpy.neutrino.Flavor
+            Return spectra for these flavors only (default: all)
 
         Returns
         -------
@@ -831,7 +845,7 @@ class Zha_2021(SupernovaModel):
         # the interpolation will not work correctly.
         t = t.to(self.time.unit)
 
-        for flavor in Flavor:
+        for flavor in flavors:
             # Use np.interp rather than scipy.interpolate.interp1d because it
             # can handle dimensional units (astropy.Quantity).
             L  = get_value(np.interp(t, self.time, self.luminosity[flavor].to('erg/s')))
@@ -937,7 +951,7 @@ class Warren_2020(SupernovaModel):
         """
         return self.time
 
-    def get_initialspectra(self, t, E):
+    def get_initialspectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity curves before oscillation.
 
         Parameters
@@ -946,6 +960,8 @@ class Warren_2020(SupernovaModel):
             Time to evaluate initial spectra.
         E : astropy.Quantity or ndarray of astropy.Quantity
             Energies to evaluate the initial spectra.
+        flavors: iterable of snewpy.neutrino.Flavor
+            Return spectra for these flavors only (default: all)
 
         Returns
         -------
@@ -964,7 +980,7 @@ class Warren_2020(SupernovaModel):
         # the interpolation will not work correctly.
         t = t.to(self.time.unit)
 
-        for flavor in Flavor:
+        for flavor in flavors:
             # Use np.interp rather than scipy.interpolate.interp1d because it
             # can handle dimensional units (astropy.Quantity).
             L  = get_value(np.interp(t, self.time, self.luminosity[flavor].to('erg/s')))
@@ -1055,7 +1071,7 @@ class Kuroda_2020(SupernovaModel):
         """
         return self.time
 
-    def get_initialspectra(self, t, E):
+    def get_initialspectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity curves before oscillation.
 
         Parameters
@@ -1064,6 +1080,8 @@ class Kuroda_2020(SupernovaModel):
             Time to evaluate initial spectra.
         E : astropy.Quantity or ndarray of astropy.Quantity
             Energies to evaluate the initial spectra.
+        flavors: iterable of snewpy.neutrino.Flavor
+            Return spectra for these flavors only (default: all)
 
         Returns
         -------
@@ -1082,7 +1100,7 @@ class Kuroda_2020(SupernovaModel):
         # the interpolation will not work correctly.
         t = t.to(self.time.unit)
 
-        for flavor in Flavor:
+        for flavor in flavors:
             # Use np.interp rather than scipy.interpolate.interp1d because it
             # can handle dimensional units (astropy.Quantity).
             L  = get_value(np.interp(t, self.time, self.luminosity[flavor].to('erg/s')))
@@ -1159,7 +1177,7 @@ class Fornax_2021_2D(SupernovaModel):
     def get_time(self):
         return self.time
 
-    def get_initialspectra(self, t, E):
+    def get_initialspectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity curves after oscillation.
 
         Parameters
@@ -1168,6 +1186,8 @@ class Fornax_2021_2D(SupernovaModel):
             Time to evaluate initial spectra.
         E : astropy.Quantity or ndarray of astropy.Quantity
             Energies to evaluate the initial spectra.
+        flavors: iterable of snewpy.neutrino.Flavor
+            Return spectra for these flavors only (default: all)
 
         Returns
         -------
@@ -1185,7 +1205,7 @@ class Fornax_2021_2D(SupernovaModel):
         t = t.to(self.time.unit)
         j = (np.abs(t - self.time)).argmin()
 
-        for flavor in Flavor:
+        for flavor in flavors:
             key = self._flavorkeys[flavor]
 
             # Energy in units of MeV.
