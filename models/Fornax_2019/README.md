@@ -1,7 +1,5 @@
 CCSN neutrino estimates from the 3D Fornax model of Vartanyan et al., taken from their [3D simulations index](https://www.astro.princeton.edu/~burrows/nu-emissions.3d/).
 
-Note that the 3D simulations extend to 0.7 s after core bounce. There are also [2D simulations](https://www.astro.princeton.edu/~burrows/nu-emissions.2d/) available which extend to >4 s after core bounce.
-
 The citations to be used are:
 * *A Successful 3D Core-Collapse Supernova Explosion Model* David Vartanyan, Adam Burrows, David Radice, Aaron Skinner, and Joshua Dolence, [MNRAS 482 (2019) 351](https://doi.org/10.1093/mnras/sty2585), [arXiv:1809.05106](https://arxiv.org/abs/1809.05106).
 * *Three-Dimensional Supernova Explosion Simulations of 9-, 10-, 11-, 12-, and 13-M⊙ Stars*, Adam Burrows, David Radice, and David Vartanyan, [MNRAS 485 (2019) 3153](https://doi.org/10.1093/mnras/stz543), [arXiv:1902.00547](https://arxiv.org/abs/1902.00547).
