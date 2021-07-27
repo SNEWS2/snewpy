@@ -2,3 +2,4 @@ numpy >= 1.16
 scipy
 astropy
 matplotlib
+h5py
