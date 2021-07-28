@@ -20,7 +20,7 @@ import tarfile
 import logging
 
 from snewpy.models import *
-from .neutrino import MassHierarchy
+from snewpy.neutrino import MassHierarchy
 from snewpy.flavor_transformation import *
 from astropy import units as u
 
@@ -40,16 +40,18 @@ def generate_time_series(model_path, model_file, model_type, transformation_type
     # Subsample the model time. Default to 30 time slices.
     tmin = snmodel.get_time()[0]
     tmax = snmodel.get_time()[-1]
+
     if deltat is not None:
         dt = deltat
+        ntbins = int((tmax/u.s-tmin/u.s)/dt)
     elif ntbins is not None:
-        dt = (tmax - tmin) / (ntbins+1)
+        dt = (tmax/u.s - tmin/u.s) / (ntbins+1)
     else:
         ntbins=30
-        dt = (tmax - tmin) / (ntbins+1)
+        dt = (tmax/u.s - tmin/u.s) / (ntbins+1)
 
-    tedges = np.arange(tmin, tmax, dt)
-    times = 0.5*(tedges[1:] + tedges[:-1])
+    tedges = np.arange(tmin.u.s, tmax/u.s, dt)
+    times = 0.5*(tedges[1:] + tedges[:-1]) * u.s
     
     # Generate output.
     if output_filename is not None:
