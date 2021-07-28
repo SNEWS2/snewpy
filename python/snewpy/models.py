@@ -490,7 +490,7 @@ class Bollig_2016(SupernovaModel):
         # Store model metadata.
         self.filename = os.path.basename(filename)
         self.EOS = eos
-        self.progenitor_mass = float(self.filename.strip('s%c')) * u.Msun
+        self.progenitor_mass = float( (self.filename.split('s'))[1].split('c')[0] )  * u.Msun
 
         # Read through the several ASCII files for the chosen simulation and
         # merge the data into one giant table.
@@ -610,6 +610,14 @@ class Bollig_2016(SupernovaModel):
              ]
         return mod + '\n'.join(s)
 
+class Tamborra_2014(Bollig_2016):
+    pass
+
+class Walk_2018(Bollig_2016):
+    pass
+
+class Walk_2019(Bollig_2016):
+    pass
 
 class OConnor_2015(SupernovaModel):
     """Set up a model based on the black hole formation simulation in O'Connor (2015). 
