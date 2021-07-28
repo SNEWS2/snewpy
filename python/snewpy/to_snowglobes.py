@@ -50,7 +50,7 @@ def generate_time_series(model_path, model_file, model_type, transformation_type
         ntbins=30
         dt = (tmax/u.s - tmin/u.s) / (ntbins+1)
 
-    tedges = np.arange(tmin.u.s, tmax/u.s, dt)
+    tedges = np.arange(tmin/u.s, tmax/u.s, dt)
     times = 0.5*(tedges[1:] + tedges[:-1]) * u.s
     
     # Generate output.
@@ -261,7 +261,6 @@ def generate_fluence(model_path, model_file, model_type, transformation_type, d,
             tf.addfile(info, io.BytesIO(output))
 
     return tfname
-
 
 
 
