@@ -1392,9 +1392,7 @@ class Fornax_2019_3D(SupernovaModel):
             # Cached data: read out the relevant time and angular rows.
             if self.is_cached:
                 # Convert input angles to a HEALPix index.
-                print('TIME BIN (CACHED): {}'.format(j))
                 k = hp.ang2pix(self.nside, theta.to_value('radian'), phi.to_value('radian'))
-                print('HEALPIXEL {}'.format(k))
                 E[flavor] = self.E[flavor][j]
                 dE[flavor] = self.dE[flavor][j]
                 binspec[flavor] = self.dLdE[flavor][j,:,k]
@@ -1418,7 +1416,6 @@ class Fornax_2019_3D(SupernovaModel):
                 dLdE = np.zeros(len(E[flavor]), dtype=float)
 
                 # Loop over energy bins.
-                print('TIME BIN: {}'.format(j))
                 for ebin in range(len(E[flavor])):
                     dLdE_j = 0
                     # Sum over multipole moments.
