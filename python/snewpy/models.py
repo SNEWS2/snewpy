@@ -1553,9 +1553,9 @@ class Fornax_2021_2D(SupernovaModel):
             for i in range(n):
                 dLdE[:,i] = self._h5file[key]["g{}".format(i)]
 
-            # Note factor of 0.5 in nu_x and nu_x_bar.
-            factor = 1e50*u.erg/u.s if flavor.is_electron else 0.5*1e50*u.erg/u.s
-            self.luminosity[flavor] = np.sum(dLdE*dE, axis=1) * factor
+            # Note factor of 0.25 in nu_x and nu_x_bar.
+            factor = 1. if flavor.is_electron else 0.25
+            self.luminosity[flavor] = np.sum(dLdE*dE, axis=1) * factor * 1e50 * u.erg/u.s
 
     def get_time(self):
         return self.time
@@ -1594,12 +1594,9 @@ class Fornax_2021_2D(SupernovaModel):
             # Energy in units of MeV.
             _E = self._h5file[key]['egroup'][j]
 
-            factor = 1e50*u.MeV
-            if not flavor.is_electron:
-                # Model flavors (internally) are nu_e, nu_e_bar, and nu_x, which stands
-                # for nu_mu(_bar) and nu_tau(_bar), making the flux 4x higher than nu_e and nu_e_bar.
-                # Since we separate NU_X and NU_X_BAR here, multiply by 2x, not 4x.
-                factor *= 0.5
+            # Model flavors (internally) are nu_e, nu_e_bar, and nu_x, which stands
+            # for nu_mu(_bar) and nu_tau(_bar), making the flux 4x higher than nu_e and nu_e_bar.
+            factor = 1. if flavor.is_electron else 0.25
 
             # Linear interpolation in flux.
             if interpolation.lower() == 'linear':
@@ -1612,7 +1609,7 @@ class Fornax_2021_2D(SupernovaModel):
                 # Spectrum in units of 1e50 erg/s/MeV.
                 # Pad with values where flux is fixed to zero.
                 _dLdE = np.asarray([0.] + [self._h5file[key]['g{}'.format(i)][j] for i in range(12)] + [0.])
-                initialspectra[flavor] = np.interp(logE, _logEbins, _dLdE) * factor
+                initialspectra[flavor] = np.interp(logE, _logEbins, _dLdE) * factor * 1e50 * u.erg/u.s/u.MeV
 
             elif interpolation.lower() == 'nearest':
                 _logE = np.log10(_E)
@@ -1625,7 +1622,7 @@ class Fornax_2021_2D(SupernovaModel):
                 select = (idx > 0) & (idx < len(_E))
                 _dLdE = np.zeros(len(E))
                 _dLdE[np.where(select)] = np.asarray([self._h5file[key]['g{}'.format(i)][j] for i in idx[select]])
-                initialspectra[flavor] = _dLdE * factor
+                initialspectra[flavor] = _dLdE * factor * 1e50 * u.erg/u.s/u.MeV
 
             else:
                 raise ValueError('Unrecognized interpolation type "{}"'.format(interpolation))
