@@ -216,7 +216,7 @@ class Analytic3Species(SupernovaModel):
         E[E==0] = np.finfo(float).eps * E.unit
 
         # Estimate L(t), <E_nu(t)> and alpha(t). Express all energies in erg.
-        E = E.to('erg').value
+        E = E.to_value('erg')
 
         # Make sure input time uses the same units as the model time grid, or
         # the interpolation will not work correctly.
@@ -328,7 +328,7 @@ class Nakazato_2013(SupernovaModel):
         E[E==0] = np.finfo(float).eps * E.unit
 
         # Estimate L(t), <E_nu(t)> and alpha(t). Express all energies in erg.
-        E = E.to('erg').value
+        E = E.to_value('erg')
 
         # Make sure input time uses the same units as the model time grid, or
         # the interpolation will not work correctly.
@@ -438,7 +438,7 @@ class Sukhbold_2015(SupernovaModel):
         E[E==0] = np.finfo(float).eps * E.unit
 
         # Estimate L(t), <E_nu(t)>, and alpha(t). Express all energies in erg.
-        E = E.to('erg').value
+        E = E.to_value('erg')
 
         # Make sure input time uses the same units as the global time grid or
         # the interpolation will not work properly.
@@ -575,7 +575,7 @@ class Bollig_2016(SupernovaModel):
         E[E==0] = np.finfo(float).eps * E.unit
 
         # Estimate L(t), <E_nu(t)> and alpha(t). Express all energies in erg.
-        E = E.to('erg').value
+        E = E.to_value('erg')
 
         # Make sure input time uses the same units as the model time grid, or
         # the interpolation will not work correctly.
@@ -710,7 +710,7 @@ class OConnor_2015(SupernovaModel):
         E[E==0] = np.finfo(float).eps * E.unit
 
         # Estimate L(t), <E_nu(t)> and alpha(t). Express all energies in erg.
-        E = E.to('erg').value
+        E = E.to_value('erg')
 
         # Make sure input time uses the same units as the model time grid, or
         # the interpolation will not work correctly.
@@ -841,7 +841,7 @@ class Zha_2021(SupernovaModel):
         E[E==0] = np.finfo(float).eps * E.unit
 
         # Estimate L(t), <E_nu(t)> and alpha(t). Express all energies in erg.
-        E = E.to('erg').value
+        E = E.to_value('erg')
 
         # Make sure input time uses the same units as the model time grid, or
         # the interpolation will not work correctly.
@@ -974,7 +974,7 @@ class Warren_2020(SupernovaModel):
         E[E==0] = np.finfo(float).eps * E.unit
 
         # Estimate L(t), <E_nu(t)> and alpha(t). Express all energies in erg.
-        E = E.to('erg').value
+        E = E.to_value('erg')
 
         # Make sure input time uses the same units as the model time grid, or
         # the interpolation will not work correctly.
@@ -1092,7 +1092,7 @@ class Kuroda_2020(SupernovaModel):
         E[E==0] = np.finfo(float).eps * E.unit
 
         # Estimate L(t), <E_nu(t)> and alpha(t). Express all energies in erg.
-        E = E.to('erg').value
+        E = E.to_value('erg')
 
         # Make sure input time uses the same units as the model time grid, or
         # the interpolation will not work correctly.
@@ -1260,7 +1260,7 @@ class Fornax_2019_3D(SupernovaModel):
         """
         hx = fits.HDUList()
 
-        hdu_time = fits.PrimaryHDU(self.time.to('s').value)
+        hdu_time = fits.PrimaryHDU(self.time.to_value('s'))
         hdu_time.header['EXTNAME'] = 'TIME'
         hdu_time.header['BUNIT'] = 'second'
         hx.append(hdu_time)
@@ -1268,17 +1268,17 @@ class Fornax_2019_3D(SupernovaModel):
         for flavor in Flavor:
             name = str(flavor).split('.')[-1]
 
-            hdu_E = fits.ImageHDU(self.E[flavor].to('MeV').value)
+            hdu_E = fits.ImageHDU(self.E[flavor].to_value('MeV'))
             hdu_E.header['EXTNAME'] = '{}_ENERGY'.format(name)
             hdu_E.header['BUNIT'] = 'MeV'
             hx.append(hdu_E)
 
-            hdu_dE = fits.ImageHDU(self.dE[flavor].to('MeV').value)
+            hdu_dE = fits.ImageHDU(self.dE[flavor].to_value('MeV'))
             hdu_dE.header['EXTNAME'] = '{}_DE'.format(name)
             hdu_dE.header['BUNIT'] = 'MeV'
             hx.append(hdu_dE)
 
-            hdu_flux = fits.ImageHDU(self.dLdE[flavor].to(str(self.fluxunit)).value)
+            hdu_flux = fits.ImageHDU(self.dLdE[flavor].to_value(str(self.fluxunit)))
             hdu_flux.header['EXTNAME'] = '{}_FLUX'.format(name)
             hdu_flux.header['BUNIT'] = str(self.fluxunit)
             hx.append(hdu_flux)
@@ -1362,7 +1362,7 @@ class Fornax_2019_3D(SupernovaModel):
         
         # Avoid "division by zero" in retrieval of the spectrum.
         E[E == 0] = np.finfo(float).eps * E.unit
-        logE = np.log10(E.to('MeV').value)
+        logE = np.log10(E.to_value('MeV'))
         
         for flavor in Flavor:
             key = self._flavorkeys[flavor]
@@ -1379,7 +1379,7 @@ class Fornax_2019_3D(SupernovaModel):
                 # Sum over multipole moments.
                 for l in range(3):
                     for m in range(-l, l + 1):
-                        Ylm = self.real_sph_harm(l, m, theta.to('radian').value, phi.to('radian').value)
+                        Ylm = self.real_sph_harm(l, m, theta.to_value('radian'), phi.to_value('radian'))
                         dLdE_j += self._h5file['nu0']['g{}'.format(ebin)]['l={} m={}'.format(l,m)][j] * Ylm
                 dLdE_i.append(dLdE_j)
 
@@ -1506,7 +1506,7 @@ class Fornax_2021_2D(SupernovaModel):
 
         # Avoid "division by zero" in retrieval of the spectrum.
         E[E == 0] = np.finfo(float).eps * E.unit
-        logE = np.log10(E.to('MeV').value)
+        logE = np.log10(E.to_value('MeV'))
 
         # Make sure the input time uses the same units as the model time grid.
         # Convert input time to a time index.
