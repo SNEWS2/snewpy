@@ -1123,6 +1123,212 @@ class Kuroda_2020(SupernovaModel):
         return mod + '\n'.join(s)
 
 
+class Fornax_2019_3D(SupernovaModel):
+    """Model based 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019. Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/.
+    """
+
+    def __init__(self, filename, cache_flux=False):
+        """Initialize model.
+
+        Parameters
+        ----------
+        filename : str
+            Absolute or relative path to FITS file with model data.
+        cache_flux : bool
+            If true, pre-compute the flux on a fixed angular grid. Time and memory intensive!
+        """
+        # Set up model metadata.
+        self.progenitor_mass = float(filename.split('_')[-1][:-4]) * u.Msun
+
+        # Conversion of flavor to key name in the model HDF5 file.
+        self._flavorkeys = { Flavor.NU_E : 'nu0',
+                             Flavor.NU_E_BAR : 'nu1',
+                             Flavor.NU_X : 'nu2',
+                             Flavor.NU_X_BAR : 'nu2' }
+
+        # Open HDF5 data file.
+        self._h5file = h5py.File(filename, 'r')
+
+        # Get grid of model times.
+        self.time = self._h5file['nu0']['g0'].attrs['time'] * u.s
+        
+#        if cache_flux:
+#            dE = self._h5file['nu0']['degroup'][()].astype(np.single)
+#            E = self._h5file['nu0']['egroup'][()].astype(np.single)
+#
+#            nt, ne = E.shape
+#            nth, nph = len(thetac), len(phic)
+#
+#            dLdE = np.zeros((nt, ne, nth, nph), dtype=np.single)
+#
+#            # Loop over time bins.
+#            for i in range(nt):
+#                # Loop over energy bins.
+#                for j in range(ne):
+#                    dLdE_ij = 0.
+#                    # Sum over multipole moments.
+#                    for l in range(3):
+#                        for m in range(-l, l + 1):
+#                            Ylm = real_sph_harm(l,m)
+#                            dLdE_ij += self._h5file['nu0']['g{}'.format(j)]['l={} m={}'.format(l,m)][i] * Ylm[l][m]
+#                    dLdE[i][j] = dLdE_ij
+            
+    def get_time(self):
+        return self.time
+    
+    def fact(self, n):
+        """Calculate n!.
+
+        Parameters
+        ----------
+        n : int or float
+            Input for computing n factorial.
+
+        Returns
+        -------
+        factorial : float
+            Factorial n!, computed as Gamma(n+1).
+        """
+        return gamma(n + 1.)
+    
+    def real_sph_harm(self, l, m, theta, phi):
+        """Compute orthonormalized real (tesseral) spherical harmonics Y_lm.
+
+        Parameters
+        ----------
+        l : int
+            Degree of the spherical harmonics.
+        m : int
+            Order of the spherical harmonics.
+        theta : float or ndarray
+            Input zenith angles.
+        phi : float or ndarray
+            Input azimuth angles.
+
+        Returns
+        -------
+        Y_lm : float or ndarray
+            Real-valued spherical harmonic function at theta, phi.
+        """
+        if m < 0:
+            norm = np.sqrt((2*l + 1.)/(2*np.pi)*self.fact(l + m)/self.fact(l - m))
+            return norm * lpmv(-m, l, np.cos(theta)) * np.sin(-m*phi)
+        elif m == 0:
+            norm = np.sqrt((2*l + 1.)/(4*np.pi))
+            return norm * lpmv(0, l, np.cos(theta)) * np.ones_like(phi)
+        else:
+            norm = np.sqrt((2*l + 1.)/(2*np.pi)*self.fact(l - m)/self.fact(l + m))
+            return norm * lpmv(m, l, np.cos(theta)) * np.cos(m*phi)
+
+    def get_initialspectra(self, t, E, theta, phi, interpolation='linear'):
+        """Get neutrino spectra/luminosity curves before flavor transformation.
+
+        Parameters
+        ----------
+        t : float or astropy.Quantity
+            Time to evaluate initial and oscillated spectra.
+        E : float or ndarray
+            Energies to evaluate the initial and oscillated spectra.
+        theta : astropy.Quantity
+            Zenith angle of the spectral emission.
+        phi : astropy.Quantity
+            Azimuth angle of the spectral emission.
+        interpolation : str
+            Scheme to interpolate in spectra ('nearest', 'linear').
+
+        Returns
+        -------
+        initialspectra : dict
+            Dictionary of model spectra, keyed by neutrino flavor.
+        """
+        initialspectra = {}
+        
+        # Make sure the input time uses the same units as the model time grid.
+        # Convert input time to a time index.
+        t = t.to(self.time.unit)
+        j = (np.abs(t - self.time)).argmin()
+        
+        # Avoid "division by zero" in retrieval of the spectrum.
+        E[E == 0] = np.finfo(float).eps * E.unit
+        logE = np.log10(E.to('MeV').value)
+        
+        for flavor in Flavor:
+            key = self._flavorkeys[flavor]
+
+            # Energy binning of the model for this flavor, in units of MeV.
+            _E = self._h5file[key]['egroup'][j]
+            
+            # Storage of differential flux per energy, angle, and time.
+            dLdE_i = []
+
+            # Sum over energy bins.
+            for ebin in range(len(dE)):
+                dLdE_j = 0
+                # Sum over multipole moments.
+                for l in range(3):
+                    for m in range(-l, l + 1):
+                        Ylm = self.real_sph_harm(l, m, theta.to('radian').value, phi.to('radian').value)
+                        dLdE_j += self._h5file['nu0']['g{}'.format(ebin)]['l={} m={}'.format(l,m)][j] * Ylm
+                dLdE_i.append(dLdE_j)
+
+            factor = 1e50*u.MeV
+            if not flavor.is_electron:
+                # Model flavors (internally) are nu_e, nu_e_bar, and nu_x,
+                # which stands for nu_mu(_bar) and nu_tau(_bar), making the
+                # flux 4x higher than nu_e and nu_e_bar.  Since we separate
+                # NU_X and NU_X_BAR here, multiply by 2x, not 4x.
+                factor *= 0.5
+
+            # Linear interpolation in flux.
+            if interpolation.lower() == 'linear':
+                # Pad log(E) array with values where flux is fixed to zero.
+                _logE = np.log10(_E)
+                _dlogE = np.diff(_logE)
+                _logEbins = np.insert(_logE, 0, np.log10(np.finfo(float).eps))
+                _logEbins = np.append(_logEbins, _logE[-1] + _dlogE[-1])
+
+                # Spectrum in units of 1e50 erg/s/MeV.
+                # Pad with values where flux is fixed to zero.
+                _dLdE = np.asarray([0.] + dLdE_i + [0.])
+                initialspectra[flavor] = np.interp(logE, _logEbins, _dLdE) * factor
+
+            elif interpolation.lower() == 'nearest':
+                _logE = np.log10(_E)
+                _dlogE = np.diff(_logE)[0]
+                _logEbins = _logE - _dlogE
+                _logEbins = np.concatenate((_logEbins, [_logE[-1] + _dlogE]))
+                _Ebins = 10**_logEbins
+
+                idx = np.searchsorted(_Ebins, E) - 1
+                select = (idx > 0) & (idx < len(_E))
+                _dLdE = np.zeros(len(E))
+                _dLdE[np.where(select)] = np.asarray([dLdE_i[i] for i in idx[select]])
+                initialspectra[flavor] = _dLdE * factor
+
+            else:
+                raise ValueError('Unrecognized interpolation type "{}"'.format(interpolation))
+
+        return initialspectra
+
+    def __repr__(self):
+        """Default representation of the model.
+        """
+        mod = 'Fornax 3D Model: {}\n'.format(self._h5file.filename)
+        s = ['Progenitor mass : {}'.format(self.progenitor_mass)
+            ]
+        return mod + '\n'.join(s)
+
+    def _repr_markdown_(self):
+        """Markdown representation of the model, for Jupyter notebooks.
+        """
+        mod = '**Fornax 3D Model**: {}\n\n'.format(self._h5file.filename)
+        s = ['|Parameter|Value|',
+             '|:---------|:-----:|',
+             '|Progenitor mass | ${0.value:g}$ {0.unit:latex}|'.format(self.progenitor_mass),
+            ]
+        return mod + '\n'.join(s)
+
+
 class Fornax_2021_2D(SupernovaModel):
     """Model based on axisymmetric simulations from A. Burrows and D.  Vartanyan, Nature 589:29, 2021. Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.2d/.
     """
