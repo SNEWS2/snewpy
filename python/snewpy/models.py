@@ -1151,6 +1151,7 @@ class Fornax_2019_3D(SupernovaModel):
         self.progenitor_mass = float(filename.split('_')[-1][:-4]) * u.Msun
 
         self.fluxunit = 1e50 * u.erg/(u.s*u.MeV)
+        self.time = None
 
         # Read a cached flux file in FITS format or generate one.
         self.is_cached = cache_flux and 'healpy' in sys.modules
@@ -1181,6 +1182,9 @@ class Fornax_2019_3D(SupernovaModel):
                                          Flavor.NU_X : 'nu2',
                                          Flavor.NU_X_BAR : 'nu2' }
 
+                    if self.time is None:
+                        self.time = _h5file['nu0']['g0'].attrs['time'] * u.s
+
                     # Use a HEALPix grid with nside=4 (192 pixels) to cache the
                     # values of Y_lm(theta, phi).
                     self.nside = 4
@@ -1197,8 +1201,8 @@ class Fornax_2019_3D(SupernovaModel):
                     # Store 3D tables of dL/dE for each flavor.
                     logger = logging.getLogger()
                     for flavor in Flavor:
-                        logger.info('Caching {} for {}'.format(filename, str(flavor)))
                         key = self._flavorkeys[flavor]
+                        logger.info('Caching {} for {} ({})'.format(filename, str(flavor), key))
 
                         self.E[flavor]  = _h5file[key]['egroup'][()] * u.MeV
                         self.dE[flavor] = _h5file[key]['degroup'][()] * u.MeV
@@ -1385,8 +1389,15 @@ class Fornax_2019_3D(SupernovaModel):
                 dE[flavor] = self.dE[flavor][j]
                 binspec[flavor] = self.dLdE[flavor][j,:,k]
 
-            # Read the HDF5 input file and extract the spectrum.
+            # Read the HDF5 input file directly and extract the spectrum.
             else:
+                # File only contains NU_E, NU_E_BAR, and NU_X.
+                if flavor == Flavor.NU_X_BAR:
+                    E[flavor] = E[Flavor.NU_X]
+                    dE[flavor] = dE[Flavor.NU_X]
+                    binspec[flavor] = binspec[Flavor.NU_X]
+                    continue
+
                 key = self._flavorkeys[flavor]
 
                 # Energy binning of the model for this flavor, in units of MeV.
@@ -1396,7 +1407,7 @@ class Fornax_2019_3D(SupernovaModel):
                 # Storage of differential flux per energy, angle, and time.
                 dLdE = np.zeros(len(E[flavor]), dtype=float)
 
-                # Sum over energy bins.
+                # Loop over energy bins.
                 for ebin in range(len(E[flavor])):
                     dLdE_j = 0
                     # Sum over multipole moments.
@@ -1406,8 +1417,10 @@ class Fornax_2019_3D(SupernovaModel):
                             dLdE_j += self._h5file['nu0']['g{}'.format(ebin)]['l={} m={}'.format(l,m)][j] * Ylm
                     dLdE[ebin] = dLdE_j
 
-                factor = 1. if flavor.is_electron else 0.5
+                factor = 1. if flavor.is_electron else 0.25
+                print(flavor, factor)
                 binspec[flavor] = dLdE * factor * self.fluxunit
+                binspec[flavor] = binspec[flavor].to('erg/(s*MeV)')
 
         return E, dE, binspec
 
