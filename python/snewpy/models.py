@@ -7,14 +7,15 @@ reader; see https://docs.astropy.org/en/stable/index.html for details.
 Based on the ASTERIA (https://github.com/IceCubeOpenSource/ASTERIA) models
 developed by Navya Uberoi and Spencer Griswold.
 
-Updated summer 2020 by Jim Kneller & Arkin Worlikar.
+Updated summer 2020 by Jim Kneller & Arkin Worlikar. Subsequent updates
+provided by the SNEWS team.
 """
 
 from abc import abstractmethod, ABC
 from enum import IntEnum
 
 import astropy
-from astropy.io import ascii
+from astropy.io import ascii, fits
 from astropy.table import Table, join
 from astropy.units.quantity import Quantity
 
@@ -27,12 +28,19 @@ from scipy.special import loggamma, gamma, lpmv
 
 import os
 import re
+import sys
 
 import logging
 logging.basicConfig(level=logging.INFO)
 
 import tarfile
 import h5py
+
+try:
+    import healpy as hp
+except ImportError as e:
+    logger = logging.getLogger()
+    logger.warning(e)
 
 from .neutrino import Flavor
 from .flavor_transformation import *
@@ -1135,7 +1143,7 @@ class Fornax_2019_3D(SupernovaModel):
         filename : str
             Absolute or relative path to FITS file with model data.
         cache_flux : bool
-            If true, pre-compute the flux on a fixed angular grid. Time and memory intensive!
+            If true, pre-compute the flux on a fixed angular grid and store the values in a FITS file.
         """
         # Set up model metadata.
         self.progenitor_mass = float(filename.split('_')[-1][:-4]) * u.Msun
@@ -1149,33 +1157,137 @@ class Fornax_2019_3D(SupernovaModel):
         # Open HDF5 data file.
         self._h5file = h5py.File(filename, 'r')
 
-        # Get grid of model times.
+        # Get grid of model times in seconds.
         self.time = self._h5file['nu0']['g0'].attrs['time'] * u.s
+
+        self.E = {}
+        self.dE = {}
+        self.dLdE = {}
+        self.luminosity = {}
+
+        self.fluxunit = 1e50 * u.erg/(u.s*u.MeV)
+
+        if cache_flux:
+            if 'healpy' in sys.modules:
+                fitsfile = filename.replace('h5', 'fits')
+
+                if os.path.exists(fitsfile):
+                    self.read_fits(fitsfile)
+                else:
+                    # Use a HEALPix grid with nside=4 (192 pixels) to cache the
+                    # values of Y_lm(theta, phi).
+                    self.nside = 4
+                    self.npix = hp.nside2npix(self.nside)
+                    self.pixels = np.arange(self.npix)
+                    thetac, phic = hp.pix2ang(self.nside, self.pixels)
+
+                    Ylm = {}
+                    for l in range(3):
+                        Ylm[l] = {}
+                        for m in range(-l, l+1):
+                            Ylm[l][m] = self.real_sph_harm(l, m, thetac, phic)
+
+                    # Store 3D tables of dL/dE for each flavor.
+                    logger = logging.getLogger()
+                    for flavor in Flavor:
+                        logger.info('Caching {} for {}'.format(filename, str(flavor)))
+                        key = self._flavorkeys[flavor]
+
+                        self.E[flavor]  = self._h5file[key]['egroup'][()] * u.MeV
+                        self.dE[flavor] = self._h5file[key]['degroup'][()] * u.MeV
+
+                        ntim, nene = self.E[flavor].shape
+                        self.dLdE[flavor] = np.zeros((ntim, nene, self.npix), dtype=float)
+                        # Loop over time bins.
+                        for i in range(ntim):
+                            # Loop over energy bins.
+                            for j in range(nene):
+                                dLdE_ij = 0.
+                                # Sum over multipole moments.
+                                for l in range(3):
+                                    for m in range(-l, l+1):
+                                        dLdE_ij += self._h5file[key]['g{}'.format(j)]['l={} m={}'.format(l,m)][i] * Ylm[l][m]
+                                self.dLdE[flavor][i][j] = dLdE_ij
+
+                        # Integrate over energy to get L(t).
+                        factor = 1. if flavor.is_electron else 0.5
+                        self.dLdE[flavor] = self.dLdE[flavor] * factor * self.fluxunit
+                        self.dLdE[flavor] = self.dLdE[flavor].to('erg/(s*MeV)')
+
+                        self.luminosity[flavor] = np.sum(self.dLdE[flavor] * self.dE[flavor][:,:,np.newaxis], axis=1)
+
+                    # Write output to FITS.
+                    self.write_fits(fitsfile, overwrite=True)
+
+            else:
+                logger = logging.getLogger()
+                logger.warning('healpy not installed; cannot cache Fornax model.')
+
+    def read_fits(self, filename):
+        """Read cached angular data from FITS.
+
+        Parameters
+        ----------
+        filename : str
+            Input filename.
+        """
+        hdus = fits.open(filename)
+
+        self.time = hdus['TIME'].data * u.Unit(hdus['TIME'].header['BUNIT'])
+
+        for flavor in Flavor:
+            name = str(flavor).split('.')[-1]
+
+            ext = '{}_ENERGY'.format(name)
+            self.E[flavor] = hdus[ext].data * u.Unit(hdus[ext].header['BUNIT'])
+
+            ext = '{}_DE'.format(name)
+            self.dE[flavor] = hdus[ext].data * u.Unit(hdus[ext].header['BUNIT'])
+
+            ext = '{}_FLUX'.format(name)
+            self.dLdE[flavor] = hdus[ext].data * u.Unit(hdus[ext].header['BUNIT'])
+            self.dLdE[flavor] = self.dLdE[flavor].to('erg/(s*MeV)')
+
+            self.luminosity[flavor] = np.sum(self.dLdE[flavor] * self.dE[flavor][:,:,np.newaxis], axis=1)
+
+    def write_fits(self, filename, overwrite=False):
+        """Write angular-dependent calculated flux in FITS format.
+
+        Parameters
+        ----------
+        filename : str
+            Output filename.
+        """
+        hx = fits.HDUList()
+
+        hdu_time = fits.PrimaryHDU(self.time.to('s').value)
+        hdu_time.header['EXTNAME'] = 'TIME'
+        hdu_time.header['BUNIT'] = 'second'
+        hx.append(hdu_time)
+
+        for flavor in Flavor:
+            name = str(flavor).split('.')[-1]
+
+            hdu_E = fits.ImageHDU(self.E[flavor].to('MeV').value)
+            hdu_E.header['EXTNAME'] = '{}_ENERGY'.format(name)
+            hdu_E.header['BUNIT'] = 'MeV'
+            hx.append(hdu_E)
+
+            hdu_dE = fits.ImageHDU(self.dE[flavor].to('MeV').value)
+            hdu_dE.header['EXTNAME'] = '{}_DE'.format(name)
+            hdu_dE.header['BUNIT'] = 'MeV'
+            hx.append(hdu_dE)
+
+            hdu_flux = fits.ImageHDU(self.dLdE[flavor].to(str(self.fluxunit)).value)
+            hdu_flux.header['EXTNAME'] = '{}_FLUX'.format(name)
+            hdu_flux.header['BUNIT'] = str(self.fluxunit)
+            hx.append(hdu_flux)
         
-#        if cache_flux:
-#            dE = self._h5file['nu0']['degroup'][()].astype(np.single)
-#            E = self._h5file['nu0']['egroup'][()].astype(np.single)
-#
-#            nt, ne = E.shape
-#            nth, nph = len(thetac), len(phic)
-#
-#            dLdE = np.zeros((nt, ne, nth, nph), dtype=np.single)
-#
-#            # Loop over time bins.
-#            for i in range(nt):
-#                # Loop over energy bins.
-#                for j in range(ne):
-#                    dLdE_ij = 0.
-#                    # Sum over multipole moments.
-#                    for l in range(3):
-#                        for m in range(-l, l + 1):
-#                            Ylm = real_sph_harm(l,m)
-#                            dLdE_ij += self._h5file['nu0']['g{}'.format(j)]['l={} m={}'.format(l,m)][i] * Ylm[l][m]
-#                    dLdE[i][j] = dLdE_ij
-            
+        hx.writeto(filename, overwrite=overwrite)
+
     def get_time(self):
-        return self.time
-    
+        return self.time * u.s
+
     def fact(self, n):
         """Calculate n!.
 
@@ -1190,7 +1302,7 @@ class Fornax_2019_3D(SupernovaModel):
             Factorial n!, computed as Gamma(n+1).
         """
         return gamma(n + 1.)
-    
+
     def real_sph_harm(self, l, m, theta, phi):
         """Compute orthonormalized real (tesseral) spherical harmonics Y_lm.
 
