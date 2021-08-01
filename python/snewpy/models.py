@@ -1394,7 +1394,7 @@ class Fornax_2019_3D(SupernovaModel):
                 dE[flavor] = self._h5file[key]['degroup'][j] * u.MeV
                 
                 # Storage of differential flux per energy, angle, and time.
-                dLdE_i = []
+                dLdE = np.zeros(len(E[flavor]), dtype=float)
 
                 # Sum over energy bins.
                 for ebin in range(len(E[flavor])):
@@ -1404,10 +1404,10 @@ class Fornax_2019_3D(SupernovaModel):
                         for m in range(-l, l + 1):
                             Ylm = self.real_sph_harm(l, m, theta.to_value('radian'), phi.to_value('radian'))
                             dLdE_j += self._h5file['nu0']['g{}'.format(ebin)]['l={} m={}'.format(l,m)][j] * Ylm
-                    dLdE_i.append(dLdE_j)
+                    dLdE[ebin] = dLdE_j
 
                 factor = 1. if flavor.is_electron else 0.5
-                binspec[flavor] = dLdE_i * factor * self.fluxunit
+                binspec[flavor] = dLdE * factor * self.fluxunit
 
         return E, dE, binspec
 
@@ -1437,67 +1437,40 @@ class Fornax_2019_3D(SupernovaModel):
         # Extract the binned spectra for the input t, theta, phi:
         _E, _dE, _spec = self._get_binnedspectra(t, theta, phi)
         
-        # Make sure the input time uses the same units as the model time grid.
-        # Convert input time to a time index.
-        t = t.to(self.time.unit)
-        j = (np.abs(t - self.time)).argmin()
-        
         # Avoid "division by zero" in retrieval of the spectrum.
         E[E == 0] = np.finfo(float).eps * E.unit
         logE = np.log10(E.to_value('MeV'))
         
         for flavor in Flavor:
-            key = self._flavorkeys[flavor]
-
-            # Energy binning of the model for this flavor, in units of MeV.
-            _E = self._h5file[key]['egroup'][j]
-            
-            # Storage of differential flux per energy, angle, and time.
-            dLdE_i = []
-
-            # Sum over energy bins.
-            for ebin in range(len(_E)):
-                dLdE_j = 0
-                # Sum over multipole moments.
-                for l in range(3):
-                    for m in range(-l, l + 1):
-                        Ylm = self.real_sph_harm(l, m, theta.to_value('radian'), phi.to_value('radian'))
-                        dLdE_j += self._h5file['nu0']['g{}'.format(ebin)]['l={} m={}'.format(l,m)][j] * Ylm
-                dLdE_i.append(dLdE_j)
-
-            factor = 1e50*u.MeV
-            if not flavor.is_electron:
-                # Model flavors (internally) are nu_e, nu_e_bar, and nu_x,
-                # which stands for nu_mu(_bar) and nu_tau(_bar), making the
-                # flux 4x higher than nu_e and nu_e_bar.  Since we separate
-                # NU_X and NU_X_BAR here, multiply by 2x, not 4x.
-                factor *= 0.5
 
             # Linear interpolation in flux.
             if interpolation.lower() == 'linear':
                 # Pad log(E) array with values where flux is fixed to zero.
-                _logE = np.log10(_E)
+                _logE = np.log10(_E[flavor].to_value('MeV'))
                 _dlogE = np.diff(_logE)
                 _logEbins = np.insert(_logE, 0, np.log10(np.finfo(float).eps))
                 _logEbins = np.append(_logEbins, _logE[-1] + _dlogE[-1])
 
-                # Spectrum in units of 1e50 erg/s/MeV.
                 # Pad with values where flux is fixed to zero.
-                _dLdE = np.asarray([0.] + dLdE_i + [0.])
-                initialspectra[flavor] = np.interp(logE, _logEbins, _dLdE) * factor
+                _dLdE = _spec[flavor].to_value(self.fluxunit)
+                _dLdE = np.insert(_dLdE, 0, 0.)
+                _dLdE = np.append(_dLdE, 0.)
+
+                initialspectra[flavor] = np.interp(logE, _logEbins, _dLdE) * self.fluxunit
 
             elif interpolation.lower() == 'nearest':
-                _logE = np.log10(_E)
+                _logE = np.log10(_E[flavor].to_value('MeV'))
                 _dlogE = np.diff(_logE)[0]
                 _logEbins = _logE - _dlogE
                 _logEbins = np.concatenate((_logEbins, [_logE[-1] + _dlogE]))
                 _Ebins = 10**_logEbins
 
                 idx = np.searchsorted(_Ebins, E) - 1
-                select = (idx > 0) & (idx < len(_E))
+                select = (idx > 0) & (idx < len(_E[flavor]))
+
                 _dLdE = np.zeros(len(E))
-                _dLdE[np.where(select)] = np.asarray([dLdE_i[i] for i in idx[select]])
-                initialspectra[flavor] = _dLdE * factor
+                _dLdE[np.where(select)] = np.asarray([_spec[flavor][i].to_value(self.fluxunit) for i in idx[select]])
+                initialspectra[flavor] = _dLdE * self.fluxunit
 
             else:
                 raise ValueError('Unrecognized interpolation type "{}"'.format(interpolation))
