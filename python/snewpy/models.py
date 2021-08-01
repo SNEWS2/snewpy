@@ -1148,80 +1148,91 @@ class Fornax_2019_3D(SupernovaModel):
         # Set up model metadata.
         self.progenitor_mass = float(filename.split('_')[-1][:-4]) * u.Msun
 
-        # Conversion of flavor to key name in the model HDF5 file.
-        self._flavorkeys = { Flavor.NU_E : 'nu0',
-                             Flavor.NU_E_BAR : 'nu1',
-                             Flavor.NU_X : 'nu2',
-                             Flavor.NU_X_BAR : 'nu2' }
-
-        # Open HDF5 data file.
-        self._h5file = h5py.File(filename, 'r')
-
-        # Get grid of model times in seconds.
-        self.time = self._h5file['nu0']['g0'].attrs['time'] * u.s
-
-        self.E = {}
-        self.dE = {}
-        self.dLdE = {}
-        self.luminosity = {}
-
         self.fluxunit = 1e50 * u.erg/(u.s*u.MeV)
 
+        # Read a cached flux file in FITS format or generate one.
         if cache_flux:
+
+            self.E = {}
+            self.dE = {}
+            self.dLdE = {}
+            self.luminosity = {}
+
             if 'healpy' in sys.modules:
                 fitsfile = filename.replace('h5', 'fits')
 
                 if os.path.exists(fitsfile):
                     self.read_fits(fitsfile)
+                    ntim, nene, npix = self.dLdE[Flavor.NU_E].shape
+                    self.npix = npix
+                    self.nside = hp.npix2nside(npix)
                 else:
-                    # Use a HEALPix grid with nside=4 (192 pixels) to cache the
-                    # values of Y_lm(theta, phi).
-                    self.nside = 4
-                    self.npix = hp.nside2npix(self.nside)
-                    self.pixels = np.arange(self.npix)
-                    thetac, phic = hp.pix2ang(self.nside, self.pixels)
+                    with h5py.File(filename, 'r') as _h5file:
+                        # Conversion of flavor to key name in the model HDF5 file.
+                        self._flavorkeys = { Flavor.NU_E : 'nu0',
+                                             Flavor.NU_E_BAR : 'nu1',
+                                             Flavor.NU_X : 'nu2',
+                                             Flavor.NU_X_BAR : 'nu2' }
 
-                    Ylm = {}
-                    for l in range(3):
-                        Ylm[l] = {}
-                        for m in range(-l, l+1):
-                            Ylm[l][m] = self.real_sph_harm(l, m, thetac, phic)
+                        # Use a HEALPix grid with nside=4 (192 pixels) to cache the
+                        # values of Y_lm(theta, phi).
+                        self.nside = 4
+                        self.npix = hp.nside2npix(self.nside)
+                        self.pixels = np.arange(self.npix)
+                        thetac, phic = hp.pix2ang(self.nside, self.pixels)
 
-                    # Store 3D tables of dL/dE for each flavor.
-                    logger = logging.getLogger()
-                    for flavor in Flavor:
-                        logger.info('Caching {} for {}'.format(filename, str(flavor)))
-                        key = self._flavorkeys[flavor]
+                        Ylm = {}
+                        for l in range(3):
+                            Ylm[l] = {}
+                            for m in range(-l, l+1):
+                                Ylm[l][m] = self.real_sph_harm(l, m, thetac, phic)
 
-                        self.E[flavor]  = self._h5file[key]['egroup'][()] * u.MeV
-                        self.dE[flavor] = self._h5file[key]['degroup'][()] * u.MeV
+                        # Store 3D tables of dL/dE for each flavor.
+                        logger = logging.getLogger()
+                        for flavor in Flavor:
+                            logger.info('Caching {} for {}'.format(filename, str(flavor)))
+                            key = self._flavorkeys[flavor]
 
-                        ntim, nene = self.E[flavor].shape
-                        self.dLdE[flavor] = np.zeros((ntim, nene, self.npix), dtype=float)
-                        # Loop over time bins.
-                        for i in range(ntim):
-                            # Loop over energy bins.
-                            for j in range(nene):
-                                dLdE_ij = 0.
-                                # Sum over multipole moments.
-                                for l in range(3):
-                                    for m in range(-l, l+1):
-                                        dLdE_ij += self._h5file[key]['g{}'.format(j)]['l={} m={}'.format(l,m)][i] * Ylm[l][m]
-                                self.dLdE[flavor][i][j] = dLdE_ij
+                            self.E[flavor]  = _h5file[key]['egroup'][()] * u.MeV
+                            self.dE[flavor] = _h5file[key]['degroup'][()] * u.MeV
 
-                        # Integrate over energy to get L(t).
-                        factor = 1. if flavor.is_electron else 0.5
-                        self.dLdE[flavor] = self.dLdE[flavor] * factor * self.fluxunit
-                        self.dLdE[flavor] = self.dLdE[flavor].to('erg/(s*MeV)')
+                            ntim, nene = self.E[flavor].shape
+                            self.dLdE[flavor] = np.zeros((ntim, nene, self.npix), dtype=float)
+                            # Loop over time bins.
+                            for i in range(ntim):
+                                # Loop over energy bins.
+                                for j in range(nene):
+                                    dLdE_ij = 0.
+                                    # Sum over multipole moments.
+                                    for l in range(3):
+                                        for m in range(-l, l+1):
+                                            dLdE_ij += _h5file[key]['g{}'.format(j)]['l={} m={}'.format(l,m)][i] * Ylm[l][m]
+                                    self.dLdE[flavor][i][j] = dLdE_ij
 
-                        self.luminosity[flavor] = np.sum(self.dLdE[flavor] * self.dE[flavor][:,:,np.newaxis], axis=1)
+                            # Integrate over energy to get L(t).
+                            factor = 1. if flavor.is_electron else 0.5
+                            self.dLdE[flavor] = self.dLdE[flavor] * factor * self.fluxunit
+                            self.dLdE[flavor] = self.dLdE[flavor].to('erg/(s*MeV)')
 
-                    # Write output to FITS.
-                    self.write_fits(fitsfile, overwrite=True)
+                            self.luminosity[flavor] = np.sum(self.dLdE[flavor] * self.dE[flavor][:,:,np.newaxis], axis=1)
 
+                        # Write output to FITS.
+                        self.write_fits(fitsfile, overwrite=True)
             else:
                 logger = logging.getLogger()
                 logger.warning('healpy not installed; cannot cache Fornax model.')
+        else:
+            # Conversion of flavor to key name in the model HDF5 file.
+            self._flavorkeys = { Flavor.NU_E : 'nu0',
+                                 Flavor.NU_E_BAR : 'nu1',
+                                 Flavor.NU_X : 'nu2',
+                                 Flavor.NU_X_BAR : 'nu2' }
+
+            # Open HDF5 data file.
+            self._h5file = h5py.File(filename, 'r')
+
+            # Get grid of model times in seconds.
+            self.time = self._h5file['nu0']['g0'].attrs['time'] * u.s
 
     def read_fits(self, filename):
         """Read cached angular data from FITS.
@@ -1286,7 +1297,7 @@ class Fornax_2019_3D(SupernovaModel):
         hx.writeto(filename, overwrite=overwrite)
 
     def get_time(self):
-        return self.time * u.s
+        return self.time
 
     def fact(self, n):
         """Calculate n!.
@@ -1331,6 +1342,29 @@ class Fornax_2019_3D(SupernovaModel):
         else:
             norm = np.sqrt((2*l + 1.)/(2*np.pi)*self.fact(l - m)/self.fact(l + m))
             return norm * lpmv(m, l, np.cos(theta)) * np.cos(m*phi)
+
+    def _get_binned_spectrum(self, t, E, theta, phi):
+        """Get binned neutrino spectrum at a particular time.
+
+        Parameters
+        ----------
+        t : float or astropy.Quantity
+            Time to evaluate initial and oscillated spectra.
+        E : float or ndarray
+            Energies to evaluate the initial and oscillated spectra.
+        theta : astropy.Quantity
+            Zenith angle of the spectral emission.
+        phi : astropy.Quantity
+            Azimuth angle of the spectral emission.
+        interpolation : str
+            Scheme to interpolate in spectra ('nearest', 'linear').
+
+        Returns
+        -------
+        initialspectra : dict
+            Dictionary of model spectra, keyed by neutrino flavor.
+        """
+        pass
 
     def get_initialspectra(self, t, E, theta, phi, interpolation='linear'):
         """Get neutrino spectra/luminosity curves before flavor transformation.
