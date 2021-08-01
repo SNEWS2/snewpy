@@ -31,16 +31,6 @@ import re
 import logging
 logging.basicConfig(level=logging.INFO)
 
-# Conditional import of photospline while we determine whether to make it a
-# strong dependency of snewpy (July 2021).
-try:
-    import photospline
-    from photospline import glam_fit, ndsparse, bspline, SplineTable
-    usephotospline = True
-except ImportError as e:
-    usephotospline = False
-    logging.warning(e)
-
 import tarfile
 import h5py
 
@@ -500,7 +490,7 @@ class Bollig_2016(SupernovaModel):
         # Store model metadata.
         self.filename = os.path.basename(filename)
         self.EOS = eos
-        self.progenitor_mass = float(self.filename.strip('s%c')) * u.Msun
+        self.progenitor_mass = float( (self.filename.split('s'))[1].split('c')[0] )  * u.Msun
 
         # Read through the several ASCII files for the chosen simulation and
         # merge the data into one giant table.
@@ -620,6 +610,14 @@ class Bollig_2016(SupernovaModel):
              ]
         return mod + '\n'.join(s)
 
+class Tamborra_2014(Bollig_2016):
+    pass
+
+class Walk_2018(Bollig_2016):
+    pass
+
+class Walk_2019(Bollig_2016):
+    pass
 
 class OConnor_2015(SupernovaModel):
     """Set up a model based on the black hole formation simulation in O'Connor (2015). 
@@ -1169,7 +1167,7 @@ class Fornax_2021_2D(SupernovaModel):
     def get_time(self):
         return self.time
 
-    def get_initialspectra(self, t, E):
+    def get_initialspectra(self, t, E, interpolation='linear'):
         """Get neutrino spectra/luminosity curves after oscillation.
 
         Parameters
@@ -1178,6 +1176,8 @@ class Fornax_2021_2D(SupernovaModel):
             Time to evaluate initial and oscillated spectra.
         E : float or ndarray
             Energies to evaluate the initial and oscillated spectra.
+        interpolation : str
+            Scheme to interpolate in spectra ('nearest', 'linear').
 
         Returns
         -------
@@ -1201,17 +1201,6 @@ class Fornax_2021_2D(SupernovaModel):
             # Energy in units of MeV.
             _E = self._h5file[key]['egroup'][j]
 
-            # Pad log(E) array with values where flux is fixed to zero.
-            _logE = np.log10(_E)
-            _dlogE = np.diff(_logE)
-            _logEbins = np.insert(_logE, 0, np.log10(np.finfo(float).eps))
-            _logEbins = np.append(_logEbins, _logE[-1] + _dlogE[-1])
-
-            # Spectrum in units of 1e50 erg/s/MeV.
-            # Pad with values where flux is fixed to zero.
-            _dLdE = np.asarray([0.] + [self._h5file[key]['g{}'.format(i)][j] for i in range(12)] + [0.])
-
-            # Linear interpolation in flux.
             factor = 1e50*u.MeV
             if not flavor.is_electron:
                 # Model flavors (internally) are nu_e, nu_e_bar, and nu_x, which stands
@@ -1219,7 +1208,34 @@ class Fornax_2021_2D(SupernovaModel):
                 # Since we separate NU_X and NU_X_BAR here, multiply by 2x, not 4x.
                 factor *= 0.5
 
-            initialspectra[flavor] = np.interp(logE, _logEbins, _dLdE) * factor
+            # Linear interpolation in flux.
+            if interpolation.lower() == 'linear':
+                # Pad log(E) array with values where flux is fixed to zero.
+                _logE = np.log10(_E)
+                _dlogE = np.diff(_logE)
+                _logEbins = np.insert(_logE, 0, np.log10(np.finfo(float).eps))
+                _logEbins = np.append(_logEbins, _logE[-1] + _dlogE[-1])
+
+                # Spectrum in units of 1e50 erg/s/MeV.
+                # Pad with values where flux is fixed to zero.
+                _dLdE = np.asarray([0.] + [self._h5file[key]['g{}'.format(i)][j] for i in range(12)] + [0.])
+                initialspectra[flavor] = np.interp(logE, _logEbins, _dLdE) * factor
+
+            elif interpolation.lower() == 'nearest':
+                _logE = np.log10(_E)
+                _dlogE = np.diff(_logE)[0]
+                _logEbins = _logE - _dlogE
+                _logEbins = np.concatenate((_logEbins, [_logE[-1] + _dlogE]))
+                _Ebins = 10**_logEbins
+
+                idx = np.searchsorted(_Ebins, E) - 1
+                select = (idx > 0) & (idx < len(_E))
+                _dLdE = np.zeros(len(E))
+                _dLdE[np.where(select)] = np.asarray([self._h5file[key]['g{}'.format(i)][j] for i in idx[select]])
+                initialspectra[flavor] = _dLdE * factor
+
+            else:
+                raise ValueError('Unrecognized interpolation type "{}"'.format(interpolation))
 
         return initialspectra
 
