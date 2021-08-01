@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 
 import numpy as np
 from scipy.interpolate import interp1d
-from scipy.special import loggamma
+from scipy.special import loggamma, gamma, lpmv
 
 import os
 import re
@@ -1262,7 +1262,7 @@ class Fornax_2019_3D(SupernovaModel):
             dLdE_i = []
 
             # Sum over energy bins.
-            for ebin in range(len(dE)):
+            for ebin in range(len(_E)):
                 dLdE_j = 0
                 # Sum over multipole moments.
                 for l in range(3):
