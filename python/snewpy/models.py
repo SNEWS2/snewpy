@@ -1179,8 +1179,7 @@ class Fornax_2019_3D(SupernovaModel):
                     # Conversion of flavor to key name in the model HDF5 file.
                     self._flavorkeys = { Flavor.NU_E : 'nu0',
                                          Flavor.NU_E_BAR : 'nu1',
-                                         Flavor.NU_X : 'nu2',
-                                         Flavor.NU_X_BAR : 'nu2' }
+                                         Flavor.NU_X : 'nu2' }
 
                     if self.time is None:
                         self.time = _h5file['nu0']['g0'].attrs['time'] * u.s
@@ -1201,6 +1200,15 @@ class Fornax_2019_3D(SupernovaModel):
                     # Store 3D tables of dL/dE for each flavor.
                     logger = logging.getLogger()
                     for flavor in Flavor:
+
+                        # File only contains NU_E, NU_E_BAR, and NU_X.
+                        if flavor == Flavor.NU_X_BAR:
+                            self.E[flavor] = E[Flavor.NU_X]
+                            self.dE[flavor] = dE[Flavor.NU_X]
+                            self.dLdE[flavor] = self.dLdE[Flavor.NU_X]
+                            self.luminosity[flavor] = self.luminosity[Flavor.NU_X]
+                            continue
+
                         key = self._flavorkeys[flavor]
                         logger.info('Caching {} for {} ({})'.format(filename, str(flavor), key))
 
@@ -1418,7 +1426,6 @@ class Fornax_2019_3D(SupernovaModel):
                     dLdE[ebin] = dLdE_j
 
                 factor = 1. if flavor.is_electron else 0.25
-                print(flavor, factor)
                 binspec[flavor] = dLdE * factor * self.fluxunit
                 binspec[flavor] = binspec[flavor].to('erg/(s*MeV)')
 
