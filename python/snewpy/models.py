@@ -1179,7 +1179,8 @@ class Fornax_2019_3D(SupernovaModel):
                     # Conversion of flavor to key name in the model HDF5 file.
                     self._flavorkeys = { Flavor.NU_E : 'nu0',
                                          Flavor.NU_E_BAR : 'nu1',
-                                         Flavor.NU_X : 'nu2' }
+                                         Flavor.NU_X : 'nu2',
+                                         Flavor.NU_X_BAR : 'nu2' }
 
                     if self.time is None:
                         self.time = _h5file['nu0']['g0'].attrs['time'] * u.s
@@ -1188,8 +1189,7 @@ class Fornax_2019_3D(SupernovaModel):
                     # values of Y_lm(theta, phi).
                     self.nside = 4
                     self.npix = hp.nside2npix(self.nside)
-                    self.pixels = np.arange(self.npix)
-                    thetac, phic = hp.pix2ang(self.nside, self.pixels)
+                    thetac, phic = hp.pix2ang(self.nside, np.arange(self.npix))
 
                     Ylm = {}
                     for l in range(3):
@@ -1201,16 +1201,16 @@ class Fornax_2019_3D(SupernovaModel):
                     logger = logging.getLogger()
                     for flavor in Flavor:
 
-                        # File only contains NU_E, NU_E_BAR, and NU_X.
+                        key = self._flavorkeys[flavor]
+                        logger.info('Caching {} for {} ({})'.format(filename, str(flavor), key))
+
+                        # HDF5 file only contains NU_E, NU_E_BAR, and NU_X.
                         if flavor == Flavor.NU_X_BAR:
-                            self.E[flavor] = E[Flavor.NU_X]
-                            self.dE[flavor] = dE[Flavor.NU_X]
+                            self.E[flavor] = self.E[Flavor.NU_X]
+                            self.dE[flavor] = self.dE[Flavor.NU_X]
                             self.dLdE[flavor] = self.dLdE[Flavor.NU_X]
                             self.luminosity[flavor] = self.luminosity[Flavor.NU_X]
                             continue
-
-                        key = self._flavorkeys[flavor]
-                        logger.info('Caching {} for {} ({})'.format(filename, str(flavor), key))
 
                         self.E[flavor]  = _h5file[key]['egroup'][()] * u.MeV
                         self.dE[flavor] = _h5file[key]['degroup'][()] * u.MeV
@@ -1229,7 +1229,7 @@ class Fornax_2019_3D(SupernovaModel):
                                 self.dLdE[flavor][i][j] = dLdE_ij
 
                         # Integrate over energy to get L(t).
-                        factor = 1. if flavor.is_electron else 0.5
+                        factor = 1. if flavor.is_electron else 0.25
                         self.dLdE[flavor] = self.dLdE[flavor] * factor * self.fluxunit
                         self.dLdE[flavor] = self.dLdE[flavor].to('erg/(s*MeV)')
 
@@ -1392,12 +1392,14 @@ class Fornax_2019_3D(SupernovaModel):
             # Cached data: read out the relevant time and angular rows.
             if self.is_cached:
                 # Convert input angles to a HEALPix index.
+                print('TIME BIN (CACHED): {}'.format(j))
                 k = hp.ang2pix(self.nside, theta.to_value('radian'), phi.to_value('radian'))
+                print('HEALPIXEL {}'.format(k))
                 E[flavor] = self.E[flavor][j]
                 dE[flavor] = self.dE[flavor][j]
                 binspec[flavor] = self.dLdE[flavor][j,:,k]
 
-            # Read the HDF5 input file directly and extract the spectrum.
+            # Read the HDF5 input file directly and extract the spectra.
             else:
                 # File only contains NU_E, NU_E_BAR, and NU_X.
                 if flavor == Flavor.NU_X_BAR:
@@ -1416,13 +1418,14 @@ class Fornax_2019_3D(SupernovaModel):
                 dLdE = np.zeros(len(E[flavor]), dtype=float)
 
                 # Loop over energy bins.
+                print('TIME BIN: {}'.format(j))
                 for ebin in range(len(E[flavor])):
                     dLdE_j = 0
                     # Sum over multipole moments.
                     for l in range(3):
                         for m in range(-l, l + 1):
                             Ylm = self.real_sph_harm(l, m, theta.to_value('radian'), phi.to_value('radian'))
-                            dLdE_j += self._h5file['nu0']['g{}'.format(ebin)]['l={} m={}'.format(l,m)][j] * Ylm
+                            dLdE_j += self._h5file[key]['g{}'.format(ebin)]['l={} m={}'.format(l,m)][j] * Ylm
                     dLdE[ebin] = dLdE_j
 
                 factor = 1. if flavor.is_electron else 0.25
