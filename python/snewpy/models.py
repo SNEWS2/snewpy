@@ -1449,19 +1449,21 @@ class Fornax_2019_3D(SupernovaModel):
 
         return E, dE, binspec
 
-    def get_initialspectra(self, t, E, theta, phi, interpolation='linear'):
+    def get_initialspectra(self, t, E, theta, phi, flavors=Flavor, interpolation='linear'):
         """Get neutrino spectra/luminosity curves before flavor transformation.
 
         Parameters
         ----------
-        t : float or astropy.Quantity
-            Time to evaluate initial and oscillated spectra.
-        E : float or ndarray
-            Energies to evaluate the initial and oscillated spectra.
+        t : astropy.Quantity
+            Time to evaluate initial spectra.
+        E : astropy.Quantity or ndarray of astropy.Quantity
+            Energies to evaluate the initial spectra.
         theta : astropy.Quantity
             Zenith angle of the spectral emission.
         phi : astropy.Quantity
             Azimuth angle of the spectral emission.
+        flavors: iterable of snewpy.neutrino.Flavor
+            Return spectra for these flavors only (default: all)
         interpolation : str
             Scheme to interpolate in spectra ('nearest', 'linear').
 
@@ -1479,7 +1481,7 @@ class Fornax_2019_3D(SupernovaModel):
         E[E == 0] = np.finfo(float).eps * E.unit
         logE = np.log10(E.to_value('MeV'))
         
-        for flavor in Flavor:
+        for flavor in flavors:
 
             # Linear interpolation in flux.
             if interpolation.lower() == 'linear':
