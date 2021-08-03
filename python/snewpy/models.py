@@ -38,9 +38,8 @@ import h5py
 
 try:
     import healpy as hp
-except ImportError as e:
-    logger = logging.getLogger()
-    logger.warning(e)
+except ImportError:
+    pass
 
 from .neutrino import Flavor
 from .flavor_transformation import *
@@ -1173,6 +1172,9 @@ class Fornax_2019_3D(SupernovaModel):
 
         # Read a cached flux file in FITS format or generate one.
         self.is_cached = cache_flux and 'healpy' in sys.modules
+        if cache_flux and not 'healpy' in sys.modules:
+                logger = logging.getLogger()
+                logger.warning("No module named 'healpy'. Cannot enable caching.")
 
         if self.is_cached:
 
