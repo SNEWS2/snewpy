@@ -360,9 +360,9 @@ class AdiabaticMSW(FlavorTransformation):
             pars = MixingParameters(mh)
             theta12, theta13, theta23 = pars.get_mixing_angles()
 
-        self.De1 = (np.cos(theta12) * np.cos(theta13))**2
-        self.De2 = (np.sin(theta12) * np.cos(theta13))**2
-        self.De3 = np.sin(theta13)**2
+        self.De1 = float((np.cos(theta12) * np.cos(theta13))**2)
+        self.De2 = float((np.sin(theta12) * np.cos(theta13))**2)
+        self.De3 = float(np.sin(theta13)**2)
 
     def prob_ee(self, t, E):
         """Electron neutrino survival probability.
@@ -531,9 +531,9 @@ class NonAdiabaticMSWH(FlavorTransformation):
             pars = MixingParameters(mh)
             theta12, theta13, theta23 = pars.get_mixing_angles()
 
-        self.De1 = (np.cos(theta12) * np.cos(theta13))**2
-        self.De2 = (np.sin(theta12) * np.cos(theta13))**2
-        self.De3 = np.sin(theta13)**2
+        self.De1 = float((np.cos(theta12) * np.cos(theta13))**2)
+        self.De2 = float((np.sin(theta12) * np.cos(theta13))**2)
+        self.De3 = float(np.sin(theta13)**2)
 
     def prob_ee(self, t, E):
         """Electron neutrino survival probability.
@@ -696,9 +696,9 @@ class TwoFlavorDecoherence(FlavorTransformation):
             pars = MixingParameters(mh)
             theta12, theta13, theta23 = pars.get_mixing_angles()
 
-        self.De1 = (np.cos(theta12) * np.cos(theta13))**2
-        self.De2 = (np.sin(theta12) * np.cos(theta13))**2
-        self.De3 = np.sin(theta13)**2
+        self.De1 = float((np.cos(theta12) * np.cos(theta13))**2)
+        self.De2 = float((np.sin(theta12) * np.cos(theta13))**2)
+        self.De3 = float(np.sin(theta13)**2)
 
     def prob_ee(self, t, E):
         """Electron neutrino survival probability.
@@ -1008,9 +1008,9 @@ class NeutrinoDecay(FlavorTransformation):
             pars = MixingParameters(mh)
             theta12, theta13, theta23 = pars.get_mixing_angles()
 
-        self.De1 = (np.cos(theta12) * np.cos(theta13))**2
-        self.De2 = (np.sin(theta12) * np.cos(theta13))**2
-        self.De3 = np.sin(theta13)**2
+        self.De1 = float((np.cos(theta12) * np.cos(theta13))**2)
+        self.De2 = float((np.sin(theta12) * np.cos(theta13))**2)
+        self.De3 = float(np.sin(theta13)**2)
 
         self.m = mass
         self.tau = tau
@@ -1226,14 +1226,14 @@ class AdiabaticMSWes(FlavorTransformation):
 
         theta12, theta13, theta23, theta14 = mix_angles
 
-        self.De1 = (np.cos(theta12) * np.cos(theta13) * np.cos(theta14))**2
-        self.De2 = (np.sin(theta12) * np.cos(theta13) * np.cos(theta14))**2
-        self.De3 = (np.sin(theta13) * np.cos(theta14))**2
-        self.De4 = (np.sin(theta14))**2
-        self.Ds1 = (np.cos(theta12) * np.cos(theta13) * np.sin(theta14))**2
-        self.Ds2 = (np.sin(theta12) * np.cos(theta13) * np.sin(theta14))**2
-        self.Ds3 = (np.sin(theta13) * np.sin(theta14))**2
-        self.Ds4 = (np.cos(theta14))**2
+        self.De1 = float((np.cos(theta12) * np.cos(theta13) * np.cos(theta14))**2)
+        self.De2 = float((np.sin(theta12) * np.cos(theta13) * np.cos(theta14))**2)
+        self.De3 = float((np.sin(theta13) * np.cos(theta14))**2)
+        self.De4 = float((np.sin(theta14))**2)
+        self.Ds1 = float((np.cos(theta12) * np.cos(theta13) * np.sin(theta14))**2)
+        self.Ds2 = float((np.sin(theta12) * np.cos(theta13) * np.sin(theta14))**2)
+        self.Ds3 = float((np.sin(theta13) * np.sin(theta14))**2)
+        self.Ds4 = float((np.cos(theta14))**2)
     
     def prob_ee(self, t, E):
         """e -> e neutrino transition probability.
@@ -1409,14 +1409,14 @@ class NonAdiabaticMSWes(FlavorTransformation):
 
         theta12, theta13, theta23, theta14 = mix_angles
 
-        self.De1 = (np.cos(theta12) * np.cos(theta13) * np.cos(theta14))**2
-        self.De2 = (np.sin(theta12) * np.cos(theta13) * np.cos(theta14))**2
-        self.De3 = (np.sin(theta13) * np.cos(theta14))**2
-        self.De4 = (np.sin(theta14))**2
-        self.Ds1 = (np.cos(theta12) * np.cos(theta13) * np.sin(theta14))**2
-        self.Ds2 = (np.sin(theta12) * np.cos(theta13) * np.sin(theta14))**2
-        self.Ds3 = (np.sin(theta13) * np.sin(theta14))**2
-        self.Ds4 = (np.cos(theta14))**2
+        self.De1 = float((np.cos(theta12) * np.cos(theta13) * np.cos(theta14))**2)
+        self.De2 = float((np.sin(theta12) * np.cos(theta13) * np.cos(theta14))**2)
+        self.De3 = float((np.sin(theta13) * np.cos(theta14))**2)
+        self.De4 = float((np.sin(theta14))**2)
+        self.Ds1 = float((np.cos(theta12) * np.cos(theta13) * np.sin(theta14))**2)
+        self.Ds2 = float((np.sin(theta12) * np.cos(theta13) * np.sin(theta14))**2)
+        self.Ds3 = float((np.sin(theta13) * np.sin(theta14))**2)
+        self.Ds4 = float((np.cos(theta14))**2)
     
     def prob_ee(self, t, E):
         """e -> e neutrino transition probability.
