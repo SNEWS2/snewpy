@@ -13,3 +13,95 @@ import os
 
 src_path = os.path.realpath(__path__[0])
 base_path = os.sep.join(src_path.split(os.sep)[:-2])
+
+
+def get_models(models=None, download_dir="SNEWPY_models"):
+    """Download model files from the snewpy repository.
+
+    Parameters
+    ----------
+    models : list or str
+        Models to download. Can be 'all', name of a single model or list of model names.
+    download_dir : str
+        Local directory to download model files to.
+    """
+    from urllib.request import urlretrieve
+    from ._model_urls import model_urls
+
+    if models == "all":
+        models = model_urls.keys()
+    elif isinstance(models, str):
+        models = [models]
+    elif models == None:
+        # Select model(s) to download
+        print(f"Available models in this version of SNEWPY: {list(model_urls.keys())}")
+        selected = input("\nType a model name, 'all' to download all models or <Enter> to cancel: ").strip()
+
+        if selected == "all":
+            models = model_urls.keys()
+        elif selected == "":
+            exit()
+        elif selected in model_urls.keys():
+            models = [selected]
+            while True:
+                selected = input("\nType another model name or <Enter> if you have selected all models you want to download: ").strip()
+                if selected in model_urls.keys():
+                    models.append(selected)
+                elif selected == "":
+                    break
+                else:
+                    print(f"'{selected}' is not a valid model name. Please check for typos.")
+        else:
+            print(f"'{selected}' is not a valid model name. Please check for typos.")
+            exit()
+
+        print(f"\nYou have selected the models: {models}\n")
+
+    # Download model files
+    if not os.path.isdir(download_dir):
+        print(f"Creating directory '{download_dir}' ...")
+        os.mkdir(download_dir)
+
+    for model in models:
+        model_dir = download_dir + '/' + model
+        print(f"Downloading files for '{model}' into '{model_dir}' ...")
+        if not os.path.isdir(model_dir):
+            os.mkdir(model_dir)
+
+        for url in model_urls[model]:
+            local_file = model_dir + url.split(model, maxsplit=1)[1]
+            if os.path.exists(local_file) and local_file.find('README') == -1:
+                print(f"File '{local_file}' already exists. Skipping download.")
+            else:
+                try:
+                    urlretrieve(url, filename=local_file)
+                    print(f"Successfully downloaded {url} to '{local_file}'.")
+                except IOError as e:
+                    print(f"Failed to download {url} to '{local_file}': {e}")
+
+
+def _get_model_urls():
+    """List URLs of model files for the current release.
+
+    When building a snewpy release, generate a dictionary of available models
+    and the URLs at which the respective files are located. Users can then use
+    get_models() to interactively select which model(s) to download.
+    """
+
+    repo_dir = os.path.normpath(os.path.dirname(os.path.abspath(__file__)) + '/../../')
+    url_base = 'https://github.com/SNEWS2/snewpy/raw/v' + __version__
+
+    with open(os.path.dirname(os.path.abspath(__file__)) + '/_model_urls.py', 'w') as f:
+        f.write('model_urls = {\n')
+        for model in sorted(os.listdir(repo_dir + '/models')):
+            urls = []
+            for root, dirs, files in os.walk(repo_dir + '/models/' + model):
+                for file in files:
+                    urls.append(f'{url_base}{root[len(repo_dir):]}/{file}')
+
+            f.write(f'    "{model}": [\n')
+            for url in sorted(urls):
+                url = url.split('v0.1.0')[0] + 'v1.0.0' + url.split('v0.1.0')[1]  # TODO: only for testing
+                f.write(f'        "{url}",\n')
+            f.write('    ],\n')
+        f.write('}\n')
