@@ -5,7 +5,9 @@ name: Publish to PyPI
 
 on:
   push:
-    branches: [ 'JostMigenda/lazyDownloads' ] # only for testing
+    # branches: [ 'JostMigenda/lazyDownloads' ] # only for testing
+    tags: # Sequence of patterns matched against refs/tags
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 #   release:
 #     types: [published]
 
@@ -25,13 +27,13 @@ jobs:
         python -m pip install --upgrade pip
         pip install setuptools wheel twine
     - name: Build # and publish
-#       env:
-#         TWINE_USERNAME: __token__
-#         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.TESTPYPI_JM }}
       run: |
         python -c 'import python.snewpy; python.snewpy._get_model_urls()'
         cat python/snewpy/_model_urls.py
         python -c 'import python.snewpy; python.snewpy.get_models(models="Bollig_2016")'
         rm -r SNEWPY_models/
         python setup.py sdist bdist_wheel
-#         twine upload dist/*
+        twine upload dist/*
