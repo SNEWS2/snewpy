@@ -78,8 +78,9 @@ def get_models(models=None, download_dir="SNEWPY_models"):
                 try:
                     urlretrieve(url, filename=local_file)
                     print(f"Successfully downloaded {url} to '{local_file}'.")
-                except IOError as e:
-                    print(f"Failed to download {url} to '{local_file}': {e}")
+                except IOError:
+                    print(f"Failed to download {url} to '{local_file}'.")
+                    raise
 
 
 def _get_model_urls():
