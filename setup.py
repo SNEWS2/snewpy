@@ -35,6 +35,7 @@ setup_keywords['long_description'] = ''
 if os.path.exists('README.md'):
     with open('README.md') as readme:
         setup_keywords['long_description'] = readme.read()
+    setup_keywords['long_description_content_type'] = 'text/markdown'
 #
 # Set other keywords for the setup function.
 #

@@ -5,9 +5,8 @@ name: Publish to PyPI
 
 on:
   push:
-    # branches: [ 'JostMigenda/lazyDownloads' ] # only for testing
     tags: # Sequence of patterns matched against refs/tags
-      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+      - 'v*' # Any tag matching v*, i.e. v1.0, v0.1.0.dev3
 #   release:
 #     types: [published]
 
