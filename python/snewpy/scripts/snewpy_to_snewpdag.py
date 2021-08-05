@@ -5,7 +5,7 @@ from astropy import units as u
 
 SNOwGLoBES_path = "/location/of/snowglobes/" #where snowglobes is located
 SNEWPY_models_base = "/location/of/models/" #where models (aka input for to_snowglobes) is located
-output_ptah = "/path/to/output/" #where the output files will be located
+output_path = "/path/to/output/" #where the output files will be located
 
 #set distance in kpc
 distance=10
