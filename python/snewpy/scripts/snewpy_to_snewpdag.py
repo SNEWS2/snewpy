@@ -5,6 +5,7 @@ from astropy import units as u
 
 SNOwGLoBES_path = "/location/of/snowglobes/" #where snowglobes is located
 SNEWPY_models_base = "/location/of/models/" #where models (aka input for to_snowglobes) is located
+output_ptah = "/path/to/output/" #where the output files will be located
 
 #set distance in kpc
 distance=10
@@ -51,7 +52,7 @@ print("Collating...")
 tables = from_snowglobes.collate(SNOwGLoBES_path, modeldir, tarredfile, detector_input=detector,skip_plots=True,return_tables=True,verbose=False)
 
 #read results from snowglobes and put lightcurve in output file for snewpdag
-fout = open("/path/to/output/snewpy_output_"+detector+"_"+modeltype+"_"+filename+"_1msbin.txt", "a")
+fout = open(output_path+"snewpy_output_"+detector+"_"+modeltype+"_"+filename+"_1msbin.txt", "a")
 nevents = np.zeros(len(tmid))
 for i in range(len(tmid)):
     key = "Collated_"+outfile+"_"+str(i)+"_"+detector+"_events_smeared_weighted.dat"
