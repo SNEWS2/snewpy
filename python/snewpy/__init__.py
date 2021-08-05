@@ -25,6 +25,7 @@ def get_models(models=None, download_dir="SNEWPY_models"):
     download_dir : str
         Local directory to download model files to.
     """
+    from concurrent.futures import ThreadPoolExecutor, as_completed
     from urllib.request import urlretrieve
     from ._model_urls import model_urls
 
@@ -62,11 +63,19 @@ def get_models(models=None, download_dir="SNEWPY_models"):
         print(f"Creating directory '{download_dir}' ...")
         os.mkdir(download_dir)
 
+    def retrieve(url, local_file):
+        try:
+            urlretrieve(url, filename=local_file)
+            print(f"Successfully downloaded {url} to '{local_file}'.")
+        except IOError:
+            print(f"Failed to download {url} to '{local_file}'.")
+            raise
+
+    pool = ThreadPoolExecutor(max_workers=8)
+    results = []
     for model in models:
         model_dir = download_dir + '/' + model
         print(f"Downloading files for '{model}' into '{model_dir}' ...")
-        if not os.path.isdir(model_dir):
-            os.mkdir(model_dir)
 
         for url in model_urls[model]:
             local_file = model_dir + url.split(model, maxsplit=1)[1]
@@ -75,12 +84,16 @@ def get_models(models=None, download_dir="SNEWPY_models"):
             else:
                 if not os.path.isdir(os.path.dirname(local_file)):
                     os.makedirs(os.path.dirname(local_file))
-                try:
-                    urlretrieve(url, filename=local_file)
-                    print(f"Successfully downloaded {url} to '{local_file}'.")
-                except IOError:
-                    print(f"Failed to download {url} to '{local_file}'.")
-                    raise
+                results.append(pool.submit(retrieve, url, local_file))
+
+    exceptions = []
+    for result in as_completed(results):
+        if result.exception() is not None:
+            exceptions.append(result.exception())
+    if exceptions:
+        print(f"ERROR: {len(exceptions)} exceptions occured. ({exceptions})")
+        exit(1)
+    pool.shutdown(wait=False)
 
 
 def _get_model_urls():
