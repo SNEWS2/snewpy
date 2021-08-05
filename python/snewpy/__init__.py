@@ -101,7 +101,6 @@ def _get_model_urls():
 
             f.write(f'    "{model}": [\n')
             for url in sorted(urls):
-                url = url.split('v0.1.0')[0] + 'v1.0.0' + url.split('v0.1.0')[1]  # TODO: only for testing
                 f.write(f'        "{url}",\n')
             f.write('    ],\n')
         f.write('}\n')

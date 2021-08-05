@@ -36,4 +36,4 @@ jobs:
         python -c 'import python.snewpy; python.snewpy.get_models(models="Bollig_2016")'
         rm -r SNEWPY_models/
         python setup.py sdist bdist_wheel
-        twine upload dist/*
+        twine upload --repository testpypi dist/*
