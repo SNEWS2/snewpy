@@ -1,14 +1,7 @@
 
-from argparse import ArgumentParser
-from snewpy import to_snowglobes
-from snewpy import run_snowglobes
-from snewpy import from_snowglobes
-import tarfile
+from snewpy import to_snowglobes, run_snowglobes, from_snowglobes
 import numpy as np
-import os
-from astropy.io import ascii
 from astropy import units as u
-import matplotlib.pyplot as plt
 
 SNOwGLoBES_path = "/location/of/snowglobes/" #where snowglobes is located
 SNEWPY_models_base = "/location/of/models/" #where models (aka input for to_snowglobes) is located
