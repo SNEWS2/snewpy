@@ -73,6 +73,8 @@ def get_models(models=None, download_dir="SNEWPY_models"):
             if os.path.exists(local_file) and local_file.find('README') == -1:
                 print(f"File '{local_file}' already exists. Skipping download.")
             else:
+                if not os.path.isdir(os.path.dirname(local_file)):
+                    os.makedirs(os.path.dirname(local_file))
                 try:
                     urlretrieve(url, filename=local_file)
                     print(f"Successfully downloaded {url} to '{local_file}'.")
