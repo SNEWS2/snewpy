@@ -17,7 +17,7 @@ authors:
     affiliation: 3
   - name: Anne Graf
     affiliation: 4
-  - name: 'James P. Kneller^[Corresponding author: jpknelle@ncsu.edu]'
+  - name: James P. Kneller^[Corresponding author]
     orcid: 0000-0002-3502-3830
     affiliation: 4
   - name: Jost Migenda
