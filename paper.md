@@ -17,7 +17,7 @@ authors:
     affiliation: 3
   - name: Anne Graf
     affiliation: 4
-  - name: James P. Kneller^{Corresponding author: jpknelle@ncsu.edu}
+  - name: 'James P. Kneller^{Corresponding author: jpknelle@ncsu.edu}'
     orcid: 0000-0002-3502-3830
     affiliation: 4
   - name: Jost Migenda
@@ -31,7 +31,7 @@ authors:
     affiliation: 7
 
 affiliations:
-  - name: University of Rochester,\\ Rochester, NY, USA
+  - name: University of Rochester, Rochester, NY, USA
     index: 1
   - name: NC School of Science and Math, Durham, NC, USA
     index: 2
@@ -45,7 +45,7 @@ affiliations:
     index: 6
   - name: Raleigh Charter High School, Raleigh, NC, USA
     index: 7
- 
+
 date: 11 August 2021
 #bibliography: references.bib
 
