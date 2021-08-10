@@ -38,14 +38,4 @@ Usage
    Include a few simple usage examples here, e.g. some basic plots for one model.
    Refer to Jupyter notebooks in ``doc/nb/`` for more usage examples.
 
-More advanced usage of SNEWPy requires SNOwGLoBES.
-
-Download Additional Dependencies
---------------------------------
-Important parts of SNEWPy’s functionality require the `SNOwGLoBES <https://github.com/SNOwGLoBES/snowglobes>`_ and
-`GLoBES <https://www.mpi-hd.mpg.de/personalhomes/globes/>`_ libraries, which need to be installed separately.
-
-.. warning::
-
-   Should we include installation instructions for those here? (E.g. copied from the README)
-   Or is it better to refer to their respective documentation for that?
+More advanced usage of SNEWPy requires SNOwGLoBES and is described in the following section.
