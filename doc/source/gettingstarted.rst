@@ -30,6 +30,16 @@ By default, they will be downloaded to a subdirectory named ``SNEWPY-models/<mod
    (e.g. DOI or arXiv identifier). If you use one of these models, please always cite the appropriate reference.
 
 
+Usage
+-----
+
+.. warning::
+
+   Include a few simple usage examples here, e.g. some basic plots for one model.
+   Refer to Jupyter notebooks in ``doc/nb/`` for more usage examples.
+
+More advanced usage of SNEWPy requires SNOwGLoBES.
+
 Download Additional Dependencies
 --------------------------------
 Important parts of SNEWPy’s functionality require the `SNOwGLoBES <https://github.com/SNOwGLoBES/snowglobes>`_ and
