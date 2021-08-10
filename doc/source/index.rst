@@ -12,6 +12,9 @@ Contents:
    :maxdepth: 2
    
    gettingstarted
+   models
+   transformations
+   neutrino
 
 
 Indices and tables
