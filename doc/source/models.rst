@@ -8,11 +8,23 @@ Supernova Models: ``snewpy.models``
 
    In particular:
 
-   * The base class ``snewpy.models.SupernovaModel`` should be at the top of the page and highlighted
    * ``get_time`` and ``get_initialspectra`` have the same signature for most models (apart from the additional interpolation parameter for the ``Fornax`` models); avoid repetitive documentation?
    * Purely internal functions (e.g. in the ``Fornax`` models) should not appear here.
 
+Base Class for Supernova Models
+-------------------------------
+.. autoclass:: snewpy.models.SupernovaModel
+   :members:
 
+Models Inheriting From the Base Class
+-------------------------------------
 
 .. automodule:: snewpy.models
+   :members:
+   :exclude-members: SupernovaModel, SNOwGLoBES
+
+Other Models
+------------
+
+.. autoclass:: SNOwGLoBES
    :members:
