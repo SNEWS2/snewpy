@@ -628,15 +628,15 @@ class Bollig_2016(SupernovaModel):
         return mod + '\n'.join(s)
 
 
-class Tamborra_2014(SupernovaModel):
+class Tamborra_2014(Bollig_2016):
     pass
 
 
-class Walk_2018(SupernovaModel):
+class Walk_2018(Bollig_2016):
     pass
 
 
-class Walk_2019(SupernovaModel):
+class Walk_2019(Bollig_2016):
     pass
 
 
