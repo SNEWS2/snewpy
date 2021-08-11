@@ -658,11 +658,57 @@ class Bollig_2016(GarchingArchiveModel):
 
       
 class Walk_2018(GarchingArchiveModel):
-    pass
+    """Set up a model based on SASI-dominated simulations from [Walk et al.,
+    PRD 98:123001, 2018](https://arxiv.org/abs/1807.02366). Data files are from
+    the Garching Supernova Archive.
+    """
+
+    def __repr__(self):
+        """Default representation of the model.
+        """
+        mod = 'Walk_2018 Model: {}\n'.format(self.filename)
+        s = ['Progenitor mass : {}'.format(self.progenitor_mass),
+             'Eq. of state    : {}'.format(self.EOS)
+             ]
+        return mod + '\n'.join(s)
+
+    def _repr_markdown_(self):
+        """Markdown representation of the model, for Jupyter notebooks.
+        """
+        mod = '**Walk_2018 Model**: {}\n\n'.format(self.filename)
+        s = ['|Parameter|Value|',
+             '|:---------|:-----:|',
+             '|Progenitor mass | ${0.value:g}$ {0.unit:latex}|'.format(self.progenitor_mass),
+             '|EOS | {}|'.format(self.EOS)
+             ]
+        return mod + '\n'.join(s)
 
 
 class Walk_2019(GarchingArchiveModel):
-    pass
+    """Set up a model based on SASI-dominated simulations from [Walk et al.,
+    PRD 101:123013, 2019](https://arxiv.org/abs/1910.12971). Data files are
+    from the Garching Supernova Archive.
+    """
+
+    def __repr__(self):
+        """Default representation of the model.
+        """
+        mod = 'Walk_2019 Model: {}\n'.format(self.filename)
+        s = ['Progenitor mass : {}'.format(self.progenitor_mass),
+             'Eq. of state    : {}'.format(self.EOS)
+             ]
+        return mod + '\n'.join(s)
+
+    def _repr_markdown_(self):
+        """Markdown representation of the model, for Jupyter notebooks.
+        """
+        mod = '**Walk_2019 Model**: {}\n\n'.format(self.filename)
+        s = ['|Parameter|Value|',
+             '|:---------|:-----:|',
+             '|Progenitor mass | ${0.value:g}$ {0.unit:latex}|'.format(self.progenitor_mass),
+             '|EOS | {}|'.format(self.EOS)
+             ]
+        return mod + '\n'.join(s)
 
 
 class OConnor_2015(SupernovaModel):
