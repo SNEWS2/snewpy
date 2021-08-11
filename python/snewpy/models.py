@@ -656,7 +656,7 @@ class Bollig_2016(GarchingArchiveModel):
              ]
         return mod + '\n'.join(s)
 
-
+      
 class Walk_2018(GarchingArchiveModel):
     pass
 

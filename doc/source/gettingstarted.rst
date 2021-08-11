@@ -30,12 +30,12 @@ By default, they will be downloaded to a subdirectory named ``SNEWPY-models/<mod
    (e.g. DOI or arXiv identifier). If you use one of these models, please always cite the appropriate reference.
 
 
-Download Additional Dependencies
---------------------------------
-Important parts of SNEWPy’s functionality require the `SNOwGLoBES <https://github.com/SNOwGLoBES/snowglobes>`_ and
-`GLoBES <https://www.mpi-hd.mpg.de/personalhomes/globes/>`_ libraries, which need to be installed separately.
+Usage
+-----
 
 .. warning::
 
-   Should we include installation instructions for those here? (E.g. copied from the README)
-   Or is it better to refer to their respective documentation for that?
+   Include a few simple usage examples here, e.g. some basic plots for one model.
+   Refer to Jupyter notebooks in ``doc/nb/`` for more usage examples.
+
+More advanced usage of SNEWPy requires SNOwGLoBES and is described in the following section.
