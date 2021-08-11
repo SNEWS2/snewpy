@@ -30,6 +30,7 @@ sys.path.insert(0, os.path.abspath('../../python/'))
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
     'sphinx.ext.doctest',
     'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
@@ -99,6 +100,10 @@ pygments_style = 'sphinx'
 # If true, keep warnings as "system message" paragraphs in the built documents.
 #keep_warnings = False
 
+# Napoleon settings (see https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html)
+napoleon_google_docstring = False
+napoleon_numpy_docstring = True
+napoleon_use_rtype = False
 
 # -- Options for HTML output ----------------------------------------------
 
