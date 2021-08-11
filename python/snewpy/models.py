@@ -686,8 +686,8 @@ class Walk_2018(GarchingArchiveModel):
 
 class Walk_2019(GarchingArchiveModel):
     """Set up a model based on SASI-dominated simulations from [Walk et al.,
-    PRD 98:123001, 2018](https://arxiv.org/abs/1807.02366). Data files are from
-    the Garching Supernova Archive.
+    PRD 101:123013, 2019](https://arxiv.org/abs/1910.12971). Data files are
+    from the Garching Supernova Archive.
     """
 
     def __repr__(self):
