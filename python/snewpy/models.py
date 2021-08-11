@@ -627,14 +627,18 @@ class Bollig_2016(SupernovaModel):
              ]
         return mod + '\n'.join(s)
 
-class Tamborra_2014(Bollig_2016):
+
+class Tamborra_2014(SupernovaModel):
     pass
 
-class Walk_2018(Bollig_2016):
+
+class Walk_2018(SupernovaModel):
     pass
 
-class Walk_2019(Bollig_2016):
+
+class Walk_2019(SupernovaModel):
     pass
+
 
 class OConnor_2015(SupernovaModel):
     """Set up a model based on the black hole formation simulation in O'Connor (2015). 
