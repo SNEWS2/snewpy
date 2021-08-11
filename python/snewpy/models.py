@@ -628,12 +628,15 @@ class Bollig_2016(SupernovaModel):
         return mod + '\n'.join(s)
 
 class Tamborra_2014(Bollig_2016):
+    """Alias for Bollig_2016 that is provided for ease of use."""
     pass
 
 class Walk_2018(Bollig_2016):
+    """Alias for Bollig_2016 that is provided for ease of use."""
     pass
 
 class Walk_2019(Bollig_2016):
+    """Alias for Bollig_2016 that is provided for ease of use."""
     pass
 
 class OConnor_2015(SupernovaModel):
