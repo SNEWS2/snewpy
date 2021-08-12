@@ -153,7 +153,131 @@ class SupernovaModel(ABC):
 
         return oscillatedspectra   
     
-    
+
+class GarchingArchiveModel(SupernovaModel):
+    """Subclass that reads models in the format used in the [Garching Supernova Archive](https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/).
+    """
+    def __init__(self, filename, eos='LS220'):
+        """Initialize model.
+
+        Parameters
+        ----------
+        filename : str
+            Absolute or relative path to file prefix, we add nue/nuebar/nux.
+        eos : string
+            Equation of state used in simulation.
+        """
+        self.time = {}
+        self.luminosity = {}
+        self.meanE = {}
+        self.pinch = {}
+
+        # Store model metadata.
+        self.filename = os.path.basename(filename)
+        self.EOS = eos
+        self.progenitor_mass = float( (self.filename.split('s'))[1].split('c')[0] )  * u.Msun
+
+        # Read through the several ASCII files for the chosen simulation and
+        # merge the data into one giant table.
+        mergtab = None
+        for flavor in Flavor:
+            _flav = Flavor.NU_X if flavor == Flavor.NU_X_BAR else flavor
+            _sfx = _flav.name.replace('_', '').lower()
+            _filename = '{}_{}_{}'.format(filename, eos, _sfx)
+            _lname  = 'L_{}'.format(flavor.name)
+            _ename  = 'E_{}'.format(flavor.name)
+            _e2name = 'E2_{}'.format(flavor.name)
+            _aname  = 'ALPHA_{}'.format(flavor.name)
+
+            simtab = Table.read(_filename,
+                                names=['TIME', _lname, _ename, _e2name],
+                                format='ascii')
+            simtab['TIME'].unit = 's'
+            simtab[_lname].unit = '1e51 erg/s'
+            simtab[_aname] = (2*simtab[_ename]**2 - simtab[_e2name]) / (simtab[_e2name] - simtab[_ename]**2)
+            simtab[_ename].unit = 'MeV'
+            del simtab[_e2name]
+
+            if mergtab is None:
+                mergtab = simtab
+            else:
+                mergtab = join(mergtab, simtab, keys='TIME', join_type='left')
+                mergtab[_lname].fill_value = 0.
+                mergtab[_ename].fill_value = 0.
+                mergtab[_aname].fill_value = 0.
+        simtab = mergtab.filled()
+
+        self.time = simtab['TIME'].to('s')
+
+        for flavor in Flavor:
+            # Set the dictionary of luminosity, mean energy, and shape
+            # parameter keyed by NU_E, NU_X, NU_E_BAR, NU_X_BAR.
+            _lname  = 'L_{}'.format(flavor.name)
+            self.luminosity[flavor] = simtab[_lname].to('erg/s')
+
+            _ename  = 'E_{}'.format(flavor.name)
+            self.meanE[flavor] = simtab[_ename].to('MeV')
+
+            _aname  = 'ALPHA_{}'.format(flavor.name)
+            self.pinch[flavor] = simtab[_aname]
+
+    def get_time(self):
+        """Get grid of model times.
+
+        Returns
+        -------
+        time : ndarray
+            Grid of times used in the model.
+        """
+        return self.time
+
+    def get_initialspectra(self, t, E, flavors=Flavor):
+        """Get neutrino spectra/luminosity curves before oscillation.
+
+        Parameters
+        ----------
+        t : astropy.Quantity
+            Time to evaluate initial spectra.
+        E : astropy.Quantity or ndarray of astropy.Quantity
+            Energies to evaluate the initial spectra.
+        flavors: iterable of snewpy.neutrino.Flavor
+            Return spectra for these flavors only (default: all)
+
+        Returns
+        -------
+        initialspectra : dict
+            Dictionary of model spectra, keyed by neutrino flavor.
+        """
+        initialspectra = {}
+
+        # Avoid division by zero in energy PDF below.
+        E[E==0] = np.finfo(float).eps * E.unit
+
+        # Estimate L(t), <E_nu(t)> and alpha(t). Express all energies in erg.
+        E = E.to_value('erg')
+
+        # Make sure input time uses the same units as the model time grid, or
+        # the interpolation will not work correctly.
+        t = t.to(self.time.unit)
+
+        for flavor in flavors:
+            # Use np.interp rather than scipy.interpolate.interp1d because it
+            # can handle dimensional units (astropy.Quantity).
+            L  = get_value(np.interp(t, self.time, self.luminosity[flavor].to('erg/s')))
+            Ea = get_value(np.interp(t, self.time, self.meanE[flavor].to('erg')))
+            a  = np.interp(t, self.time, self.pinch[flavor])
+
+            if L==0:
+                initialspectra[flavor] = 0.0*E/(u.erg*u.s)
+            else:
+                # For numerical stability, evaluate log PDF and then exponentiate.
+                initialspectra[flavor] = \
+                  np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a)
+                        - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea)) / (u.erg * u.s)
+
+        return initialspectra
+
+ 
 class Analytic3Species(SupernovaModel):
     """Allow to generate an analytic model given total luminosity,
     average energy, and rms or pinch, for each species.
@@ -484,129 +608,34 @@ class Sukhbold_2015(SupernovaModel):
         return mod + '\n'.join(s)
 
 
-class Bollig_2016(SupernovaModel):
+class Tamborra_2014(GarchingArchiveModel):
+    """Set up a model based on 3D simulations from [Tamborra et al., PRD 90:045032, 2014](https://arxiv.org/abs/1406.0006). Data files are from the Garching Supernova Archive.
+    """
+
+    def __repr__(self):
+        """Default representation of the model.
+        """
+        mod = 'Tamborra_2014 Model: {}\n'.format(self.filename)
+        s = ['Progenitor mass : {}'.format(self.progenitor_mass),
+             'Eq. of state    : {}'.format(self.EOS)
+             ]
+        return mod + '\n'.join(s)
+
+    def _repr_markdown_(self):
+        """Markdown representation of the model, for Jupyter notebooks.
+        """
+        mod = '**Tamborra_2014 Model**: {}\n\n'.format(self.filename)
+        s = ['|Parameter|Value|',
+             '|:---------|:-----:|',
+             '|Progenitor mass | ${0.value:g}$ {0.unit:latex}|'.format(self.progenitor_mass),
+             '|EOS | {}|'.format(self.EOS)
+             ]
+        return mod + '\n'.join(s)
+
+
+class Bollig_2016(GarchingArchiveModel):
     """Set up a model based on simulations from Bollig et al. (2016). Models were taken, with permission, from the Garching Supernova Archive.
     """
-    def __init__(self, filename, eos='LS220'):
-        """Initialize model.
-
-        Parameters
-        ----------
-        filename : str
-            Absolute or relative path to file prefix, we add nue/nuebar/nux.
-        eos : string
-            Equation of state used in simulation.
-        """
-        self.time = {}
-        self.luminosity = {}
-        self.meanE = {}
-        self.pinch = {}
-
-        # Store model metadata.
-        self.filename = os.path.basename(filename)
-        self.EOS = eos
-        self.progenitor_mass = float( (self.filename.split('s'))[1].split('c')[0] )  * u.Msun
-
-        # Read through the several ASCII files for the chosen simulation and
-        # merge the data into one giant table.
-        mergtab = None
-        for flavor in Flavor:
-            _flav = Flavor.NU_X if flavor == Flavor.NU_X_BAR else flavor
-            _sfx = _flav.name.replace('_', '').lower()
-            _filename = '{}_{}_{}'.format(filename, eos, _sfx)
-            _lname  = 'L_{}'.format(flavor.name)
-            _ename  = 'E_{}'.format(flavor.name)
-            _e2name = 'E2_{}'.format(flavor.name)
-            _aname  = 'ALPHA_{}'.format(flavor.name)
-
-            simtab = Table.read(_filename,
-                                names=['TIME', _lname, _ename, _e2name],
-                                format='ascii')
-            simtab['TIME'].unit = 's'
-            simtab[_lname].unit = '1e51 erg/s'
-            simtab[_aname] = (2*simtab[_ename]**2 - simtab[_e2name]) / (simtab[_e2name] - simtab[_ename]**2)
-            simtab[_ename].unit = 'MeV'
-            del simtab[_e2name]
-
-            if mergtab is None:
-                mergtab = simtab
-            else:
-                mergtab = join(mergtab, simtab, keys='TIME', join_type='left')
-                mergtab[_lname].fill_value = 0.
-                mergtab[_ename].fill_value = 0.
-                mergtab[_aname].fill_value = 0.
-        simtab = mergtab.filled()
-
-        self.time = simtab['TIME'].to('s')
-
-        for flavor in Flavor:
-            # Set the dictionary of luminosity, mean energy, and shape
-            # parameter keyed by NU_E, NU_X, NU_E_BAR, NU_X_BAR.
-            _lname  = 'L_{}'.format(flavor.name)
-            self.luminosity[flavor] = simtab[_lname].to('erg/s')
-
-            _ename  = 'E_{}'.format(flavor.name)
-            self.meanE[flavor] = simtab[_ename].to('MeV')
-
-            _aname  = 'ALPHA_{}'.format(flavor.name)
-            self.pinch[flavor] = simtab[_aname]
-
-    def get_time(self):
-        """Get grid of model times.
-
-        Returns
-        -------
-        time : ndarray
-            Grid of times used in the model.
-        """
-        return self.time
-
-    def get_initialspectra(self, t, E, flavors=Flavor):
-        """Get neutrino spectra/luminosity curves before oscillation.
-
-        Parameters
-        ----------
-        t : astropy.Quantity
-            Time to evaluate initial spectra.
-        E : astropy.Quantity or ndarray of astropy.Quantity
-            Energies to evaluate the initial spectra.
-        flavors: iterable of snewpy.neutrino.Flavor
-            Return spectra for these flavors only (default: all)
-
-        Returns
-        -------
-        initialspectra : dict
-            Dictionary of model spectra, keyed by neutrino flavor.
-        """
-        initialspectra = {}
-
-        # Avoid division by zero in energy PDF below.
-        E[E==0] = np.finfo(float).eps * E.unit
-
-        # Estimate L(t), <E_nu(t)> and alpha(t). Express all energies in erg.
-        E = E.to_value('erg')
-
-        # Make sure input time uses the same units as the model time grid, or
-        # the interpolation will not work correctly.
-        t = t.to(self.time.unit)
-
-        for flavor in flavors:
-            # Use np.interp rather than scipy.interpolate.interp1d because it
-            # can handle dimensional units (astropy.Quantity).
-            L  = get_value(np.interp(t, self.time, self.luminosity[flavor].to('erg/s')))
-            Ea = get_value(np.interp(t, self.time, self.meanE[flavor].to('erg')))
-            a  = np.interp(t, self.time, self.pinch[flavor])
-
-            if L==0:
-                initialspectra[flavor] = 0.0*E/(u.erg*u.s)
-            else:
-                # For numerical stability, evaluate log PDF and then exponentiate.
-                initialspectra[flavor] = \
-                  np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a)
-                        - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea)) / (u.erg * u.s)
-
-        return initialspectra
-
     def __repr__(self):
         """Default representation of the model.
         """
@@ -627,14 +656,60 @@ class Bollig_2016(SupernovaModel):
              ]
         return mod + '\n'.join(s)
 
-class Tamborra_2014(Bollig_2016):
-    pass
+      
+class Walk_2018(GarchingArchiveModel):
+    """Set up a model based on SASI-dominated simulations from [Walk et al.,
+    PRD 98:123001, 2018](https://arxiv.org/abs/1807.02366). Data files are from
+    the Garching Supernova Archive.
+    """
 
-class Walk_2018(Bollig_2016):
-    pass
+    def __repr__(self):
+        """Default representation of the model.
+        """
+        mod = 'Walk_2018 Model: {}\n'.format(self.filename)
+        s = ['Progenitor mass : {}'.format(self.progenitor_mass),
+             'Eq. of state    : {}'.format(self.EOS)
+             ]
+        return mod + '\n'.join(s)
 
-class Walk_2019(Bollig_2016):
-    pass
+    def _repr_markdown_(self):
+        """Markdown representation of the model, for Jupyter notebooks.
+        """
+        mod = '**Walk_2018 Model**: {}\n\n'.format(self.filename)
+        s = ['|Parameter|Value|',
+             '|:---------|:-----:|',
+             '|Progenitor mass | ${0.value:g}$ {0.unit:latex}|'.format(self.progenitor_mass),
+             '|EOS | {}|'.format(self.EOS)
+             ]
+        return mod + '\n'.join(s)
+
+
+class Walk_2019(GarchingArchiveModel):
+    """Set up a model based on SASI-dominated simulations from [Walk et al.,
+    PRD 101:123013, 2019](https://arxiv.org/abs/1910.12971). Data files are
+    from the Garching Supernova Archive.
+    """
+
+    def __repr__(self):
+        """Default representation of the model.
+        """
+        mod = 'Walk_2019 Model: {}\n'.format(self.filename)
+        s = ['Progenitor mass : {}'.format(self.progenitor_mass),
+             'Eq. of state    : {}'.format(self.EOS)
+             ]
+        return mod + '\n'.join(s)
+
+    def _repr_markdown_(self):
+        """Markdown representation of the model, for Jupyter notebooks.
+        """
+        mod = '**Walk_2019 Model**: {}\n\n'.format(self.filename)
+        s = ['|Parameter|Value|',
+             '|:---------|:-----:|',
+             '|Progenitor mass | ${0.value:g}$ {0.unit:latex}|'.format(self.progenitor_mass),
+             '|EOS | {}|'.format(self.EOS)
+             ]
+        return mod + '\n'.join(s)
+
 
 class OConnor_2015(SupernovaModel):
     """Set up a model based on the black hole formation simulation in O'Connor (2015). 
