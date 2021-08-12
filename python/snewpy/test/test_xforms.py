@@ -29,9 +29,10 @@ class TestFlavorTransformations(unittest.TestCase):
         self.lifetime = 1 * u.day
         self.distance = 10 * u.kpc
 
-
     def test_noxform(self):
-        # No transformations.
+        """
+        Survival probabilities for no oscillations
+        """
         xform = NoTransformation()
 
         self.assertEqual(xform.prob_ee(self.t, self.E), 1)
@@ -44,9 +45,26 @@ class TestFlavorTransformations(unittest.TestCase):
         self.assertEqual(xform.prob_xxbar(self.t, self.E), 1)
         self.assertEqual(xform.prob_xebar(self.t, self.E), 0)
 
+    def test_fullex(self):
+        """
+        Survival probabilities for complete electron->X transformation
+        """
+        xform = CompleteExchange()
+
+        self.assertEqual(xform.prob_ee(self.t, self.E), 0)
+        self.assertEqual(xform.prob_ex(self.t, self.E), 1)
+        self.assertEqual(xform.prob_xx(self.t, self.E), 0.5)
+        self.assertEqual(xform.prob_xe(self.t, self.E), 0.5)
+
+        self.assertEqual(xform.prob_eebar(self.t, self.E), 0)
+        self.assertEqual(xform.prob_exbar(self.t, self.E), 1)
+        self.assertEqual(xform.prob_xxbar(self.t, self.E), 0.5)
+        self.assertEqual(xform.prob_xebar(self.t, self.E), 0.5)
 
     def test_adiabaticmsw_nmo(self):
-        # Adiabatic MSW: normal mass ordering; override default mixing angles.
+        """
+        Adiabatic MSW with normal ordering
+        """
         xform = AdiabaticMSW(mix_angles=(self.theta12, self.theta13, self.theta23), mh=MassHierarchy.NORMAL)
 
         self.assertEqual(xform.prob_ee(self.t, self.E), sin(self.theta13)**2)
@@ -77,6 +95,9 @@ class TestFlavorTransformations(unittest.TestCase):
 
 
     def test_adiabaticmsw_imo(self):
+        """
+        Adiabatic MSW with inverted ordering
+        """
         # Adiabatic MSW: inverted mass ordering; override default mixing angles.
         xform = AdiabaticMSW(mix_angles=(self.theta12, self.theta13, self.theta23), mh=MassHierarchy.INVERTED)
 
