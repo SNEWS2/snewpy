@@ -33,15 +33,15 @@ class TestFlavorTransformations(unittest.TestCase):
         # No transformations.
         xform = NoTransformation()
 
-        self.assertTrue(xform.prob_ee(self.t, self.E) == 1)
-        self.assertTrue(xform.prob_ex(self.t, self.E) == 0)
-        self.assertTrue(xform.prob_xx(self.t, self.E) == 1)
-        self.assertTrue(xform.prob_xe(self.t, self.E) == 0)
+        self.assertEqual(xform.prob_ee(self.t, self.E), 1)
+        self.assertEqual(xform.prob_ex(self.t, self.E), 0)
+        self.assertEqual(xform.prob_xx(self.t, self.E), 1)
+        self.assertEqual(xform.prob_xe(self.t, self.E), 0)
 
-        self.assertTrue(xform.prob_eebar(self.t, self.E) == 1)
-        self.assertTrue(xform.prob_exbar(self.t, self.E) == 0)
-        self.assertTrue(xform.prob_xxbar(self.t, self.E) == 1)
-        self.assertTrue(xform.prob_xebar(self.t, self.E) == 0)
+        self.assertEqual(xform.prob_eebar(self.t, self.E), 1)
+        self.assertEqual(xform.prob_exbar(self.t, self.E), 0)
+        self.assertEqual(xform.prob_xxbar(self.t, self.E), 1)
+        self.assertEqual(xform.prob_xebar(self.t, self.E), 0)
 
 
     def test_adiabaticmsw_nmo(self):
