@@ -14,6 +14,9 @@ import numpy as np
 class TestModels(unittest.TestCase):
 
     def test_Nakazato_vanilla(self):
+        """
+        Instantiate a 'Nakazato 2013' model
+        """
         xform = NoTransformation()
         mfile = 'models/Nakazato_2013/nakazato-shen-z0.004-t_rev100ms-s13.0.fits'
         model = Nakazato_2013(mfile)
