@@ -183,19 +183,19 @@ class TestFlavorTransformations(unittest.TestCase):
 #        self.assertTrue(xform.prob_xebar(self.t, self.E) == 0.25)
 #
 #
-#    def test_3fd(self):
-#        # Three-flavor decoherence.
-#        xform = ThreeFlavorDecoherence()
-#
-#        self.assertTrue(xform.prob_ee(self.t, self.E) == 1./3)
-#        self.assertTrue(abs(xform.prob_ex(self.t, self.E) - 2./3) < 1e-12)
-#        self.assertTrue(abs(xform.prob_xx(self.t, self.E) - 2./3) < 1e-12)
-#        self.assertTrue(abs(xform.prob_xe(self.t, self.E) - 1./3) < 1e-12)
-#
-#        self.assertTrue(xform.prob_eebar(self.t, self.E) == 1./3)
-#        self.assertTrue(abs(xform.prob_exbar(self.t, self.E) - 2./3) < 1e-12)
-#        self.assertTrue(abs(xform.prob_xxbar(self.t, self.E) - 2./3) < 1e-12)
-#        self.assertTrue(abs(xform.prob_xebar(self.t, self.E) - 1./3) < 1e-12)
+    def test_3fd(self):
+        # Three-flavor decoherence.
+        xform = ThreeFlavorDecoherence()
+
+        self.assertEqual(xform.prob_ee(self.t, self.E), 1./3)
+        self.assertTrue(abs(xform.prob_ex(self.t, self.E) - 2./3) < 1e-12)
+        self.assertTrue(abs(xform.prob_xx(self.t, self.E) - 2./3) < 1e-12)
+        self.assertTrue(abs(xform.prob_xe(self.t, self.E) - 1./3) < 1e-12)
+
+        self.assertEqual(xform.prob_eebar(self.t, self.E) , 1./3)
+        self.assertTrue(abs(xform.prob_exbar(self.t, self.E) - 2./3) < 1e-12)
+        self.assertTrue(abs(xform.prob_xxbar(self.t, self.E) - 2./3) < 1e-12)
+        self.assertTrue(abs(xform.prob_xebar(self.t, self.E) - 1./3) < 1e-12)
 
 
     def test_nudecay_nmo(self):
