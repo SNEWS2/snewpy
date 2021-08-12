@@ -50,8 +50,8 @@ bibliography: paper.bib
 
 # Optional fields if submitting to a AAS journal too, see this blog post:
 # https://blog.joss.theoj.org/2018/12/a-new-collaboration-with-aas-publishing
-aas-doi: 10.3847/xxxxx <- update this with the DOI from AAS once you know it.
-aas-journal: The Astrophysical Journal <- The name of the AAS journal.
+aas-doi: 10.3847/xxxxx # <- update this with the DOI from AAS once you know it.
+aas-journal: The Astrophysical Journal # <- The name of the AAS journal.
 ---
 
 
@@ -77,15 +77,14 @@ simulations of supernova neutrinos and the corresponding signals (neutrino
 events) one would expect from neutrino detectors here on Earth. The package,
 written in Python, is built upon numpy [@vanderWalt:2011bqk] and scipy
 [@Virtanen:2019joe], and makes use of astropy [@Astropy:2013muo;
-@Price-Whelan:2018hus] for astronomical transformations, model I/O, and unit
-conversions.
+@Price-Whelan:2018hus] for model I/O and unit conversions.
 
 SNEWPY provides a number of functions that together form a complete
 simulation pipeline.  The software is able to interface with supernova
 simulation data sets to extract the neutrino emission as a function of time,
 energy, angle, and neutrino flavor from the proto-neutron star. It then
 convolves the neutrino spectra with a prescription for neutrino flavor
-transformation through the mantle of the star. Using the SNOwGLoBES data
+transformation in the mantle of the star and during propagation to Earth. Using the SNOwGLoBES data
 format, it then generates either a time series of neutrino spectra at Earth
 - the neutrinocurve - or the spectral fluence. SNEWPY is also able to
 interface with SNOwGLoBES itself, and can run the neutrinocurve or fluence
