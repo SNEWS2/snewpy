@@ -295,19 +295,21 @@ class TestFlavorTransformations(unittest.TestCase):
         self.assertEqual(xform.prob_xxbar(self.t, self.E), (2 - De1 - De2 - Ds1 - Ds2)/2)
         self.assertEqual(xform.prob_xebar(self.t, self.E), (1 - De3 - Ds3)/2)
 
-#    def test_2fd(self):
-#        # Two-flavor decoherence.
-#        xform = TwoFlavorDecoherence()
-#
-#        self.assertTrue(xform.prob_ee(self.t, self.E) == 0.5)
-#        self.assertTrue(xform.prob_ex(self.t, self.E) == 0.5)
-#        self.assertTrue(xform.prob_xx(self.t, self.E) == 0.75)
-#        self.assertTrue(xform.prob_xe(self.t, self.E) == 0.25)
-#
-#        self.assertTrue(xform.prob_eebar(self.t, self.E) == 0.5)
-#        self.assertTrue(xform.prob_exbar(self.t, self.E) == 0.5)
-#        self.assertTrue(xform.prob_xxbar(self.t, self.E) == 0.75)
-#        self.assertTrue(xform.prob_xebar(self.t, self.E) == 0.25)
+    def test_2fd(self):
+        """
+        Two flavor decoherence
+        """
+        xform = TwoFlavorDecoherence()
+
+        self.assertFalse(xform.prob_ee(self.t, self.E) == 0.5)
+        self.assertFalse(xform.prob_ex(self.t, self.E) == 0.5)
+        self.assertFalse(xform.prob_xx(self.t, self.E) == 0.75)
+        self.assertFalse(xform.prob_xe(self.t, self.E) == 0.25)
+
+        self.assertFalse(xform.prob_eebar(self.t, self.E) == 0.5)
+        self.assertFalse(xform.prob_exbar(self.t, self.E) == 0.5)
+        self.assertFalse(xform.prob_xxbar(self.t, self.E) == 0.75)
+        self.assertFalse(xform.prob_xebar(self.t, self.E) == 0.25)
 
     def test_3fd(self):
         """
