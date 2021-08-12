@@ -75,9 +75,10 @@ different neutrino detectors.
 SNEWPY is an open-source software package which bridges the gap between
 simulations of supernovae and the signals one would expect from the
 simulation in neutrino detectors here on Earth. The package, written in
-Python, is built upon numpy [@Walt:2011] and scipy [@Virtanen:2020], and
-makes use of astropy [Astropy:2013muo, @Price-Whelan:2018hus] for
-astronomical transformations, model I/O, and unit conversions.
+Python, is built upon numpy [@vanderWalt:2011bqk] and scipy
+[Virtanen:2019joe], and makes use of astropy [Astropy:2013muo,
+@Price-Whelan:2018hus] for astronomical transformations, model I/O, and unit
+conversions.
 
 SNEWPY provides a number of functions that together form a complete
 simulation pipeline.  The software is able to interface with supernova
