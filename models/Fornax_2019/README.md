@@ -1,4 +1,4 @@
-CCSN neutrino estimates from Fornax model of Vartanyan et al., taken from [their website](https://www.astro.princeton.edu/~burrows/nu-emissions.3d/).
+CCSN neutrino estimates from the 3D Fornax model of Vartanyan et al., taken from their [3D simulations index](https://www.astro.princeton.edu/~burrows/nu-emissions.3d/).
 
 The citations to be used are:
 * *A Successful 3D Core-Collapse Supernova Explosion Model* David Vartanyan, Adam Burrows, David Radice, Aaron Skinner, and Joshua Dolence, [MNRAS 482 (2019) 351](https://doi.org/10.1093/mnras/sty2585), [arXiv:1809.05106](https://arxiv.org/abs/1809.05106).
