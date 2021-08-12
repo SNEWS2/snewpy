@@ -8,10 +8,12 @@ tags:
 
 authors:
   - name: Segev Benzvi
+    orcid: 0000-0001-5537-4710
     affiliation: 1
   - name: Joahan Castaneda Jaimes
     affiliation: 2
   - name: Spencer Griswold
+    orcid: 0000-0002-7321-7513
     affiliation: 1
   - name: Tomer Goldhagen
     affiliation: 3
