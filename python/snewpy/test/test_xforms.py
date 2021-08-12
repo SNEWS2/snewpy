@@ -48,15 +48,15 @@ class TestFlavorTransformations(unittest.TestCase):
         # Adiabatic MSW: normal mass ordering; override default mixing angles.
         xform = AdiabaticMSW(mix_angles=(self.theta12, self.theta13, self.theta23), mh=MassHierarchy.NORMAL)
 
-        self.assertTrue(xform.prob_ee(self.t, self.E) == sin(self.theta13)**2)
-        self.assertTrue(xform.prob_ex(self.t, self.E) == 1. - sin(self.theta13)**2)
-        self.assertTrue(xform.prob_xx(self.t, self.E) == 0.5*(1. + sin(self.theta13)**2))
-        self.assertTrue(xform.prob_xe(self.t, self.E) == 0.5*(1. - sin(self.theta13)**2))
+        self.assertEqual(xform.prob_ee(self.t, self.E), sin(self.theta13)**2)
+        self.assertEqual(xform.prob_ex(self.t, self.E), 1. - sin(self.theta13)**2)
+        self.assertEqual(xform.prob_xx(self.t, self.E), 0.5*(1. + sin(self.theta13)**2))
+        self.assertEqual(xform.prob_xe(self.t, self.E), 0.5*(1. - sin(self.theta13)**2))
 
-        self.assertTrue(xform.prob_eebar(self.t, self.E) == (cos(self.theta12)*cos(self.theta13))**2)
-        self.assertTrue(xform.prob_exbar(self.t, self.E) == 1. - (cos(self.theta12)*cos(self.theta13))**2)
-        self.assertTrue(xform.prob_xxbar(self.t, self.E) == 0.5*(1. + (cos(self.theta12)*cos(self.theta13))**2))
-        self.assertTrue(xform.prob_xebar(self.t, self.E) == 0.5*(1. - (cos(self.theta12)*cos(self.theta13))**2))
+        self.assertEqual(xform.prob_eebar(self.t, self.E), (cos(self.theta12)*cos(self.theta13))**2)
+        self.assertEqual(xform.prob_exbar(self.t, self.E), 1. - (cos(self.theta12)*cos(self.theta13))**2)
+        self.assertEqual(xform.prob_xxbar(self.t, self.E), 0.5*(1. + (cos(self.theta12)*cos(self.theta13))**2))
+        self.assertEqual(xform.prob_xebar(self.t, self.E), 0.5*(1. - (cos(self.theta12)*cos(self.theta13))**2))
 
         # Test interface using default mixing angles defined in the submodule.
         mixpars = MixingParameters(MassHierarchy.NORMAL)
@@ -64,30 +64,30 @@ class TestFlavorTransformations(unittest.TestCase):
 
         xform = AdiabaticMSW()
 
-        self.assertTrue(xform.prob_ee(self.t, self.E) == sin(th13)**2)
-        self.assertTrue(xform.prob_ex(self.t, self.E) == 1. - sin(th13)**2)
-        self.assertTrue(xform.prob_xx(self.t, self.E) == 0.5*(1. + sin(th13)**2))
-        self.assertTrue(xform.prob_xe(self.t, self.E) == 0.5*(1. - sin(th13)**2))
+        self.assertEqual(xform.prob_ee(self.t, self.E), sin(th13)**2)
+        self.assertEqual(xform.prob_ex(self.t, self.E), 1. - sin(th13)**2)
+        self.assertEqual(xform.prob_xx(self.t, self.E), 0.5*(1. + sin(th13)**2))
+        self.assertEqual(xform.prob_xe(self.t, self.E), 0.5*(1. - sin(th13)**2))
 
-        self.assertTrue(xform.prob_eebar(self.t, self.E) == (cos(th12)*cos(th13))**2)
-        self.assertTrue(xform.prob_exbar(self.t, self.E) == 1. - (cos(th12)*cos(th13))**2)
-        self.assertTrue(xform.prob_xxbar(self.t, self.E) == 0.5*(1. + (cos(th12)*cos(th13))**2))
-        self.assertTrue(xform.prob_xebar(self.t, self.E) == 0.5*(1. - (cos(th12)*cos(th13))**2))
+        self.assertEqual(xform.prob_eebar(self.t, self.E), (cos(th12)*cos(th13))**2)
+        self.assertEqual(xform.prob_exbar(self.t, self.E), 1. - (cos(th12)*cos(th13))**2)
+        self.assertEqual(xform.prob_xxbar(self.t, self.E), 0.5*(1. + (cos(th12)*cos(th13))**2))
+        self.assertEqual(xform.prob_xebar(self.t, self.E), 0.5*(1. - (cos(th12)*cos(th13))**2))
 
 
     def test_adiabaticmsw_imo(self):
         # Adiabatic MSW: inverted mass ordering; override default mixing angles.
         xform = AdiabaticMSW(mix_angles=(self.theta12, self.theta13, self.theta23), mh=MassHierarchy.INVERTED)
 
-        self.assertTrue(xform.prob_ee(self.t, self.E) == (sin(self.theta12)*cos(self.theta13))**2)
-        self.assertTrue(xform.prob_ex(self.t, self.E) == 1. - (sin(self.theta12)*cos(self.theta13))**2)
-        self.assertTrue(xform.prob_xx(self.t, self.E) == 0.5*(1. + (sin(self.theta12)*cos(self.theta13))**2))
-        self.assertTrue(xform.prob_xe(self.t, self.E) == 0.5*(1. - (sin(self.theta12)*cos(self.theta13))**2))
+        self.assertEqual(xform.prob_ee(self.t, self.E), (sin(self.theta12)*cos(self.theta13))**2)
+        self.assertEqual(xform.prob_ex(self.t, self.E), 1. - (sin(self.theta12)*cos(self.theta13))**2)
+        self.assertEqual(xform.prob_xx(self.t, self.E), 0.5*(1. + (sin(self.theta12)*cos(self.theta13))**2))
+        self.assertEqual(xform.prob_xe(self.t, self.E), 0.5*(1. - (sin(self.theta12)*cos(self.theta13))**2))
 
-        self.assertTrue(xform.prob_eebar(self.t, self.E) == sin(self.theta13)**2)
-        self.assertTrue(xform.prob_exbar(self.t, self.E) == 1. - sin(self.theta13)**2)
-        self.assertTrue(xform.prob_xxbar(self.t, self.E) == 0.5*(1. + sin(self.theta13)**2))
-        self.assertTrue(xform.prob_xebar(self.t, self.E) == 0.5*(1. - sin(self.theta13)**2))
+        self.assertEqual(xform.prob_eebar(self.t, self.E), sin(self.theta13)**2)
+        self.assertEqual(xform.prob_exbar(self.t, self.E), 1. - sin(self.theta13)**2)
+        self.assertEqual(xform.prob_xxbar(self.t, self.E), 0.5*(1. + sin(self.theta13)**2))
+        self.assertEqual(xform.prob_xebar(self.t, self.E), 0.5*(1. - sin(self.theta13)**2))
 
         # Test interface using default mixing angles defined in the submodule.
         mixpars = MixingParameters(MassHierarchy.INVERTED)
@@ -95,15 +95,15 @@ class TestFlavorTransformations(unittest.TestCase):
 
         xform = AdiabaticMSW(mh=MassHierarchy.INVERTED)
 
-        self.assertTrue(xform.prob_ee(self.t, self.E) == (sin(th12)*cos(th13))**2)
-        self.assertTrue(xform.prob_ex(self.t, self.E) == 1. - (sin(th12)*cos(th13))**2)
-        self.assertTrue(xform.prob_xx(self.t, self.E) == 0.5*(1. + (sin(th12)*cos(th13))**2))
-        self.assertTrue(xform.prob_xe(self.t, self.E) == 0.5*(1. - (sin(th12)*cos(th13))**2))
+        self.assertEqual(xform.prob_ee(self.t, self.E), (sin(th12)*cos(th13))**2)
+        self.assertEqual(xform.prob_ex(self.t, self.E), 1. - (sin(th12)*cos(th13))**2)
+        self.assertEqual(xform.prob_xx(self.t, self.E), 0.5*(1. + (sin(th12)*cos(th13))**2))
+        self.assertEqual(xform.prob_xe(self.t, self.E), 0.5*(1. - (sin(th12)*cos(th13))**2))
 
-        self.assertTrue(xform.prob_eebar(self.t, self.E) == sin(th13)**2)
-        self.assertTrue(xform.prob_exbar(self.t, self.E) == 1. - sin(th13)**2)
-        self.assertTrue(xform.prob_xxbar(self.t, self.E) == 0.5*(1. + sin(th13)**2))
-        self.assertTrue(xform.prob_xebar(self.t, self.E) == 0.5*(1. - sin(th13)**2))
+        self.assertEqual(xform.prob_eebar(self.t, self.E), sin(th13)**2)
+        self.assertEqual(xform.prob_exbar(self.t, self.E), 1. - sin(th13)**2)
+        self.assertEqual(xform.prob_xxbar(self.t, self.E), 0.5*(1. + sin(th13)**2))
+        self.assertEqual(xform.prob_xebar(self.t, self.E), 0.5*(1. - sin(th13)**2))
 
 
     #def test_nonadiabaticmsw_nmo():
@@ -214,16 +214,16 @@ class TestFlavorTransformations(unittest.TestCase):
         prob_ee = np.asarray([De1*(1.-exp(-xform.gamma(_E)*self.distance)) + De3*exp(-xform.gamma(_E)*self.distance) for _E in self.E])
 
         self.assertTrue(np.array_equal(xform.prob_ee(self.t, self.E), prob_ee))
-        self.assertTrue(xform.prob_ex(self.t, self.E) == De1 + De3)
-        self.assertTrue(xform.prob_xx(self.t, self.E) == 1 - 0.5*(De1 + De3))
+        self.assertEqual(xform.prob_ex(self.t, self.E), De1 + De3)
+        self.assertEqual(xform.prob_xx(self.t, self.E), 1 - 0.5*(De1 + De3))
         self.assertTrue(np.array_equal(xform.prob_xe(self.t, self.E), 0.5*(1 - prob_ee)))
 
         prob_exbar = np.asarray([De1*(1.-exp(-xform.gamma(_E)*self.distance)) + De2 + De3*exp(-xform.gamma(_E)*self.distance) for _E in self.E])
 
-        self.assertTrue(xform.prob_eebar(self.t, self.E) == De3)
+        self.assertEqual(xform.prob_eebar(self.t, self.E), De3)
         self.assertTrue(np.array_equal(xform.prob_exbar(self.t, self.E), prob_exbar))
         self.assertTrue(np.array_equal(xform.prob_xxbar(self.t, self.E), 1. - 0.5*prob_exbar))
-        self.assertTrue(xform.prob_xebar(self.t, self.E) == 0.5*(1. - De3))
+        self.assertEqual(xform.prob_xebar(self.t, self.E), 0.5*(1. - De3))
 
 
     def test_nudecay_nmo_default_mixing(self):
@@ -241,16 +241,16 @@ class TestFlavorTransformations(unittest.TestCase):
         prob_ee = np.asarray([De1*(1.-exp(-xform.gamma(_E)*self.distance)) + De3*exp(-xform.gamma(_E)*self.distance) for _E in self.E])
 
         self.assertTrue(np.array_equal(xform.prob_ee(self.t, self.E), prob_ee))
-        self.assertTrue(xform.prob_ex(self.t, self.E) == De1 + De3)
-        self.assertTrue(xform.prob_xx(self.t, self.E) == 1 - 0.5*(De1 + De3))
+        self.assertEqual(xform.prob_ex(self.t, self.E), De1 + De3)
+        self.assertEqual(xform.prob_xx(self.t, self.E), 1 - 0.5*(De1 + De3))
         self.assertTrue(np.array_equal(xform.prob_xe(self.t, self.E), 0.5*(1 - prob_ee)))
 
         prob_exbar = np.asarray([De1*(1.-exp(-xform.gamma(_E)*self.distance)) + De2 + De3*exp(-xform.gamma(_E)*self.distance) for _E in self.E])
 
-        self.assertTrue(xform.prob_eebar(self.t, self.E) == De3)
+        self.assertEqual(xform.prob_eebar(self.t, self.E), De3)
         self.assertTrue(np.array_equal(xform.prob_exbar(self.t, self.E), prob_exbar))
         self.assertTrue(np.array_equal(xform.prob_xxbar(self.t, self.E), 1. - 0.5*prob_exbar))
-        self.assertTrue(xform.prob_xebar(self.t, self.E) == 0.5*(1. - De3))
+        self.assertEqual(xform.prob_xebar(self.t, self.E), 0.5*(1. - De3))
 
 
     def test_nudecay_imo(self):
@@ -265,17 +265,17 @@ class TestFlavorTransformations(unittest.TestCase):
         prob_ee = np.asarray([De2*exp(-xform.gamma(_E)*self.distance) + De3*(1.-exp(-xform.gamma(_E)*self.distance)) for _E in self.E])
 
         self.assertTrue(np.array_equal(xform.prob_ee(self.t, self.E), prob_ee))
-        self.assertTrue(xform.prob_ex(self.t, self.E) == De1 + De2)
-        self.assertTrue(xform.prob_xx(self.t, self.E) == 1 - 0.5*(De1 + De2))
+        self.assertEqual(xform.prob_ex(self.t, self.E), De1 + De2)
+        self.assertEqual(xform.prob_xx(self.t, self.E), 1 - 0.5*(De1 + De2))
         self.assertTrue(np.array_equal(xform.prob_xe(self.t, self.E), 0.5*(1 - prob_ee)))
 
         prob_exbar = np.asarray([De1 + De2*np.exp(-xform.gamma(_E)*self.distance) +
                                  De3*(1-np.exp(-xform.gamma(_E)*self.distance)) for _E in self.E])
 
-        self.assertTrue(xform.prob_eebar(self.t, self.E) == De3)
+        self.assertEqual(xform.prob_eebar(self.t, self.E), De3)
         self.assertTrue(np.array_equal(xform.prob_exbar(self.t, self.E), prob_exbar))
         self.assertTrue(np.array_equal(xform.prob_xxbar(self.t, self.E), 1. - 0.5*prob_exbar))
-        self.assertTrue(xform.prob_xebar(self.t, self.E) == 0.5*(1. - De3))
+        self.assertEqual(xform.prob_xebar(self.t, self.E), 0.5*(1. - De3))
 
 
     def test_nudecay_imo_default_mixing(self):
@@ -294,14 +294,14 @@ class TestFlavorTransformations(unittest.TestCase):
                               De3*(1.-exp(-xform.gamma(_E)*self.distance)) for _E in self.E])
 
         self.assertTrue(np.array_equal(xform.prob_ee(self.t, self.E), prob_ee))
-        self.assertTrue(xform.prob_ex(self.t, self.E) == De1 + De2)
-        self.assertTrue(xform.prob_xx(self.t, self.E) == 1 - 0.5*(De1 + De2))
+        self.assertEqual(xform.prob_ex(self.t, self.E), De1 + De2)
+        self.assertEqual(xform.prob_xx(self.t, self.E), 1 - 0.5*(De1 + De2))
         self.assertTrue(np.array_equal(xform.prob_xe(self.t, self.E), 0.5*(1 - prob_ee)))
 
         prob_exbar = np.asarray([De1 + De2*np.exp(-xform.gamma(_E)*self.distance) +
                                  De3*(1-np.exp(-xform.gamma(_E)*self.distance)) for _E in self.E])
 
-        self.assertTrue(xform.prob_eebar(self.t, self.E) == De3)
+        self.assertEqual(xform.prob_eebar(self.t, self.E), De3)
         self.assertTrue(np.array_equal(xform.prob_exbar(self.t, self.E), prob_exbar))
         self.assertTrue(np.array_equal(xform.prob_xxbar(self.t, self.E), 1. - 0.5*prob_exbar))
-        self.assertTrue(xform.prob_xebar(self.t, self.E) == 0.5*(1. - De3))
+        self.assertEqual(xform.prob_xebar(self.t, self.E), 0.5*(1. - De3))
