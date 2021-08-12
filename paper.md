@@ -66,8 +66,8 @@ neutrinos. However there is a large gulf between supernova simulations and
 the corresponding signals in detectors which make any comparison between
 theory and observation, as well as between different detectors, very
 difficult. The SNEWPY code connects supernova simulations with the
-SNOwGLoBES software, allowing users to calculate expected event rates in
-various neutrino detectors. 
+SNOwGLoBES software [@SNOwGLoBES], allowing users to calculate expected
+event rates in various neutrino detectors. 
 
 # Statement of need
 
@@ -94,10 +94,12 @@ transformations.
 In addition to the code, SNEWPY comes with data from several hundred
 simulations kindly provided by various modeling groups, a script for
 generating a spectral fluence from an analytic prescription, and several
-Jupyter notebooks illustrating its capabilities. We expect SNEWPY will prove
-useful to modelers and theorists interested in what neutrino detectors will
-observe from a supernova simulation, and to experimentalists wishing to
-evaluate the sensitivity of their detector to supernova neutrinos. 
+Jupyter notebooks illustrating its capabilities. While SNEWPY has been
+developed explicitly for the SuperNova Early Warning System, SNEWS 2.0
+[@SNEWS:2020tbu], we expect it will prove broadly useful to modelers and
+theorists interested in what neutrino detectors will observe from a
+supernova simulation, and to experimentalists wishing to evaluate the
+sensitivity of their detector to supernova neutrinos. 
 
 # Acknowledgements
 
