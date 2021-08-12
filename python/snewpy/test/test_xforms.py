@@ -295,12 +295,14 @@ class TestFlavorTransformations(unittest.TestCase):
         self.assertEqual(xform.prob_xxbar(self.t, self.E), (2 - De1 - De2 - Ds1 - Ds2)/2)
         self.assertEqual(xform.prob_xebar(self.t, self.E), (1 - De3 - Ds3)/2)
 
-    def test_2fd(self):
+    def test_2fd_nmo(self):
         """
-        Two flavor decoherence
+        Two flavor decoherence with normal ordering
         """
         xform = TwoFlavorDecoherence()
 
+        # These probabilities assumed >10% turbulence and are now disabled
+        # in the class.
         self.assertFalse(xform.prob_ee(self.t, self.E) == 0.5)
         self.assertFalse(xform.prob_ex(self.t, self.E) == 0.5)
         self.assertFalse(xform.prob_xx(self.t, self.E) == 0.75)
@@ -310,6 +312,47 @@ class TestFlavorTransformations(unittest.TestCase):
         self.assertFalse(xform.prob_exbar(self.t, self.E) == 0.5)
         self.assertFalse(xform.prob_xxbar(self.t, self.E) == 0.75)
         self.assertFalse(xform.prob_xebar(self.t, self.E) == 0.25)
+
+        # Calculation that applies to 1% turbulence.
+        mixpars = MixingParameters()
+        th12, th13, th23 = mixpars.get_mixing_angles()
+
+        De1 = (cos(th12) * cos(th13))**2
+        De2 = (sin(th12) * cos(th13))**2
+        De3 = sin(th13)**2
+
+        self.assertTrue(xform.prob_ee(self.t, self.E), (De2 + De3)/2)
+        self.assertTrue(xform.prob_ex(self.t, self.E), 1 - (De2 + De3)/2)
+        self.assertTrue(xform.prob_xx(self.t, self.E), (1 + (De2 + De3)/2)/2)
+        self.assertTrue(xform.prob_xe(self.t, self.E), (1 - (De2 + De3)/2)/2)
+
+        self.assertTrue(xform.prob_eebar(self.t, self.E), De1)
+        self.assertTrue(xform.prob_exbar(self.t, self.E), 1 - De1)
+        self.assertTrue(xform.prob_xxbar(self.t, self.E), (1 + De2)/2)
+        self.assertTrue(xform.prob_xebar(self.t, self.E), (1 - De2)/2)
+
+    def test_2fd_imo(self):
+        """
+        Two flavor decoherence with inverted ordering
+        """
+        xform = TwoFlavorDecoherence(mh=MassHierarchy.INVERTED)
+
+        mixpars = MixingParameters()
+        th12, th13, th23 = mixpars.get_mixing_angles()
+
+        De1 = (cos(th12) * cos(th13))**2
+        De2 = (sin(th12) * cos(th13))**2
+        De3 = sin(th13)**2
+
+        self.assertTrue(xform.prob_ee(self.t, self.E), De2)
+        self.assertTrue(xform.prob_ex(self.t, self.E), 1 - De2)
+        self.assertTrue(xform.prob_xx(self.t, self.E), (1 + De2)/2)
+        self.assertTrue(xform.prob_xe(self.t, self.E), (1 - De2)/2)
+
+        self.assertTrue(xform.prob_eebar(self.t, self.E), (De1 + De3)/2)
+        self.assertTrue(xform.prob_exbar(self.t, self.E), 1 - (De1 + De3)/2)
+        self.assertTrue(xform.prob_xxbar(self.t, self.E), (1 + (De1 + De3)/2)/2)
+        self.assertTrue(xform.prob_xebar(self.t, self.E), (1 - (De1 + De3)/2)/2)
 
     def test_3fd(self):
         """
