@@ -6,9 +6,9 @@ name: SNEWPy Test Suite
 # events but only for the master branch
 on:
   push:
-    branches: [ $default-branch ]
+    branches: [ main ]
   pull_request:
-    branches: [ $default-branch ]
+    branches: [ main ]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -19,7 +19,7 @@ jobs:
     strategy:
       # Add a list of python versions we want to use for testing.
       matrix:
-        python-version: [3.7]
+        python-version: ['3.7', '3.8', '3.9']
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
