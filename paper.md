@@ -63,7 +63,7 @@ an order of magnitude or more. With such a data set there is potential for a
 huge increase in our understanding of the explosions of massive stars,
 nuclear physics under extreme conditions, and the fundamental properties of
 neutrinos. However there is a large gulf between supernova simulations and
-the corresponding signals in detectors which make any comparison between
+the corresponding signals in detectors, making comparisons between
 theory and observation, as well as between different detectors, very
 difficult. The SNEWPY code connects supernova simulations with the
 SNOwGLoBES software [@SNOwGLoBES], allowing users to calculate expected
