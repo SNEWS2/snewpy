@@ -77,8 +77,7 @@ simulations of supernova neutrinos and the corresponding signals (neutrino
 events) one would expect from neutrino detectors here on Earth. The package,
 written in Python, is built upon numpy [@vanderWalt:2011bqk] and scipy
 [@Virtanen:2019joe], and makes use of astropy [@Astropy:2013muo;
-@Price-Whelan:2018hus] for coordinate transformations, model I/O, and unit
-conversions.
+@Price-Whelan:2018hus] for model I/O and unit conversions.
 
 SNEWPY provides a number of functions that together form a complete
 simulation pipeline.  The software is able to interface with supernova
