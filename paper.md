@@ -59,37 +59,42 @@ aas-journal: The Astrophysical Journal <- The name of the AAS journal.
 
 Current neutrino detectors will observe hundreds to thousands of neutrinos
 from a Galactic supernova, and future detectors will increase the yield by
-an order of magnitude or more. With such a data set there is potential for a
-huge increase in our understanding of the explosions of massive stars,
-nuclear physics under extreme conditions, and the fundamental properties of
-neutrinos. However there is a large gulf between supernova simulations and
-the corresponding signals in detectors, making comparisons between
-theory and observation, as well as between different detectors, very
-difficult. The SNEWPY code connects supernova simulations with the
-SNOwGLoBES software [@SNOwGLoBES], allowing users to calculate expected
-event rates in various neutrino detectors. 
+an order of magnitude or more. With such neutrino data sets, the next
+Galactic supernova will significantly increase our understanding of the
+explosions of massive stars, nuclear physics under extreme conditions, and
+the fundamental properties of neutrinos. However there is a large gulf
+between supernova simulations and the corresponding signals in detectors,
+making comparisons between theory and observation, as well as between
+different detectors, very difficult. The SNEWPY code connects supernova
+simulations with the SNOwGLoBES software [@SNOwGLoBES], allowing users to
+easily calculate expected event rates from many supernova models in many
+different neutrino detectors. 
 
 # Statement of need
 
 SNEWPY is an open-source software package which bridges the gap between
 simulations of supernovae and the signals one would expect from the
-simulation in neutrino detectors here on Earth. The package provides a
-number of functions that together form a complete simulation pipeline.
-SNEWPY is able to interface with supernova simulation datasets to extract
-the neutrino emission as a function of time, energy, angle, and neutrino
-flavor from the proto-neutron star. It then convolves the neutrino spectra
-with a prescription for neutrino flavor transformation through the mantle of
-the star. Using the SNOwGLoBES data format, it then generates either a time
-series of neutrino spectra at Earth - the neutrinocurve - or the spectral
-fluence. SNEWPY is also able to interface with SNOwGLoBES itself, and can
-run the neutrinocurve or fluence data files through all the different
-neutrino detector models available in SNOwGLoBES to compute expected event
-rates.  SNEWPY will then collate the output from SNOwGLoBES into a signal
-data file per detector per signal. Finally, SNEWPY is easily integrated into
-other software, such as the supernova event generator sntools
-[@Migenda2021], which recently incorporated SNEWPY as a dependency to
-provide access to a broad range of supernova models and flavor
-transformations.
+simulation in neutrino detectors here on Earth. The package, written in
+Python, is built upon numpy [@Walt:2011] and scipy [@Virtanen:2020], and
+makes use of astropy [Astropy:2013muo, @Price-Whelan:2018hus] for
+astronomical transformations, model I/O, and unit conversions.
+
+SNEWPY provides a number of functions that together form a complete
+simulation pipeline.  The software is able to interface with supernova
+simulation data sets to extract the neutrino emission as a function of time,
+energy, angle, and neutrino flavor from the proto-neutron star. It then
+convolves the neutrino spectra with a prescription for neutrino flavor
+transformation through the mantle of the star. Using the SNOwGLoBES data
+format, it then generates either a time series of neutrino spectra at Earth
+- the neutrinocurve - or the spectral fluence. SNEWPY is also able to
+interface with SNOwGLoBES itself, and can run the neutrinocurve or fluence
+data files through all the different neutrino detector models available in
+SNOwGLoBES to compute expected event rates.  SNEWPY will then collate the
+output from SNOwGLoBES into a signal data file per detector per signal.
+Finally, SNEWPY is easily integrated into other software, such as the
+supernova event generator sntools [@Migenda2021], which recently
+incorporated SNEWPY as a dependency to provide access to a broad range of
+supernova models and flavor transformations.
 
 In addition to the code, SNEWPY comes with data from several hundred
 simulations kindly provided by various modeling groups, a script for
