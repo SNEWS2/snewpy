@@ -2,10 +2,12 @@
 import unittest
 
 from snewpy.flavor_transformation import MassHierarchy, MixingParameters
-from snewpy.flavor_transformation import NoTransformation, \
-    CompleteExchange, AdiabaticMSW, NonAdiabaticMSWH, \
+from snewpy.flavor_transformation import \
+    NoTransformation, CompleteExchange, \
+    AdiabaticMSW, NonAdiabaticMSWH, \
+    AdiabaticMSWes, NonAdiabaticMSWes, \
     TwoFlavorDecoherence, ThreeFlavorDecoherence, \
-    NeutrinoDecay, AdiabaticMSWes, NonAdiabaticMSWes
+    NeutrinoDecay
 
 from astropy import units as u
 from astropy import constants as c
@@ -205,10 +207,11 @@ class TestFlavorTransformations(unittest.TestCase):
 #        self.assertTrue(xform.prob_exbar(self.t, self.E) == 0.5)
 #        self.assertTrue(xform.prob_xxbar(self.t, self.E) == 0.75)
 #        self.assertTrue(xform.prob_xebar(self.t, self.E) == 0.25)
-#
-#
+
     def test_3fd(self):
-        # Three-flavor decoherence.
+        """
+        Three flavor decoherence
+        """
         xform = ThreeFlavorDecoherence()
 
         self.assertEqual(xform.prob_ee(self.t, self.E), 1./3)
@@ -221,9 +224,11 @@ class TestFlavorTransformations(unittest.TestCase):
         self.assertTrue(abs(xform.prob_xxbar(self.t, self.E) - 2./3) < 1e-12)
         self.assertTrue(abs(xform.prob_xebar(self.t, self.E) - 1./3) < 1e-12)
 
-
     def test_nudecay_nmo(self):
-        # Neutrino decay with NMO, overriding the default mixing angles.
+        """
+        Neutrino decay with NMO and new mixing angles 
+        """
+        # Override the default mixing angles.
         xform = NeutrinoDecay(mix_angles=(self.theta12, self.theta13, self.theta23), mass=self.mass3, tau=self.lifetime, dist=self.distance, mh=MassHierarchy.NORMAL)
 
         # Test computation of the decay length.
@@ -249,9 +254,11 @@ class TestFlavorTransformations(unittest.TestCase):
         self.assertTrue(np.array_equal(xform.prob_xxbar(self.t, self.E), 1. - 0.5*prob_exbar))
         self.assertEqual(xform.prob_xebar(self.t, self.E), 0.5*(1. - De3))
 
-
     def test_nudecay_nmo_default_mixing(self):
-        # Test interface using default mixing angles defined in the submodule.
+        """
+        Neutrino decay with NMO and default mixing angles
+        """
+        # Use default mixing angles defined in the submodule.
         xform = NeutrinoDecay(mass=self.mass3, tau=self.lifetime, dist=self.distance)
 
         # Check transition probabilities (normal hierarchy is default).
@@ -276,8 +283,10 @@ class TestFlavorTransformations(unittest.TestCase):
         self.assertTrue(np.array_equal(xform.prob_xxbar(self.t, self.E), 1. - 0.5*prob_exbar))
         self.assertEqual(xform.prob_xebar(self.t, self.E), 0.5*(1. - De3))
 
-
     def test_nudecay_imo(self):
+        """
+        Neutrino decay with IMO and new mixing angles
+        """
         # Neutrino decay with IMO, overriding the default mixing angles.
         xform = NeutrinoDecay(mix_angles=(self.theta12, self.theta13, self.theta23), mass=self.mass3, tau=self.lifetime, dist=self.distance, mh=MassHierarchy.INVERTED)
 
@@ -301,9 +310,11 @@ class TestFlavorTransformations(unittest.TestCase):
         self.assertTrue(np.array_equal(xform.prob_xxbar(self.t, self.E), 1. - 0.5*prob_exbar))
         self.assertEqual(xform.prob_xebar(self.t, self.E), 0.5*(1. - De3))
 
-
     def test_nudecay_imo_default_mixing(self):
-        # Test interface using default mixing angles defined in the submodule.
+        """
+        Neutrino decay with IMO and default mixing angles
+        """
+        # Use default mixing angles defined in the submodule.
         xform = NeutrinoDecay(mass=self.mass3, tau=self.lifetime, dist=self.distance, mh=MassHierarchy.INVERTED)
 
         # Check transition probabilities.
