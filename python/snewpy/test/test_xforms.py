@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import unittest
 
-from snewpy.flavor_transformation \
-import MassHierarchy, MixingParameters, \
-       NoTransformation, AdiabaticMSW, \
-       TwoFlavorDecoherence, ThreeFlavorDecoherence, NeutrinoDecay
+from snewpy.flavor_transformation import MassHierarchy, MixingParameters
+from snewpy.flavor_transformation import NoTransformation, \
+    CompleteExchange, AdiabaticMSW, NonAdiabaticMSWH, \
+    TwoFlavorDecoherence, ThreeFlavorDecoherence, \
+    NeutrinoDecay, AdiabaticMSWes, NonAdiabaticMSWes
 
 from astropy import units as u
 from astropy import constants as c
