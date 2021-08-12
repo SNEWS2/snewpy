@@ -8,10 +8,8 @@ def snewpy_test_suite():
     """
     from os.path import dirname
     pydir = dirname(dirname(__file__))
-    print(pydir)
     tests = unittest.defaultTestLoader.discover(pydir,
                                                 top_level_dir=dirname(pydir))
-    print(tests)
     return tests
 
 def runtests():
