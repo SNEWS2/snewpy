@@ -6,7 +6,7 @@ tags:
   - supernova
   - neutrinos
 authors:
-  - name: Segev Benzvi
+  - name: Segev BenZvi
     orcid: 0000-0001-5537-4710
     affiliation: 1
   - name: Joahan Castaneda Jaimes
