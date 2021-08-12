@@ -97,15 +97,17 @@ supernova event generator sntools [@Migenda2021], which recently
 incorporated SNEWPY as a dependency to provide access to a broad range of
 supernova models and flavor transformations.
 
-In addition to the code, SNEWPY comes with data from several hundred
+In addition to the source code, SNEWPY comes with data from several hundred
 simulations kindly provided by various modeling groups, a script for
 generating a spectral fluence from an analytic prescription, and several
 Jupyter notebooks illustrating its capabilities. While SNEWPY has been
 developed explicitly for the SuperNova Early Warning System, SNEWS 2.0
-[@SNEWS:2020tbu], we expect it will prove broadly useful to modelers and
-theorists interested in what neutrino detectors will observe from a
-supernova simulation, and to experimentalists wishing to evaluate the
-sensitivity of their detector to supernova neutrinos. 
+[@SNEWS:2020tbu], its object-oriented design makes the addition of new
+supernova models and flavor transformations straightforward. We expect it
+will prove broadly useful to modelers and theorists interested in what
+neutrino detectors will observe from a supernova simulation, as well as
+experimentalists wishing to evaluate the sensitivity of their detector to
+supernova neutrinos. 
 
 # Acknowledgements
 
