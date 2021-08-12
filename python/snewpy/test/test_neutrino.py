@@ -11,6 +11,9 @@ from astropy import units as u
 class TestNeutrino(unittest.TestCase):
 
     def test_flavor(self):
+        """
+        Neutrino flavor types
+        """
         nue  = Flavor.NU_E
         self.assertTrue(nue.is_electron)
         self.assertTrue(nue.is_neutrino)
@@ -33,6 +36,9 @@ class TestNeutrino(unittest.TestCase):
 
 
     def test_mixing_nmo(self):
+        """
+        Mixing parameter values; NMO
+        """
         # By default, return mixing parameters for NMO.
         mixpars = MixingParameters()
         self.assertEqual(mixpars.theta12, 33.44 * u.deg)
@@ -44,7 +50,9 @@ class TestNeutrino(unittest.TestCase):
 
 
     def test_mixing_imo(self):
-        # By default, return mixing parameters for NMO.
+        """
+        Mixing parameter values; IMO
+        """
         mixpars = MixingParameters(MassHierarchy.INVERTED)
         self.assertEqual(mixpars.theta12, 33.45 * u.deg)
         self.assertEqual(mixpars.theta13,  8.60 * u.deg)
