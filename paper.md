@@ -33,7 +33,7 @@ authors:
 affiliations:
   - name: University of Rochester, Rochester, NY, USA
     index: 1
-  - name: NC School of Science and Math, Durham, NC, USA
+  - name: California Institute of Technology, Pasadena, CA, USA
     index: 2
   - name: University of North Carolina - Chapel Hill, Chapel Hill, NC, USA
     index: 3
@@ -43,7 +43,7 @@ affiliations:
     index: 5
   - name: Stockholm University, Stockholm, Sweden
     index: 6
-  - name: Raleigh Charter High School, Raleigh, NC, USA
+  - name: Georgia Institute of Technology, Atlanta, GA, USA
     index: 7
 date: 12 August 2021
 bibliography: paper.bib
