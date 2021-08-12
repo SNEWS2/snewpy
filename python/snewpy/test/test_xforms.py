@@ -245,6 +245,56 @@ class TestFlavorTransformations(unittest.TestCase):
         self.assertEqual(xform.prob_xxbar(self.t, self.E), (2 - De2 - De4 - Ds2 - Ds4)/2)
         self.assertEqual(xform.prob_xebar(self.t, self.E), (1 - De3 - Ds3)/2)
 
+    def test_nonadiabaticmsw_es_nmo(self):
+        """
+        Four-neutrino non-adiabatic MSW with normal ordering
+        """
+        xform = AdiabaticMSWes(mix_angles=(self.theta12, self.theta13, self.theta23, self.theta14), mh=MassHierarchy.NORMAL)
+
+        De1 = (cos(self.theta12) * cos(self.theta13) * cos(self.theta14))**2
+        De2 = (sin(self.theta12) * cos(self.theta13) * cos(self.theta14))**2
+        De3 = (sin(self.theta13) * cos(self.theta14))**2
+        De4 = (sin(self.theta14))**2
+        Ds1 = (cos(self.theta12) * cos(self.theta13) * sin(self.theta14))**2
+        Ds2 = (sin(self.theta12) * cos(self.theta13) * sin(self.theta14))**2
+        Ds3 = (sin(self.theta13) * sin(self.theta14))**2
+        Ds4 = (cos(self.theta14))**2
+
+        self.assertEqual(xform.prob_ee(self.t, self.E), De4)
+        self.assertEqual(xform.prob_ex(self.t, self.E), De1 + De2)
+        self.assertEqual(xform.prob_xx(self.t, self.E), (2 - De1 - De2 - Ds1 - Ds2)/2)
+        self.assertEqual(xform.prob_xe(self.t, self.E), (1 - De4 - Ds4)/2)
+
+        self.assertEqual(xform.prob_eebar(self.t, self.E), De1)
+        self.assertEqual(xform.prob_exbar(self.t, self.E), De3 + De4)
+        self.assertEqual(xform.prob_xxbar(self.t, self.E), (2 - De3 - De4 - Ds3 - Ds4)/2)
+        self.assertEqual(xform.prob_xebar(self.t, self.E), (1 - De1 - Ds1)/2)
+
+    def test_nonadiabaticmsw_es_imo(self):
+        """
+        Four-neutrino non-adiabatic MSW with inverted ordering
+        """
+        xform = AdiabaticMSWes(mix_angles=(self.theta12, self.theta13, self.theta23, self.theta14), mh=MassHierarchy.INVERTED)
+
+        De1 = (cos(self.theta12) * cos(self.theta13) * cos(self.theta14))**2
+        De2 = (sin(self.theta12) * cos(self.theta13) * cos(self.theta14))**2
+        De3 = (sin(self.theta13) * cos(self.theta14))**2
+        De4 = (sin(self.theta14))**2
+        Ds1 = (cos(self.theta12) * cos(self.theta13) * sin(self.theta14))**2
+        Ds2 = (sin(self.theta12) * cos(self.theta13) * sin(self.theta14))**2
+        Ds3 = (sin(self.theta13) * sin(self.theta14))**2
+        Ds4 = (cos(self.theta14))**2
+
+        self.assertEqual(xform.prob_ee(self.t, self.E), De4)
+        self.assertEqual(xform.prob_ex(self.t, self.E), De1 + De3)
+        self.assertEqual(xform.prob_xx(self.t, self.E), (2 - De1 - De3 - Ds1 - Ds3)/2)
+        self.assertEqual(xform.prob_xe(self.t, self.E), (1 - De4 - Ds4)/2)
+
+        self.assertEqual(xform.prob_eebar(self.t, self.E), De3)
+        self.assertEqual(xform.prob_exbar(self.t, self.E), De2 + De4)
+        self.assertEqual(xform.prob_xxbar(self.t, self.E), (2 - De2 - De4 - Ds2 - Ds4)/2)
+        self.assertEqual(xform.prob_xebar(self.t, self.E), (1 - De3 - Ds3)/2)
+
 #    def test_2fd(self):
 #        # Two-flavor decoherence.
 #        xform = TwoFlavorDecoherence()
