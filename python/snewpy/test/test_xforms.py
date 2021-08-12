@@ -25,6 +25,7 @@ class TestFlavorTransformations(unittest.TestCase):
         self.theta12 = 33 * u.deg
         self.theta13 =  9 * u.deg
         self.theta23 = 49 * u.deg
+        self.theta14 =  1 * u.deg
 
         # Dummy neutrino decay parameters; see arXiv:1910.01127.
         self.mass3 = 0.5 * u.eV/c.c**2
@@ -193,6 +194,56 @@ class TestFlavorTransformations(unittest.TestCase):
         self.assertEqual(xform.prob_exbar(self.t, self.E), 1. - (cos(th12)*cos(th13))**2)
         self.assertEqual(xform.prob_xxbar(self.t, self.E), 0.5*(1. + (cos(th12)*cos(th13))**2))
         self.assertEqual(xform.prob_xebar(self.t, self.E), 0.5*(1. - (cos(th12)*cos(th13))**2))
+
+    def test_adiabaticmsw_es_nmo(self):
+        """
+        Four-neutrino adiabatic MSW with normal ordering
+        """
+        xform = AdiabaticMSWes(mix_angles=(self.theta12, self.theta13, self.theta23, self.theta14), mh=MassHierarchy.NORMAL)
+
+        De1 = (cos(self.theta12) * cos(self.theta13) * cos(self.theta14))**2
+        De2 = (sin(self.theta12) * cos(self.theta13) * cos(self.theta14))**2
+        De3 = (sin(self.theta13) * cos(self.theta14))**2
+        De4 = (sin(self.theta14))**2
+        Ds1 = (cos(self.theta12) * cos(self.theta13) * sin(self.theta14))**2
+        Ds2 = (sin(self.theta12) * cos(self.theta13) * sin(self.theta14))**2
+        Ds3 = (sin(self.theta13) * sin(self.theta14))**2
+        Ds4 = (cos(self.theta14))**2
+
+        self.assertEqual(xform.prob_ee(self.t, self.E), De4)
+        self.assertEqual(xform.prob_ex(self.t, self.E), De1 + De2)
+        self.assertEqual(xform.prob_xx(self.t, self.E), (2 - De1 - De2 - Ds1 - Ds2)/2)
+        self.assertEqual(xform.prob_xe(self.t, self.E), (1 - De4 - Ds4)/2)
+
+        self.assertEqual(xform.prob_eebar(self.t, self.E), De1)
+        self.assertEqual(xform.prob_exbar(self.t, self.E), De3 + De4)
+        self.assertEqual(xform.prob_xxbar(self.t, self.E), (2 - De3 - De4 - Ds3 - Ds4)/2)
+        self.assertEqual(xform.prob_xebar(self.t, self.E), (1 - De1 - Ds1)/2)
+
+    def test_adiabaticmsw_es_imo(self):
+        """
+        Four-neutrino adiabatic MSW with inverted ordering
+        """
+        xform = AdiabaticMSWes(mix_angles=(self.theta12, self.theta13, self.theta23, self.theta14), mh=MassHierarchy.INVERTED)
+
+        De1 = (cos(self.theta12) * cos(self.theta13) * cos(self.theta14))**2
+        De2 = (sin(self.theta12) * cos(self.theta13) * cos(self.theta14))**2
+        De3 = (sin(self.theta13) * cos(self.theta14))**2
+        De4 = (sin(self.theta14))**2
+        Ds1 = (cos(self.theta12) * cos(self.theta13) * sin(self.theta14))**2
+        Ds2 = (sin(self.theta12) * cos(self.theta13) * sin(self.theta14))**2
+        Ds3 = (sin(self.theta13) * sin(self.theta14))**2
+        Ds4 = (cos(self.theta14))**2
+
+        self.assertEqual(xform.prob_ee(self.t, self.E), De4)
+        self.assertEqual(xform.prob_ex(self.t, self.E), De1 + De3)
+        self.assertEqual(xform.prob_xx(self.t, self.E), (2 - De1 - De3 - Ds1 - Ds3)/2)
+        self.assertEqual(xform.prob_xe(self.t, self.E), (1 - De4 - Ds4)/2)
+
+        self.assertEqual(xform.prob_eebar(self.t, self.E), De3)
+        self.assertEqual(xform.prob_exbar(self.t, self.E), De2 + De4)
+        self.assertEqual(xform.prob_xxbar(self.t, self.E), (2 - De2 - De4 - Ds2 - Ds4)/2)
+        self.assertEqual(xform.prob_xebar(self.t, self.E), (1 - De3 - Ds3)/2)
 
 #    def test_2fd(self):
 #        # Two-flavor decoherence.
