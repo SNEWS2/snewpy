@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import unittest
+
 from snewpy.flavor_transformation \
 import MassHierarchy, MixingParameters, \
        NoTransformation, AdiabaticMSW, \
@@ -9,295 +11,297 @@ from astropy import constants as c
 import numpy as np
 from numpy import sin, cos, exp, abs
 
-# Dummy time and energy arrays, with proper dimensions.
-t = np.arange(10) * u.s
-E = np.linspace(1,100,21) * u.MeV
+class TestFlavorTransformations(unittest.TestCase):
 
-# Dummy mixing angles.
-theta12 = 33 * u.deg
-theta13 =  9 * u.deg
-theta23 = 49 * u.deg
+    def setUp(self):
+        # Dummy time and energy arrays, with proper dimensions.
+        self.t = np.arange(10) * u.s
+        self.E = np.linspace(1,100,21) * u.MeV
 
-# Dummy neutrino decay parameters; see arXiv:1910.01127.
-mass3 = 0.5 * u.eV/c.c**2
-lifetime = 1 * u.day
-distance = 10 * u.kpc
+        # Dummy mixing angles.
+        self.theta12 = 33 * u.deg
+        self.theta13 =  9 * u.deg
+        self.theta23 = 49 * u.deg
 
-
-def test_noxform():
-    # No transformations.
-    xform = NoTransformation()
-
-    assert(xform.prob_ee(t, E) == 1)
-    assert(xform.prob_ex(t, E) == 0)
-    assert(xform.prob_xx(t, E) == 1)
-    assert(xform.prob_xe(t, E) == 0)
-
-    assert(xform.prob_eebar(t, E) == 1)
-    assert(xform.prob_exbar(t, E) == 0)
-    assert(xform.prob_xxbar(t, E) == 1)
-    assert(xform.prob_xebar(t, E) == 0)
+        # Dummy neutrino decay parameters; see arXiv:1910.01127.
+        self.mass3 = 0.5 * u.eV/c.c**2
+        self.lifetime = 1 * u.day
+        self.distance = 10 * u.kpc
 
 
-def test_adiabaticmsw_nmo():
-    # Adiabatic MSW: normal mass ordering; override default mixing angles.
-    xform = AdiabaticMSW(mix_angles=(theta12, theta13, theta23), mh=MassHierarchy.NORMAL)
+    def test_noxform(self):
+        # No transformations.
+        xform = NoTransformation()
 
-    assert(xform.prob_ee(t, E) == sin(theta13)**2)
-    assert(xform.prob_ex(t, E) == 1. - sin(theta13)**2)
-    assert(xform.prob_xx(t, E) == 0.5*(1. + sin(theta13)**2))
-    assert(xform.prob_xe(t, E) == 0.5*(1. - sin(theta13)**2))
+        self.assertTrue(xform.prob_ee(self.t, self.E) == 1)
+        self.assertTrue(xform.prob_ex(self.t, self.E) == 0)
+        self.assertTrue(xform.prob_xx(self.t, self.E) == 1)
+        self.assertTrue(xform.prob_xe(self.t, self.E) == 0)
 
-    assert(xform.prob_eebar(t, E) == (cos(theta12)*cos(theta13))**2)
-    assert(xform.prob_exbar(t, E) == 1. - (cos(theta12)*cos(theta13))**2)
-    assert(xform.prob_xxbar(t, E) == 0.5*(1. + (cos(theta12)*cos(theta13))**2))
-    assert(xform.prob_xebar(t, E) == 0.5*(1. - (cos(theta12)*cos(theta13))**2))
-
-    # Test interface using default mixing angles defined in the submodule.
-    mixpars = MixingParameters(MassHierarchy.NORMAL)
-    th12, th13, th23 = mixpars.get_mixing_angles()
-
-    xform = AdiabaticMSW()
-
-    assert(xform.prob_ee(t, E) == sin(th13)**2)
-    assert(xform.prob_ex(t, E) == 1. - sin(th13)**2)
-    assert(xform.prob_xx(t, E) == 0.5*(1. + sin(th13)**2))
-    assert(xform.prob_xe(t, E) == 0.5*(1. - sin(th13)**2))
-
-    assert(xform.prob_eebar(t, E) == (cos(th12)*cos(th13))**2)
-    assert(xform.prob_exbar(t, E) == 1. - (cos(th12)*cos(th13))**2)
-    assert(xform.prob_xxbar(t, E) == 0.5*(1. + (cos(th12)*cos(th13))**2))
-    assert(xform.prob_xebar(t, E) == 0.5*(1. - (cos(th12)*cos(th13))**2))
+        self.assertTrue(xform.prob_eebar(self.t, self.E) == 1)
+        self.assertTrue(xform.prob_exbar(self.t, self.E) == 0)
+        self.assertTrue(xform.prob_xxbar(self.t, self.E) == 1)
+        self.assertTrue(xform.prob_xebar(self.t, self.E) == 0)
 
 
-def test_adiabaticmsw_imo():
-    # Adiabatic MSW: inverted mass ordering; override default mixing angles.
-    xform = AdiabaticMSW(mix_angles=(theta12, theta13, theta23), mh=MassHierarchy.INVERTED)
+    def test_adiabaticmsw_nmo(self):
+        # Adiabatic MSW: normal mass ordering; override default mixing angles.
+        xform = AdiabaticMSW(mix_angles=(self.theta12, self.theta13, self.theta23), mh=MassHierarchy.NORMAL)
 
-    assert(xform.prob_ee(t, E) == (sin(theta12)*cos(theta13))**2)
-    assert(xform.prob_ex(t, E) == 1. - (sin(theta12)*cos(theta13))**2)
-    assert(xform.prob_xx(t, E) == 0.5*(1. + (sin(theta12)*cos(theta13))**2))
-    assert(xform.prob_xe(t, E) == 0.5*(1. - (sin(theta12)*cos(theta13))**2))
+        self.assertTrue(xform.prob_ee(self.t, self.E) == sin(self.theta13)**2)
+        self.assertTrue(xform.prob_ex(self.t, self.E) == 1. - sin(self.theta13)**2)
+        self.assertTrue(xform.prob_xx(self.t, self.E) == 0.5*(1. + sin(self.theta13)**2))
+        self.assertTrue(xform.prob_xe(self.t, self.E) == 0.5*(1. - sin(self.theta13)**2))
 
-    assert(xform.prob_eebar(t, E) == sin(theta13)**2)
-    assert(xform.prob_exbar(t, E) == 1. - sin(theta13)**2)
-    assert(xform.prob_xxbar(t, E) == 0.5*(1. + sin(theta13)**2))
-    assert(xform.prob_xebar(t, E) == 0.5*(1. - sin(theta13)**2))
+        self.assertTrue(xform.prob_eebar(self.t, self.E) == (cos(self.theta12)*cos(self.theta13))**2)
+        self.assertTrue(xform.prob_exbar(self.t, self.E) == 1. - (cos(self.theta12)*cos(self.theta13))**2)
+        self.assertTrue(xform.prob_xxbar(self.t, self.E) == 0.5*(1. + (cos(self.theta12)*cos(self.theta13))**2))
+        self.assertTrue(xform.prob_xebar(self.t, self.E) == 0.5*(1. - (cos(self.theta12)*cos(self.theta13))**2))
 
-    # Test interface using default mixing angles defined in the submodule.
-    mixpars = MixingParameters(MassHierarchy.INVERTED)
-    th12, th13, th23 = mixpars.get_mixing_angles()
+        # Test interface using default mixing angles defined in the submodule.
+        mixpars = MixingParameters(MassHierarchy.NORMAL)
+        th12, th13, th23 = mixpars.get_mixing_angles()
 
-    xform = AdiabaticMSW(mh=MassHierarchy.INVERTED)
+        xform = AdiabaticMSW()
 
-    assert(xform.prob_ee(t, E) == (sin(th12)*cos(th13))**2)
-    assert(xform.prob_ex(t, E) == 1. - (sin(th12)*cos(th13))**2)
-    assert(xform.prob_xx(t, E) == 0.5*(1. + (sin(th12)*cos(th13))**2))
-    assert(xform.prob_xe(t, E) == 0.5*(1. - (sin(th12)*cos(th13))**2))
+        self.assertTrue(xform.prob_ee(self.t, self.E) == sin(th13)**2)
+        self.assertTrue(xform.prob_ex(self.t, self.E) == 1. - sin(th13)**2)
+        self.assertTrue(xform.prob_xx(self.t, self.E) == 0.5*(1. + sin(th13)**2))
+        self.assertTrue(xform.prob_xe(self.t, self.E) == 0.5*(1. - sin(th13)**2))
 
-    assert(xform.prob_eebar(t, E) == sin(th13)**2)
-    assert(xform.prob_exbar(t, E) == 1. - sin(th13)**2)
-    assert(xform.prob_xxbar(t, E) == 0.5*(1. + sin(th13)**2))
-    assert(xform.prob_xebar(t, E) == 0.5*(1. - sin(th13)**2))
+        self.assertTrue(xform.prob_eebar(self.t, self.E) == (cos(th12)*cos(th13))**2)
+        self.assertTrue(xform.prob_exbar(self.t, self.E) == 1. - (cos(th12)*cos(th13))**2)
+        self.assertTrue(xform.prob_xxbar(self.t, self.E) == 0.5*(1. + (cos(th12)*cos(th13))**2))
+        self.assertTrue(xform.prob_xebar(self.t, self.E) == 0.5*(1. - (cos(th12)*cos(th13))**2))
 
 
-#def test_nonadiabaticmsw_nmo():
-#    # Adiabatic MSW: normal mass ordering; override the default mixing angles.
-#    xform = NonAdiabaticMSW(mix_angles=(theta12, theta13, theta23), mh=MassHierarchy.NORMAL)
+    def test_adiabaticmsw_imo(self):
+        # Adiabatic MSW: inverted mass ordering; override default mixing angles.
+        xform = AdiabaticMSW(mix_angles=(self.theta12, self.theta13, self.theta23), mh=MassHierarchy.INVERTED)
+
+        self.assertTrue(xform.prob_ee(self.t, self.E) == (sin(self.theta12)*cos(self.theta13))**2)
+        self.assertTrue(xform.prob_ex(self.t, self.E) == 1. - (sin(self.theta12)*cos(self.theta13))**2)
+        self.assertTrue(xform.prob_xx(self.t, self.E) == 0.5*(1. + (sin(self.theta12)*cos(self.theta13))**2))
+        self.assertTrue(xform.prob_xe(self.t, self.E) == 0.5*(1. - (sin(self.theta12)*cos(self.theta13))**2))
+
+        self.assertTrue(xform.prob_eebar(self.t, self.E) == sin(self.theta13)**2)
+        self.assertTrue(xform.prob_exbar(self.t, self.E) == 1. - sin(self.theta13)**2)
+        self.assertTrue(xform.prob_xxbar(self.t, self.E) == 0.5*(1. + sin(self.theta13)**2))
+        self.assertTrue(xform.prob_xebar(self.t, self.E) == 0.5*(1. - sin(self.theta13)**2))
+
+        # Test interface using default mixing angles defined in the submodule.
+        mixpars = MixingParameters(MassHierarchy.INVERTED)
+        th12, th13, th23 = mixpars.get_mixing_angles()
+
+        xform = AdiabaticMSW(mh=MassHierarchy.INVERTED)
+
+        self.assertTrue(xform.prob_ee(self.t, self.E) == (sin(th12)*cos(th13))**2)
+        self.assertTrue(xform.prob_ex(self.t, self.E) == 1. - (sin(th12)*cos(th13))**2)
+        self.assertTrue(xform.prob_xx(self.t, self.E) == 0.5*(1. + (sin(th12)*cos(th13))**2))
+        self.assertTrue(xform.prob_xe(self.t, self.E) == 0.5*(1. - (sin(th12)*cos(th13))**2))
+
+        self.assertTrue(xform.prob_eebar(self.t, self.E) == sin(th13)**2)
+        self.assertTrue(xform.prob_exbar(self.t, self.E) == 1. - sin(th13)**2)
+        self.assertTrue(xform.prob_xxbar(self.t, self.E) == 0.5*(1. + sin(th13)**2))
+        self.assertTrue(xform.prob_xebar(self.t, self.E) == 0.5*(1. - sin(th13)**2))
+
+
+    #def test_nonadiabaticmsw_nmo():
+    #    # Adiabatic MSW: normal mass ordering; override the default mixing angles.
+    #    xform = NonAdiabaticMSW(mix_angles=(self.theta12, self.theta13, self.theta23), mh=MassHierarchy.NORMAL)
+    #
+    #    self.assertTrue(xform.prob_ee(self.t, self.E) == (sin(self.theta12)*cos(self.theta13))**2)
+    #    self.assertTrue(xform.prob_ex(self.t, self.E) == 1. - (sin(self.theta12)*cos(self.theta13))**2)
+    #    self.assertTrue(xform.prob_xx(self.t, self.E) == 0.5*(1. + (sin(self.theta12)*cos(self.theta13))**2))
+    #    self.assertTrue(xform.prob_xe(self.t, self.E) == 0.5*(1. - (sin(self.theta12)*cos(self.theta13))**2))
+    #
+    #    self.assertTrue(xform.prob_eebar(self.t, self.E) == (cos(self.theta12)*cos(self.theta13))**2)
+    #    self.assertTrue(xform.prob_exbar(self.t, self.E) == 1. - (cos(self.theta12)*cos(self.theta13))**2)
+    #    self.assertTrue(xform.prob_xxbar(self.t, self.E) == 0.5*(1. + (cos(self.theta12)*cos(self.theta13))**2))
+    #    self.assertTrue(xform.prob_xebar(self.t, self.E) == 0.5*(1. - (cos(self.theta12)*cos(self.theta13))**2))
+    #
+    #    # Test interface using default mixing angles defined in the submodule.
+    #    mixpars = MixingParameters(MassHierarchy.NORMAL)
+    #    th12, th13, th23 = mixpars.get_mixing_angles()
+    #
+    #    xform = NonAdiabaticMSW()
+    #
+    #    self.assertTrue(xform.prob_ee(self.t, self.E) == (sin(th12)*cos(th13))**2)
+    #    self.assertTrue(xform.prob_ex(self.t, self.E) == 1. - (sin(th12)*cos(th13))**2)
+    #    self.assertTrue(xform.prob_xx(self.t, self.E) == 0.5*(1. + (sin(th12)*cos(th13))**2))
+    #    self.assertTrue(xform.prob_xe(self.t, self.E) == 0.5*(1. - (sin(th12)*cos(th13))**2))
+    #
+    #    self.assertTrue(xform.prob_eebar(self.t, self.E) == (cos(th12)*cos(th13))**2)
+    #    self.assertTrue(xform.prob_exbar(self.t, self.E) == 1. - (cos(th12)*cos(th13))**2)
+    #    self.assertTrue(xform.prob_xxbar(self.t, self.E) == 0.5*(1. + (cos(th12)*cos(th13))**2))
+    #    self.assertTrue(xform.prob_xebar(self.t, self.E) == 0.5*(1. - (cos(th12)*cos(th13))**2))
+    #
+    #
+    #def test_nonadiabaticmsw_imo():
+    #    # Adiabatic MSW: inverted mass ordering; override default mixing angles.
+    #    xform = NonAdiabaticMSW(mix_angles=(self.theta12, self.theta13, self.theta23), mh=MassHierarchy.NORMAL)
+    #
+    #    self.assertTrue(xform.prob_ee(self.t, self.E) == (sin(self.theta12)*cos(self.theta13))**2)
+    #    self.assertTrue(xform.prob_ex(self.t, self.E) == 1. - (sin(self.theta12)*cos(self.theta13))**2)
+    #    self.assertTrue(xform.prob_xx(self.t, self.E) == 0.5*(1. + (sin(self.theta12)*cos(self.theta13))**2))
+    #    self.assertTrue(xform.prob_xe(self.t, self.E) == 0.5*(1. - (sin(self.theta12)*cos(self.theta13))**2))
+    #
+    #    self.assertTrue(xform.prob_eebar(self.t, self.E) == (cos(self.theta12)*cos(self.theta13))**2)
+    #    self.assertTrue(xform.prob_exbar(self.t, self.E) == 1. - (cos(self.theta12)*cos(self.theta13))**2)
+    #    self.assertTrue(xform.prob_xxbar(self.t, self.E) == 0.5*(1. + (cos(self.theta12)*cos(self.theta13))**2))
+    #    self.assertTrue(xform.prob_xebar(self.t, self.E) == 0.5*(1. - (cos(self.theta12)*cos(self.theta13))**2))
+    #
+    #    # Test interface using default mixing angles defined in the submodule.
+    #    mixpars = MixingParameters(MassHierarchy.INVERTED)
+    #    th12, th13, th23 = mixpars.get_mixing_angles()
+    #
+    #    xform = NonAdiabaticMSW(mh=MassHierarchy.INVERTED)
+    #
+    #    self.assertTrue(xform.prob_ee(self.t, self.E) == (sin(th12)*cos(th13))**2)
+    #    self.assertTrue(xform.prob_ex(self.t, self.E) == 1. - (sin(th12)*cos(th13))**2)
+    #    self.assertTrue(xform.prob_xx(self.t, self.E) == 0.5*(1. + (sin(th12)*cos(th13))**2))
+    #    self.assertTrue(xform.prob_xe(self.t, self.E) == 0.5*(1. - (sin(th12)*cos(th13))**2))
+    #
+    #    self.assertTrue(xform.prob_eebar(self.t, self.E) == (cos(th12)*cos(th13))**2)
+    #    self.assertTrue(xform.prob_exbar(self.t, self.E) == 1. - (cos(th12)*cos(th13))**2)
+    #    self.assertTrue(xform.prob_xxbar(self.t, self.E) == 0.5*(1. + (cos(th12)*cos(th13))**2))
+    #    self.assertTrue(xform.prob_xebar(self.t, self.E) == 0.5*(1. - (cos(th12)*cos(th13))**2))
+
+
+#    def test_2fd(self):
+#        # Two-flavor decoherence.
+#        xform = TwoFlavorDecoherence()
 #
-#    assert(xform.prob_ee(t, E) == (sin(theta12)*cos(theta13))**2)
-#    assert(xform.prob_ex(t, E) == 1. - (sin(theta12)*cos(theta13))**2)
-#    assert(xform.prob_xx(t, E) == 0.5*(1. + (sin(theta12)*cos(theta13))**2))
-#    assert(xform.prob_xe(t, E) == 0.5*(1. - (sin(theta12)*cos(theta13))**2))
+#        self.assertTrue(xform.prob_ee(self.t, self.E) == 0.5)
+#        self.assertTrue(xform.prob_ex(self.t, self.E) == 0.5)
+#        self.assertTrue(xform.prob_xx(self.t, self.E) == 0.75)
+#        self.assertTrue(xform.prob_xe(self.t, self.E) == 0.25)
 #
-#    assert(xform.prob_eebar(t, E) == (cos(theta12)*cos(theta13))**2)
-#    assert(xform.prob_exbar(t, E) == 1. - (cos(theta12)*cos(theta13))**2)
-#    assert(xform.prob_xxbar(t, E) == 0.5*(1. + (cos(theta12)*cos(theta13))**2))
-#    assert(xform.prob_xebar(t, E) == 0.5*(1. - (cos(theta12)*cos(theta13))**2))
-#
-#    # Test interface using default mixing angles defined in the submodule.
-#    mixpars = MixingParameters(MassHierarchy.NORMAL)
-#    th12, th13, th23 = mixpars.get_mixing_angles()
-#
-#    xform = NonAdiabaticMSW()
-#
-#    assert(xform.prob_ee(t, E) == (sin(th12)*cos(th13))**2)
-#    assert(xform.prob_ex(t, E) == 1. - (sin(th12)*cos(th13))**2)
-#    assert(xform.prob_xx(t, E) == 0.5*(1. + (sin(th12)*cos(th13))**2))
-#    assert(xform.prob_xe(t, E) == 0.5*(1. - (sin(th12)*cos(th13))**2))
-#
-#    assert(xform.prob_eebar(t, E) == (cos(th12)*cos(th13))**2)
-#    assert(xform.prob_exbar(t, E) == 1. - (cos(th12)*cos(th13))**2)
-#    assert(xform.prob_xxbar(t, E) == 0.5*(1. + (cos(th12)*cos(th13))**2))
-#    assert(xform.prob_xebar(t, E) == 0.5*(1. - (cos(th12)*cos(th13))**2))
+#        self.assertTrue(xform.prob_eebar(self.t, self.E) == 0.5)
+#        self.assertTrue(xform.prob_exbar(self.t, self.E) == 0.5)
+#        self.assertTrue(xform.prob_xxbar(self.t, self.E) == 0.75)
+#        self.assertTrue(xform.prob_xebar(self.t, self.E) == 0.25)
 #
 #
-#def test_nonadiabaticmsw_imo():
-#    # Adiabatic MSW: inverted mass ordering; override default mixing angles.
-#    xform = NonAdiabaticMSW(mix_angles=(theta12, theta13, theta23), mh=MassHierarchy.NORMAL)
+#    def test_3fd(self):
+#        # Three-flavor decoherence.
+#        xform = ThreeFlavorDecoherence()
 #
-#    assert(xform.prob_ee(t, E) == (sin(theta12)*cos(theta13))**2)
-#    assert(xform.prob_ex(t, E) == 1. - (sin(theta12)*cos(theta13))**2)
-#    assert(xform.prob_xx(t, E) == 0.5*(1. + (sin(theta12)*cos(theta13))**2))
-#    assert(xform.prob_xe(t, E) == 0.5*(1. - (sin(theta12)*cos(theta13))**2))
+#        self.assertTrue(xform.prob_ee(self.t, self.E) == 1./3)
+#        self.assertTrue(abs(xform.prob_ex(self.t, self.E) - 2./3) < 1e-12)
+#        self.assertTrue(abs(xform.prob_xx(self.t, self.E) - 2./3) < 1e-12)
+#        self.assertTrue(abs(xform.prob_xe(self.t, self.E) - 1./3) < 1e-12)
 #
-#    assert(xform.prob_eebar(t, E) == (cos(theta12)*cos(theta13))**2)
-#    assert(xform.prob_exbar(t, E) == 1. - (cos(theta12)*cos(theta13))**2)
-#    assert(xform.prob_xxbar(t, E) == 0.5*(1. + (cos(theta12)*cos(theta13))**2))
-#    assert(xform.prob_xebar(t, E) == 0.5*(1. - (cos(theta12)*cos(theta13))**2))
-#
-#    # Test interface using default mixing angles defined in the submodule.
-#    mixpars = MixingParameters(MassHierarchy.INVERTED)
-#    th12, th13, th23 = mixpars.get_mixing_angles()
-#
-#    xform = NonAdiabaticMSW(mh=MassHierarchy.INVERTED)
-#
-#    assert(xform.prob_ee(t, E) == (sin(th12)*cos(th13))**2)
-#    assert(xform.prob_ex(t, E) == 1. - (sin(th12)*cos(th13))**2)
-#    assert(xform.prob_xx(t, E) == 0.5*(1. + (sin(th12)*cos(th13))**2))
-#    assert(xform.prob_xe(t, E) == 0.5*(1. - (sin(th12)*cos(th13))**2))
-#
-#    assert(xform.prob_eebar(t, E) == (cos(th12)*cos(th13))**2)
-#    assert(xform.prob_exbar(t, E) == 1. - (cos(th12)*cos(th13))**2)
-#    assert(xform.prob_xxbar(t, E) == 0.5*(1. + (cos(th12)*cos(th13))**2))
-#    assert(xform.prob_xebar(t, E) == 0.5*(1. - (cos(th12)*cos(th13))**2))
+#        self.assertTrue(xform.prob_eebar(self.t, self.E) == 1./3)
+#        self.assertTrue(abs(xform.prob_exbar(self.t, self.E) - 2./3) < 1e-12)
+#        self.assertTrue(abs(xform.prob_xxbar(self.t, self.E) - 2./3) < 1e-12)
+#        self.assertTrue(abs(xform.prob_xebar(self.t, self.E) - 1./3) < 1e-12)
 
 
-def test_2fd():
-    # Two-flavor decoherence.
-    xform = TwoFlavorDecoherence()
+    def test_nudecay_nmo(self):
+        # Neutrino decay with NMO, overriding the default mixing angles.
+        xform = NeutrinoDecay(mix_angles=(self.theta12, self.theta13, self.theta23), mass=self.mass3, tau=self.lifetime, dist=self.distance, mh=MassHierarchy.NORMAL)
 
-    assert(xform.prob_ee(t, E) == 0.5)
-    assert(xform.prob_ex(t, E) == 0.5)
-    assert(xform.prob_xx(t, E) == 0.75)
-    assert(xform.prob_xe(t, E) == 0.25)
+        # Test computation of the decay length.
+        _E = 10*u.MeV
+        self.assertTrue(xform.gamma(_E) == self.mass3*c.c / (_E*self.lifetime))
 
-    assert(xform.prob_eebar(t, E) == 0.5)
-    assert(xform.prob_exbar(t, E) == 0.5)
-    assert(xform.prob_xxbar(t, E) == 0.75)
-    assert(xform.prob_xebar(t, E) == 0.25)
+        De1 = (cos(self.theta12) * cos(self.theta13))**2
+        De2 = (sin(self.theta12) * cos(self.theta13))**2
+        De3 = sin(self.theta13)**2
 
+        # Check transition probabilities.
+        prob_ee = np.asarray([De1*(1.-exp(-xform.gamma(_E)*self.distance)) + De3*exp(-xform.gamma(_E)*self.distance) for _E in self.E])
 
-def test_3fd():
-    # Three-flavor decoherence.
-    xform = ThreeFlavorDecoherence()
+        self.assertTrue(np.array_equal(xform.prob_ee(self.t, self.E), prob_ee))
+        self.assertTrue(xform.prob_ex(self.t, self.E) == De1 + De3)
+        self.assertTrue(xform.prob_xx(self.t, self.E) == 1 - 0.5*(De1 + De3))
+        self.assertTrue(np.array_equal(xform.prob_xe(self.t, self.E), 0.5*(1 - prob_ee)))
 
-    assert(xform.prob_ee(t, E) == 1./3)
-    assert(abs(xform.prob_ex(t, E) - 2./3) < 1e-12)
-    assert(abs(xform.prob_xx(t, E) - 2./3) < 1e-12)
-    assert(abs(xform.prob_xe(t, E) - 1./3) < 1e-12)
+        prob_exbar = np.asarray([De1*(1.-exp(-xform.gamma(_E)*self.distance)) + De2 + De3*exp(-xform.gamma(_E)*self.distance) for _E in self.E])
 
-    assert(xform.prob_eebar(t, E) == 1./3)
-    assert(abs(xform.prob_exbar(t, E) - 2./3) < 1e-12)
-    assert(abs(xform.prob_xxbar(t, E) - 2./3) < 1e-12)
-    assert(abs(xform.prob_xebar(t, E) - 1./3) < 1e-12)
+        self.assertTrue(xform.prob_eebar(self.t, self.E) == De3)
+        self.assertTrue(np.array_equal(xform.prob_exbar(self.t, self.E), prob_exbar))
+        self.assertTrue(np.array_equal(xform.prob_xxbar(self.t, self.E), 1. - 0.5*prob_exbar))
+        self.assertTrue(xform.prob_xebar(self.t, self.E) == 0.5*(1. - De3))
 
 
-def test_nudecay_nmo():
-    # Neutrino decay with NMO, overriding the default mixing angles.
-    xform = NeutrinoDecay(mix_angles=(theta12, theta13, theta23), mass=mass3, tau=lifetime, dist=distance, mh=MassHierarchy.NORMAL)
+    def test_nudecay_nmo_default_mixing(self):
+        # Test interface using default mixing angles defined in the submodule.
+        xform = NeutrinoDecay(mass=self.mass3, tau=self.lifetime, dist=self.distance)
 
-    # Test computation of the decay length.
-    _E = 10*u.MeV
-    assert(xform.gamma(_E) == mass3*c.c / (_E*lifetime))
+        # Check transition probabilities (normal hierarchy is default).
+        mixpars = MixingParameters()
+        th12, th13, th23 = mixpars.get_mixing_angles()
 
-    De1 = (cos(theta12) * cos(theta13))**2
-    De2 = (sin(theta12) * cos(theta13))**2
-    De3 = sin(theta13)**2
+        De1 = (cos(th12) * cos(th13))**2
+        De2 = (sin(th12) * cos(th13))**2
+        De3 = sin(th13)**2
 
-    # Check transition probabilities.
-    prob_ee = np.asarray([De1*(1.-exp(-xform.gamma(_E)*distance)) + De3*exp(-xform.gamma(_E)*distance) for _E in E])
+        prob_ee = np.asarray([De1*(1.-exp(-xform.gamma(_E)*self.distance)) + De3*exp(-xform.gamma(_E)*self.distance) for _E in self.E])
 
-    assert(np.array_equal(xform.prob_ee(t, E), prob_ee))
-    assert(xform.prob_ex(t, E) == De1 + De3)
-    assert(xform.prob_xx(t, E) == 1 - 0.5*(De1 + De3))
-    assert(np.array_equal(xform.prob_xe(t, E), 0.5*(1 - prob_ee)))
+        self.assertTrue(np.array_equal(xform.prob_ee(self.t, self.E), prob_ee))
+        self.assertTrue(xform.prob_ex(self.t, self.E) == De1 + De3)
+        self.assertTrue(xform.prob_xx(self.t, self.E) == 1 - 0.5*(De1 + De3))
+        self.assertTrue(np.array_equal(xform.prob_xe(self.t, self.E), 0.5*(1 - prob_ee)))
 
-    prob_exbar = np.asarray([De1*(1.-exp(-xform.gamma(_E)*distance)) + De2 + De3*exp(-xform.gamma(_E)*distance) for _E in E])
+        prob_exbar = np.asarray([De1*(1.-exp(-xform.gamma(_E)*self.distance)) + De2 + De3*exp(-xform.gamma(_E)*self.distance) for _E in self.E])
 
-    assert(xform.prob_eebar(t, E) == De3)
-    assert(np.array_equal(xform.prob_exbar(t, E), prob_exbar))
-    assert(np.array_equal(xform.prob_xxbar(t, E), 1. - 0.5*prob_exbar))
-    assert(xform.prob_xebar(t, E) == 0.5*(1. - De3))
-
-
-def test_nudecay_nmo_default_mixing():
-    # Test interface using default mixing angles defined in the submodule.
-    xform = NeutrinoDecay(mass=mass3, tau=lifetime, dist=distance)
-
-    # Check transition probabilities (normal hierarchy is default).
-    mixpars = MixingParameters()
-    th12, th13, th23 = mixpars.get_mixing_angles()
-
-    De1 = (cos(th12) * cos(th13))**2
-    De2 = (sin(th12) * cos(th13))**2
-    De3 = sin(th13)**2
-
-    prob_ee = np.asarray([De1*(1.-exp(-xform.gamma(_E)*distance)) + De3*exp(-xform.gamma(_E)*distance) for _E in E])
-
-    assert(np.array_equal(xform.prob_ee(t, E), prob_ee))
-    assert(xform.prob_ex(t, E) == De1 + De3)
-    assert(xform.prob_xx(t, E) == 1 - 0.5*(De1 + De3))
-    assert(np.array_equal(xform.prob_xe(t, E), 0.5*(1 - prob_ee)))
-
-    prob_exbar = np.asarray([De1*(1.-exp(-xform.gamma(_E)*distance)) + De2 + De3*exp(-xform.gamma(_E)*distance) for _E in E])
-
-    assert(xform.prob_eebar(t, E) == De3)
-    assert(np.array_equal(xform.prob_exbar(t, E), prob_exbar))
-    assert(np.array_equal(xform.prob_xxbar(t, E), 1. - 0.5*prob_exbar))
-    assert(xform.prob_xebar(t, E) == 0.5*(1. - De3))
+        self.assertTrue(xform.prob_eebar(self.t, self.E) == De3)
+        self.assertTrue(np.array_equal(xform.prob_exbar(self.t, self.E), prob_exbar))
+        self.assertTrue(np.array_equal(xform.prob_xxbar(self.t, self.E), 1. - 0.5*prob_exbar))
+        self.assertTrue(xform.prob_xebar(self.t, self.E) == 0.5*(1. - De3))
 
 
-def test_nudecay_imo():
-    # Neutrino decay with IMO, overriding the default mixing angles.
-    xform = NeutrinoDecay(mix_angles=(theta12, theta13, theta23), mass=mass3, tau=lifetime, dist=distance, mh=MassHierarchy.INVERTED)
+    def test_nudecay_imo(self):
+        # Neutrino decay with IMO, overriding the default mixing angles.
+        xform = NeutrinoDecay(mix_angles=(self.theta12, self.theta13, self.theta23), mass=self.mass3, tau=self.lifetime, dist=self.distance, mh=MassHierarchy.INVERTED)
 
-    De1 = (cos(theta12) * cos(theta13))**2
-    De2 = (sin(theta12) * cos(theta13))**2
-    De3 = sin(theta13)**2
+        De1 = (cos(self.theta12) * cos(self.theta13))**2
+        De2 = (sin(self.theta12) * cos(self.theta13))**2
+        De3 = sin(self.theta13)**2
 
-    # Check transition probabilities.
-    prob_ee = np.asarray([De2*exp(-xform.gamma(_E)*distance) +
-                          De3*(1.-exp(-xform.gamma(_E)*distance)) for _E in E])
+        # Check transition probabilities.
+        prob_ee = np.asarray([De2*exp(-xform.gamma(_E)*self.distance) + De3*(1.-exp(-xform.gamma(_E)*self.distance)) for _E in self.E])
 
-    assert(np.array_equal(xform.prob_ee(t, E), prob_ee))
-    assert(xform.prob_ex(t, E) == De1 + De2)
-    assert(xform.prob_xx(t, E) == 1 - 0.5*(De1 + De2))
-    assert(np.array_equal(xform.prob_xe(t, E), 0.5*(1 - prob_ee)))
+        self.assertTrue(np.array_equal(xform.prob_ee(self.t, self.E), prob_ee))
+        self.assertTrue(xform.prob_ex(self.t, self.E) == De1 + De2)
+        self.assertTrue(xform.prob_xx(self.t, self.E) == 1 - 0.5*(De1 + De2))
+        self.assertTrue(np.array_equal(xform.prob_xe(self.t, self.E), 0.5*(1 - prob_ee)))
 
-    prob_exbar = np.asarray([De1 + De2*np.exp(-xform.gamma(_E)*distance) +
-                             De3*(1-np.exp(-xform.gamma(_E)*distance)) for _E in E])
+        prob_exbar = np.asarray([De1 + De2*np.exp(-xform.gamma(_E)*self.distance) +
+                                 De3*(1-np.exp(-xform.gamma(_E)*self.distance)) for _E in self.E])
 
-    assert(xform.prob_eebar(t, E) == De3)
-    assert(np.array_equal(xform.prob_exbar(t, E), prob_exbar))
-    assert(np.array_equal(xform.prob_xxbar(t, E), 1. - 0.5*prob_exbar))
-    assert(xform.prob_xebar(t, E) == 0.5*(1. - De3))
+        self.assertTrue(xform.prob_eebar(self.t, self.E) == De3)
+        self.assertTrue(np.array_equal(xform.prob_exbar(self.t, self.E), prob_exbar))
+        self.assertTrue(np.array_equal(xform.prob_xxbar(self.t, self.E), 1. - 0.5*prob_exbar))
+        self.assertTrue(xform.prob_xebar(self.t, self.E) == 0.5*(1. - De3))
 
 
-def test_nudecay_imo_default_mixing():
-    # Test interface using default mixing angles defined in the submodule.
-    xform = NeutrinoDecay(mass=mass3, tau=lifetime, dist=distance, mh=MassHierarchy.INVERTED)
+    def test_nudecay_imo_default_mixing(self):
+        # Test interface using default mixing angles defined in the submodule.
+        xform = NeutrinoDecay(mass=self.mass3, tau=self.lifetime, dist=self.distance, mh=MassHierarchy.INVERTED)
 
-    # Check transition probabilities.
-    mixpars = MixingParameters(MassHierarchy.INVERTED)
-    th12, th13, th23 = mixpars.get_mixing_angles()
+        # Check transition probabilities.
+        mixpars = MixingParameters(MassHierarchy.INVERTED)
+        th12, th13, th23 = mixpars.get_mixing_angles()
 
-    De1 = (cos(th12) * cos(th13))**2
-    De2 = (sin(th12) * cos(th13))**2
-    De3 = sin(th13)**2
+        De1 = (cos(th12) * cos(th13))**2
+        De2 = (sin(th12) * cos(th13))**2
+        De3 = sin(th13)**2
 
-    prob_ee = np.asarray([De2*exp(-xform.gamma(_E)*distance) +
-                          De3*(1.-exp(-xform.gamma(_E)*distance)) for _E in E])
+        prob_ee = np.asarray([De2*exp(-xform.gamma(_E)*self.distance) +
+                              De3*(1.-exp(-xform.gamma(_E)*self.distance)) for _E in self.E])
 
-    assert(np.array_equal(xform.prob_ee(t, E), prob_ee))
-    assert(xform.prob_ex(t, E) == De1 + De2)
-    assert(xform.prob_xx(t, E) == 1 - 0.5*(De1 + De2))
-    assert(np.array_equal(xform.prob_xe(t, E), 0.5*(1 - prob_ee)))
+        self.assertTrue(np.array_equal(xform.prob_ee(self.t, self.E), prob_ee))
+        self.assertTrue(xform.prob_ex(self.t, self.E) == De1 + De2)
+        self.assertTrue(xform.prob_xx(self.t, self.E) == 1 - 0.5*(De1 + De2))
+        self.assertTrue(np.array_equal(xform.prob_xe(self.t, self.E), 0.5*(1 - prob_ee)))
 
-    prob_exbar = np.asarray([De1 + De2*np.exp(-xform.gamma(_E)*distance) +
-                             De3*(1-np.exp(-xform.gamma(_E)*distance)) for _E in E])
+        prob_exbar = np.asarray([De1 + De2*np.exp(-xform.gamma(_E)*self.distance) +
+                                 De3*(1-np.exp(-xform.gamma(_E)*self.distance)) for _E in self.E])
 
-    assert(xform.prob_eebar(t, E) == De3)
-    assert(np.array_equal(xform.prob_exbar(t, E), prob_exbar))
-    assert(np.array_equal(xform.prob_xxbar(t, E), 1. - 0.5*prob_exbar))
-    assert(xform.prob_xebar(t, E) == 0.5*(1. - De3))
+        self.assertTrue(xform.prob_eebar(self.t, self.E) == De3)
+        self.assertTrue(np.array_equal(xform.prob_exbar(self.t, self.E), prob_exbar))
+        self.assertTrue(np.array_equal(xform.prob_xxbar(self.t, self.E), 1. - 0.5*prob_exbar))
+        self.assertTrue(xform.prob_xebar(self.t, self.E) == 0.5*(1. - De3))
