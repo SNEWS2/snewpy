@@ -93,7 +93,6 @@ class TestFlavorTransformations(unittest.TestCase):
         self.assertEqual(xform.prob_xxbar(self.t, self.E), 0.5*(1. + (cos(th12)*cos(th13))**2))
         self.assertEqual(xform.prob_xebar(self.t, self.E), 0.5*(1. - (cos(th12)*cos(th13))**2))
 
-
     def test_adiabaticmsw_imo(self):
         """
         Adiabatic MSW with inverted ordering
@@ -127,68 +126,71 @@ class TestFlavorTransformations(unittest.TestCase):
         self.assertEqual(xform.prob_xxbar(self.t, self.E), 0.5*(1. + sin(th13)**2))
         self.assertEqual(xform.prob_xebar(self.t, self.E), 0.5*(1. - sin(th13)**2))
 
+    def test_nonadiabaticmswh_nmo(self):
+        """
+        Nonadiabatic MSW effect with normal ordering
+        """
+        # Override the default mixing angles.
+        xform = NonAdiabaticMSWH(mix_angles=(self.theta12, self.theta13, self.theta23), mh=MassHierarchy.NORMAL)
 
-    #def test_nonadiabaticmsw_nmo():
-    #    # Adiabatic MSW: normal mass ordering; override the default mixing angles.
-    #    xform = NonAdiabaticMSW(mix_angles=(self.theta12, self.theta13, self.theta23), mh=MassHierarchy.NORMAL)
-    #
-    #    self.assertTrue(xform.prob_ee(self.t, self.E) == (sin(self.theta12)*cos(self.theta13))**2)
-    #    self.assertTrue(xform.prob_ex(self.t, self.E) == 1. - (sin(self.theta12)*cos(self.theta13))**2)
-    #    self.assertTrue(xform.prob_xx(self.t, self.E) == 0.5*(1. + (sin(self.theta12)*cos(self.theta13))**2))
-    #    self.assertTrue(xform.prob_xe(self.t, self.E) == 0.5*(1. - (sin(self.theta12)*cos(self.theta13))**2))
-    #
-    #    self.assertTrue(xform.prob_eebar(self.t, self.E) == (cos(self.theta12)*cos(self.theta13))**2)
-    #    self.assertTrue(xform.prob_exbar(self.t, self.E) == 1. - (cos(self.theta12)*cos(self.theta13))**2)
-    #    self.assertTrue(xform.prob_xxbar(self.t, self.E) == 0.5*(1. + (cos(self.theta12)*cos(self.theta13))**2))
-    #    self.assertTrue(xform.prob_xebar(self.t, self.E) == 0.5*(1. - (cos(self.theta12)*cos(self.theta13))**2))
-    #
-    #    # Test interface using default mixing angles defined in the submodule.
-    #    mixpars = MixingParameters(MassHierarchy.NORMAL)
-    #    th12, th13, th23 = mixpars.get_mixing_angles()
-    #
-    #    xform = NonAdiabaticMSW()
-    #
-    #    self.assertTrue(xform.prob_ee(self.t, self.E) == (sin(th12)*cos(th13))**2)
-    #    self.assertTrue(xform.prob_ex(self.t, self.E) == 1. - (sin(th12)*cos(th13))**2)
-    #    self.assertTrue(xform.prob_xx(self.t, self.E) == 0.5*(1. + (sin(th12)*cos(th13))**2))
-    #    self.assertTrue(xform.prob_xe(self.t, self.E) == 0.5*(1. - (sin(th12)*cos(th13))**2))
-    #
-    #    self.assertTrue(xform.prob_eebar(self.t, self.E) == (cos(th12)*cos(th13))**2)
-    #    self.assertTrue(xform.prob_exbar(self.t, self.E) == 1. - (cos(th12)*cos(th13))**2)
-    #    self.assertTrue(xform.prob_xxbar(self.t, self.E) == 0.5*(1. + (cos(th12)*cos(th13))**2))
-    #    self.assertTrue(xform.prob_xebar(self.t, self.E) == 0.5*(1. - (cos(th12)*cos(th13))**2))
-    #
-    #
-    #def test_nonadiabaticmsw_imo():
-    #    # Adiabatic MSW: inverted mass ordering; override default mixing angles.
-    #    xform = NonAdiabaticMSW(mix_angles=(self.theta12, self.theta13, self.theta23), mh=MassHierarchy.NORMAL)
-    #
-    #    self.assertTrue(xform.prob_ee(self.t, self.E) == (sin(self.theta12)*cos(self.theta13))**2)
-    #    self.assertTrue(xform.prob_ex(self.t, self.E) == 1. - (sin(self.theta12)*cos(self.theta13))**2)
-    #    self.assertTrue(xform.prob_xx(self.t, self.E) == 0.5*(1. + (sin(self.theta12)*cos(self.theta13))**2))
-    #    self.assertTrue(xform.prob_xe(self.t, self.E) == 0.5*(1. - (sin(self.theta12)*cos(self.theta13))**2))
-    #
-    #    self.assertTrue(xform.prob_eebar(self.t, self.E) == (cos(self.theta12)*cos(self.theta13))**2)
-    #    self.assertTrue(xform.prob_exbar(self.t, self.E) == 1. - (cos(self.theta12)*cos(self.theta13))**2)
-    #    self.assertTrue(xform.prob_xxbar(self.t, self.E) == 0.5*(1. + (cos(self.theta12)*cos(self.theta13))**2))
-    #    self.assertTrue(xform.prob_xebar(self.t, self.E) == 0.5*(1. - (cos(self.theta12)*cos(self.theta13))**2))
-    #
-    #    # Test interface using default mixing angles defined in the submodule.
-    #    mixpars = MixingParameters(MassHierarchy.INVERTED)
-    #    th12, th13, th23 = mixpars.get_mixing_angles()
-    #
-    #    xform = NonAdiabaticMSW(mh=MassHierarchy.INVERTED)
-    #
-    #    self.assertTrue(xform.prob_ee(self.t, self.E) == (sin(th12)*cos(th13))**2)
-    #    self.assertTrue(xform.prob_ex(self.t, self.E) == 1. - (sin(th12)*cos(th13))**2)
-    #    self.assertTrue(xform.prob_xx(self.t, self.E) == 0.5*(1. + (sin(th12)*cos(th13))**2))
-    #    self.assertTrue(xform.prob_xe(self.t, self.E) == 0.5*(1. - (sin(th12)*cos(th13))**2))
-    #
-    #    self.assertTrue(xform.prob_eebar(self.t, self.E) == (cos(th12)*cos(th13))**2)
-    #    self.assertTrue(xform.prob_exbar(self.t, self.E) == 1. - (cos(th12)*cos(th13))**2)
-    #    self.assertTrue(xform.prob_xxbar(self.t, self.E) == 0.5*(1. + (cos(th12)*cos(th13))**2))
-    #    self.assertTrue(xform.prob_xebar(self.t, self.E) == 0.5*(1. - (cos(th12)*cos(th13))**2))
-
+        self.assertEqual(xform.prob_ee(self.t, self.E), (sin(self.theta12)*cos(self.theta13))**2)
+        self.assertEqual(xform.prob_ex(self.t, self.E), 1. - (sin(self.theta12)*cos(self.theta13))**2)
+        self.assertEqual(xform.prob_xx(self.t, self.E), 0.5*(1. + (sin(self.theta12)*cos(self.theta13))**2))
+        self.assertEqual(xform.prob_xe(self.t, self.E), 0.5*(1. - (sin(self.theta12)*cos(self.theta13))**2))
+    
+        self.assertEqual(xform.prob_eebar(self.t, self.E), (cos(self.theta12)*cos(self.theta13))**2)
+        self.assertEqual(xform.prob_exbar(self.t, self.E), 1. - (cos(self.theta12)*cos(self.theta13))**2)
+        self.assertEqual(xform.prob_xxbar(self.t, self.E), 0.5*(1. + (cos(self.theta12)*cos(self.theta13))**2))
+        self.assertEqual(xform.prob_xebar(self.t, self.E), 0.5*(1. - (cos(self.theta12)*cos(self.theta13))**2))
+    
+        # Test interface with default mixing angles defined in the submodule.
+        mixpars = MixingParameters(MassHierarchy.NORMAL)
+        th12, th13, th23 = mixpars.get_mixing_angles()
+    
+        xform = NonAdiabaticMSWH()
+    
+        self.assertEqual(xform.prob_ee(self.t, self.E), (sin(th12)*cos(th13))**2)
+        self.assertEqual(xform.prob_ex(self.t, self.E), 1. - (sin(th12)*cos(th13))**2)
+        self.assertEqual(xform.prob_xx(self.t, self.E), 0.5*(1. + (sin(th12)*cos(th13))**2))
+        self.assertEqual(xform.prob_xe(self.t, self.E), 0.5*(1. - (sin(th12)*cos(th13))**2))
+    
+        self.assertEqual(xform.prob_eebar(self.t, self.E), (cos(th12)*cos(th13))**2)
+        self.assertEqual(xform.prob_exbar(self.t, self.E), 1. - (cos(th12)*cos(th13))**2)
+        self.assertEqual(xform.prob_xxbar(self.t, self.E), 0.5*(1. + (cos(th12)*cos(th13))**2))
+        self.assertEqual(xform.prob_xebar(self.t, self.E), 0.5*(1. - (cos(th12)*cos(th13))**2))
+    
+    def test_nonadiabaticmswh_imo(self):
+        """
+        Nonadiabatic MSW effect with inverted ordering
+        """
+        # Override default mixing angles.
+        xform = NonAdiabaticMSWH(mix_angles=(self.theta12, self.theta13, self.theta23), mh=MassHierarchy.NORMAL)
+    
+        self.assertEqual(xform.prob_ee(self.t, self.E), (sin(self.theta12)*cos(self.theta13))**2)
+        self.assertEqual(xform.prob_ex(self.t, self.E), 1. - (sin(self.theta12)*cos(self.theta13))**2)
+        self.assertEqual(xform.prob_xx(self.t, self.E), 0.5*(1. + (sin(self.theta12)*cos(self.theta13))**2))
+        self.assertEqual(xform.prob_xe(self.t, self.E), 0.5*(1. - (sin(self.theta12)*cos(self.theta13))**2))
+    
+        self.assertEqual(xform.prob_eebar(self.t, self.E), (cos(self.theta12)*cos(self.theta13))**2)
+        self.assertEqual(xform.prob_exbar(self.t, self.E), 1. - (cos(self.theta12)*cos(self.theta13))**2)
+        self.assertEqual(xform.prob_xxbar(self.t, self.E), 0.5*(1. + (cos(self.theta12)*cos(self.theta13))**2))
+        self.assertEqual(xform.prob_xebar(self.t, self.E), 0.5*(1. - (cos(self.theta12)*cos(self.theta13))**2))
+    
+        # Test interface with default mixing angles defined in the submodule.
+        mixpars = MixingParameters(MassHierarchy.INVERTED)
+        th12, th13, th23 = mixpars.get_mixing_angles()
+    
+        xform = NonAdiabaticMSWH(mh=MassHierarchy.INVERTED)
+    
+        self.assertEqual(xform.prob_ee(self.t, self.E), (sin(th12)*cos(th13))**2)
+        self.assertEqual(xform.prob_ex(self.t, self.E), 1. - (sin(th12)*cos(th13))**2)
+        self.assertEqual(xform.prob_xx(self.t, self.E), 0.5*(1. + (sin(th12)*cos(th13))**2))
+        self.assertEqual(xform.prob_xe(self.t, self.E), 0.5*(1. - (sin(th12)*cos(th13))**2))
+    
+        self.assertEqual(xform.prob_eebar(self.t, self.E), (cos(th12)*cos(th13))**2)
+        self.assertEqual(xform.prob_exbar(self.t, self.E), 1. - (cos(th12)*cos(th13))**2)
+        self.assertEqual(xform.prob_xxbar(self.t, self.E), 0.5*(1. + (cos(th12)*cos(th13))**2))
+        self.assertEqual(xform.prob_xebar(self.t, self.E), 0.5*(1. - (cos(th12)*cos(th13))**2))
 
 #    def test_2fd(self):
 #        # Two-flavor decoherence.
