@@ -16,6 +16,7 @@ Contents:
    models
    transformations
    neutrino
+   contributing
 
 
 Indices and tables
