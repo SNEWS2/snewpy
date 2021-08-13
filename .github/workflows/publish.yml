@@ -7,12 +7,9 @@ on:
   push:
     tags: # Sequence of patterns matched against refs/tags
       - 'v*' # Any tag matching v*, e.g. v1.0, v1.2b1
-#   release:
-#     types: [published]
 
 jobs:
   deploy:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -36,3 +33,26 @@ jobs:
         rm -r SNEWPY_models/
         python setup.py sdist bdist_wheel
         twine upload dist/*
+
+    - name: Get Version Number
+      id: get_version
+      run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+    - name: Create Draft Release
+      # Go to https://github.com/SNEWS2/snewpy/releases to edit this draft release and publish it
+      # Once it is published, the release automatically is pushed to Zenodo: https://doi.org/10.5281/zenodo.4498940
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.get_version.outputs.VERSION }}
+        release_name: ${{ steps.get_version.outputs.VERSION }}
+        body: |
+          [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4498940.svg)](https://doi.org/10.5281/zenodo.4498940)
+          (TODO: This DOI always points to the latest version. Replace it with the DOI for this specific release!)
+          
+          List major changes since the last release here: newly added models, new features, etc.
+          If necessary, also list breaking changes: removed features, renamed command line options, new minimum Python version, etc.
+          
+        draft: true
+        prerelease: false

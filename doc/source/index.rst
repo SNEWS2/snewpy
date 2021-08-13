@@ -10,7 +10,12 @@ Contents:
 
 .. toctree::
    :maxdepth: 2
-
+   
+   gettingstarted
+   snowglobes
+   models
+   transformations
+   neutrino
 
 
 Indices and tables

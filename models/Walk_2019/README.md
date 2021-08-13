@@ -1,9 +1,3 @@
-Data from Tamborra et al., taken from the Garching Supernova archive for 40Msun with BH formation:
-(with permission to use the data in snewpy)
+Model from L. Walk, I. Tamborra, H.-T. Janka, A. Summa, D. Kresse, [Neutrino emission characteristics of black hole formation in three-dimensional simulations of stellar collapse](https://arxiv.org/abs/1910.12971), Phys. Rev. D 101:123013, 2019.
 
-https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/data/Walk2019/
-Reference: I. Tamborra et al., Phys. Rev. D 101, 123013 (2020)
-doi:10.1103/PhysRevD.101.123013
-arXiv:1910.12971
-
-NOTE: same file format as Boliig_2016 models
+Data taken from the [Garching Supernova archive](https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/data/Walk2019/) for 40Msun progenitor, with permission to use them within snewpy.

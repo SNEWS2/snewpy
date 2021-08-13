@@ -49,8 +49,7 @@ setup_keywords['use_2to3'] = False
 setup_keywords['packages'] = find_packages('python')
 setup_keywords['package_dir'] = {'': 'python'}
 setup_keywords['cmdclass'] = {'version': SetVersion, 'sdist': DistutilsSdist}
-setup_keywords['test_suite'] = 'tests'
-setup_keywords['tests_require'] = ['pytest']
+setup_keywords['test_suite']='snewpy.test.snewpy_test_suite.snewpy_test_suite'
 
 requires = []
 with open('requirements.txt', 'r') as f:
