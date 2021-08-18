@@ -119,6 +119,10 @@ def skip(app, what, name, obj, would_skip, options):
             # Fornax_2019_3D has additional parameters theta, phi -> should appear in documentation
             return True
 
+    if name in ("prob_ee", "prob_eebar", "prob_ex", "prob_exbar", "prob_xe", "prob_xebar", "prob_xx", "prob_xxbar"):
+        if not obj.__qualname__.startswith("FlavorTransformation"):
+            return True
+
     return None
 
 
