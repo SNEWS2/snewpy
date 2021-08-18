@@ -57,28 +57,12 @@ def get_value(x):
     Returns
     -------
     value : float or ndarray
+    
+    :meta private:
     """
     if type(x) == Quantity:
         return x.value
     return x
-
-
-def get_closest(arr, x):
-    """Get index of closest element in an array to input value.
-
-    Parameters
-    ----------
-    arr : list or ndarray
-        Array of values.
-    x : float or int or str
-        Value to search.
-
-    Returns
-    -------
-    idx : int
-        Index of closest element in the array.
-    """
-    return np.abs(np.asarray(arr) - x).argmin()
 
 
 class SupernovaModel(ABC):
@@ -161,9 +145,8 @@ class SupernovaModel(ABC):
         return oscillatedspectra   
     
 
-class GarchingArchiveModel(SupernovaModel):
-    """Subclass that reads models in the format used in the [Garching Supernova Archive](https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/).
-    """
+class _GarchingArchiveModel(SupernovaModel):
+    """Subclass that reads models in the format used in the [Garching Supernova Archive](https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/)."""
     def __init__(self, filename, eos='LS220'):
         """Initialize model.
 
@@ -615,7 +598,7 @@ class Sukhbold_2015(SupernovaModel):
         return mod + '\n'.join(s)
 
 
-class Tamborra_2014(GarchingArchiveModel):
+class Tamborra_2014(_GarchingArchiveModel):
     """Set up a model based on 3D simulations from [Tamborra et al., PRD 90:045032, 2014](https://arxiv.org/abs/1406.0006). Data files are from the Garching Supernova Archive.
     """
 
@@ -640,7 +623,7 @@ class Tamborra_2014(GarchingArchiveModel):
         return mod + '\n'.join(s)
 
 
-class Bollig_2016(GarchingArchiveModel):
+class Bollig_2016(_GarchingArchiveModel):
     """Set up a model based on simulations from Bollig et al. (2016). Models were taken, with permission, from the Garching Supernova Archive.
     """
     def __str__(self):
@@ -664,7 +647,7 @@ class Bollig_2016(GarchingArchiveModel):
         return mod + '\n'.join(s)
 
       
-class Walk_2018(GarchingArchiveModel):
+class Walk_2018(_GarchingArchiveModel):
     """Set up a model based on SASI-dominated simulations from [Walk et al.,
     PRD 98:123001, 2018](https://arxiv.org/abs/1807.02366). Data files are from
     the Garching Supernova Archive.
@@ -691,7 +674,7 @@ class Walk_2018(GarchingArchiveModel):
         return mod + '\n'.join(s)
 
 
-class Walk_2019(GarchingArchiveModel):
+class Walk_2019(_GarchingArchiveModel):
     """Set up a model based on SASI-dominated simulations from [Walk et al.,
     PRD 101:123013, 2019](https://arxiv.org/abs/1910.12971). Data files are
     from the Garching Supernova Archive.
@@ -1825,7 +1808,8 @@ class SNOwGLoBES:
         fluence : dict
             A dictionary giving fluence at time t, keyed by flavor.
         """
-        idx = get_closest(self.time, t)
+        # Get index of closest element in the array
+        idx = np.abs(np.asarray(self.time) - t).argmin()
 
         fluence = {}
         for k, fl in self.flux.items():
