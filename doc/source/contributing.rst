@@ -23,6 +23,10 @@ To contribute, please clone the GitHub repository, make your changes and
 If you plan larger changes, it’s probably a good idea to open an issue first
 to coordinate our work.
 
+SNEWPY uses the `unittest <https://docs.python.org/3/library/unittest.html>`_
+module for automated testing. Tests will run when you submit a pull request.
+In addition, you can run them manually using ``python -m unittest python/snewpy/test/test_*.py``.
+
 
 Contribute Supernova Models
 ---------------------------
