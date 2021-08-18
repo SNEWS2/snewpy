@@ -11,6 +11,8 @@ To use SNEWPy, first install it using pip:
    $ pip install snewpy
 
 
+.. _sec-download_models:
+
 Download Supernova Models
 -------------------------
 
