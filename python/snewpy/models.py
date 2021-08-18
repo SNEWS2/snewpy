@@ -86,7 +86,14 @@ class SupernovaModel(ABC):
     
     def __init__(self):
         pass
-    
+
+    def __repr__(self):
+        if hasattr(self, "filename"):
+            # self.__class__ will be something like 
+            return f"{self.__class__.__name__}('{self.filename}')"
+        else:
+            return super().__repr__()
+
     @abstractmethod
     def get_time(self):
         """Returns
@@ -363,7 +370,7 @@ class Analytic3Species(SupernovaModel):
 
         return initialspectra
 
-    def __repr__(self):
+    def __str__(self):
         """Default representation of the model.
         """
         mod = 'Analytic Model: {}\n'.format(self.filename)
@@ -477,7 +484,7 @@ class Nakazato_2013(SupernovaModel):
 
         return initialspectra
 
-    def __repr__(self):
+    def __str__(self):
         """Default representation of the model.
         """
         mod = 'Nakazato_2013 Model: {}\n'.format(self.filename)
@@ -587,7 +594,7 @@ class Sukhbold_2015(SupernovaModel):
 
         return initialspectra
 
-    def __repr__(self):
+    def __str__(self):
         """Default representation of the model.
         """
         mod = 'Sukhbold_2015 Model: {}\n'.format(self.filename)
@@ -612,7 +619,7 @@ class Tamborra_2014(GarchingArchiveModel):
     """Set up a model based on 3D simulations from [Tamborra et al., PRD 90:045032, 2014](https://arxiv.org/abs/1406.0006). Data files are from the Garching Supernova Archive.
     """
 
-    def __repr__(self):
+    def __str__(self):
         """Default representation of the model.
         """
         mod = 'Tamborra_2014 Model: {}\n'.format(self.filename)
@@ -636,7 +643,7 @@ class Tamborra_2014(GarchingArchiveModel):
 class Bollig_2016(GarchingArchiveModel):
     """Set up a model based on simulations from Bollig et al. (2016). Models were taken, with permission, from the Garching Supernova Archive.
     """
-    def __repr__(self):
+    def __str__(self):
         """Default representation of the model.
         """
         mod = 'Bollig_2016 Model: {}\n'.format(self.filename)
@@ -663,7 +670,7 @@ class Walk_2018(GarchingArchiveModel):
     the Garching Supernova Archive.
     """
 
-    def __repr__(self):
+    def __str__(self):
         """Default representation of the model.
         """
         mod = 'Walk_2018 Model: {}\n'.format(self.filename)
@@ -690,7 +697,7 @@ class Walk_2019(GarchingArchiveModel):
     from the Garching Supernova Archive.
     """
 
-    def __repr__(self):
+    def __str__(self):
         """Default representation of the model.
         """
         mod = 'Walk_2019 Model: {}\n'.format(self.filename)
@@ -816,7 +823,7 @@ class OConnor_2015(SupernovaModel):
 
         return initialspectra
 
-    def __repr__(self):
+    def __str__(self):
         """Default representation of the model.
         """
         mod = 'OConnor_2015 Model: {}\n'.format(self.filename)
@@ -949,7 +956,7 @@ class Zha_2021(SupernovaModel):
 
         return initialspectra
 
-    def __repr__(self):
+    def __str__(self):
         """Default representation of the model.
         """
         mod = 'Zha_2021 Model: {}\n'.format(self.filename)
@@ -1085,7 +1092,7 @@ class Warren_2020(SupernovaModel):
 
         return initialspectra
 
-    def __repr__(self):
+    def __str__(self):
         """Default representation of the model.
         """
         mod = 'Warren_2020 Model: {}\n'.format(self.filename)
@@ -1205,7 +1212,7 @@ class Kuroda_2020(SupernovaModel):
 
         return initialspectra
 
-    def __repr__(self):
+    def __str__(self):
         """Default representation of the model.
         """
         mod = 'Kuroda_2020 Model: {}\n'.format(self.filename)
@@ -1595,7 +1602,7 @@ class Fornax_2019_3D(SupernovaModel):
 
         return initialspectra
 
-    def __repr__(self):
+    def __str__(self):
         """Default representation of the model.
         """
         mod = 'Fornax 3D Model: {}\n'.format(self.filename)
@@ -1729,7 +1736,7 @@ class Fornax_2021_2D(SupernovaModel):
 
         return initialspectra
 
-    def __repr__(self):
+    def __str__(self):
         """Default representation of the model.
         """
         mod = 'Fornax 2D Model: {}\n'.format(self._h5file.filename)
