@@ -57,28 +57,12 @@ def get_value(x):
     Returns
     -------
     value : float or ndarray
+    
+    :meta private:
     """
     if type(x) == Quantity:
         return x.value
     return x
-
-
-def get_closest(arr, x):
-    """Get index of closest element in an array to input value.
-
-    Parameters
-    ----------
-    arr : list or ndarray
-        Array of values.
-    x : float or int or str
-        Value to search.
-
-    Returns
-    -------
-    idx : int
-        Index of closest element in the array.
-    """
-    return np.abs(np.asarray(arr) - x).argmin()
 
 
 class SupernovaModel(ABC):
@@ -161,9 +145,8 @@ class SupernovaModel(ABC):
         return oscillatedspectra   
     
 
-class GarchingArchiveModel(SupernovaModel):
-    """Subclass that reads models in the format used in the [Garching Supernova Archive](https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/).
-    """
+class _GarchingArchiveModel(SupernovaModel):
+    """Subclass that reads models in the format used in the [Garching Supernova Archive](https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/)."""
     def __init__(self, filename, eos='LS220'):
         """Initialize model.
 
@@ -615,7 +598,7 @@ class Sukhbold_2015(SupernovaModel):
         return mod + '\n'.join(s)
 
 
-class Tamborra_2014(GarchingArchiveModel):
+class Tamborra_2014(_GarchingArchiveModel):
     """Set up a model based on 3D simulations from [Tamborra et al., PRD 90:045032, 2014](https://arxiv.org/abs/1406.0006). Data files are from the Garching Supernova Archive.
     """
 
@@ -640,7 +623,7 @@ class Tamborra_2014(GarchingArchiveModel):
         return mod + '\n'.join(s)
 
 
-class Bollig_2016(GarchingArchiveModel):
+class Bollig_2016(_GarchingArchiveModel):
     """Set up a model based on simulations from Bollig et al. (2016). Models were taken, with permission, from the Garching Supernova Archive.
     """
     def __str__(self):
@@ -664,7 +647,7 @@ class Bollig_2016(GarchingArchiveModel):
         return mod + '\n'.join(s)
 
       
-class Walk_2018(GarchingArchiveModel):
+class Walk_2018(_GarchingArchiveModel):
     """Set up a model based on SASI-dominated simulations from [Walk et al.,
     PRD 98:123001, 2018](https://arxiv.org/abs/1807.02366). Data files are from
     the Garching Supernova Archive.
@@ -691,7 +674,7 @@ class Walk_2018(GarchingArchiveModel):
         return mod + '\n'.join(s)
 
 
-class Walk_2019(GarchingArchiveModel):
+class Walk_2019(_GarchingArchiveModel):
     """Set up a model based on SASI-dominated simulations from [Walk et al.,
     PRD 101:123013, 2019](https://arxiv.org/abs/1910.12971). Data files are
     from the Garching Supernova Archive.
@@ -1273,7 +1256,7 @@ class Fornax_2019_3D(SupernovaModel):
                 fitsfile = filename.replace('h5', 'fits')
 
             if os.path.exists(fitsfile):
-                self.read_fits(fitsfile)
+                self._read_fits(fitsfile)
                 ntim, nene, npix = self.dLdE[Flavor.NU_E].shape
                 self.npix = npix
                 self.nside = hp.npix2nside(npix)
@@ -1298,7 +1281,7 @@ class Fornax_2019_3D(SupernovaModel):
                     for l in range(3):
                         Ylm[l] = {}
                         for m in range(-l, l+1):
-                            Ylm[l][m] = self.real_sph_harm(l, m, thetac, phic)
+                            Ylm[l][m] = self._real_sph_harm(l, m, thetac, phic)
 
                     # Store 3D tables of dL/dE for each flavor.
                     logger = logging.getLogger()
@@ -1339,7 +1322,7 @@ class Fornax_2019_3D(SupernovaModel):
                         self.luminosity[flavor] = np.sum(self.dLdE[flavor] * self.dE[flavor][:,:,np.newaxis], axis=1)
 
                     # Write output to FITS.
-                    self.write_fits(fitsfile, overwrite=True)
+                    self._write_fits(fitsfile, overwrite=True)
         else:
             # Conversion of flavor to key name in the model HDF5 file.
             self._flavorkeys = { Flavor.NU_E : 'nu0',
@@ -1353,7 +1336,7 @@ class Fornax_2019_3D(SupernovaModel):
             # Get grid of model times in seconds.
             self.time = self._h5file['nu0']['g0'].attrs['time'] * u.s
 
-    def read_fits(self, filename):
+    def _read_fits(self, filename):
         """Read cached angular data from FITS.
 
         Parameters
@@ -1380,7 +1363,7 @@ class Fornax_2019_3D(SupernovaModel):
 
             self.luminosity[flavor] = np.sum(self.dLdE[flavor] * self.dE[flavor][:,:,np.newaxis], axis=1)
 
-    def write_fits(self, filename, overwrite=False):
+    def _write_fits(self, filename, overwrite=False):
         """Write angular-dependent calculated flux in FITS format.
 
         Parameters
@@ -1418,7 +1401,7 @@ class Fornax_2019_3D(SupernovaModel):
     def get_time(self):
         return self.time
 
-    def fact(self, n):
+    def _fact(self, n):
         """Calculate n!.
 
         Parameters
@@ -1433,7 +1416,7 @@ class Fornax_2019_3D(SupernovaModel):
         """
         return gamma(n + 1.)
 
-    def real_sph_harm(self, l, m, theta, phi):
+    def _real_sph_harm(self, l, m, theta, phi):
         """Compute orthonormalized real (tesseral) spherical harmonics Y_lm.
 
         Parameters
@@ -1453,13 +1436,13 @@ class Fornax_2019_3D(SupernovaModel):
             Real-valued spherical harmonic function at theta, phi.
         """
         if m < 0:
-            norm = np.sqrt((2*l + 1.)/(2*np.pi)*self.fact(l + m)/self.fact(l - m))
+            norm = np.sqrt((2*l + 1.)/(2*np.pi)*self._fact(l + m)/self._fact(l - m))
             return norm * lpmv(-m, l, np.cos(theta)) * np.sin(-m*phi)
         elif m == 0:
             norm = np.sqrt((2*l + 1.)/(4*np.pi))
             return norm * lpmv(0, l, np.cos(theta)) * np.ones_like(phi)
         else:
-            norm = np.sqrt((2*l + 1.)/(2*np.pi)*self.fact(l - m)/self.fact(l + m))
+            norm = np.sqrt((2*l + 1.)/(2*np.pi)*self._fact(l - m)/self._fact(l + m))
             return norm * lpmv(m, l, np.cos(theta)) * np.cos(m*phi)
 
     def _get_binnedspectra(self, t, theta, phi):
@@ -1524,7 +1507,7 @@ class Fornax_2019_3D(SupernovaModel):
                     # Sum over multipole moments.
                     for l in range(3):
                         for m in range(-l, l + 1):
-                            Ylm = self.real_sph_harm(l, m, theta.to_value('radian'), phi.to_value('radian'))
+                            Ylm = self._real_sph_harm(l, m, theta.to_value('radian'), phi.to_value('radian'))
                             dLdE_j += self._h5file[key]['g{}'.format(ebin)]['l={} m={}'.format(l,m)][j] * Ylm
                     dLdE[ebin] = dLdE_j
 
@@ -1825,7 +1808,8 @@ class SNOwGLoBES:
         fluence : dict
             A dictionary giving fluence at time t, keyed by flavor.
         """
-        idx = get_closest(self.time, t)
+        # Get index of closest element in the array
+        idx = np.abs(np.asarray(self.time) - t).argmin()
 
         fluence = {}
         for k, fl in self.flux.items():

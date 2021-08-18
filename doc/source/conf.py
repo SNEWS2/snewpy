@@ -100,10 +100,35 @@ pygments_style = 'sphinx'
 # If true, keep warnings as "system message" paragraphs in the built documents.
 #keep_warnings = False
 
+
+# -- Options for autodoc/napoleon -----------------------------------------
+
 # Napoleon settings (see https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html)
 napoleon_google_docstring = False
 napoleon_numpy_docstring = True
 napoleon_use_rtype = False
+
+
+def skip(app, what, name, obj, would_skip, options):
+    if name == "get_time":
+        if not obj.__qualname__.startswith("SupernovaModel"):
+            return True
+    if name == "get_initialspectra":
+        containing_class = obj.__qualname__.split(".")[0]
+        if not containing_class in ("SupernovaModel", "Fornax_2019_3D"):
+            # Fornax_2019_3D has additional parameters theta, phi -> should appear in documentation
+            return True
+
+    if name in ("prob_ee", "prob_eebar", "prob_ex", "prob_exbar", "prob_xe", "prob_xebar", "prob_xx", "prob_xxbar"):
+        if not obj.__qualname__.startswith("FlavorTransformation"):
+            return True
+
+    return None
+
+
+def setup(app):
+    app.connect("autodoc-skip-member", skip)
+
 
 # -- Options for HTML output ----------------------------------------------
 

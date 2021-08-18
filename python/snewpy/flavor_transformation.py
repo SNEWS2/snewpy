@@ -18,52 +18,148 @@ class FlavorTransformation(ABC):
     """Generic interface to compute neutrino and antineutrino survival probability."""
 
     @abstractmethod
-    def prob_ee(self):
+    def prob_ee(self, t, E):
         """Electron neutrino survival probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        float or ndarray
+            Transition probability.
         """
         pass
 
     @abstractmethod
-    def prob_ex(self):
+    def prob_ex(self, t, E):
         """X -> e neutrino transition probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        float or ndarray
+            Transition probability.
         """
         pass
 
     @abstractmethod
-    def prob_xx(self):
+    def prob_xx(self, t, E):
         """Flavor X neutrino survival probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        float or ndarray
+            Transition probability.
         """
         pass
 
     @abstractmethod
-    def prob_xe(self):
+    def prob_xe(self, t, E):
         """e -> X neutrino transition probability.
-        """
-        pass    
 
-    @abstractmethod
-    def prob_eebar(self):
-        """Electron antineutrino survival probability.
-        """
-        pass    
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
 
-    @abstractmethod
-    def prob_exbar(self):
-        """X -> e antineutrino transition probability.
-        """
-        pass   
-
-    @abstractmethod
-    def prob_xxbar(self):
-        """X -> X antineutrino survival probability.
+        Returns
+        -------
+        float or ndarray
+            Transition probability.
         """
         pass
 
     @abstractmethod
-    def prob_xebar(self):
-        """e -> X antineutrino transition probability.
+    def prob_eebar(self, t, E):
+        """Electron antineutrino survival probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        float or ndarray
+            Transition probability.
         """
-        pass    
+        pass
+
+    @abstractmethod
+    def prob_exbar(self, t, E):
+        """X -> e antineutrino transition probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        float or ndarray
+            Transition probability.
+        """
+        pass
+
+    @abstractmethod
+    def prob_xxbar(self, t, E):
+        """X -> X antineutrino survival probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        float or ndarray
+            Transition probability.
+        """
+        pass
+
+    @abstractmethod
+    def prob_xebar(self, t, E):
+        """e -> X antineutrino transition probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        float or ndarray
+            Transition probability.
+        """
+        pass
 
 
 class NoTransformation(FlavorTransformation):
@@ -1028,6 +1124,8 @@ class NeutrinoDecay(FlavorTransformation):
         -------
         Gamma : float
             Decay width of the neutrino mass, in units of 1/length.
+
+        :meta private:
         """
         return self.m*c.c / (E*self.tau)
 
