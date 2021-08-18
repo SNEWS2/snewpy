@@ -1,40 +1,37 @@
 # -*- coding: utf-8 -*-
-"""Basic neutrino properties.
-"""
+"""This module implements basic neutrino properties that are used throughout SNEWPY."""
 
 from enum import IntEnum
 from astropy import units as u
 
 
 class MassHierarchy(IntEnum):
-    """Neutrino mass ordering: normal or inverted.
-    """
+    """Neutrino mass ordering: ``NORMAL`` or ``INVERTED``."""
     NORMAL = 1
     INVERTED = 2
 
 
 class Flavor(IntEnum):
-    """Enumeration of CCSN Neutrino flavors.
-    """
+    """Enumeration of CCSN Neutrino flavors."""
     NU_E = 2
     NU_E_BAR = 1
     NU_X = 3
     NU_X_BAR = 0
     
     def to_tex(self):
-        """LaTeX-compatible string representations of flavor.
-        """
-        
+        """LaTeX-compatible string representations of flavor."""
         if '_BAR' in self.name:
             return r'$\overline{{\nu}}_{0}$'.format(self.name[3].lower())
         return r'$\{0}$'.format(self.name.lower())
 
     @property
     def is_electron(self):
+        """Return ``True`` for ``Flavor.NU_E`` and ``Flavor.NU_E_BAR``."""
         return self.value in (Flavor.NU_E.value, Flavor.NU_E_BAR.value)
 
     @property
     def is_neutrino(self):
+        """Return ``True`` for ``Flavor.NU_E`` and ``Flavor.NU_X``."""
         return self.value in (Flavor.NU_E.value, Flavor.NU_X.value)
 
     @property
@@ -43,8 +40,13 @@ class Flavor(IntEnum):
 
 
 class MixingParameters:
-    """Best-fit parameters of the PMNS matrix and mass differences, assuming
-    three neutrino flavors. See www.nu-fit.org for current global fits.
+    """Mixing angles and mass differences, assuming three neutrino flavors.
+    
+    This class contains the default values used throughout SNEWPY, which are
+    based on `NuFIT 5.0 <http://www.nu-fit.org>`_ results from July 2020,
+    published in `JHEP 09 (2020) 178 <https://dx.doi.org/10.1007/JHEP09(2020)178>`_
+    [`arXiv:2007.14792 <https://arxiv.org/abs/2007.14792>`_].
+    Note that the best fit values vary between normal and inverted mass hierarchy.
     """
     def __init__(self, mh=MassHierarchy.NORMAL):
         """Initialize the neutrino mixing parameters.
@@ -85,7 +87,7 @@ class MixingParameters:
         
         Returns
         -------
-        angles : tuple
+        tuple
             Angles theta12, theta13, theta23.
         """
         return (self.theta12, self.theta13, self.theta23)
