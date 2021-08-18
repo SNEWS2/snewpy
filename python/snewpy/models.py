@@ -1273,7 +1273,7 @@ class Fornax_2019_3D(SupernovaModel):
                 fitsfile = filename.replace('h5', 'fits')
 
             if os.path.exists(fitsfile):
-                self.read_fits(fitsfile)
+                self._read_fits(fitsfile)
                 ntim, nene, npix = self.dLdE[Flavor.NU_E].shape
                 self.npix = npix
                 self.nside = hp.npix2nside(npix)
@@ -1298,7 +1298,7 @@ class Fornax_2019_3D(SupernovaModel):
                     for l in range(3):
                         Ylm[l] = {}
                         for m in range(-l, l+1):
-                            Ylm[l][m] = self.real_sph_harm(l, m, thetac, phic)
+                            Ylm[l][m] = self._real_sph_harm(l, m, thetac, phic)
 
                     # Store 3D tables of dL/dE for each flavor.
                     logger = logging.getLogger()
@@ -1339,7 +1339,7 @@ class Fornax_2019_3D(SupernovaModel):
                         self.luminosity[flavor] = np.sum(self.dLdE[flavor] * self.dE[flavor][:,:,np.newaxis], axis=1)
 
                     # Write output to FITS.
-                    self.write_fits(fitsfile, overwrite=True)
+                    self._write_fits(fitsfile, overwrite=True)
         else:
             # Conversion of flavor to key name in the model HDF5 file.
             self._flavorkeys = { Flavor.NU_E : 'nu0',
@@ -1353,7 +1353,7 @@ class Fornax_2019_3D(SupernovaModel):
             # Get grid of model times in seconds.
             self.time = self._h5file['nu0']['g0'].attrs['time'] * u.s
 
-    def read_fits(self, filename):
+    def _read_fits(self, filename):
         """Read cached angular data from FITS.
 
         Parameters
@@ -1380,7 +1380,7 @@ class Fornax_2019_3D(SupernovaModel):
 
             self.luminosity[flavor] = np.sum(self.dLdE[flavor] * self.dE[flavor][:,:,np.newaxis], axis=1)
 
-    def write_fits(self, filename, overwrite=False):
+    def _write_fits(self, filename, overwrite=False):
         """Write angular-dependent calculated flux in FITS format.
 
         Parameters
@@ -1418,7 +1418,7 @@ class Fornax_2019_3D(SupernovaModel):
     def get_time(self):
         return self.time
 
-    def fact(self, n):
+    def _fact(self, n):
         """Calculate n!.
 
         Parameters
@@ -1433,7 +1433,7 @@ class Fornax_2019_3D(SupernovaModel):
         """
         return gamma(n + 1.)
 
-    def real_sph_harm(self, l, m, theta, phi):
+    def _real_sph_harm(self, l, m, theta, phi):
         """Compute orthonormalized real (tesseral) spherical harmonics Y_lm.
 
         Parameters
@@ -1453,13 +1453,13 @@ class Fornax_2019_3D(SupernovaModel):
             Real-valued spherical harmonic function at theta, phi.
         """
         if m < 0:
-            norm = np.sqrt((2*l + 1.)/(2*np.pi)*self.fact(l + m)/self.fact(l - m))
+            norm = np.sqrt((2*l + 1.)/(2*np.pi)*self._fact(l + m)/self._fact(l - m))
             return norm * lpmv(-m, l, np.cos(theta)) * np.sin(-m*phi)
         elif m == 0:
             norm = np.sqrt((2*l + 1.)/(4*np.pi))
             return norm * lpmv(0, l, np.cos(theta)) * np.ones_like(phi)
         else:
-            norm = np.sqrt((2*l + 1.)/(2*np.pi)*self.fact(l - m)/self.fact(l + m))
+            norm = np.sqrt((2*l + 1.)/(2*np.pi)*self._fact(l - m)/self._fact(l + m))
             return norm * lpmv(m, l, np.cos(theta)) * np.cos(m*phi)
 
     def _get_binnedspectra(self, t, theta, phi):
@@ -1524,7 +1524,7 @@ class Fornax_2019_3D(SupernovaModel):
                     # Sum over multipole moments.
                     for l in range(3):
                         for m in range(-l, l + 1):
-                            Ylm = self.real_sph_harm(l, m, theta.to_value('radian'), phi.to_value('radian'))
+                            Ylm = self._real_sph_harm(l, m, theta.to_value('radian'), phi.to_value('radian'))
                             dLdE_j += self._h5file[key]['g{}'.format(ebin)]['l={} m={}'.format(l,m)][j] * Ylm
                     dLdE[ebin] = dLdE_j
 
