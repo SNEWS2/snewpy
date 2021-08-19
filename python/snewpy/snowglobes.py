@@ -1,14 +1,19 @@
 # -*- coding: utf-8 -*-
-"""
-snewpy.scripts.to_snowglobes
-============================
+"""The ``snewpy.snowglobes`` module contains functions for interacting with SNOwGLoBES.
 
-Convert an arbitrary model to SNOwGLoBES format. Based on SNEWPY.py script by
-E. O'Connor and J. P. Kneller. Improved by Segev Benzvi. 
-Arkin Worlikar added the neutrino decay classes
+`SNOwGLoBES <https://github.com/SNOwGLoBES/snowglobes>`_ can estimate detected
+event rates from a given input supernova neutrino flux. It supports many
+different neutrino detectors, detector materials and interaction channels.
+There are three basic steps to using SNOwGLoBES from SNEWPY:
 
-This version will subsample the times in a supernova model, produce energy
-tables expected by SNOwGLoBES, and compress the output into a tarfile.
+* **Generating input files for SNOwGLoBES:**
+    There are two ways to do this, either generate time series or fluence file.
+    (TODO: explain difference)
+    The result is a compressed .tar file containing all individual input files.
+* **Running SNOwGLoBES:**
+    TODO: add description
+* **Collating SNOwGLoBES outputs:**
+    TODO: add description
 """
 
 from __future__ import unicode_literals
@@ -36,7 +41,15 @@ mpl.use('Agg')
 
 
 def generate_time_series(model_path, model_file, model_type, transformation_type, transformation_parameters, d, output_filename, ntbins, deltat):
+    """Generate time series files in SNOwGLoBES format.
 
+    This version will subsample the times in a supernova model, produce energy
+    tables expected by SNOwGLoBES, and compress the output into a tarfile.
+
+    .. warning::
+
+        TODO: Add parameters to docstring.
+    """
     # Chooses model format. model_format_dict associates the model format name with it's class
     model_class_dict = {'Nakazato_2013': Nakazato_2013, 'Sukhbold_2015': Sukhbold_2015, 'Bollig_2016': Bollig_2016, 'OConnor_2015': OConnor_2015, 'Fornax_2021': Fornax_2021_2D, 'Warren_2020': Warren_2020, 'Analytic3Species': Analytic3Species, 'Zha_2021': Zha_2021, 'Tamborra_2014': Tamborra_2014, 'Walk_2018': Walk_2018, 'Walk_2019': Walk_2019}
     model_class = model_class_dict[model_type]
@@ -124,6 +137,15 @@ def generate_time_series(model_path, model_file, model_type, transformation_type
 
 
 def generate_fluence(model_path, model_file, model_type, transformation_type, d, output_filename, tstart=None, tend=None):
+    """Generate fluence files in SNOwGLoBES format.
+
+    This version will subsample the times in a supernova model, produce energy
+    tables expected by SNOwGLoBES, and compress the output into a tarfile.
+
+    .. warning::
+
+        TODO: Add parameters to docstring.
+    """
 
     # Chooses model format. model_format_dict associates the model format name with it's class
     model_class_dict = {'Nakazato_2013': Nakazato_2013, 'Sukhbold_2015': Sukhbold_2015, 'Bollig_2016': Bollig_2016, 'OConnor_2015': OConnor_2015, 'Fornax_2021': Fornax_2021_2D, 'Warren_2020': Warren_2020, 'Analytic3Species': Analytic3Species, 'Zha_2021': Zha_2021, 'Tamborra_2014': Tamborra_2014, 'Walk_2018': Walk_2018, 'Walk_2019': Walk_2019}
@@ -286,21 +308,15 @@ def generate_fluence(model_path, model_file, model_type, transformation_type, d,
     return tfname
 
 
-"""
-snewpy.scripts.run_snowglobes
-=============================
-"""
 
-# Tomer K. Goldhagen
-# Translated from perl to python June 2019
-# Anne Graf
-# Made it Better Summer 2020
-# Takes in input flux files and configures and runs supernova (which outputs calculated rates)
+def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input=all, verbose=False):
+    """Takes in input flux files and configures and runs supernova (which outputs calculated rates).
 
-#for tar file in folder, call go & replace go in master
+    .. warning::
 
+        TODO: More detailed docstring, including parameters & return value
+    """
 
-def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input=all, verbose=False):  # function for entire file
     #Extracts data from tarfile and sets up lists of paths and fluxfilenames for later use
 
     if tarfile.is_tarfile(Models_Path+"/"+Tarball):  # extracts tarfile
@@ -756,20 +772,14 @@ def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input=all, verbose=False): 
                 print('\n'*3)
 
 
-"""
-snewpy.scripts.from_snowglobes
-==============================
-"""
-
-
-logging.getLogger().setLevel(logging.CRITICAL)
-
-# Anne Graf
-# Written & modulized Summer 2020
-# Takes in input flux files and configures and runs supernova (which outputs calculated rates)
-
-
 def collate(Branch, Model_Path, Tarball, detector_input=all, skip_plots=False, return_tables=False, verbose=False, remove_generated_files=True):
+    """Collates SNOwGLoBES output files and generates plots or returns data table.
+
+    .. warning::
+
+        TODO: More detailed docstring, including parameters & return value
+    """
+
     #Determines type of input file
 
     if ".tar.bz2" in str(Tarball):
