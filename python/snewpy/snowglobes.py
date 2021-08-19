@@ -311,7 +311,7 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
 
 
 
-def go(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
+def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     """Takes in input flux files and configures and runs supernova (which outputs calculated rates).
 
     .. warning::
