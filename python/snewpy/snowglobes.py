@@ -40,7 +40,7 @@ from snewpy.neutrino import MassHierarchy
 mpl.use('Agg')
 
 
-def generate_time_series(model_path, model_file, model_type, transformation_type, transformation_parameters, d, output_filename, ntbins, deltat):
+def generate_time_series(model_path, model_type, transformation_type, transformation_parameters, d, output_filename, ntbins, deltat):
     """Generate time series files in SNOwGLoBES format.
 
     This version will subsample the times in a supernova model, produce energy
@@ -58,7 +58,8 @@ def generate_time_series(model_path, model_file, model_type, transformation_type
     flavor_transformation_dict = {'NoTransformation': NoTransformation(), 'AdiabaticMSW_NMO': AdiabaticMSW(mh=MassHierarchy.NORMAL), 'AdiabaticMSW_IMO': AdiabaticMSW(mh=MassHierarchy.INVERTED), 'NonAdiabaticMSWH_NMO': NonAdiabaticMSWH(mh=MassHierarchy.NORMAL), 'NonAdiabaticMSWH_IMO': NonAdiabaticMSWH(mh=MassHierarchy.INVERTED), 'TwoFlavorDecoherence': TwoFlavorDecoherence(), 'ThreeFlavorDecoherence': ThreeFlavorDecoherence(), 'NeutrinoDecay_NMO': NeutrinoDecay(mh=MassHierarchy.NORMAL), 'NeutrinoDecay_IMO': NeutrinoDecay(mh=MassHierarchy.INVERTED)}
     flavor_transformation = flavor_transformation_dict[transformation_type]
 
-    snmodel = model_class(model_path+"/"+model_file)
+    model_dir, model_file = os.path.split(os.path.abspath(model_path))
+    snmodel = model_class(model_path)
 
     # Subsample the model time. Default to 30 time slices.
     tmin = snmodel.get_time()[0]
@@ -90,7 +91,7 @@ def generate_time_series(model_path, model_file, model_type, transformation_type
         tfname = model_file + '.' + transformation_type + \
             '.{:.3f},{:.3f},{:d}-{:.1f}'.format(tmin, tmax, ntbins, d) + 'kpc.tar.bz2'
 
-    with tarfile.open(model_path + tfname, 'w:bz2') as tf:
+    with tarfile.open(os.path.join(model_dir, tfname), 'w:bz2') as tf:
         #creates file in tar archive that gives information on parameters
         output = '\n'.join(map(str, transformation_type)).encode('ascii')
         tf.addfile(tarfile.TarInfo(name='parameterinfo'), io.BytesIO(output))
@@ -133,10 +134,10 @@ def generate_time_series(model_path, model_file, model_type, transformation_type
             info.size = len(output)
             tf.addfile(info, io.BytesIO(output))
 
-    return tfname
+    return os.path.join(model_dir, tfname)
 
 
-def generate_fluence(model_path, model_file, model_type, transformation_type, d, output_filename, tstart=None, tend=None):
+def generate_fluence(model_path, model_type, transformation_type, d, output_filename, tstart=None, tend=None):
     """Generate fluence files in SNOwGLoBES format.
 
     This version will subsample the times in a supernova model, produce energy
@@ -155,7 +156,8 @@ def generate_fluence(model_path, model_file, model_type, transformation_type, d,
     flavor_transformation_dict = {'NoTransformation': NoTransformation(), 'AdiabaticMSW_NMO': AdiabaticMSW(mh=MassHierarchy.NORMAL), 'AdiabaticMSW_IMO': AdiabaticMSW(mh=MassHierarchy.INVERTED), 'NonAdiabaticMSWH_NMO': NonAdiabaticMSWH(mh=MassHierarchy.NORMAL), 'NonAdiabaticMSWH_IMO': NonAdiabaticMSWH(mh=MassHierarchy.INVERTED), 'TwoFlavorDecoherence': TwoFlavorDecoherence(), 'ThreeFlavorDecoherence': ThreeFlavorDecoherence(), 'NeutrinoDecay_NMO': NeutrinoDecay(mh=MassHierarchy.NORMAL), 'NeutrinoDecay_IMO': NeutrinoDecay(mh=MassHierarchy.INVERTED)}
     flavor_transformation = flavor_transformation_dict[transformation_type]
 
-    snmodel = model_class(model_path+"/"+model_file)
+    model_dir, model_file = os.path.split(os.path.abspath(model_path))
+    snmodel = model_class(model_path)
 
     #set the timings up
     #default if inputs are None: full time window of the model
@@ -211,7 +213,7 @@ def generate_fluence(model_path, model_file, model_type, transformation_type, d,
         tfname = model_file + '.' + transformation_type + \
             '.{:.3f},{:.3f},{:d}-{:.1f}'.format(t0, t1, nbin, d) + 'kpc.tar.bz2'
 
-    with tarfile.open(model_path + tfname, 'w:bz2') as tf:
+    with tarfile.open(os.path.join(model_dir, tfname), 'w:bz2') as tf:
         #creates file in tar archive that gives information on parameters
         output = '\n'.join(map(str, transformation_type)).encode('ascii')
         tf.addfile(tarfile.TarInfo(name='parameterinfo'), io.BytesIO(output))
@@ -305,11 +307,11 @@ def generate_fluence(model_path, model_file, model_type, transformation_type, d,
             info.size = len(output)
             tf.addfile(info, io.BytesIO(output))
 
-    return tfname
+    return os.path.join(model_dir, tfname)
 
 
 
-def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input=all, verbose=False):
+def go(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     """Takes in input flux files and configures and runs supernova (which outputs calculated rates).
 
     .. warning::
@@ -319,19 +321,19 @@ def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input=all, verbose=False):
 
     #Extracts data from tarfile and sets up lists of paths and fluxfilenames for later use
 
-    if tarfile.is_tarfile(Models_Path+"/"+Tarball):  # extracts tarfile
+    if tarfile.is_tarfile(tarball_path):  # extracts tarfile
         if (verbose):
             print("Valid Tar file")
-        tar = tarfile.open(Models_Path+"/"+Tarball)
+        tar = tarfile.open(tarball_path)
         TarballFileNames = tar.getnames()
         tar.extractall(path=SNOwGLoBESdir + "/fluxes")
         tar.close()
         if (verbose):
             print("Tar file data extracted")
-    elif zipfile.is_zipfile(Models_Path+"/"+Tarball):  # extracts zipfile
+    elif zipfile.is_zipfile(tarball_path):  # extracts zipfile
         if (verbose):
             print("Valid Zip file")
-        zip = zipfile.ZipFile(Models_Path+"/"+Tarball)
+        zip = zipfile.ZipFile(tarball_path)
         TarballFileNames = zip.namelist()
         for fileName in TarballFileNames:
             if str(fileName)[0] == "." or str(fileName)[0] == "_":
@@ -671,7 +673,7 @@ def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input=all, verbose=False):
         percent_calc = (position/total)*100
         percentage_done = str(round(percent_calc, 2))
 
-        if detector_input == all:
+        if detector_input == "all":
             if (verbose):
                 print("Running all detectors")
             if format_globes_for_supernova(IndividualFluxFile, "water", "icecube", "weight") == "Complete":
@@ -772,29 +774,30 @@ def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input=all, verbose=False):
                 print('\n'*3)
 
 
-def collate(Branch, Model_Path, Tarball, detector_input=all, skip_plots=False, return_tables=False, verbose=False, remove_generated_files=True):
+def collate(Branch, tarball_path, detector_input="all", skip_plots=False, return_tables=False, verbose=False, remove_generated_files=True):
     """Collates SNOwGLoBES output files and generates plots or returns data table.
 
     .. warning::
 
         TODO: More detailed docstring, including parameters & return value
     """
+    model_dir, tarball = os.path.split(os.path.abspath(tarball_path))
 
     #Determines type of input file
 
-    if ".tar.bz2" in str(Tarball):
-        outputnamestem = Tarball[0:str(Tarball).rfind(".tar.bz2")]
-        tar = tarfile.open(Model_Path+"/"+Tarball)
+    if ".tar.bz2" in str(tarball):
+        outputnamestem = tarball[0:str(tarball).rfind(".tar.bz2")]
+        tar = tarfile.open(tarball_path)
         TarballFileNames = tar.getnames()
         tar.close()
-    elif ".tar.gz" in str(Tarball):
-        outputnamestem = Tarball[0:str(Tarball).rfind(".tar.gz")]
-        tar = tarfile.open(Model_Path+"/"+Tarball)
+    elif ".tar.gz" in str(tarball):
+        outputnamestem = tarball[0:str(tarball).rfind(".tar.gz")]
+        tar = tarfile.open(tarball_path)
         TarballFileNames = tar.getnames()
         tar.close()
-    elif ".zip" in str(Tarball):
-        outputnamestem = Tarball[0:str(Tarball).rfind(".zip")]
-        zip = zipfile.ZipFile(Model_Path+"/"+Tarball)
+    elif ".zip" in str(tarball):
+        outputnamestem = tarball[0:str(tarball).rfind(".zip")]
+        zip = zipfile.ZipFile(tarball_path)
         TarballFileNames = zip.namelist()
         zip.close()
     else:
@@ -971,7 +974,7 @@ def collate(Branch, Model_Path, Tarball, detector_input=all, skip_plots=False, r
         if (skip_plots is False):
             r = 0
 
-            if detector_input == all:  # aka all detectors are being run, not a specific one
+            if detector_input == "all":  # aka all detectors are being run, not a specific one
                 relevant_list = arg
             else:
                 relevant_list = sum_categories
@@ -1037,7 +1040,7 @@ def collate(Branch, Model_Path, Tarball, detector_input=all, skip_plots=False, r
 
     #The driver, runs through the addition function for every detector
     #The values at the end correspond to the different categories that each file is being summed into
-    if detector_input == all:
+    if detector_input == "all":
         for single_flux in FluxFileNameStems:
             for smearval in smearvals:
                 add_funct(str(single_flux), "wc100kt15prct", smearval, "nc_", "*_e_", "ibd", "nue_O16", "nuebar_O16")  # everything after smearval corresponds to a *arg value
@@ -1097,7 +1100,7 @@ def collate(Branch, Model_Path, Tarball, detector_input=all, skip_plots=False, r
 
     #Now create tarball output
     #Makes a tarfile with the condensed data files and plots
-    tar = tarfile.open(Model_Path + "/" + outputnamestem + "_SNOprocessed.tar.gz", "w:gz")
+    tar = tarfile.open(model_dir + "/" + outputnamestem + "_SNOprocessed.tar.gz", "w:gz")
     for file in os.listdir(Branch + "/out"):
         if "Collated" in str(file):
             tar.add(Branch + "/out/" + file, arcname=outputnamestem+'_SNOprocessed/'+file)
