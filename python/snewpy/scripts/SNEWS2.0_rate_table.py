@@ -4,14 +4,13 @@ from argparse import ArgumentParser
 from snewpy import to_snowglobes
 from snewpy import run_snowglobes
 from snewpy import from_snowglobes
-import tarfile
 import numpy as np
 import os
 from astropy.io import ascii
 
 home_directory = os.getcwd()
-SNOwGLoBES_path = "/Users/evanoc/Documents/GitHub/snowglobes/" #where snowglobes is located
-SNEWPY_models_base = "/Users/evanoc/Documents/GitHub/supernova_models/models/" #where models (aka input for to_snowglobes) is located
+SNOwGLoBES_path = "/path/to/snowglobes/"
+SNEWPY_models_base = "/path/to/snewpy/models/"
 
 d=10
 
@@ -131,11 +130,11 @@ for experiment in range(len(data['Experiment'])):
     
 #Hacking in different numbers
 
-#IceCube, the effective mass in SNOwGLoBES is artificially high.  This is because the
+#For IceCube, the effective mass in SNOwGLoBES is artificially high.  This is because the
 #non-standard energy dependence is handled through the efficiencies.  To get an effective
-#mass we take the ratio of the total weighted events to the unweigthed events and multiply
-#the unweigthed mass (the entry in SNOwGLoBES), see below for details.  Here we take the
-#effective mass of the s27 normal scenerio and discuss the range in the table caption
+#mass we take the ratio of the total weighted events to the unweighted events and multiply
+#the unweighted mass (the entry in SNOwGLoBES), see below for details.  Here we take the
+#effective mass of the s27 normal scenario and discuss the range in the table caption
 
 dettype='icecube'
 mass=51600
