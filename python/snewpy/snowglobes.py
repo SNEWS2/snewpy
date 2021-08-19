@@ -40,7 +40,7 @@ from snewpy.neutrino import MassHierarchy
 mpl.use('Agg')
 
 
-def generate_time_series(model_path, model_type, transformation_type, transformation_parameters, d, output_filename, ntbins, deltat):
+def generate_time_series(model_path, model_type, transformation_type, d, output_filename, ntbins, deltat):
     """Generate time series files in SNOwGLoBES format.
 
     This version will subsample the times in a supernova model, produce energy
