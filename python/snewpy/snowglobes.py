@@ -23,7 +23,6 @@ import io
 import logging
 import os
 import re
-import shutil
 import tarfile
 import zipfile
 from subprocess import call
@@ -40,7 +39,7 @@ from snewpy.neutrino import MassHierarchy
 mpl.use('Agg')
 
 
-def generate_time_series(model_path, model_type, transformation_type, d, output_filename, ntbins, deltat):
+def generate_time_series(model_path, model_type, transformation_type, d, output_filename=None, ntbins=30, deltat=None):
     """Generate time series files in SNOwGLoBES format.
 
     This version will subsample the times in a supernova model, produce energy
@@ -58,7 +57,7 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
         Distance to supernova in kpc.
     output_filename : str or None
         Name of output file. If ``None``, will be based on input file name.
-    ntbins : int or None
+    ntbins : int
         Number of time slices. Will be ignored if ``deltat`` is also given.
     deltat : astropy.Quantity or None
         Length of time slices.
@@ -84,10 +83,7 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
     tmax = snmodel.get_time()[-1]
     if deltat is not None:
         dt = deltat
-    elif ntbins is not None:
-        dt = (tmax - tmin) / (ntbins+1)
     else:
-        ntbins = 30
         dt = (tmax - tmin) / (ntbins+1)
 
     tedges = np.arange(tmin, tmax, dt)
@@ -155,7 +151,7 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
     return os.path.join(model_dir, tfname)
 
 
-def generate_fluence(model_path, model_type, transformation_type, d, output_filename, tstart=None, tend=None):
+def generate_fluence(model_path, model_type, transformation_type, d, output_filename=None, tstart=None, tend=None):
     """Generate fluence files in SNOwGLoBES format.
 
     This version will subsample the times in a supernova model, produce energy
