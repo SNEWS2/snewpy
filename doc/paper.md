@@ -82,10 +82,10 @@ written in Python, is built upon numpy [@vanderWalt:2011bqk] and scipy
 ![Flowchart showing the complete SNEWPY pipeline.\label{fig:flowchart}](snewpy-flowchart.pdf)
 
 SNEWPY consists of three main modules that together form a complete
-simulation pipeline (see figure \autoref{fig:flowchart}).
-The first module, `snewpy.models`, interfaces with supernova
-simulation data sets to extract the neutrino emission produced in the supernova
-as a function of time, energy, angle, and neutrino flavor.
+simulation pipeline (see \autoref{fig:flowchart}).
+The first module, `snewpy.models`, interfaces with supernova simulation data
+sets in different formats to extract the neutrino emission produced in the
+supernova as a function of time, energy, angle, and neutrino flavor.
 The `snewpy.flavor_transformation` module then
 convolves the neutrino spectra with a prescription for neutrino flavor
 transformation in the mantle of the star and during propagation to Earth.
@@ -96,7 +96,8 @@ run the generated data files through all neutrino detector models available in
 SNOwGLoBES to compute expected event rates before collating the
 output from SNOwGLoBES into a signal data file per detector per interaction channel.
 
-Instead of running the complete pipeline, SNEWPY’s modular design means it is easily integrated into other software.
+Instead of using it as a complete simulation pipeline, SNEWPY can also be
+integrated into other software thanks to its modular design.
 For example, the supernova event generator sntools [@Migenda2021], recently
 incorporated SNEWPY as a dependency to provide access to a broad range of
 supernova models and flavor transformations.
