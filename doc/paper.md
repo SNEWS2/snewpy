@@ -45,7 +45,7 @@ affiliations:
     index: 6
   - name: Georgia Institute of Technology, Atlanta, GA, USA
     index: 7
-date: 12 August 2021
+date: 20 August 2021
 bibliography: paper.bib
 
 # Optional fields if submitting to a AAS journal too, see this blog post:
@@ -79,18 +79,20 @@ written in Python, is built upon numpy [@vanderWalt:2011bqk] and scipy
 [@Virtanen:2019joe], and makes use of astropy [@Astropy:2013muo;
 @Price-Whelan:2018hus] for model I/O and unit conversions.
 
+![Flowchart showing the complete SNEWPY pipeline.\label{fig:flowchart}](snewpy-flowchart.pdf)
+
 SNEWPY provides a number of functions that together form a complete
-simulation pipeline.  The software is able to interface with supernova
+simulation pipeline (see figure \autoref{fig:flowchart}). The software is able to interface with supernova
 simulation data sets to extract the neutrino emission as a function of time,
-energy, angle, and neutrino flavor from the proto-neutron star. It then
+energy, angle, and neutrino flavor from the proto-neutron star (`snewpy.models`). It then
 convolves the neutrino spectra with a prescription for neutrino flavor
-transformation in the mantle of the star and during propagation to Earth. Using the SNOwGLoBES data
+transformation in the mantle of the star and during propagation to Earth (`snewpy.flavor_transformation`). Using the SNOwGLoBES data
 format, it then generates either a time series of neutrino spectra at Earth
 - the neutrinocurve - or the spectral fluence. SNEWPY is also able to
 interface with SNOwGLoBES itself, and can run the neutrinocurve or fluence
 data files through all the different neutrino detector models available in
 SNOwGLoBES to compute expected event rates.  SNEWPY will then collate the
-output from SNOwGLoBES into a signal data file per detector per signal.
+output from SNOwGLoBES into a signal data file per detector per signal (`snewpy.snowglobes`).
 Finally, SNEWPY is easily integrated into other software, such as the
 supernova event generator sntools [@Migenda2021], which recently
 incorporated SNEWPY as a dependency to provide access to a broad range of
