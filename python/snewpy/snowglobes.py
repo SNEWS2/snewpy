@@ -46,9 +46,27 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
     This version will subsample the times in a supernova model, produce energy
     tables expected by SNOwGLoBES, and compress the output into a tarfile.
 
-    .. warning::
+    Parameters
+    ----------
+    model_path : str
+        Input file containing neutrino flux information from supernova model.
+    model_type : str
+        Format of input file. See snewpy.models documentation for possible values.
+    transformation_type : str
+        Name of flavor transformation. See snewpy.flavor_transformation documentation for possible values.
+    d : int or float
+        Distance to supernova in kpc.
+    output_filename : str or None
+        Name of output file. If ``None``, will be based on input file name.
+    ntbins : int or None
+        Number of time slices. Will be ignored if ``deltat`` is also given.
+    deltat : astropy.Quantity or None
+        Length of time slices.
 
-        TODO: Add parameters to docstring.
+    Returns
+    -------
+    str
+        Path of compressed .tar file with neutrino flux data.
     """
     # Chooses model format. model_format_dict associates the model format name with it's class
     model_class_dict = {'Nakazato_2013': Nakazato_2013, 'Sukhbold_2015': Sukhbold_2015, 'Bollig_2016': Bollig_2016, 'OConnor_2015': OConnor_2015, 'Fornax_2021': Fornax_2021_2D, 'Warren_2020': Warren_2020, 'Analytic3Species': Analytic3Species, 'Zha_2021': Zha_2021, 'Tamborra_2014': Tamborra_2014, 'Walk_2018': Walk_2018, 'Walk_2019': Walk_2019}
@@ -143,9 +161,27 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
     This version will subsample the times in a supernova model, produce energy
     tables expected by SNOwGLoBES, and compress the output into a tarfile.
 
-    .. warning::
+    Parameters
+    ----------
+    model_path : str
+        Input file containing neutrino flux information from supernova model.
+    model_type : str
+        Format of input file. See snewpy.models documentation for possible values.
+    transformation_type : str
+        Name of flavor transformation. See snewpy.flavor_transformation documentation for possible values.
+    d : int or float
+        Distance to supernova in kpc.
+    output_filename : str or None
+        Name of output file. If ``None``, will be based on input file name.
+    tstart : astropy.Quantity or None
+        Start of time interval to integrate over.
+    tend : astropy.Quantity or None
+        End of time interval to integrate over.
 
-        TODO: Add parameters to docstring.
+    Returns
+    -------
+    str
+        Path of compressed .tar file with neutrino flux data.
     """
 
     # Chooses model format. model_format_dict associates the model format name with it's class
@@ -314,9 +350,16 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
 def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     """Takes in input flux files and configures and runs supernova (which outputs calculated rates).
 
-    .. warning::
-
-        TODO: More detailed docstring, including parameters & return value
+    Parameters
+    ----------
+    SNOwGLoBESdir : str
+        Path to directory where SNOwGLoBES is installed.
+    tarball_path : str
+        Path of compressed .tar file produced e.g. by ``generate_time_series()`` or ``generate_fluence()``.
+    detector_input : str
+        Name of detector. If ``"all"``, will use all detectors supported by SNOwGLoBES.
+    verbose : bool
+        Whether to generate verbose output, e.g. for debugging.
     """
 
     #Extracts data from tarfile and sets up lists of paths and fluxfilenames for later use
@@ -779,7 +822,29 @@ def collate(Branch, tarball_path, detector_input="all", skip_plots=False, return
 
     .. warning::
 
-        TODO: More detailed docstring, including parameters & return value
+        TODO: Complete description of parameters & return value
+
+    Parameters
+    ----------
+    Branch : ?
+        TODO: add type and description
+    tarball_path : str
+        Path of compressed .tar file produced e.g. by ``generate_time_series()`` or ``generate_fluence()``.
+    detector_input : str
+        Name of detector. If ``"all"``, will use all detectors supported by SNOwGLoBES.
+    skip_plots: bool
+        TODO: add description
+    return_tables: bool
+        TODO: add description
+    verbose : bool
+        Whether to generate verbose output, e.g. for debugging.
+    remove_generated_files: bool
+        TODO: add description
+
+    Returns
+    -------
+    ? or None
+        If ``return_tables`` is set to ``True``, return … (TODO: describe format of returned data)
     """
     model_dir, tarball = os.path.split(os.path.abspath(tarball_path))
 
