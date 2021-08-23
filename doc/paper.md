@@ -45,7 +45,7 @@ affiliations:
     index: 6
   - name: Georgia Institute of Technology, Atlanta, GA, USA
     index: 7
-date: 20 August 2021
+date: 23 August 2021
 bibliography: paper.bib
 
 # Optional fields if submitting to a AAS journal too, see this blog post:
@@ -65,10 +65,11 @@ explosions of massive stars, nuclear physics under extreme conditions, and
 the fundamental properties of neutrinos. However there is a large gulf
 between supernova simulations and the corresponding signals in detectors,
 making comparisons between theory and observation, as well as between
-different detectors, very difficult. The SNEWPY code connects supernova
-simulations with the SNOwGLoBES software [@SNOwGLoBES], allowing users to
-easily calculate expected event rates from many supernova models in many
-different neutrino detectors. 
+different detectors, very difficult. SNEWPY offers a unified interface for
+hundreds of supernova simulations, a large library of flux transformations on
+the way towards the detector, and an interface to SNOwGLoBES [@SNOwGLoBES],
+allowing users to easily calculate expected event rates from many supernova
+models in many different neutrino detectors. 
 
 # Statement of need
 
