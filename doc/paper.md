@@ -118,7 +118,9 @@ supernova neutrinos.
 # Acknowledgements
 
 This work was supported at NC State by U.S. Department of Energy grant
-DE-FG02-02ER41216. The University of Rochester group acknowledges support
-from the U.S. National Science Foundation under award number 1914426.
+DE-FG02-02ER41216. The University of Rochester group acknowledges
+support from the U.S. National Science Foundation under award number
+1914426. This work was supported at Stockholm University by the
+Swedish Research Council (Project No. 2020-00452).
 
 # References
