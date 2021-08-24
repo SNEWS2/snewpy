@@ -93,18 +93,9 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
     # Generate output.
     if output_filename is not None:
         tfname = output_filename + 'kpc.tar.bz2'
-    elif '.fits' in model_file:
-        tfname = model_file.replace('.fits', '.' + transformation_type +
-                                    '.{:.3f},{:.3f},{:d}-{:.1f}'.format(tmin, tmax, ntbins, d) + 'kpc.tar.bz2')
-    elif '.dat' in model_file:
-        tfname = model_file.replace('.dat', '.' + transformation_type +
-                                    '.{:.3f},{:.3f},{:d}-{:.1f}'.format(tmin, tmax, ntbins, d) + 'kpc.tar.bz2')
-    elif '.h5' in model_file:
-        tfname = model_file.replace('.h5', '.' + transformation_type +
-                                    '.{:.3f},{:.3f},{:d}-{:.1f}'.format(tmin, tmax, ntbins, d) + 'kpc.tar.bz2')
     else:
-        tfname = model_file + '.' + transformation_type + \
-            '.{:.3f},{:.3f},{:d}-{:.1f}'.format(tmin, tmax, ntbins, d) + 'kpc.tar.bz2'
+        model_file_root, _ = os.path.splitext(model_file)  # strip extension (if present)
+        tfname = model_file_root + '.' + transformation_type + '.{:.3f},{:.3f},{:d}-{:.1f}'.format(tmin, tmax, ntbins, d) + 'kpc.tar.bz2'
 
     with tarfile.open(os.path.join(model_dir, tfname), 'w:bz2') as tf:
         #creates file in tar archive that gives information on parameters
@@ -143,22 +134,10 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
             output = '\n'.join(table).encode('ascii')
 
             extension = ".dat"
-            filename = model_file.replace('.fits', '.tbin{:01d}.'.format(i+1) + transformation_type +
-                                          '.{:.3f},{:.3f},{:01d}-{:.1f}kpc{}'.format(tmin/u.s, tmax/u.s, ntbins, d, extension))
-
-            if '.fits' in model_file:
-                filename = model_file.replace('.fits', '.tbin{:01d}.'.format(i+1) + transformation_type +
-                                                  '.{:.3f},{:.3f},{:01d}-{:.1f}kpc{}'.format(tmin/u.s, tmax/u.s, ntbins, d, extension))
-            elif '.dat' in model_file:
-                filename = model_file.replace('.dat', '.tbin{:01d}.'.format(i+1) + transformation_type +
-                                                  '.{:.3f},{:.3f},{:01d}-{:.1f}kpc{}'.format(tmin/u.s, tmax/u.s, ntbins, d, extension))
-            elif '.h5' in model_file:
-                filename = model_file.replace('.h5', '.tbin{:01d}.'.format(i+1) + transformation_type +
-                                                  '.{:.3f},{:.3f},{:01d}-{:.1f}kpc{}'.format(tmin/u.s, tmax/u.s, ntbins, d, extension))                
-            else:
-                filename = model_file+'.tbin{:01d}.'.format(i+1) + transformation_type + \
+            model_file_root, _ = os.path.splitext(model_file)
+            filename = model_file_root + '.tbin{:01d}.'.format(i+1) + transformation_type + \
                 '.{:.3f},{:.3f},{:01d}-{:.1f}kpc{}'.format(tmin/u.s, tmax/u.s, ntbins, d, extension)
-            
+
             info = tarfile.TarInfo(name=filename)
             info.size = len(output)
             tf.addfile(info, io.BytesIO(output))
@@ -247,18 +226,9 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
     # Generate output.
     if output_filename is not None:
         tfname = output_filename+'.tar.bz2'
-    elif '.fits' in model_file:
-        tfname = model_file.replace('.fits', '.' + transformation_type +
-                                    '.{:.3f},{:.3f},{:d}-{:.1f}'.format(t0, t1, nbin, d) + 'kpc.tar.bz2')
-    elif '.dat' in model_file:
-        tfname = model_file.replace('.dat', '.' + transformation_type +
-                                    '.{:.3f},{:.3f},{:d}-{:.1f}'.format(t0, t1, nbin, d) + 'kpc.tar.bz2')
-    elif '.h5' in model_file:
-        tfname = model_file.replace('.h5', '.' + transformation_type +
-                                    '.{:.3f},{:.3f},{:d}-{:.1f}'.format(t0, t1, nbin, d) + 'kpc.tar.bz2')
     else:
-        tfname = model_file + '.' + transformation_type + \
-            '.{:.3f},{:.3f},{:d}-{:.1f}'.format(t0, t1, nbin, d) + 'kpc.tar.bz2'
+        model_file_root, _ = os.path.splitext(model_file)  # strip extension (if present)
+        tfname = model_file_root + '.' + transformation_type + '.{:.3f},{:.3f},{:d}-{:.1f}'.format(t0, t1, nbin, d) + 'kpc.tar.bz2'
 
     with tarfile.open(os.path.join(model_dir, tfname), 'w:bz2') as tf:
         #creates file in tar archive that gives information on parameters
@@ -336,18 +306,9 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
                     filename = output_filename+"_"+str(i)+extension
                 else:
                     filename = output_filename+extension
-            elif '.fits' in model_file:
-                filename = model_file.replace('.fits', '.tbin{:01d}.'.format(i+1) + transformation_type +
-                                              '.{:.3f},{:.3f},{:01d}-{:.1f}kpc{}'.format(t0, t1, nbin, d, extension))
-            elif '.dat' in model_file:
-                filename = model_file.replace('.dat', '.tbin{:01d}.'.format(i+1) + transformation_type +
-                                              '.{:.3f},{:.3f},{:01d}-{:.1f}kpc{}'.format(t0, t1, nbin, d, extension))
-            elif '.h5' in model_file:
-                filename = model_file.replace('.h5', '.tbin{:01d}.'.format(i+1) + transformation_type +
-                                              '.{:.3f},{:.3f},{:01d}-{:.1f}kpc{}'.format(t0, t1, nbin, d, extension))
             else:
-                filename = model_file + \
-                    '.tbin{:01d}.'.format(i+1) + transformation_type + \
+                model_file_root, _ = os.path.splitext(model_file)  # strip extension (if present)
+                filename = model_file_root + '.tbin{:01d}.'.format(i+1) + transformation_type + \
                     '.{:.3f},{:.3f},{:01d}-{:.1f}kpc{}'.format(t0, t1, nbin, d, extension)
 
             info = tarfile.TarInfo(name=filename)
