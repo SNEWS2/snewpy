@@ -1066,10 +1066,10 @@ def collate(Branch, tarball_path, detector_input="all", skip_plots=False, return
                     name = r'${\nu}_x+e^-$'
                 elif arg[r] == "nc_":
                     name = "Neutral Current"
-                elif arg[r] == "Pb208_1n":
-                    name = r'${}^{208}Pb$' + " 1n"
-                elif arg[r] == "Pb208_2n":
-                    name = r'${}^{208}Pb$' + " 2n"
+                elif arg[r] == "nue_Pb208_1n":
+                    name = r'${\nu}_e {}^{208}Pb$' + " 1n"
+                elif arg[r] == "nue_Pb208_2n":
+                    name = r'${\nu}_e {}^{208}Pb$' + " 2n"
                 elif arg[r] == "nue_O16":
                     name = r'${\nu}_e$' + " " + r'${}^{16}O$'
                 elif arg[r] == "nuebar_O16":
@@ -1122,8 +1122,8 @@ def collate(Branch, tarball_path, detector_input="all", skip_plots=False, return
                 add_funct(str(single_flux), "wc100kt15prct", smearval, "nc_", "*_e_", "ibd", "nue_O16", "nuebar_O16")  # everything after smearval corresponds to a *arg value
                 add_funct(str(single_flux), "wc100kt30prct", smearval, "nc_", "*_e_", "ibd", "nue_O16", "nuebar_O16")
                 add_funct(str(single_flux), "wc100kt30prct_he", smearval, "nc_", "*_e_", "ibd", "nue_O16", "nuebar_O16")
-                add_funct(str(single_flux), "halo1", smearval, "nc_", "*_e_", "Pb208_1n", "Pb208_2n")
-                add_funct(str(single_flux), "halo2", smearval, "nc_", "*_e_", "Pb208_1n", "Pb208_2n")
+                add_funct(str(single_flux), "halo1", smearval, "nc_", "*_e_", "nue_Pb208_1n", "nue_Pb208_2n")
+                add_funct(str(single_flux), "halo2", smearval, "nc_", "*_e_", "nue_Pb208_1n", "nue_Pb208_2n")
                 add_funct(str(single_flux), "ar40kt_eve", smearval, "nc_", "*_e_", "nue_Ar40", "nuebar_Ar40")
                 add_funct(str(single_flux), "ar40kt_he", smearval, "nc_", "*_e_", "nue_Ar40", "nuebar_Ar40")
                 add_funct(str(single_flux), "icecube", smearval, "nc_", "*_e_", "ibd", "nue_O16", "nuebar_O16")
@@ -1150,7 +1150,7 @@ def collate(Branch, tarball_path, detector_input="all", skip_plots=False, return
                 if detector_input in ("wc100kt15prct", "wc100kt30prct", "wc100kt30prct_he", "icecube", "hyperk30prct", "km3net"):
                     sum_categories = ["nc_", "*_e_", "ibd", "nue_O16", "nuebar_O16"]
                 elif detector_input in ("halo1", "halo2"):
-                    sum_categories = ["nc_", "*_e_", "Pb208_1n", "Pb208_2n"]
+                    sum_categories = ["nc_", "*_e_", "nue_Pb208_1n", "nue_Pb208_2n"]
                 elif detector_input in ("ar40kt", "ar40kt_he"):
                     sum_categories = ["nc_", "*_e_", "nue_Ar40", "nuebar_Ar40"]
                 elif detector_input in ("scint20kt"):
