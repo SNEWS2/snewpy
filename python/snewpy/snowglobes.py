@@ -637,16 +637,13 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
             else:
                 NumTargetFactor = float(NumTargetFactordraft)
 
-            # Writes modified UNWEIGHT to WEIGHTED
-
+            # Write weighted file
+            # This applies the weighting factor to unweighted data and reformats a few lines for consistency
             UnweightFileName = "{0}/out/{1}_{2}_{3}_events{4}_unweighted.dat".format(
                 SNOwGLoBESdir, FluxNameStem, ChanName, ExpConfigName, smear_input)
             WeightedFileName = "{0}/out/{1}_{2}_{3}_events{4}_weighted.dat".format(
                 SNOwGLoBESdir, FluxNameStem, ChanName, ExpConfigName, smear_input)
 
-            UNWEIGHT = open(UnweightFileName)
-
-            #This applies the weighting factor, and reformates a few lines for consistency
             with open(UnweightFileName, "r") as f:
                 WEIGHT = open(WeightedFileName, "w")
                 for line in f:
@@ -692,80 +689,51 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
             if (verbose):
                 print("Running all detectors")
             if format_globes_for_supernova(IndividualFluxFile, "water", "icecube", "weight") == "Complete":
-                if (verbose):
-                    os.system('echo "Finished {0}||icecube"'.format(IndividualFluxFile))
-                if (verbose):
-                    print('')
-            # each of these calls the subroutine with varying
+                if verbose:
+                    print("Finished {0}||icecube".format(IndividualFluxFile))
             if format_globes_for_supernova(IndividualFluxFile, "water", "wc100kt30prct", "weight") == "Complete":
-                if (verbose):
-                    os.system('echo "Finished {0}||wc100kt30prct"'.format(IndividualFluxFile)
-                              )          # settings and echoes a completion confirmation
-                if (verbose):
-                    print('')
+                if verbose:
+                    print("Finished {0}||wc100kt30prct".format(IndividualFluxFile))
             #if format_globes_for_supernova(IndividualFluxFile, "water", "wc100kt30prct_he", "weight") == "Complete":
-                #if (verbose): os.system('echo "Finished {0}||wc100kt30prct_he"'.format(IndividualFluxFile))
-                #if (verbose): print('')
+                # if verbose: print("Finished {0}||wc100kt30prct_he".format(IndividualFluxFile))
             if format_globes_for_supernova(IndividualFluxFile, "water", "wc100kt15prct", "weight") == "Complete":
-                if (verbose):
-                    os.system('echo "Finished {0}||wc100kt15prct"'.format(IndividualFluxFile))
-                if (verbose):
-                    print('')
+                if verbose:
+                    print("Finished {0}||wc100kt15prct".format(IndividualFluxFile))
             #if format_globes_for_supernova(IndividualFluxFile, "water", "hyperk30prct", "weight") == "Complete": #not working
-                #if (verbose): os.system('echo "Finished {0}||hyperk30prct"'.format(IndividualFluxFile))
-                #if (verbose): print('')
+                # if verbose: print("Finished {0}||hyperk30prct".format(IndividualFluxFile))
             if format_globes_for_supernova(IndividualFluxFile, "argon", "ar40kt", "weight") == "Complete":
-                if (verbose):
-                    os.system('echo "Finished {0}||ar40kt"'.format(IndividualFluxFile))
-                if (verbose):
-                    print('')
+                if verbose:
+                    print("Finished {0}||ar40kt".format(IndividualFluxFile))
             if format_globes_for_supernova(IndividualFluxFile, "lead", "halo1", "weight") == "Complete":
-                if (verbose):
-                    os.system('echo "Finished {0}||halo1"'.format(IndividualFluxFile))
-                if (verbose):
-                    print('')
+                if verbose:
+                    print("Finished {0}||halo1".format(IndividualFluxFile))
             if format_globes_for_supernova(IndividualFluxFile, "lead", "halo2", "weight") == "Complete":
-                if (verbose):
-                    os.system('echo "Finished {0}||halo2"'.format(IndividualFluxFile))
-                if (verbose):
-                    print('')
+                if verbose:
+                    print("Finished {0}||halo2".format(IndividualFluxFile))
             #if format_globes_for_supernova(IndividualFluxFile, "argon", "ar40kt_he", "weight") == "Complete":
-                #if (verbose): os.system('echo "Finished {0}||ar40kt_he"'.format(IndividualFluxFile))
-                #if (verbose): print('')
+                # if verbose: print("Finished {0}||ar40kt_he".format(IndividualFluxFile))
             if format_globes_for_supernova(IndividualFluxFile, "scint", "scint20kt", "weight") == "Complete":
-                if (verbose):
-                    os.system('echo "Finished {0}||scint20kt"'.format(IndividualFluxFile))
-                if (verbose):
-                    print('')
+                if verbose:
+                    print("Finished {0}||scint20kt".format(IndividualFluxFile))
             if format_globes_for_supernova(IndividualFluxFile, "nova_soup", "novaND", "weight") == "Complete":
-                if (verbose):
-                    os.system('echo "Finished {0}||novaND"'.format(IndividualFluxFile))
-                if (verbose):
-                    print('')
+                if verbose:
+                    print("Finished {0}||novaND".format(IndividualFluxFile))
             if format_globes_for_supernova(IndividualFluxFile, "nova_soup", "novaFD", "weight") == "Complete":
-                if (verbose):
-                    os.system('echo "Finished {0}||novaFD"'.format(IndividualFluxFile))
-                if (verbose):
-                    print('')
+                if verbose:
+                    print("Finished {0}||novaFD".format(IndividualFluxFile))
             fluxes_list.append(IndividualFluxFile)
-            if (verbose):
-                print('\n'*3)
-            if (verbose):
-                print("Calculations are " + percentage_done + "% completed.")
-            if (verbose):
-                print('\n'*3)
+            if verbose:
+                print("\n\n\nCalculations are " + percentage_done + "% completed.\n\n\n")
         else:  # This is called if you choose to input a single detector in SNEWPY.py, and just run that one
-            if (verbose):
-                print("Running inputted detector")
-            if (verbose):
-                print(detector_input)
+            if verbose:
+                print("Running selected detector:", detector_input)
             if detector_input in ("icecube", "wc100kt30prct", "wc100kt30prct_he", "wc100kt15prct", "hyperk30prct", "km3net"):
                 detector_material = "water"
             elif detector_input in ("ar40kt_he", "ar40kt"):
                 detector_material = "argon"
             elif detector_input in ("novaND", "novaFD"):
                 detector_material = "nova_soup"
-            elif detector_input in ("scint20kt"):
+            elif detector_input in ("scint20kt",):
                 detector_material = "scint"
             elif detector_input in ("halo1", "halo2"):
                 detector_material = "lead"
@@ -773,13 +741,11 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
                 print("Unanticipated value for detector input")
 
             detector_output = detector_input
-            if (verbose):
-                print(detector_material)
+            if verbose:
+                print("Detector material:", detector_material)
             if format_globes_for_supernova(IndividualFluxFile, detector_material, detector_input, "weight") == "Complete":
-                if (verbose):
-                    os.system('echo "Finished {0}||{1}"'.format(IndividualFluxFile, detector_output))
-                if (verbose):
-                    print('')
+                if verbose:
+                    print("Finished {0}||{1}".format(IndividualFluxFile, detector_output))
             fluxes_list.append(IndividualFluxFile)
             if (verbose):
                 print('\n'*3)
