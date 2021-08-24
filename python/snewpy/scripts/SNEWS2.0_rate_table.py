@@ -127,11 +127,11 @@ for experiment in range(len(data['Experiment'])):
     
 #Hacking in different numbers
 
-#IceCube, the effective mass in SNOwGLoBES is artificially high.  This is because the
+#For IceCube, the effective mass in SNOwGLoBES is artificially high.  This is because the
 #non-standard energy dependence is handled through the efficiencies.  To get an effective
-#mass we take the ratio of the total weighted events to the unweigthed events and multiply
-#the unweigthed mass (the entry in SNOwGLoBES), see below for details.  Here we take the
-#effective mass of the s27 normal scenerio and discuss the range in the table caption
+#mass we take the ratio of the total weighted events to the unweighted events and multiply
+#the unweighted mass (the entry in SNOwGLoBES), see below for details.  Here we take the
+#effective mass of the s27 normal scenario and discuss the range in the table caption.
 
 dettype='icecube'
 mass=51600
@@ -154,8 +154,8 @@ data['\\SI{40.0}{\solarmass}'].append("-")
 
 
 #For XENONnT, LZ, and PandaX-4T, we take the values from Lang et al. [Phys. Rev. D 94 (2016) no.10, 103009].
-#We take the S2-only, 60PE threshold numbers for the 11.2 msun and 27 msun modeels as they
-#are the ones used here. We take 9.4 events/tonne for the 11.2 model and 17.6 events/tonne for the 27.0 model
+#We take the S2-only, 60PE threshold numbers for the 11.2 msun and 27 msun models as they
+#are the ones used here. We take 9.4 events/tonne for the 11.2 model and 17.6 events/tonne for the 27.0 model.
 s11_epT = 9400.
 s27_epT = 17600.
 
