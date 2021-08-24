@@ -1,48 +1,21 @@
 #!/usr/bin/env python
 
-from argparse import ArgumentParser
-import to_snowglobes
-import run_snowglobes
-import from_snowglobes
-import tarfile
+from snewpy import snowglobes
 
-SNOwGLoBES_path = "/location/of/snowglobes/" #where snowglobes is located
-models_dir = "/location/of/models/Nakazato_2013/" #where models (aka input for to_snowglobes) is located
-file_name = 'nakazato-LS220-BH-z0.004-s30.0.fits'
+SNOwGLoBES_path = "/path/to/snowglobes/"  # where snowglobes is located
 
-#input necessary for to_snowglobes
+# arguments for generate_time_series
+model_file = "/path/to/snewpy/models/Nakazato_2013/nakazato-LS220-BH-z0.004-s30.0.fits"
 modeltype = 'Nakazato_2013'
 transformation = 'AdiabaticMSW_NMO'
-output = None
-ntbins =  None
-deltat = None
+d = 10  # Supernova distance in kpc
 
-theta12 = 33.
-theta13 = 9.
-theta23 = 45.
+# Running the modules
+outfile = snowglobes.generate_time_series(model_file, modeltype, transformation, d)
+snowglobes.simulate(SNOwGLoBES_path, outfile, detector_input="icecube")
+snowglobes.collate(SNOwGLoBES_path, outfile, detector_input="icecube")
 
-m=None
-tau=None
-
-d=10
-
-mixing_parameters = [theta12,theta13,theta23]    
-decay_parameters = [m,tau,d]
-parameters = mixing_parameters
-
-#Running the modules
-
-outfile = to_snowglobes.generate_time_series(models_dir, file_name, modeltype, transformation, parameters, d, output, ntbins, deltat) #runs to_snowglobes
-
-#outfile = "ezyzip.zip"
-
-run_snowglobes.go(SNOwGLoBES_path, models_dir, outfile)
-
-from_snowglobes.collate(SNOwGLoBES_path, models_dir, outfile)
-
-#an optional fourth argument in both run_ and from_ is the detector name, if one wants to only run 1 detector, rather than all of them
-#fourth argument is the same except in the case of wc100kt30prct and ar40kt
-#For wc100kt30prct: run_snowglobes takes in "wc100kt30prct", while from_snowglobes takes in "wc100kt30prct_eve"
-#For ar40kt: run_snowglobes takes in "ar40kt", while from_snowglobes takes in "ar40kt_eve"
-#All other times they are identical
-
+# An additional, optional argument in both simulate() and collate() is the detector name, if one wants to only run 1 detector, rather than all of them.
+# The value of this argument is the same for both functions, except in the case of wc100kt30prct and ar40kt.
+# For wc100kt30prct: simulate() takes in "wc100kt30prct", while collate() takes in "wc100kt30prct_eve"
+# For ar40kt: simulate() takes in "ar40kt", while collate() takes in "ar40kt_eve"
