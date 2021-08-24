@@ -83,10 +83,11 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
     tmax = snmodel.get_time()[-1]
     if deltat is not None:
         dt = deltat
+        ntbins = int((tmax-tmin)/dt)
     else:
         dt = (tmax - tmin) / (ntbins+1)
 
-    tedges = np.arange(tmin, tmax, dt)
+    tedges = np.arange(tmin/u.s, tmax/u.s, dt/u.s)*u.s
     times = 0.5*(tedges[1:] + tedges[:-1])
 
     # Generate output.
@@ -143,7 +144,21 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
 
             extension = ".dat"
             filename = model_file.replace('.fits', '.tbin{:01d}.'.format(i+1) + transformation_type +
-                                          '.{:.3f},{:.3f},{:01d}-{:.1f}kpc{}'.format(tmin, tmax, ntbins, d, extension))
+                                          '.{:.3f},{:.3f},{:01d}-{:.1f}kpc{}'.format(tmin/u.s, tmax/u.s, ntbins, d, extension))
+
+            if '.fits' in model_file:
+                filename = model_file.replace('.fits', '.tbin{:01d}.'.format(i+1) + transformation_type +
+                                                  '.{:.3f},{:.3f},{:01d}-{:.1f}kpc{}'.format(tmin/u.s, tmax/u.s, ntbins, d, extension))
+            elif '.dat' in model_file:
+                filename = model_file.replace('.dat', '.tbin{:01d}.'.format(i+1) + transformation_type +
+                                                  '.{:.3f},{:.3f},{:01d}-{:.1f}kpc{}'.format(tmin/u.s, tmax/u.s, ntbins, d, extension))
+            elif '.h5' in model_file:
+                filename = model_file.replace('.h5', '.tbin{:01d}.'.format(i+1) + transformation_type +
+                                                  '.{:.3f},{:.3f},{:01d}-{:.1f}kpc{}'.format(tmin/u.s, tmax/u.s, ntbins, d, extension))                
+            else:
+                filename = model_file+'.tbin{:01d}.'.format(i+1) + transformation_type + \
+                '.{:.3f},{:.3f},{:01d}-{:.1f}kpc{}'.format(tmin/u.s, tmax/u.s, ntbins, d, extension)
+            
             info = tarfile.TarInfo(name=filename)
             info.size = len(output)
             tf.addfile(info, io.BytesIO(output))
