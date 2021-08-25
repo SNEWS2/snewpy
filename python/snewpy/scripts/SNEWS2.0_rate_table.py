@@ -1,30 +1,18 @@
 #!/usr/bin/env python
 
 from argparse import ArgumentParser
-import to_snowglobes
-import run_snowglobes
-import from_snowglobes
-import tarfile
+from snewpy import to_snowglobes
+from snewpy import run_snowglobes
+from snewpy import from_snowglobes
 import numpy as np
 import os
 from astropy.io import ascii
 
 home_directory = os.getcwd()
-SNOwGLoBES_path = "/path/to/snowglobes/" #where snowglobes is located
-SNEWPY_models_base = "/path/to/snewpy/models/" #where models (aka input for to_snowglobes) is located
-
-theta12 = 33.
-theta13 = 9.
-theta23 = 45.
-
-m=None
-tau=None
+SNOwGLoBES_path = "/path/to/snowglobes/"
+SNEWPY_models_base = "/path/to/snewpy/models/"
 
 d=10
-
-mixing_parameters = [theta12,theta13,theta23]    
-decay_parameters = [m,tau,d]
-parameters = mixing_parameters
 
 dets = ["wc100kt30prct","ar40kt","halo1","halo2","scint20kt","novaFD","icecube","km3net"]
 ref_mass = {"wc100kt30prct":100,"ar40kt":40,"halo1":0.079,"halo2":1,"scint20kt":20,"novaFD":14,"icecube":51600,"km3net":69366*3}
@@ -50,7 +38,7 @@ if (have_data_saved is False):
             outfile = modeltype+"_"+model+"_summed_"+transformation
             model_dir = SNEWPY_models_base+"/"+modeltype+"/"
         
-            tarredfile = to_snowglobes.generate_fluence(model_dir, file_name, modeltype, transformation, parameters, d, outfile) #runs to_snowglobes
+            tarredfile = to_snowglobes.generate_fluence(model_dir, file_name, modeltype, transformation, d, outfile) #runs to_snowglobes
             for det in dets:
                 run_snowglobes.go(SNOwGLoBES_path, model_dir, tarredfile, detector_input=det)
                 tables = from_snowglobes.collate(SNOwGLoBES_path, model_dir, tarredfile, detector_input=det,skip_plots=True,return_tables=True)
@@ -142,11 +130,11 @@ for experiment in range(len(data['Experiment'])):
     
 #Hacking in different numbers
 
-#IceCube, the effective mass in SNOwGLoBES is artificially high.  This is because the
+#For IceCube, the effective mass in SNOwGLoBES is artificially high.  This is because the
 #non-standard energy dependence is handled through the efficiencies.  To get an effective
-#mass we take the ratio of the total weighted events to the unweigthed events and multiply
-#the unweigthed mass (the entry in SNOwGLoBES), see below for details.  Here we take the
-#effective mass of the s27 normal scenerio and discuss the range in the table caption
+#mass we take the ratio of the total weighted events to the unweighted events and multiply
+#the unweighted mass (the entry in SNOwGLoBES), see below for details.  Here we take the
+#effective mass of the s27 normal scenario and discuss the range in the table caption
 
 dettype='icecube'
 mass=51600
