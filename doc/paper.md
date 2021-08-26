@@ -6,6 +6,8 @@ tags:
   - supernova
   - neutrinos
 authors:
+  - name: Amanda L. Baxter
+    affiliation: 9
   - name: Segev BenZvi
     orcid: 0000-0001-5537-4710
     affiliation: 1
@@ -18,6 +20,9 @@ authors:
     affiliation: 3
   - name: Anne Graf
     affiliation: 4
+  - name: Shunsaku Horiuchi
+    orcid: 0000-0001-6142-6556
+    affiliation: 8
   - name: James P. Kneller^[Corresponding author]
     orcid: 0000-0002-3502-3830
     affiliation: 4
@@ -26,6 +31,9 @@ authors:
     affiliation: 5
   - name: Evan O'Connor
     affiliation: 6
+  - name: Christopher Tunnell
+    orcid: 0000-0001-8158-7795
+    affiliation: 10
   - name: Navya Uberoi
     affiliation: 1
   - name: Arkin Worlikar
@@ -45,7 +53,13 @@ affiliations:
     index: 6
   - name: Georgia Institute of Technology, Atlanta, GA, USA
     index: 7
-date: 23 August 2021
+  - name: Virginia Tech, Blacksburg, VA, USA
+    index: 8
+  - name: Purdue University, West Lafayette, IN, USA
+    index: 9
+  - name: Rice University, Houston, TX, USA
+    index: 10
+date: 26 August 2021
 bibliography: paper.bib
 
 # Optional fields if submitting to a AAS journal too, see this blog post:
@@ -62,7 +76,7 @@ from a Galactic supernova, and future detectors will increase the yield by
 an order of magnitude or more. With such neutrino data sets, the next
 Galactic supernova will significantly increase our understanding of the
 explosions of massive stars, nuclear physics under extreme conditions, and
-the fundamental properties of neutrinos. However there is a large gulf
+the fundamental properties of neutrinos. However, there is a large gulf
 between supernova simulations and the corresponding signals in detectors,
 making comparisons between theory and observation, as well as between
 different detectors, very difficult. SNEWPY offers a unified interface for
@@ -80,7 +94,7 @@ written in Python, is built upon NumPy [@harris2020array] and SciPy
 [@Virtanen:2019joe], and makes use of Astropy [@Astropy:2013muo;
 @Price-Whelan:2018hus] for model I/O and unit conversions.
 
-![Flowchart showing the complete SNEWPY pipeline.\label{fig:flowchart}](snewpy-flowchart.pdf)
+![Flowchart showing the complete SNEWPY pipeline. SNEWPY supports a wide variety of input formats and can output results as plots or as a Python dictionary for further analysis.\label{fig:flowchart}](snewpy-flowchart.pdf)
 
 SNEWPY consists of three main modules that together form a complete
 simulation pipeline (see \autoref{fig:flowchart}).
