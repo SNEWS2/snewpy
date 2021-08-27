@@ -106,7 +106,8 @@ class SupernovaModel(ABC):
         """
         pass
 
-    def get_oscillatedspectra(self, t, E, flavor_xform):
+    # TODO: find & replace all uses in example notebooks
+    def get_transformed_spectra(self, t, E, flavor_xform):
         """Get neutrino spectra after applying oscillation.
 
         Parameters
@@ -120,30 +121,39 @@ class SupernovaModel(ABC):
 
         Returns
         -------
-        oscillatedspectra : dict
-            Dictionary of oscillated spectra, keyed by neutrino flavor.
+        dict
+            Dictionary of transformed spectra, keyed by neutrino flavor.
         """
         initialspectra = self.get_initialspectra(t, E)
-        oscillatedspectra = {}
+        transformed_spectra = {}
 
-        oscillatedspectra[Flavor.NU_E] = \
+        transformed_spectra[Flavor.NU_E] = \
             flavor_xform.prob_ee(t, E) * initialspectra[Flavor.NU_E] + \
             flavor_xform.prob_ex(t, E) * initialspectra[Flavor.NU_X]
 
-        oscillatedspectra[Flavor.NU_X] = \
+        transformed_spectra[Flavor.NU_X] = \
             flavor_xform.prob_xe(t, E) * initialspectra[Flavor.NU_E] + \
             flavor_xform.prob_xx(t, E) * initialspectra[Flavor.NU_X] 
 
-        oscillatedspectra[Flavor.NU_E_BAR] = \
+        transformed_spectra[Flavor.NU_E_BAR] = \
             flavor_xform.prob_eebar(t, E) * initialspectra[Flavor.NU_E_BAR] + \
             flavor_xform.prob_exbar(t, E) * initialspectra[Flavor.NU_X_BAR]
 
-        oscillatedspectra[Flavor.NU_X_BAR] = \
+        transformed_spectra[Flavor.NU_X_BAR] = \
             flavor_xform.prob_xebar(t, E) * initialspectra[Flavor.NU_E_BAR] + \
             flavor_xform.prob_xxbar(t, E) * initialspectra[Flavor.NU_X_BAR] 
 
-        return oscillatedspectra   
-    
+        return transformed_spectra   
+
+
+    def get_oscillatedspectra(self, *args):
+        """DO NOT USE! Only for backward compatibility!
+
+        :meta private:
+        """
+        print("[WARNING] Please use `get_transformed_spectra()` instead of `get_oscillatedspectra()`!")
+        return self.get_transformed_spectra(*args)
+
 
 class _GarchingArchiveModel(SupernovaModel):
     """Subclass that reads models in the format used in the [Garching Supernova Archive](https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/)."""
