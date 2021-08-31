@@ -11,3 +11,6 @@ SNEWPY_models/
 
 # editor-specific
 .vscode/
+doc/nb/.ipynb_checkpoints/snowglobes_models-checkpoint.ipynb
+doc/nb/.ipynb_checkpoints/SNEWPY_examples-checkpoint.ipynb
+doc/nb/.ipynb_checkpoints/AnalyticFluence-checkpoint.ipynb

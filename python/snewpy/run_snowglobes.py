@@ -17,8 +17,15 @@ from subprocess import call
 
 #for tar file in folder, call go & replace go in master
            
-def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input = all, verbose=False):  #function for entire file  
-    #Extracts data from tarfile and sets up lists of paths and fluxfilenames for later use
+def go(SNOwGLoBESdir, 
+       Models_Path, 
+       Tarball, 
+       detector_input = all, 
+       verbose=False):  
+    """ Function for entire file  
+        Extracts data from tarfile and sets up 
+        lists of paths and fluxfilenames for later use
+    """
 
     if tarfile.is_tarfile(Models_Path+"/"+Tarball): #extracts tarfile
         if (verbose): print("Valid Tar file")
@@ -66,19 +73,28 @@ def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input = all, verbose=False)
             continue
 
     ##################################################################################################
-    #The main function that reformats data from a bunch of different files in order to run supernova.c
 
-    def format_globes_for_supernova(FluxNameStem, ChannelName, ExpConfigName, NoWeight = 1, extension = extension): #this function runs supernova
+    def format_globes_for_supernova(
+            FluxNameStem, 
+            ChannelName, 
+            ExpConfigName, 
+            NoWeight = 1, 
+            extension = extension):
+        """ this function runs supernova
+            The main function that reformats data from 
+            a bunch of different files in order to run supernova.c
+
+        """
         ExeName = "bin/supernova" #Supernova
-        ChannelFileName = "{0}/channels/channels_{1}.dat".format(SNOwGLoBESdir, ChannelName)
+        ChannelFileName = f"{SNOwGLoBESdir}/channels/channels_{ChannelName}.dat"
 
-        GlobesFileName = "{0}/supernova.glb".format(SNOwGLoBESdir)
+        GlobesFileName = f"{SNOwGLoBESdir}/supernova.glb"
         GLOBESFILE = open(GlobesFileName, 'w')
         GLOBESFILE.truncate(0)
 
         # Write PREAMBLE to GLOBESFILE
 
-        PREAMBLE = open("{0}/glb/preamble.glb".format(SNOwGLoBESdir))
+        PREAMBLE = open(f"{SNOwGLoBESdir}/glb/preamble.glb")
 
         for line in PREAMBLE:
 
@@ -90,12 +106,12 @@ def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input = all, verbose=False)
 
         FluxFileNamePath = "fluxes/" + FluxNameStem + extension
         if not os.path.isfile(SNOwGLoBESdir+"/"+FluxFileNamePath): 
-            print(("Flux file name {0} not found".format(FluxFileNamePath)))
+            print((f"Flux file name {FluxFileNamePath} not found"))
             return "Incomplete"
 
         # Write modified FLUX to GLOBESFILE; replace the flux file name with the input argument
 
-        FLUX = open("{0}/glb/flux.glb".format(SNOwGLoBESdir))
+        FLUX = open(f"{SNOwGLoBESdir}/glb/flux.glb")
 
         for line in FLUX:
             if "flux_file" in line: line = "        @flux_file=  \"{0}\"\n".format(FluxFileNamePath)
@@ -109,7 +125,7 @@ def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input = all, verbose=False)
 
         # Checks channel existence
         if not os.path.isfile(ChannelFileName):
-            print(("Channel file name {0} not found".format(ChannelFileName)))
+            print((f"Channel file name {ChannelFileName} not found"))
             return "Incomplete"
 
         # Grabs channel name from each line in CHANFILE and write it (modified) to GLOBESFILE
@@ -130,10 +146,10 @@ def go(SNOwGLoBESdir, Models_Path, Tarball, detector_input = all, verbose=False)
         # Checks DetectorFileNamePath existence
 
         DetectorFileName = "detector_configurations.dat"
-        DetectorFileNamePath = "{0}/{1}".format(SNOwGLoBESdir, DetectorFileName)
+        DetectorFileNamePath = f"{SNOwGLoBESdir}/{DetectorFileName}"
 
         if not os.path.isfile(DetectorFileNamePath):
-            print(("Detector file name {0} not found".format(DetectorFileName)))
+            print((f"Detector file name {DetectorFileName} not found"))
             return "Incomplete"
 
         # Defines Masses and NormFact (hashes, A.K.A. dictionaries) for later use

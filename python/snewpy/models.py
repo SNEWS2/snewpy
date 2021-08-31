@@ -173,11 +173,11 @@ class _GarchingArchiveModel(SupernovaModel):
         for flavor in Flavor:
             _flav = Flavor.NU_X if flavor == Flavor.NU_X_BAR else flavor
             _sfx = _flav.name.replace('_', '').lower()
-            _filename = '{}_{}_{}'.format(filename, eos, _sfx)
-            _lname  = 'L_{}'.format(flavor.name)
-            _ename  = 'E_{}'.format(flavor.name)
-            _e2name = 'E2_{}'.format(flavor.name)
-            _aname  = 'ALPHA_{}'.format(flavor.name)
+            _filename = f'{filename}_{eos}_{_sfx}'
+            _lname  = f'L_{flavor.name}'
+            _ename  = f'E_{flavor.name}'
+            _e2name = f'E2_{flavor.name}'
+            _aname  = f'ALPHA_{flavor.name}'
 
             simtab = Table.read(_filename,
                                 names=['TIME', _lname, _ename, _e2name],
@@ -202,13 +202,13 @@ class _GarchingArchiveModel(SupernovaModel):
         for flavor in Flavor:
             # Set the dictionary of luminosity, mean energy, and shape
             # parameter keyed by NU_E, NU_X, NU_E_BAR, NU_X_BAR.
-            _lname  = 'L_{}'.format(flavor.name)
+            _lname  = 'L_{flavor.name}'
             self.luminosity[flavor] = simtab[_lname].to('erg/s')
 
-            _ename  = 'E_{}'.format(flavor.name)
+            _ename  = 'E_{flavor.name}'
             self.meanE[flavor] = simtab[_ename].to('MeV')
 
-            _aname  = 'ALPHA_{}'.format(flavor.name)
+            _aname  = 'ALPHA_{flavor.name}'
             self.pinch[flavor] = simtab[_aname]
 
     def get_time(self):
@@ -296,9 +296,9 @@ class Analytic3Species(SupernovaModel):
             # the use of NU_X for NU_X_BAR.
             _flav = Flavor.NU_X if flavor == Flavor.NU_X_BAR else flavor
 
-            self.luminosity[flavor] = simtab['L_{}'.format(_flav.name)] * u.erg/u.s
-            self.meanE[flavor] = simtab['E_{}'.format(_flav.name)] * u.MeV
-            self.pinch[flavor] = simtab['ALPHA_{}'.format(_flav.name)]
+            self.luminosity[flavor] = simtab[f'L_{_flav.name}'] * u.erg/u.s
+            self.meanE[flavor] = simtab[f'E_{_flav.name}'] * u.MeV
+            self.pinch[flavor] = simtab[f'ALPHA_{_flav.name}']
 
     def get_time(self):
         """Get grid of model times.
@@ -356,13 +356,13 @@ class Analytic3Species(SupernovaModel):
     def __str__(self):
         """Default representation of the model.
         """
-        mod = 'Analytic Model: {}\n'.format(self.filename)
+        mod = f'Analytic Model: {self.filename}\n'
         return mod
 
     def _repr_markdown_(self):
         """Markdown representation of the model, for Jupyter notebooks.
         """
-        mod = '**Analytic Model**: {}\n\n'.format(self.filename)
+        mod = f'**Analytic Model**: {self.filename}\n\n'
         return mod  
 
 
@@ -825,6 +825,7 @@ class OConnor_2015(SupernovaModel):
              '|EOS | {}|'.format(self.EOS)
              ]
         return mod + '\n'.join(s)
+
 
 class Zha_2021(SupernovaModel):
     """Set up a model based on the hadron-quark phse transition models from Zha et al. 2021. 
@@ -1739,7 +1740,9 @@ class Fornax_2021_2D(SupernovaModel):
 
 
 class SNOwGLoBES:
-    """A model that does not inherit from SupernovaModel (yet) and imports a group of SNOwGLoBES files."""
+    """ A model that does not inherit from SupernovaModel (yet) 
+        and imports a group of SNOwGLoBES files.
+    """
 
     def __init__(self, tarfilename):
         """Initialize model from a tar archive.

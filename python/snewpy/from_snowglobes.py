@@ -16,9 +16,31 @@ logging.getLogger().setLevel(logging.CRITICAL)
 # Written & modulized Summer 2020
 # Takes in input flux files and configures and runs supernova (which outputs calculated rates)
             
-def collate(Branch, Model_Path, Tarball, detector_input = all, skip_plots=False, return_tables=False, verbose=False, remove_generated_files=True):
-    #Determines type of input file
+def collate(Branch, 
+            Model_Path, 
+            Tarball, 
+            detector_input = all, 
+            skip_plots=False, 
+            return_tables=False, 
+            verbose=False, 
+            remove_generated_files=True):
+    """ 
 
+    Parameters
+    ----------
+    Branch : str
+
+    Model_Path : str
+
+    Tarball : 
+
+    detector_input : , optional
+    skip_plots : bool, optional
+    return_tables : bool, optional
+    verbose : bool, optional
+    remove_generated_files : bool, optional   
+    """
+    #Determines type of input file
     if ".tar.bz2" in str(Tarball):
         outputnamestem = Tarball[0:str(Tarball).rfind(".tar.bz2")]
         tar = tarfile.open(Model_Path+"/"+Tarball)
@@ -37,9 +59,8 @@ def collate(Branch, Model_Path, Tarball, detector_input = all, skip_plots=False,
     else:
         print("Invalid Tar file")
 
-
-    #Determining the configuration of the files and directories within the tarfile and defining variables for uniformity
-
+    #Determining the configuration of the files and directories within the tarfile 
+    # and defining variables for uniformity
     FluxFileNameStems = []
     extension = '.dat'
     for IndividualFile in TarballFileNames:
@@ -56,8 +77,20 @@ def collate(Branch, Model_Path, Tarball, detector_input = all, skip_plots=False,
 
     FilesToCleanup = []
 
-    #Add_funct sums up relevant files from output generated above
     def add_funct(flux, detector, smear, *arg):
+        """ Sums up relevant files from output generated above
+
+        Parameters
+        ----------
+        flux : 
+
+        detector : 
+
+        smear : 
+
+        args
+
+        """
         homebase = Branch + "/out/"
         
         #Defining different variables for the combinatoric iterations

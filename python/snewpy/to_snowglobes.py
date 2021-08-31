@@ -25,46 +25,115 @@ from snewpy.flavor_transformation import *
 from astropy import units as u
 
 
-def generate_time_series(model_path, model_file, model_type, transformation_type, transformation_parameters, d, output_filename, ntbins, deltat):
+def generate_output_name(output_filename, model_file,
+                         transformation_type, tmin,
+                         tmax, ntbins, d):
+    if output_filename is not None:
+        tfname = output_filename + 'kpc.tar.bz2'
+    elif '.fits' in model_file:
+        tfname = model_file.replace('.fits', f'.{transformation_type}{tmin:.3f},{tmax:.3f},{ntbins:d}-{d:.1f}kpc.tar.bz2')
+    elif '.dat' in model_file:
+        tfname = model_file.replace('.dat', f'.{transformation_type}.{tmin:.3f},{tmax:.3f},{ntbins:d}-{d:.1f}kpc.tar.bz2')
+    elif '.h5' in model_file:
+        tfname = model_file.replace('.h5', f'.{transformation_type}.{tmin:.3f},{tmax:.3f},{ntbins:d}-{d:.1f}kpc.tar.bz2')
+    else:
+        tfname = model_file + f'.{transformation_type}.{tmin:.3f},{tmax:.3f},{ntbins:d}-{d:.1f}kpc.tar.bz2'
+    return tfname 
 
-    # Chooses model format. model_format_dict associates the model format name with it's class
-    model_class_dict = {'Nakazato_2013':Nakazato_2013, 'Sukhbold_2015':Sukhbold_2015, 'Bollig_2016':Bollig_2016, 'OConnor_2015':OConnor_2015, 'Fornax_2021':Fornax_2021_2D, 'Warren_2020':Warren_2020, 'Analytic3Species':Analytic3Species, 'Zha_2021':Zha_2021, 'Tamborra_2014':Tamborra_2014, 'Walk_2018':Walk_2018, 'Walk_2019':Walk_2019}
+def get_model(model_type):
+    """ Chooses model format. model_format_dict associates
+         the model format name with it's class
+    """
+    model_class_dict = {'Nakazato_2013':Nakazato_2013, 
+                        'Sukhbold_2015':Sukhbold_2015, 
+                        'Bollig_2016':Bollig_2016, 
+                        'OConnor_2015':OConnor_2015, 
+                        'Fornax_2021':Fornax_2021_2D, 
+                        'Warren_2020':Warren_2020, 
+                        'Analytic3Species':Analytic3Species, 
+                        'Zha_2021':Zha_2021, 
+                        'Tamborra_2014':Tamborra_2014, 
+                        'Walk_2018':Walk_2018, 
+                        'Walk_2019':Walk_2019}
     model_class = model_class_dict[model_type]
-    
-    # chooses flavor transformation, works in the same way as model_format
-    flavor_transformation_dict = {'NoTransformation':NoTransformation(), 'AdiabaticMSW_NMO':AdiabaticMSW(mh=MassHierarchy.NORMAL), 'AdiabaticMSW_IMO':AdiabaticMSW(mh=MassHierarchy.INVERTED), 'NonAdiabaticMSWH_NMO':NonAdiabaticMSWH(mh=MassHierarchy.NORMAL), 'NonAdiabaticMSWH_IMO':NonAdiabaticMSWH(mh=MassHierarchy.INVERTED), 'TwoFlavorDecoherence':TwoFlavorDecoherence(), 'ThreeFlavorDecoherence':ThreeFlavorDecoherence(), 'NeutrinoDecay_NMO':NeutrinoDecay(mh=MassHierarchy.NORMAL), 'NeutrinoDecay_IMO':NeutrinoDecay(mh=MassHierarchy.INVERTED)}
-    flavor_transformation = flavor_transformation_dict[transformation_type]
+    return model_class
 
-    snmodel = model_class(model_path+"/"+model_file)
+def get_flavor(transformation_type):
+    """ Chooses flavor transformation, 
+        works in the same way as model_format
+    """
+    flavor_transformation_dict = {'NoTransformation':NoTransformation(), 
+                                  'AdiabaticMSW_NMO':AdiabaticMSW(mh=MassHierarchy.NORMAL), 
+                                  'AdiabaticMSW_IMO':AdiabaticMSW(mh=MassHierarchy.INVERTED), 
+                                  'NonAdiabaticMSWH_NMO':NonAdiabaticMSWH(mh=MassHierarchy.NORMAL), 
+                                  'NonAdiabaticMSWH_IMO':NonAdiabaticMSWH(mh=MassHierarchy.INVERTED), 
+                                  'TwoFlavorDecoherence':TwoFlavorDecoherence(), 
+                                  'ThreeFlavorDecoherence':ThreeFlavorDecoherence(), 
+                                  'NeutrinoDecay_NMO':NeutrinoDecay(mh=MassHierarchy.NORMAL), 
+                                  'NeutrinoDecay_IMO':NeutrinoDecay(mh=MassHierarchy.INVERTED)}
+    flavor_transformation = flavor_transformation_dict[transformation_type]
+    return flavor_transformation
+
+def generate_time_series(model_path, 
+                         model_file, 
+                         model_type, 
+                         transformation_type, 
+                         transformation_parameters, 
+                         d, 
+                         output_filename, 
+                         ntbins = 30, 
+                         deltat = None):
+    """
+    model_path : str
+        Location of the SN models
+    model_file : str
+        Name of the model file at model_path
+    model_type : str
+        The model to be used from snewpy.models, the options are;
+        Nakazato_2013, Sukhbold_2015, Bollig_2016, OConnor_2015, Fornax_2021, 
+        Warren_2020, Analytic3Species, Zha_2021, Tamborra_2014, Walk_2018, Walk_2019
+    transformation_type : str
+        Transformation to be used select from
+        NoTransformation, AdiabaticMSW_NMO, AdiabaticMSW_IMO, 
+        NonAdiabaticMSWH_NMO, NonAdiabaticMSWH_IMO, TwoFlavorDecoherence, 
+        ThreeFlavorDecoherence, NeutrinoDecay_NMO, NeutrinoDecay_IMO
+    transformation_parameters : 
+    d : float
+        distance to supernova in kpc
+    output_filename : str
+        output file name
+    ntbins: int, optional
+        desired number of time bins
+    deltat : float, optional
+        the time step to divide timeseries. If given number of bins is recalculated
+        and ntbins is overwritten.
+    """
+    model_class = get_model(model_type)
+    flavor_transformation = get_flavor(transformation_type)
+
+    # sets the SN model obj
+    snmodel = model_class(f"{model_path}/{model_file}")
 
     # Subsample the model time. Default to 30 time slices.
+    # snmodel.get_time() brings the timeseries from the model
     tmin = snmodel.get_time()[0]
     tmax = snmodel.get_time()[-1]
-    if deltat is not None:
-        dt = deltat
-    elif ntbins is not None:
-        dt = (tmax - tmin) / (ntbins+1)
-    else:
-        ntbins=30
+    if deltat is not None:                     # if delta-t is given, 
+        dt = deltat                      
+        ntbins = len(np.arange(tmin,tmax,dt))  # calculate nt-bins and overwrite
+    else:                                       # if delta-t is not given, use default nt-bins
         dt = (tmax - tmin) / (ntbins+1)
 
     tedges = np.arange(tmin, tmax, dt)
     times = 0.5*(tedges[1:] + tedges[:-1])
     
     # Generate output.
-    if output_filename is not None:
-        tfname = output_filename + 'kpc.tar.bz2'
-    elif '.fits' in model_file:
-        tfname = model_file.replace('.fits', '.' + transformation_type + '.{:.3f},{:.3f},{:d}-{:.1f}'.format(tmin,tmax,ntbins,d) + 'kpc.tar.bz2')
-    elif '.dat' in model_file:
-        tfname = model_file.replace('.dat', '.' + transformation_type  + '.{:.3f},{:.3f},{:d}-{:.1f}'.format(tmin,tmax,ntbins,d) + 'kpc.tar.bz2')
-    elif '.h5' in model_file:
-        tfname = model_file.replace('.h5', '.' + transformation_type  + '.{:.3f},{:.3f},{:d}-{:.1f}'.format(tmin,tmax,ntbins,d) + 'kpc.tar.bz2')
-    else:
-        tfname = model_file + '.' + transformation_type  + '.{:.3f},{:.3f},{:d}-{:.1f}'.format(tmin,tmax,ntbins,d) + 'kpc.tar.bz2'
+    tfname = generate_output_name(output_filename, model_file,
+                                  transformation_type, tmin,
+                                  tmax, ntbins, d)
 
     with tarfile.open(model_path + tfname, 'w:bz2') as tf:
-        #creates file in tar archive that gives information on parameters
+        # creates file in tar archive that gives information on parameters
         output = '\n'.join(map(str,transformation_type)).encode('ascii')
         tf.addfile(tarfile.TarInfo(name='parameterinfo'), io.BytesIO(output))        
 
@@ -78,7 +147,7 @@ def generate_time_series(model_path, model_file, model_type, transformation_type
             osc_fluence = {}
             table = []
 
-            table.append('# TBinMid={:g}sec TBinWidth={:g}s EBinWidth=0.2MeV Fluence at Earth for this timebin in neutrinos per cm^2'.format(t, dt))
+            table.append(f'# TBinMid={t:g}sec TBinWidth={dt:g}s EBinWidth=0.2MeV Fluence at Earth for this timebin in neutrinos per cm^2')
             table.append('# E(GeV)	NuE	NuMu	NuTau	aNuE	aNuMu	aNuTau')
 
             # Generate energy + number flux table.
@@ -86,13 +155,14 @@ def generate_time_series(model_path, model_file, model_type, transformation_type
                 for flavor in Flavor:
                     osc_fluence[flavor] = osc_spectra[flavor][j] * dt * 0.2 * MeV / (4.*np.pi*(d*1000*3.086e+18)**2)
 
-                s = '{:17.8E}'.format(E/(1e3 * MeV))
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_E])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_X])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_X])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_E_BAR])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_X_BAR])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_X_BAR])
+
+                s = f'{E/(1e3 * MeV):17.8E}'
+                s = f'{s}{osc_fluence[Flavor.NU_E]:17.8E}'
+                s = f'{s}{osc_fluence[Flavor.NU_X]:17.8E}'
+                s = f'{s}{osc_fluence[Flavor.NU_X]:17.8E}'
+                s = f'{s}{osc_fluence[Flavor.NU_E_BAR]:17.8E}'
+                s = f'{s}{osc_fluence[Flavor.NU_X_BAR]:17.8E}'
+                s = f'{s}{osc_fluence[Flavor.NU_X_BAR]:17.8E}'
                 table.append(s)
                 logging.debug(s)
 
@@ -100,23 +170,15 @@ def generate_time_series(model_path, model_file, model_type, transformation_type
             output = '\n'.join(table).encode('ascii')
 
             extension = ".dat"
-            filename = model_file.replace('.fits', '.tbin{:01d}.'.format(i+1) + transformation_type + '.{:.3f},{:.3f},{:01d}-{:.1f}kpc{}'.format(tmin,tmax,ntbins,d,extension) )
+            filename = model_file.replace('.fits', f'.tbin{i+1:01d}.{transformation_type}.{tmin:.3f},{tmax:.3f},{ntbins:01d}-{d:.1f}kpc{extension}')
             info = tarfile.TarInfo(name=filename)
             info.size = len(output)
             tf.addfile(info, io.BytesIO(output))
-
     return tfname
 
 def generate_fluence(model_path, model_file, model_type, transformation_type, d, output_filename, tstart=None, tend=None):
-
-    # Chooses model format. model_format_dict associates the model format name with it's class
-    model_class_dict = {'Nakazato_2013':Nakazato_2013, 'Sukhbold_2015':Sukhbold_2015, 'Bollig_2016':Bollig_2016, 'OConnor_2015':OConnor_2015, 'Fornax_2021':Fornax_2021_2D, 'Warren_2020':Warren_2020, 'Analytic3Species':Analytic3Species, 'Zha_2021':Zha_2021, 'Tamborra_2014':Tamborra_2014, 'Walk_2018':Walk_2018, 'Walk_2019':Walk_2019}
-    model_class = model_class_dict[model_type]
-
-    # chooses flavor transformation, works in the same way as model_format
-    flavor_transformation_dict = {'NoTransformation':NoTransformation(), 'AdiabaticMSW_NMO':AdiabaticMSW(mh=MassHierarchy.NORMAL), 'AdiabaticMSW_IMO':AdiabaticMSW(mh=MassHierarchy.INVERTED), 'NonAdiabaticMSWH_NMO':NonAdiabaticMSWH(mh=MassHierarchy.NORMAL), 'NonAdiabaticMSWH_IMO':NonAdiabaticMSWH(mh=MassHierarchy.INVERTED), 'TwoFlavorDecoherence':TwoFlavorDecoherence(), 'ThreeFlavorDecoherence':ThreeFlavorDecoherence(), 'NeutrinoDecay_NMO':NeutrinoDecay(mh=MassHierarchy.NORMAL), 'NeutrinoDecay_IMO':NeutrinoDecay(mh=MassHierarchy.INVERTED)}
-    flavor_transformation = flavor_transformation_dict[transformation_type]
-
+    model_class = get_model(model_type)
+    flavor_transformation = get_flavor(transformation_type)
     snmodel = model_class(model_path+"/"+model_file)
 
     #set the timings up
@@ -159,16 +221,9 @@ def generate_fluence(model_path, model_file, model_type, transformation_type, d,
 
     
     # Generate output.
-    if output_filename is not None:
-        tfname = output_filename+'.tar.bz2'
-    elif '.fits' in model_file:
-        tfname = model_file.replace('.fits', '.' + transformation_type + '.{:.3f},{:.3f},{:d}-{:.1f}'.format(t0,t1,nbin,d) + 'kpc.tar.bz2')
-    elif '.dat' in model_file:
-        tfname = model_file.replace('.dat', '.' + transformation_type  + '.{:.3f},{:.3f},{:d}-{:.1f}'.format(t0,t1,nbin,d) + 'kpc.tar.bz2')
-    elif '.h5' in model_file:
-        tfname = model_file.replace('.h5', '.' + transformation_type  + '.{:.3f},{:.3f},{:d}-{:.1f}'.format(t0,t1,nbin,d) + 'kpc.tar.bz2')
-    else:
-        tfname = model_file + '.' + transformation_type  + '.{:.3f},{:.3f},{:d}-{:.1f}'.format(t0,t1,nbin,d) + 'kpc.tar.bz2'
+    tfname = generate_output_name(output_filename, model_file,
+                                  transformation_type, tmin,
+                                  tmax, ntbins, d)
 
     with tarfile.open(model_path + tfname, 'w:bz2') as tf:
         #creates file in tar archive that gives information on parameters
@@ -218,7 +273,7 @@ def generate_fluence(model_path, model_file, model_type, transformation_type, d,
             osc_fluence = {}
             table = []
 
-            table.append('# TBinMid={:g}sec TBinWidth={:g}s EBinWidth=0.2MeV Fluence at Earth for this timebin in neutrinos per cm^2'.format(t, dt))
+            table.append(f'# TBinMid={t:g}sec TBinWidth={dt:g}s EBinWidth=0.2MeV Fluence at Earth for this timebin in neutrinos per cm^2')
             table.append('# E(GeV)	NuE	NuMu	NuTau	aNuE	aNuMu	aNuTau')
 
             # Generate energy + number flux table.
@@ -226,13 +281,13 @@ def generate_fluence(model_path, model_file, model_type, transformation_type, d,
                 for flavor in Flavor:
                     osc_fluence[flavor] = osc_spectra[flavor][j] * dt * 0.2 * MeV  / (4.*np.pi*(d*1000*3.086e+18)**2)
 
-                s = '{:17.8E}'.format(E/(1e3 * MeV))
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_E])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_X])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_X])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_E_BAR])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_X_BAR])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_X_BAR])
+                s = '{E/(1e3 * MeV):17.8E}'
+                s = f'{s}{osc_fluence[Flavor.NU_E]:17.8E}'
+                s = f'{s}{osc_fluence[Flavor.NU_X]:17.8E}'
+                s = f'{s}{osc_fluence[Flavor.NU_X]:17.8E}'
+                s = f'{s}{osc_fluence[Flavor.NU_E_BAR]:17.8E}'
+                s = f'{s}{osc_fluence[Flavor.NU_X_BAR]:17.8E}'
+                s = f'{s}{osc_fluence[Flavor.NU_X_BAR]:17.8E}'
                 table.append(s)
                 logging.debug(s)
 
@@ -246,13 +301,13 @@ def generate_fluence(model_path, model_file, model_type, transformation_type, d,
                 else:
                     filename = output_filename+extension
             elif '.fits' in model_file:
-                filename = model_file.replace('.fits', '.tbin{:01d}.'.format(i+1) + transformation_type + '.{:.3f},{:.3f},{:01d}-{:.1f}kpc{}'.format(t0,t1,nbin,d,extension))
+                filename = model_file.replace('.fits', f'.tbin{i+1:01d}.{transformation_type}.{t0:.3f},{t1:.3f},{nbin:01d}-{d:.1f}kpc{extension}')
             elif '.dat' in model_file:
-                filename = model_file.replace('.dat', '.tbin{:01d}.'.format(i+1) + transformation_type + '.{:.3f},{:.3f},{:01d}-{:.1f}kpc{}'.format(t0,t1,nbin,d,extension))
+                filename = model_file.replace('.dat', f'.tbin{i+1:01d}.{transformation_type}.{t0:.3f},{t1:.3f},{nbin:01d}-{d:.1f}kpc{extension}')
             elif '.h5' in model_file:
-                filename = model_file.replace('.h5', '.tbin{:01d}.'.format(i+1) + transformation_type + '.{:.3f},{:.3f},{:01d}-{:.1f}kpc{}'.format(t0,t1,nbin,d,extension))
+                filename = model_file.replace('.h5', f'.tbin{i+1:01d}.{transformation_type}.{t0:.3f},{t1:.3f},{nbin:01d}-{d:.1f}kpc{extension}')
             else:
-                filename = model_file + '.tbin{:01d}.'.format(i+1) + transformation_type + '.{:.3f},{:.3f},{:01d}-{:.1f}kpc{}'.format(t0,t1,nbin,d,extension)
+                filename = model_file + f'.tbin{i+1:01d}.{transformation_type}.{t0:.3f},{t1:.3f},{nbin:01d}-{d:.1f}kpc{extension}'
 
             info = tarfile.TarInfo(name=filename)
             info.size = len(output)

@@ -21,7 +21,7 @@ class Flavor(IntEnum):
     def to_tex(self):
         """LaTeX-compatible string representations of flavor."""
         if '_BAR' in self.name:
-            return r'$\overline{{\nu}}_{0}$'.format(self.name[3].lower())
+            return fr'$\overline{{\nu}}_{self.name[3].lower()}$'
         return r'$\{0}$'.format(self.name.lower())
 
     @property
@@ -36,6 +36,7 @@ class Flavor(IntEnum):
 
     @property
     def is_antineutrino(self):
+        # return not self.is_neutrino()
         return self.value in (Flavor.NU_E_BAR.value, Flavor.NU_X_BAR.value)
 
 

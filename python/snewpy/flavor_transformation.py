@@ -1305,7 +1305,6 @@ class NeutrinoDecay(FlavorTransformation):
         return (1. - self.prob_eebar(t,E)) / 2.       
     
     
-        
 class AdiabaticMSWes(FlavorTransformation):
     
     def __init__(self, mix_angles, mh=MassHierarchy.NORMAL):
@@ -1488,7 +1487,6 @@ class AdiabaticMSWes(FlavorTransformation):
             return ( 1 - self.De3 - self.Ds3 ) / 2     
         
         
-
 class NonAdiabaticMSWes(FlavorTransformation):
     
     def __init__(self, mix_angles, mh=MassHierarchy.NORMAL):
@@ -1675,4 +1673,3 @@ class NonAdiabaticMSWes(FlavorTransformation):
             return ( 1 - self.De1 - self.Ds1 ) / 2
         else:
             return ( 1 - self.De3 - self.Ds3 ) / 2        
-    
