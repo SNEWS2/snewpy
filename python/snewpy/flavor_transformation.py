@@ -1307,13 +1307,20 @@ class NeutrinoDecay(FlavorTransformation):
     
         
 class AdiabaticMSWes(FlavorTransformation):
-    
+    """A four neutrino mixing prescription. The assumptions used are that:
+    a) the fourth neutrino mass is the heaviest but not so large that the electron-sterile resonances 
+       are inside the neutrinosphere
+    b) the `outer' or H' electron-sterile MSW resonance is adiabatic
+    c) the `inner' or H'' electron-sterile MSW resonance (where the lectron fraction = 1/3) is non-adibatic. 
+    For further insight see, for example, Esmaili, Peres, and Serpico, Phys. Rev. D 90, 033013 (2014)
+    """   
     def __init__(self, mix_angles, mh=MassHierarchy.NORMAL):
         """Initialize transformation matrix.
 
         Parameters
         ----------
-        mix_angles : tuple
+        mix_angles : tuple or None
+            If not None, override default mixing angles using tuple (theta12, theta13, theta23).
         mh : MassHierarchy
             MassHierarchy.NORMAL or MassHierarchy.INVERTED.
         """
@@ -1490,13 +1497,20 @@ class AdiabaticMSWes(FlavorTransformation):
         
 
 class NonAdiabaticMSWes(FlavorTransformation):
-    
+    """A four neutrino mixing prescription. The assumptions used are that:
+    a) the fourth neutrino mass is the heaviest but not so large that the electron-sterile resonances 
+       are inside the neutrinosphere
+    b) the `outer' or H' electron-sterile MSW resonance is adiabatic
+    c) the `inner' or H'' electron-sterile MSW resonance (where the lectron fraction = 1/3) is non-adibatic. 
+    For further insight see, for example, Esmaili, Peres, and Serpico, Phys. Rev. D 90, 033013 (2014)
+    """       
     def __init__(self, mix_angles, mh=MassHierarchy.NORMAL):
         """Initialize transformation matrix.
-
+        
         Parameters
         ----------
-        mix_angles : tuple
+        mix_angles : tuple or None
+            If not None, override default mixing angles using tuple (theta12, theta13, theta23).
         mh : MassHierarchy
             MassHierarchy.NORMAL or MassHierarchy.INVERTED.
         """
