@@ -779,6 +779,7 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
 
     Returns
     -------
+    dict or None
         If ``return_tables`` is set to ``True``, it returns the data tables. It provides a Table per time bin. The tables contain in the first column the energy bins, in the remaining columns, the number of events for each interaction channel in the detector.
         
     """
