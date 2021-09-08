@@ -7,13 +7,21 @@ different neutrino detectors, detector materials and interaction channels.
 There are three basic steps to using SNOwGLoBES from SNEWPY:
 
 * **Generating input files for SNOwGLoBES:**
-    There are two ways to do this, either generate time series or fluence file.
-    (TODO: explain difference)
+    There are two ways to do this, either generate time series or fluence file. This is done taking as input the supernova simulation model.
+    The first will evaluate the neutrino flux at each time stamp, the latter will compute the integrated neutrino flux (fluence) in the time bin.
     The result is a compressed .tar file containing all individual input files.
-* **Running SNOwGLoBES:**
-    TODO: add description
+* **Running SNOwGLoBES:**                                                                                                                                                   
+    This step convolves the flux with the cross-sections for the different interaction channels happenning at the various detectors incorporated in the suit. 
+    It takes into account the effective mass of the detector as well as a smearing matrix in the form an energy dependent detection efficiency.
+    SNOwGLoBES does not handle the time dependency of the event rates. As such, it provides the expected neutrino fluence at the detector.
+    The output gives the number of events detected as a function of energy for each reaction channel, integrated in a given time window (or time bin), or in a snapshot in time.
 * **Collating SNOwGLoBES outputs:**
-    TODO: add description
+    This step puts together all the interaction channels and time bins evaluated by SNOwGLoBES in a single file (for each detector and for each time bin).
+    The output Tables allow to build the detected neutrino energy spectrum and neutrino time distribution, for each reaction channel or the sum of them. 
+"""
+
+"""**Generating input files for SNOwGLoBES:**
+
 """
 
 from __future__ import unicode_literals
@@ -316,11 +324,11 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
             tf.addfile(info, io.BytesIO(output))
 
     return os.path.join(model_dir, tfname)
-
-
-
+"""
+* **Running SNOwGLoBES:**                                                                                                                                                                                  
+"""
 def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
-    """Takes in input flux files and configures and runs supernova (which outputs calculated rates).
+    """Takes as input the neutrino flux files and configures and runs the supernova script inside SNOwGLoBES, which outputs calculated event rates expected for a given (or the different) detector(s) in the suit. These event rates are given as a function of the neutrino energy and time, for each interaction channel.
 
     Parameters
     ----------
@@ -754,35 +762,36 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
             if (verbose):
                 print('\n'*3)
 
+                
+"""* **Collating SNOwGLoBES outputs:**                                                                                                                                                                        
+"""
 
 def collate(Branch, tarball_path, detector_input="all", skip_plots=False, return_tables=False, verbose=False, remove_generated_files=True):
-    """Collates SNOwGLoBES output files and generates plots or returns data table.
-
-    .. warning::
-
-        TODO: Complete description of parameters & return value
+    """Collates SNOwGLoBES output files and generates plots or returns a data table.
 
     Parameters
     ----------
-    Branch : ?
-        TODO: add type and description
+    Branch : str
+        Path where to locate the outputs
     tarball_path : str
         Path of compressed .tar file produced e.g. by ``generate_time_series()`` or ``generate_fluence()``.
     detector_input : str
         Name of detector. If ``"all"``, will use all detectors supported by SNOwGLoBES.
     skip_plots: bool
-        TODO: add description
+        If False, it returns as output the plot of the energy distribution for each time bin and for each interaction channel.
     return_tables: bool
-        TODO: add description
+        If True, the data tables are stored as output. 
     verbose : bool
         Whether to generate verbose output, e.g. for debugging.
     remove_generated_files: bool
-        TODO: add description
+        Remove the output files from SNOwGLoBES, collated files, and .png's made for this snewpy run. 
 
     Returns
     -------
-    ? or None
-        If ``return_tables`` is set to ``True``, return … (TODO: describe format of returned data)
+        If ``return_tables`` is set to ``True``, it returns the data tables. It provides a Table per time bin.  
+        The tables contain in the first column the energy bins, in the remaining columns, the number of events for each interaction channel in the detector.  
+        If ``skip_plots`` is set to ``False``, it returns as output the plot of the energy distribution for each time bin and for each interaction channel.
+        
     """
     model_dir, tarball = os.path.split(os.path.abspath(tarball_path))
 
