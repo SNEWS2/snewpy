@@ -20,10 +20,6 @@ There are three basic steps to using SNOwGLoBES from SNEWPY:
     The output Tables allow to build the detected neutrino energy spectrum and neutrino time distribution, for each reaction channel or the sum of them. 
 """
 
-"""**Generating input files for SNOwGLoBES:**
-
-"""
-
 from __future__ import unicode_literals
 
 import fnmatch
@@ -172,9 +168,9 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
     output_filename : str or None
         Name of output file. If ``None``, will be based on input file name.
     tstart : astropy.Quantity or None
-        Start of time interval to integrate over.
+        Start of time interval to integrate over, or list of start times of the time series bins.
     tend : astropy.Quantity or None
-        End of time interval to integrate over.
+        End of time interval to integrate over, or list of end times of the time series bins.
 
     Returns
     -------
@@ -324,9 +320,7 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
             tf.addfile(info, io.BytesIO(output))
 
     return os.path.join(model_dir, tfname)
-"""
-* **Running SNOwGLoBES:**                                                                                                                                                                                  
-"""
+
 def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     """Takes as input the neutrino flux files and configures and runs the supernova script inside SNOwGLoBES, which outputs calculated event rates expected for a given (or the different) detector(s) in the suit. These event rates are given as a function of the neutrino energy and time, for each interaction channel.
 
@@ -763,9 +757,6 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
                 print('\n'*3)
 
                 
-"""* **Collating SNOwGLoBES outputs:**                                                                                                                                                                        
-"""
-
 def collate(Branch, tarball_path, detector_input="all", skip_plots=False, return_tables=False, verbose=False, remove_generated_files=True):
     """Collates SNOwGLoBES output files and generates plots or returns a data table.
 

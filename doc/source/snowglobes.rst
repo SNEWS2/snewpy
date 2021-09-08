@@ -8,7 +8,6 @@ Using SNEWPy as a Front End for SNOwGLoBES
    * Expand introduction/explanations
    * Should we include installation instructions or simply refer to (SNOw)GLoBES documentation? (See https://github.com/SNEWS2/snewpy/issues/26)
    * Most of the documentation on this page is currently auto-generated from docstrings, but they are incomplete for these modules.
-   * Check and potentially expand existing docstrings (e.g. ``tstart`` in ``generate_fluence`` can also be a list).
 
 
 Install SNOwGLoBES
