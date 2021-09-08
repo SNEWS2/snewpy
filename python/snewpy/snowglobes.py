@@ -769,9 +769,9 @@ def collate(Branch, tarball_path, detector_input="all", skip_plots=False, return
     detector_input : str
         Name of detector. If ``"all"``, will use all detectors supported by SNOwGLoBES.
     skip_plots: bool
-        If False, it returns as output the plot of the energy distribution for each time bin and for each interaction channel.
+        If False, it gives as output the plot of the energy distribution for each time bin and for each interaction channel.
     return_tables: bool
-        If True, the data tables are stored as output. 
+        If True, the data tables are returned as output. 
     verbose : bool
         Whether to generate verbose output, e.g. for debugging.
     remove_generated_files: bool
@@ -779,9 +779,7 @@ def collate(Branch, tarball_path, detector_input="all", skip_plots=False, return
 
     Returns
     -------
-        If ``return_tables`` is set to ``True``, it returns the data tables. It provides a Table per time bin.  
-        The tables contain in the first column the energy bins, in the remaining columns, the number of events for each interaction channel in the detector.  
-        If ``skip_plots`` is set to ``False``, it returns as output the plot of the energy distribution for each time bin and for each interaction channel.
+        If ``return_tables`` is set to ``True``, it returns the data tables. It provides a Table per time bin. The tables contain in the first column the energy bins, in the remaining columns, the number of events for each interaction channel in the detector.
         
     """
     model_dir, tarball = os.path.split(os.path.abspath(tarball_path))
