@@ -7,13 +7,16 @@ different neutrino detectors, detector materials and interaction channels.
 There are three basic steps to using SNOwGLoBES from SNEWPY:
 
 * **Generating input files for SNOwGLoBES:**
-    There are two ways to do this, either generate time series or fluence file.
-    (TODO: explain difference)
+    There are two ways to do this, either generate a time series or a fluence file. This is done taking as input the supernova simulation model.
+    The first will evaluate the neutrino flux at each time step, the latter will compute the integrated neutrino flux (fluence) in the time bin.
     The result is a compressed .tar file containing all individual input files.
 * **Running SNOwGLoBES:**
-    TODO: add description
+    This step convolves the fluence generated in the previous step with the cross-sections for the interaction channels happening in various detectors supported by SNOwGLoBES.
+    It takes into account the effective mass of the detector as well as a smearing matrix describing the energy-dependent detection efficiency.
+    The output gives the number of events detected as a function of energy for each interaction channel, integrated in a given time window (or time bin), or in a snapshot in time.
 * **Collating SNOwGLoBES outputs:**
-    TODO: add description
+    This step puts together all the interaction channels and time bins evaluated by SNOwGLoBES in a single file (for each detector and for each time bin).
+    The output tables allow to build the detected neutrino energy spectrum and neutrino time distribution, for each reaction channel or the sum of them.
 """
 
 from __future__ import unicode_literals
@@ -164,9 +167,9 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
     output_filename : str or None
         Name of output file. If ``None``, will be based on input file name.
     tstart : astropy.Quantity or None
-        Start of time interval to integrate over.
+        Start of time interval to integrate over, or list of start times of the time series bins.
     tend : astropy.Quantity or None
-        End of time interval to integrate over.
+        End of time interval to integrate over, or list of end times of the time series bins.
 
     Returns
     -------
@@ -318,9 +321,8 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
     return os.path.join(model_dir, tfname)
 
 
-
 def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
-    """Takes in input flux files and configures and runs supernova (which outputs calculated rates).
+    """Takes as input the neutrino flux files and configures and runs the supernova script inside SNOwGLoBES, which outputs calculated event rates expected for a given (set of) detector(s). These event rates are given as a function of the neutrino energy and time, for each interaction channel.
 
     Parameters
     ----------
@@ -755,34 +757,31 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
                 print('\n'*3)
 
 
-def collate(Branch, tarball_path, detector_input="all", skip_plots=False, return_tables=False, verbose=False, remove_generated_files=True):
-    """Collates SNOwGLoBES output files and generates plots or returns data table.
-
-    .. warning::
-
-        TODO: Complete description of parameters & return value
+def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False, return_tables=False, verbose=False, remove_generated_files=True):
+    """Collates SNOwGLoBES output files and generates plots or returns a data table.
 
     Parameters
     ----------
-    Branch : ?
-        TODO: add type and description
+    SNOwGLoBESdir : str
+        Path to directory where SNOwGLoBES is installed.
     tarball_path : str
         Path of compressed .tar file produced e.g. by ``generate_time_series()`` or ``generate_fluence()``.
     detector_input : str
         Name of detector. If ``"all"``, will use all detectors supported by SNOwGLoBES.
     skip_plots: bool
-        TODO: add description
+        If False, it gives as output the plot of the energy distribution for each time bin and for each interaction channel.
     return_tables: bool
-        TODO: add description
+        If True, the data tables are returned as output. 
     verbose : bool
         Whether to generate verbose output, e.g. for debugging.
     remove_generated_files: bool
-        TODO: add description
+        Remove the output files from SNOwGLoBES, collated files, and .png's made for this snewpy run. 
 
     Returns
     -------
-    ? or None
-        If ``return_tables`` is set to ``True``, return … (TODO: describe format of returned data)
+    dict or None
+        If ``return_tables`` is set to ``True``, it returns the data tables. It provides a Table per time bin. The tables contain in the first column the energy bins, in the remaining columns, the number of events for each interaction channel in the detector.
+        
     """
     model_dir, tarball = os.path.split(os.path.abspath(tarball_path))
 
@@ -827,7 +826,7 @@ def collate(Branch, tarball_path, detector_input="all", skip_plots=False, return
 
     #Add_funct sums up relevant files from output generated above
     def add_funct(flux, detector, smear, *arg):
-        homebase = Branch + "/out/"
+        homebase = SNOwGLoBESdir + "/out/"
 
         #Defining different variables for the combinatoric iterations
         #And reformatting some variables for different naming uses
@@ -927,7 +926,7 @@ def collate(Branch, tarball_path, detector_input="all", skip_plots=False, return
         #Creates the condensed data file & applies formatting
         # this part making new files with only useful info
         condensed_file = "{0}/out/Collated_{1}_{2}_events_{3}_{4}.dat".format(
-            Branch, flux, detector_label2, smear_value, weight_value)
+            SNOwGLoBESdir, flux, detector_label2, smear_value, weight_value)
         FilesToCleanup.append(condensed_file)
         new_f = open(condensed_file, "w")
         if len(arg) == 4:
@@ -1033,9 +1032,9 @@ def collate(Branch, tarball_path, detector_input="all", skip_plots=False, return
             plt.xlabel(x_label)
             plt.title(str(flux).capitalize() + " " + str(detector_label).capitalize() + " " +
                       str(weight_value).capitalize() + " " + str(smear_title).capitalize() + " Events")
-            plt.savefig("{0}/out/{1}_{2}_{3}_{4}_log_plot.png".format(Branch, flux,
+            plt.savefig("{0}/out/{1}_{2}_{3}_{4}_log_plot.png".format(SNOwGLoBESdir, flux,
                         detector, smear_value, weight_value), dpi=300, bbox_inches='tight')
-            FilesToCleanup.append("{0}/out/{1}_{2}_{3}_{4}_log_plot.png".format(Branch,
+            FilesToCleanup.append("{0}/out/{1}_{2}_{3}_{4}_log_plot.png".format(SNOwGLoBESdir,
                                   flux, detector, smear_value, weight_value))
             plt.clf()
 
@@ -1104,37 +1103,37 @@ def collate(Branch, tarball_path, detector_input="all", skip_plots=False, return
     #Now create tarball output
     #Makes a tarfile with the condensed data files and plots
     tar = tarfile.open(model_dir + "/" + outputnamestem + "_SNOprocessed.tar.gz", "w:gz")
-    for file in os.listdir(Branch + "/out"):
+    for file in os.listdir(SNOwGLoBESdir + "/out"):
         if "Collated" in str(file):
-            tar.add(Branch + "/out/" + file, arcname=outputnamestem+'_SNOprocessed/'+file)
+            tar.add(SNOwGLoBESdir + "/out/" + file, arcname=outputnamestem+'_SNOprocessed/'+file)
         elif ".png" in str(file):
-            tar.add(Branch + "/out/" + file, arcname=outputnamestem+'_SNOprocessed/'+file)
+            tar.add(SNOwGLoBESdir + "/out/" + file, arcname=outputnamestem+'_SNOprocessed/'+file)
         else:
             continue
     tar.close()
 
-    if (return_tables is True):
+    if return_tables:
         returned_tables = {}
-        for file in os.listdir(Branch + "/out"):
+        for file in os.listdir(SNOwGLoBESdir + "/out"):
             if "Collated" in str(file):
                 returned_tables[file] = {}
-                fstream = open(Branch + "/out/"+file, 'r')
+                fstream = open(SNOwGLoBESdir + "/out/"+file, 'r')
                 returned_tables[file]['header'] = fstream.readline()
                 fstream.close()
-                returned_tables[file]['data'] = np.loadtxt(Branch + "/out/" + file, skiprows=2, unpack=True)
+                returned_tables[file]['data'] = np.loadtxt(SNOwGLoBESdir + "/out/" + file, skiprows=2, unpack=True)
 
     #removes all snowglobes output files, collated files, and .png's made for this snewpy run
-    if (remove_generated_files == True):
+    if remove_generated_files:
         for file in FilesToCleanup:
             os.remove(file)
 
     #Removes all the fluxfiles unzipped from the tarfile
     for file in FluxFileNameStems:
-        os.remove(Branch + "/fluxes/" + file + extension)
+        os.remove(SNOwGLoBESdir + "/fluxes/" + file + extension)
     try:
-        os.remove(Branch + "/fluxes/parameterinfo")
+        os.remove(SNOwGLoBESdir + "/fluxes/parameterinfo")
     except OSError:
-        print("")
+        pass
 
-    if (return_tables is True):
+    if return_tables:
         return returned_tables
