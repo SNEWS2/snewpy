@@ -25,6 +25,7 @@ import fnmatch
 import io
 import logging
 import os
+from python.snewpy.models import Fornax_2019, Fornax_2021
 import re
 import tarfile
 import zipfile
@@ -71,7 +72,7 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
         Path of compressed .tar file with neutrino flux data.
     """
     # Chooses model format. model_format_dict associates the model format name with it's class
-    model_class_dict = {'Nakazato_2013': Nakazato_2013, 'Sukhbold_2015': Sukhbold_2015, 'Bollig_2016': Bollig_2016, 'OConnor_2015': OConnor_2015, 'Fornax_2019': Fornax_2019_3D, 'Fornax_2021': Fornax_2021_2D, 'Warren_2020': Warren_2020, 'Analytic3Species': Analytic3Species, 'Zha_2021': Zha_2021, 'Tamborra_2014': Tamborra_2014, 'Walk_2018': Walk_2018, 'Walk_2019': Walk_2019, 'Kuroda_2020': Kuroda_2020}
+    model_class_dict = {'Nakazato_2013': Nakazato_2013, 'Sukhbold_2015': Sukhbold_2015, 'Bollig_2016': Bollig_2016, 'OConnor_2015': OConnor_2015, 'Fornax_2019': Fornax_2019, 'Fornax_2021': Fornax_2021, 'Warren_2020': Warren_2020, 'Analytic3Species': Analytic3Species, 'Zha_2021': Zha_2021, 'Tamborra_2014': Tamborra_2014, 'Walk_2018': Walk_2018, 'Walk_2019': Walk_2019, 'Kuroda_2020': Kuroda_2020}
     model_class = model_class_dict[model_type]
 
     # chooses flavor transformation, works in the same way as model_format
@@ -178,7 +179,7 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
     """
 
     # Chooses model format. model_format_dict associates the model format name with it's class
-    model_class_dict = {'Nakazato_2013': Nakazato_2013, 'Sukhbold_2015': Sukhbold_2015, 'Bollig_2016': Bollig_2016, 'OConnor_2015': OConnor_2015, 'Fornax_2019': Fornax_2019_3D, 'Fornax_2021': Fornax_2021_2D, 'Warren_2020': Warren_2020, 'Analytic3Species': Analytic3Species, 'Zha_2021': Zha_2021, 'Tamborra_2014': Tamborra_2014, 'Walk_2018': Walk_2018, 'Walk_2019': Walk_2019, 'Kuroda_2020': Kuroda_2020}
+    model_class_dict = {'Nakazato_2013': Nakazato_2013, 'Sukhbold_2015': Sukhbold_2015, 'Bollig_2016': Bollig_2016, 'OConnor_2015': OConnor_2015, 'Fornax_2019': Fornax_2019, 'Fornax_2021': Fornax_2021, 'Warren_2020': Warren_2020, 'Analytic3Species': Analytic3Species, 'Zha_2021': Zha_2021, 'Tamborra_2014': Tamborra_2014, 'Walk_2018': Walk_2018, 'Walk_2019': Walk_2019, 'Kuroda_2020': Kuroda_2020}
     model_class = model_class_dict[model_type]
 
     # chooses flavor transformation, works in the same way as model_format

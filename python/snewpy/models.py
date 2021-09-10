@@ -1231,7 +1231,7 @@ class Kuroda_2020(SupernovaModel):
         return mod + '\n'.join(s)
 
 
-class Fornax_2019_3D(SupernovaModel):
+class Fornax_2019(SupernovaModel):
     """Model based 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019. Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/.
     """
 
@@ -1621,7 +1621,7 @@ class Fornax_2019_3D(SupernovaModel):
         return mod + '\n'.join(s)
 
 
-class Fornax_2021_2D(SupernovaModel):
+class Fornax_2021(SupernovaModel):
     """Model based on axisymmetric simulations from A. Burrows and D.  Vartanyan, Nature 589:29, 2021. Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.2d/.
     """
 
