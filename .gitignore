@@ -10,4 +10,5 @@ dist/
 SNEWPY_models/
 
 # editor-specific
+.ipynb_checkpoints/
 .vscode/

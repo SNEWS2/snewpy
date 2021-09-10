@@ -1,20 +1,17 @@
 #!/usr/bin/env python
 
-from argparse import ArgumentParser
-from snewpy import to_snowglobes
-from snewpy import run_snowglobes
-from snewpy import from_snowglobes
 import numpy as np
 import os
 from astropy.io import ascii
+from snewpy import snowglobes
 
 home_directory = os.getcwd()
-SNOwGLoBES_path = "/path/to/snowglobes/"
-SNEWPY_models_base = "/path/to/snewpy/models/"
+SNOwGLoBES_path = "/path/to/snowglobes/"  # directory where SNOwGLoBES is located
+SNEWPY_models_base = "/path/to/snewpy/models/"  # directory containing model input files
 
-d=10
+d = 10  # distance of supernova in kpc
 
-dets = ["wc100kt30prct","ar40kt","halo1","halo2","scint20kt","novaFD","icecube","km3net"]
+dets = ["wc100kt30prct","ar40kt","halo1","halo2","scint20kt","novaFD","icecube"]
 ref_mass = {"wc100kt30prct":100,"ar40kt":40,"halo1":0.079,"halo2":1,"scint20kt":20,"novaFD":14,"icecube":51600,"km3net":69366*3}
 
 models = {}
@@ -37,11 +34,11 @@ if (have_data_saved is False):
             modeltype = models[model]['type']
             outfile = modeltype+"_"+model+"_summed_"+transformation
             model_dir = SNEWPY_models_base+"/"+modeltype+"/"
-        
-            tarredfile = to_snowglobes.generate_fluence(model_dir, file_name, modeltype, transformation, d, outfile) #runs to_snowglobes
+
+            tarredfile = snowglobes.generate_fluence(model_dir + file_name, modeltype, transformation, d, outfile)
             for det in dets:
-                run_snowglobes.go(SNOwGLoBES_path, model_dir, tarredfile, detector_input=det)
-                tables = from_snowglobes.collate(SNOwGLoBES_path, model_dir, tarredfile, detector_input=det,skip_plots=True,return_tables=True)
+                snowglobes.simulate(SNOwGLoBES_path, tarredfile, detector_input=det)
+                tables = snowglobes.collate(SNOwGLoBES_path, tarredfile, detector_input=det, skip_plots=True, return_tables=True)
 
                 #for our table, interesting number is the smeared total number of events
                 key = "Collated_"+outfile+"_"+det+"_events_smeared_weighted.dat"
@@ -68,22 +65,22 @@ def round_to_2(x):
     else:
         return round(x, -int(np.floor(np.log10(np.abs(x))))+1)
 
-det_maps = {"Super-K":"wc100kt30prct","Hyper-K":"wc100kt30prct","IceCube":"icecube","KM3NeT":"km3net","LVD":"scint20kt",
+det_maps = {"Super-K":"wc100kt30prct","Hyper-K":"wc100kt30prct","IceCube":"icecube","LVD":"scint20kt",
             "KamLAND":"scint20kt","Borexino":"scint20kt","JUNO":"scint20kt","SNO+":"scint20kt","NO{$\\nu$}A":"novaFD",
             "HALO":"halo1","HALO-1kT":"halo2","DUNE":"ar40kt","MicroBooNe":"ar40kt","SBND":"ar40kt","Baksan":"scint20kt"}
     
 data = {}
-data['Experiment'] = ['Super-K','Hyper-K','IceCube','KM3NeT','LVD','KamLAND','Borexino',
+data['Experiment'] = ['Super-K','Hyper-K','IceCube','LVD','KamLAND','Borexino',
                        'JUNO','SNO+','NO{$\\nu$}A','Baksan','HALO','HALO-1kT','DUNE','MicroBooNe','SBND']
 
 data['Type'] = ["H$_2$O/$\\bar{\\nu}_e$","H$_2$O/$\\bar{\\nu}_e$","String/$\\bar{\\nu}_e$",
-                "String/$\\bar{\\nu}_e$",'C$_n$H$_{2n}$/$\\bar{\\nu}_e$','C$_n$H$_{2n}$/$\\bar{\\nu}_e$',
+                'C$_n$H$_{2n}$/$\\bar{\\nu}_e$','C$_n$H$_{2n}$/$\\bar{\\nu}_e$',
                 'C$_n$H$_{2n}$/$\\bar{\\nu}_e$','C$_n$H$_{2n}$/$\\bar{\\nu}_e$',
                 'C$_n$H$_{2n}$/$\\bar{\\nu}_e$','C$_n$H$_{2n}$/$\\bar{\\nu}_e$','C$_n$H$_{2n}$/$\\bar{\\nu}_e$',
                 "Lead/$\\nu_e$","Lead/$\\nu_e$","Ar/$\\nu_e$","Ar/$\\nu_e$","Ar/$\\nu_e$"]
-data['Mass [kt]'] = [32,220,51600,69366*3,1,1,0.278,20,0.78,14,0.240,0.079,1,40,0.09,0.12]
+data['Mass [kt]'] = [32,220,51600,1,1,0.278,20,0.78,14,0.240,0.079,1,40,0.09,0.12]
 
-data['Location'] = ["Japan","Japan","South Pole","Italy/France","Italy","Japan","Italy","China",
+data['Location'] = ["Japan","Japan","South Pole","Italy","Japan","Italy","China",
                     "Canada","USA","Russia","Canada","Italy","USA","USA","USA"]
 
 data['\\SI{11.2}{\solarmass}'] = []
@@ -134,17 +131,12 @@ for experiment in range(len(data['Experiment'])):
 #non-standard energy dependence is handled through the efficiencies.  To get an effective
 #mass we take the ratio of the total weighted events to the unweighted events and multiply
 #the unweighted mass (the entry in SNOwGLoBES), see below for details.  Here we take the
-#effective mass of the s27 normal scenario and discuss the range in the table caption
+#effective mass of the s27 normal scenario and discuss the range in the table caption.
 
 dettype='icecube'
 mass=51600
 data['Mass [kt]'][2] = "~"+str(100*int(0.01*(mass*total_events['s27.0']['AdiabaticMSW_NMO'][dettype+"smeared"]/
       total_events['s27.0']['AdiabaticMSW_NMO'][dettype+"unsmeared"]+50)))+"*"
-
-dettype='km3net'
-mass=69366*3
-data['Mass [kt]'][3] = "~"+str(10*int(0.1*(mass*total_events['s27.0']['AdiabaticMSW_NMO'][dettype+"smeared"]/
-      total_events['s27.0']['AdiabaticMSW_NMO'][dettype+"unsmeared"]+5)))+"*"
 
 #DarkSide-20k & Ar/any $\nu$ & 0.02 & Italy & \\
 #For DarkSide-20k, the text on the SNEWS2.0 paper says the s27 will produce 250 events at 10kpc with a
@@ -162,8 +154,8 @@ data['\\SI{40.0}{\solarmass}'].append("-")
 
 
 #For XENONnT, LZ, and PandaX-4T, we take the values from Lang et al. [Phys. Rev. D 94 (2016) no.10, 103009].
-#We take the S2-only, 60PE threshold numbers for the 11.2 msun and 27 msun modeels as they
-#are the ones used here. We take 9.4 events/tonne for the 11.2 model and 17.6 events/tonne for the 27.0 model
+#We take the S2-only, 60PE threshold numbers for the 11.2 msun and 27 msun models as they
+#are the ones used here. We take 9.4 events/tonne for the 11.2 model and 17.6 events/tonne for the 27.0 model.
 s11_epT = 9400.
 s27_epT = 17600.
 
@@ -196,6 +188,3 @@ data['\\SI{40.0}{\solarmass}'].append("-")
 
 
 ascii.write(data,Writer=ascii.Latex)
-
-
-
