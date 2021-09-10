@@ -110,7 +110,7 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
 
         # Loop over sampled times.
         for i, t in enumerate(times):
-            osc_spectra = snmodel.get_oscillatedspectra(t, energy, flavor_transformation)
+            osc_spectra = snmodel.get_transformed_spectra(t, energy, flavor_transformation)
 
             osc_fluence = {}
             table = []
@@ -256,7 +256,7 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
                 dt = tb-ta
 
             #first time bin of model in requested interval
-            osc_spectra = snmodel.get_oscillatedspectra(model_times[starting_index[i]], energy, flavor_transformation)
+            osc_spectra = snmodel.get_transformed_spectra(model_times[starting_index[i]], energy, flavor_transformation)
 
             if dt < model_tend[starting_index[i]]-ta:
                 dt = dt
@@ -266,12 +266,12 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
 
                 #intermediate time bins of model in requested interval
                 for j in range(starting_index[i]+1, ending_index[i], 1):
-                    temp_spectra = snmodel.get_oscillatedspectra(model_times[j], energy, flavor_transformation)
+                    temp_spectra = snmodel.get_transformed_spectra(model_times[j], energy, flavor_transformation)
                     for flavor in Flavor:
                         osc_spectra[flavor] += temp_spectra[flavor]*(model_tend[j]-model_tstart[j])
 
                 #last time bin of model in requested interval
-                temp_spectra = snmodel.get_oscillatedspectra(
+                temp_spectra = snmodel.get_transformed_spectra(
                     model_times[ending_index[i]], energy, flavor_transformation)
                 for flavor in Flavor:
                     osc_spectra[flavor] += temp_spectra[flavor]*(tb-model_tstart[ending_index[i]])

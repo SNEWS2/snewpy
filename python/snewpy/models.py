@@ -87,7 +87,7 @@ class SupernovaModel(ABC):
         pass
 
     @abstractmethod
-    def get_initialspectra(self, t, E, flavors=Flavor):
+    def get_initial_spectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra at the source.
 
         Parameters
@@ -106,7 +106,15 @@ class SupernovaModel(ABC):
         """
         pass
 
-    def get_oscillatedspectra(self, t, E, flavor_xform):
+    def get_initialspectra(self, *args):
+        """DO NOT USE! Only for backward compatibility!
+
+        :meta private:
+        """
+        print("[WARNING] Please use `get_initial_spectra()` instead of `get_initialspectra()`!")
+        return self.get_initial_spectra(*args)
+
+    def get_transformed_spectra(self, t, E, flavor_xform):
         """Get neutrino spectra after applying oscillation.
 
         Parameters
@@ -120,30 +128,39 @@ class SupernovaModel(ABC):
 
         Returns
         -------
-        oscillatedspectra : dict
-            Dictionary of oscillated spectra, keyed by neutrino flavor.
+        dict
+            Dictionary of transformed spectra, keyed by neutrino flavor.
         """
-        initialspectra = self.get_initialspectra(t, E)
-        oscillatedspectra = {}
+        initialspectra = self.get_initial_spectra(t, E)
+        transformed_spectra = {}
 
-        oscillatedspectra[Flavor.NU_E] = \
+        transformed_spectra[Flavor.NU_E] = \
             flavor_xform.prob_ee(t, E) * initialspectra[Flavor.NU_E] + \
             flavor_xform.prob_ex(t, E) * initialspectra[Flavor.NU_X]
 
-        oscillatedspectra[Flavor.NU_X] = \
+        transformed_spectra[Flavor.NU_X] = \
             flavor_xform.prob_xe(t, E) * initialspectra[Flavor.NU_E] + \
             flavor_xform.prob_xx(t, E) * initialspectra[Flavor.NU_X] 
 
-        oscillatedspectra[Flavor.NU_E_BAR] = \
+        transformed_spectra[Flavor.NU_E_BAR] = \
             flavor_xform.prob_eebar(t, E) * initialspectra[Flavor.NU_E_BAR] + \
             flavor_xform.prob_exbar(t, E) * initialspectra[Flavor.NU_X_BAR]
 
-        oscillatedspectra[Flavor.NU_X_BAR] = \
+        transformed_spectra[Flavor.NU_X_BAR] = \
             flavor_xform.prob_xebar(t, E) * initialspectra[Flavor.NU_E_BAR] + \
             flavor_xform.prob_xxbar(t, E) * initialspectra[Flavor.NU_X_BAR] 
 
-        return oscillatedspectra   
-    
+        return transformed_spectra   
+
+
+    def get_oscillatedspectra(self, *args):
+        """DO NOT USE! Only for backward compatibility!
+
+        :meta private:
+        """
+        print("[WARNING] Please use `get_transformed_spectra()` instead of `get_oscillatedspectra()`!")
+        return self.get_transformed_spectra(*args)
+
 
 class _GarchingArchiveModel(SupernovaModel):
     """Subclass that reads models in the format used in the [Garching Supernova Archive](https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/)."""
@@ -221,7 +238,7 @@ class _GarchingArchiveModel(SupernovaModel):
         """
         return self.time
 
-    def get_initialspectra(self, t, E, flavors=Flavor):
+    def get_initial_spectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity curves before oscillation.
 
         Parameters
@@ -310,7 +327,7 @@ class Analytic3Species(SupernovaModel):
         """
         return self.time
     
-    def get_initialspectra(self, t, E, flavors=Flavor):
+    def get_initial_spectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity curves after oscillation.
 
         Parameters
@@ -424,7 +441,7 @@ class Nakazato_2013(SupernovaModel):
         """
         return self.time
     
-    def get_initialspectra(self, t, E, flavors=Flavor):
+    def get_initial_spectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity at the source.
 
         Parameters
@@ -536,7 +553,7 @@ class Sukhbold_2015(SupernovaModel):
         """
         return self.time
     
-    def get_initialspectra(self, t, E, flavors=Flavor):
+    def get_initial_spectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity curves after oscillation.
 
         Parameters
@@ -763,7 +780,7 @@ class OConnor_2015(SupernovaModel):
         """
         return self.time
 
-    def get_initialspectra(self, t, E, flavors=Flavor):
+    def get_initial_spectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity curves before oscillation.
 
         Parameters
@@ -896,7 +913,7 @@ class Zha_2021(SupernovaModel):
         """
         return self.time
 
-    def get_initialspectra(self, t, E, flavors=Flavor):
+    def get_initial_spectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity curves before oscillation.
 
         Parameters
@@ -1032,7 +1049,7 @@ class Warren_2020(SupernovaModel):
         """
         return self.time
 
-    def get_initialspectra(self, t, E, flavors=Flavor):
+    def get_initial_spectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity curves before oscillation.
 
         Parameters
@@ -1152,7 +1169,7 @@ class Kuroda_2020(SupernovaModel):
         """
         return self.time
 
-    def get_initialspectra(self, t, E, flavors=Flavor):
+    def get_initial_spectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity curves before oscillation.
 
         Parameters
@@ -1517,7 +1534,7 @@ class Fornax_2019_3D(SupernovaModel):
 
         return E, dE, binspec
 
-    def get_initialspectra(self, t, E, theta, phi, flavors=Flavor, interpolation='linear'):
+    def get_initial_spectra(self, t, E, theta, phi, flavors=Flavor, interpolation='linear'):
         """Get neutrino spectra/luminosity curves before flavor transformation.
 
         Parameters
@@ -1648,7 +1665,7 @@ class Fornax_2021_2D(SupernovaModel):
     def get_time(self):
         return self.time
 
-    def get_initialspectra(self, t, E, flavors=Flavor, interpolation='linear'):
+    def get_initial_spectra(self, t, E, flavors=Flavor, interpolation='linear'):
         """Get neutrino spectra/luminosity curves after oscillation.
 
         Parameters
