@@ -1,5 +1,5 @@
 ---
-title: 'SNEWPY: A data pipeline from supernova simulations to neutrino signals'
+title: 'SNEWPY: A Data Pipeline from Supernova Simulations to Neutrino Signals'
 tags:
   - Python
   - astronomy
@@ -82,7 +82,7 @@ affiliations:
     index: 13
   - name: Duke University, Durham, NC, USA
     index: 14
-date: 7 September 2021
+date: 10 September 2021
 bibliography: paper.bib
 
 # Optional fields if submitting to a AAS journal too, see this blog post:
@@ -95,18 +95,18 @@ aas-journal: The Astrophysical Journal # <- The name of the AAS journal.
 # Summary
 
 Current neutrino detectors will observe hundreds to thousands of neutrinos
-from a Galactic supernova, and future detectors will increase the yield by
+from a Galactic supernova, and future detectors will increase this yield by
 an order of magnitude or more. With such neutrino data sets, the next
 Galactic supernova will significantly increase our understanding of the
 explosions of massive stars, nuclear physics under extreme conditions, and
-the fundamental properties of neutrinos. However, there is a large gulf
+the fundamental properties of neutrinos. However, there is a gulf
 between supernova simulations and the corresponding signals in detectors,
 making comparisons between theory and observation, as well as between
 different detectors, very difficult. SNEWPY offers a unified interface for
 hundreds of supernova simulations, a large library of flux transformations on
 the way towards the detector, and an interface to SNOwGLoBES [@SNOwGLoBES],
-allowing users to easily calculate expected event rates from many supernova
-models in many different neutrino detectors. 
+allowing users to easily calculate and compare expected event rates from many supernova
+models in many different neutrino detectors.
 
 # Statement of need
 
@@ -154,9 +154,13 @@ supernova neutrinos.
 
 # Acknowledgements
 
-This work was supported at NC State by U.S. Department of Energy grant
-DE-FG02-02ER41216, at University of Rochester by the U.S. National Science
-Foundation under award number 1914426, at Stockholm University by the Swedish
-Research Council (Project No. 2020-00452), and at King’s College London by STFC.
+This work is supported by the National Science Foundation “Windows on the
+Universe: the Era of Multi-Messenger Astrophysics” Program: “WoU-MMA:
+Collaborative Research: A Next-Generation SuperNova Early Warning System for
+Multimessenger Astronomy” through Grant Nos. 1914448, 1914409, 1914447,
+1914418, 1914410, 1914416, and 1914426.
+This work is also supported at NC State by U.S. Department of Energy grant
+DE-FG02-02ER41216, at Stockholm University by the Swedish Research Council
+(Project No. 2020-00452), and at King’s College London by STFC.
 
 # References
