@@ -87,7 +87,7 @@ class SupernovaModel(ABC):
         pass
 
     @abstractmethod
-    def get_initialspectra(self, t, E, flavors=Flavor):
+    def get_initial_spectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra at the source.
 
         Parameters
@@ -106,7 +106,14 @@ class SupernovaModel(ABC):
         """
         pass
 
-    # TODO: find & replace all uses in example notebooks
+    def get_initialspectra(self, *args):
+        """DO NOT USE! Only for backward compatibility!
+
+        :meta private:
+        """
+        print("[WARNING] Please use `get_initial_spectra()` instead of `get_initialspectra()`!")
+        return self.get_initial_spectra(*args)
+
     def get_transformed_spectra(self, t, E, flavor_xform):
         """Get neutrino spectra after applying oscillation.
 
@@ -124,7 +131,7 @@ class SupernovaModel(ABC):
         dict
             Dictionary of transformed spectra, keyed by neutrino flavor.
         """
-        initialspectra = self.get_initialspectra(t, E)
+        initialspectra = self.get_initial_spectra(t, E)
         transformed_spectra = {}
 
         transformed_spectra[Flavor.NU_E] = \
@@ -231,7 +238,7 @@ class _GarchingArchiveModel(SupernovaModel):
         """
         return self.time
 
-    def get_initialspectra(self, t, E, flavors=Flavor):
+    def get_initial_spectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity curves before oscillation.
 
         Parameters
@@ -320,7 +327,7 @@ class Analytic3Species(SupernovaModel):
         """
         return self.time
     
-    def get_initialspectra(self, t, E, flavors=Flavor):
+    def get_initial_spectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity curves after oscillation.
 
         Parameters
@@ -434,7 +441,7 @@ class Nakazato_2013(SupernovaModel):
         """
         return self.time
     
-    def get_initialspectra(self, t, E, flavors=Flavor):
+    def get_initial_spectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity at the source.
 
         Parameters
@@ -546,7 +553,7 @@ class Sukhbold_2015(SupernovaModel):
         """
         return self.time
     
-    def get_initialspectra(self, t, E, flavors=Flavor):
+    def get_initial_spectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity curves after oscillation.
 
         Parameters
@@ -773,7 +780,7 @@ class OConnor_2015(SupernovaModel):
         """
         return self.time
 
-    def get_initialspectra(self, t, E, flavors=Flavor):
+    def get_initial_spectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity curves before oscillation.
 
         Parameters
@@ -906,7 +913,7 @@ class Zha_2021(SupernovaModel):
         """
         return self.time
 
-    def get_initialspectra(self, t, E, flavors=Flavor):
+    def get_initial_spectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity curves before oscillation.
 
         Parameters
@@ -1042,7 +1049,7 @@ class Warren_2020(SupernovaModel):
         """
         return self.time
 
-    def get_initialspectra(self, t, E, flavors=Flavor):
+    def get_initial_spectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity curves before oscillation.
 
         Parameters
@@ -1162,7 +1169,7 @@ class Kuroda_2020(SupernovaModel):
         """
         return self.time
 
-    def get_initialspectra(self, t, E, flavors=Flavor):
+    def get_initial_spectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity curves before oscillation.
 
         Parameters
@@ -1527,7 +1534,7 @@ class Fornax_2019_3D(SupernovaModel):
 
         return E, dE, binspec
 
-    def get_initialspectra(self, t, E, theta, phi, flavors=Flavor, interpolation='linear'):
+    def get_initial_spectra(self, t, E, theta, phi, flavors=Flavor, interpolation='linear'):
         """Get neutrino spectra/luminosity curves before flavor transformation.
 
         Parameters
@@ -1658,7 +1665,7 @@ class Fornax_2021_2D(SupernovaModel):
     def get_time(self):
         return self.time
 
-    def get_initialspectra(self, t, E, flavors=Flavor, interpolation='linear'):
+    def get_initial_spectra(self, t, E, flavors=Flavor, interpolation='linear'):
         """Get neutrino spectra/luminosity curves after oscillation.
 
         Parameters

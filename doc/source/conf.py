@@ -113,7 +113,7 @@ def skip(app, what, name, obj, would_skip, options):
     if name == "get_time":
         if not obj.__qualname__.startswith("SupernovaModel"):
             return True
-    if name == "get_initialspectra":
+    if name == "get_initial_spectra":
         containing_class = obj.__qualname__.split(".")[0]
         if not containing_class in ("SupernovaModel", "Fornax_2019_3D"):
             # Fornax_2019_3D has additional parameters theta, phi -> should appear in documentation
