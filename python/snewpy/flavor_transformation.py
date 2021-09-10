@@ -1501,7 +1501,7 @@ class NonAdiabaticMSWes(FlavorTransformation):
 
     1. the fourth neutrino mass is the heaviest but not so large that the electron-sterile resonances
        are inside the neutrinosphere;
-    2. the “outer” or H' electron-sterile MSW resonance is adiabatic;
+    2. the “outer” or H' electron-sterile MSW resonance is non-adiabatic;
     3. the “inner” or H'' electron-sterile MSW resonance (where the electron fraction = 1/3) is non-adiabatic.
 
     For further insight see, for example, Esmaili, Peres, and Serpico, Phys. Rev. D 90, 033013 (2014).
