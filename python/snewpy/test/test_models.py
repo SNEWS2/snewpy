@@ -6,7 +6,7 @@ import unittest
 from snewpy.neutrino import Flavor
 from snewpy.flavor_transformation import NoTransformation
 from snewpy.models import Nakazato_2013, Tamborra_2014, OConnor_2015, \
-                          Sukhbold_2015
+                          Sukhbold_2015, Bollig_2016
 
 from astropy import units as u
 
@@ -103,3 +103,25 @@ class TestModels(unittest.TestCase):
                 self.assertEqual(type(f), dict)
                 self.assertEqual(len(f), len(Flavor))
                 self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
+
+    def test_Bollig_2016(self):
+        """
+        Instantiate a set of 'Bollig 2016' models
+        """
+        for mass in [11.2, 27.]:
+            mfile = 'models/Bollig_2016/s{:.1f}c'.format(mass)
+            model = Bollig_2016(mfile, eos='LS220')
+
+            self.assertEqual(model.EOS, 'LS220')
+            self.assertEqual(model.progenitor_mass, mass*u.Msun)
+
+            # Check that times are in proper units.
+            t = model.get_time()
+            self.assertTrue(t.unit, u.s)
+
+            # Check that we can compute flux dictionaries.
+            f = model.get_initial_spectra(0*u.s, 10*u.MeV)
+            self.assertEqual(type(f), dict)
+            self.assertEqual(len(f), len(Flavor))
+            self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
+
