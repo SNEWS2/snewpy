@@ -1642,7 +1642,7 @@ class Fornax_2021(SupernovaModel):
             Absolute or relative path to FITS file with model data.
         """
         # Set up model metadata.
-        self.progenitor_mass = float(filename.split('_')[-3][:-1]) * u.Msun
+        self.progenitor_mass = float(filename.split('/')[-1].split('_')[2][:-1]) * u.Msun
 
         # Conversion of flavor to key name in the model HDF5 file.
         self._flavorkeys = { Flavor.NU_E : 'nu0',
