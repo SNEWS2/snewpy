@@ -1147,11 +1147,11 @@ class NeutrinoDecay(FlavorTransformation):
         # NMO case.
         if self.mass_order == MassHierarchy.NORMAL:
             pe_array = self.De1*(1-np.exp(-self.gamma(E)*self.d)) + \
-                       self.De3*np.exp(-self.gamma(E)*self.d))
+                       self.De3*np.exp(-self.gamma(E)*self.d)
         # IMO case.
         else:
             pe_array = self.De2*np.exp(-self.gamma(E)*self.d) + \
-                       self.De3*(1-np.exp(-self.gamma(E)*self.d)))
+                       self.De3*(1-np.exp(-self.gamma(E)*self.d))
         return pe_array
 
     def prob_ex(self, t, E):
