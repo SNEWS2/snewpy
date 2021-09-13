@@ -1018,7 +1018,7 @@ class Warren_2020(SupernovaModel):
         # Set model metadata.
         self.filename = os.path.basename(filename)
         self.EOS = eos
-        self.progenitor_mass = float(filename.split('_')[-1].strip('m%.h5')) * u.Msun
+        self.progenitor_mass = float(filename.split('_')[-1][1:-3]) * u.Msun
         self.turbmixing_param = float(filename.split('_')[-2].strip('a%'))
 
         # Get grid of model times.
