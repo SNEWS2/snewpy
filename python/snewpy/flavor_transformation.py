@@ -1244,7 +1244,7 @@ class NeutrinoDecay(FlavorTransformation):
         """
         # NMO case.
         if self.mass_order == MassHierarchy.NORMAL:
-            pxbar_array = self.De1*(1-np.exp(-self.gamma(E)*self.d)) + \ 
+            pxbar_array = self.De1*(1-np.exp(-self.gamma(E)*self.d)) + \
                           self.De2 + self.De3*np.exp(-self.gamma(E)*self.d)
         # IMO case.
         else:
