@@ -6,7 +6,8 @@ import unittest
 from snewpy.neutrino import Flavor
 from snewpy.flavor_transformation import NoTransformation
 from snewpy.models import Nakazato_2013, Tamborra_2014, OConnor_2015, \
-                          Sukhbold_2015, Bollig_2016, Walk_2018
+                          Sukhbold_2015, Bollig_2016, Walk_2018, \
+                          Walk_2019
 
 from astropy import units as u
 
@@ -132,6 +133,27 @@ class TestModels(unittest.TestCase):
         mass = 15.
         mfile = 'models/Walk_2018/s{:.1f}c_3D_nonrot_dir1'.format(mass)
         model = Walk_2018(mfile, eos='LS220')
+
+        self.assertEqual(model.EOS, 'LS220')
+        self.assertEqual(model.progenitor_mass, mass*u.Msun)
+
+        # Check that times are in proper units.
+        t = model.get_time()
+        self.assertTrue(t.unit, u.s)
+
+        # Check that we can compute flux dictionaries.
+        f = model.get_initial_spectra(0*u.s, 10*u.MeV)
+        self.assertEqual(type(f), dict)
+        self.assertEqual(len(f), len(Flavor))
+        self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
+
+    def test_Walk_2019(self):
+        """
+        Instantiate a set of 'Walk 2019' models
+        """
+        mass = 40.
+        mfile = 'models/Walk_2019/s{:.1f}c_3DBH_dir1'.format(mass)
+        model = Walk_2019(mfile, eos='LS220')
 
         self.assertEqual(model.EOS, 'LS220')
         self.assertEqual(model.progenitor_mass, mass*u.Msun)
