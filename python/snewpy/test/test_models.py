@@ -7,7 +7,8 @@ from snewpy.neutrino import Flavor
 from snewpy.flavor_transformation import NoTransformation
 from snewpy.models import Nakazato_2013, Tamborra_2014, OConnor_2015, \
                           Sukhbold_2015, Bollig_2016, Walk_2018, \
-                          Walk_2019, Fornax_2019, Warren_2020
+                          Walk_2019, Fornax_2019, Warren_2020, \
+                          Kuroda_2020
 
 from astropy import units as u
 
@@ -236,3 +237,23 @@ class TestModels(unittest.TestCase):
                 self.assertEqual(len(f), len(Flavor))
                 self.assertEqual(f[Flavor.NU_E].unit, 1./(u.erg * u.s))
 
+    def test_Kuroda_2020(self):
+        """
+        Instantiate a set of 'Kuroda 2020' models
+        """
+        for field in ['R00B00', 'R10B12', 'R10B13']:
+            mfile = 'models/Kuroda_2020/Lnu{}.dat'.format(field)
+            model = Kuroda_2020(mfile)
+
+            self.assertEqual(model.EOS, 'LS220')
+            self.assertEqual(model.progenitor_mass, 20*u.Msun)
+
+            # Check that times are in proper units.
+            t = model.get_time()
+            self.assertTrue(t.unit, u.s)
+
+            # Check that we can compute flux dictionaries.
+            f = model.get_initial_spectra(0*u.s, 10*u.MeV)
+            self.assertEqual(type(f), dict)
+            self.assertEqual(len(f), len(Flavor))
+            self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
