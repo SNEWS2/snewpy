@@ -1118,7 +1118,7 @@ class Warren_2020(SupernovaModel):
 class Kuroda_2020(SupernovaModel):
     """Set up a model based on simulations from Kuroda et al. (2020)."""
 
-    def __init__(self, filename, eos='LS220'):
+    def __init__(self, filename, eos='LS220', mass=20*u.Msun):
         """Initialize model.
 
         Parameters
@@ -1131,6 +1131,7 @@ class Kuroda_2020(SupernovaModel):
         # Load up model metadata.
         self.filename = filename
         self.EOS = eos
+        self.progenitor_mass = mass
 
         # Read ASCII data.
         simtab = Table.read(filename, format='ascii')
@@ -1216,7 +1217,8 @@ class Kuroda_2020(SupernovaModel):
         """Default representation of the model.
         """
         mod = 'Kuroda_2020 Model: {}\n'.format(self.filename)
-        s = ['Eq. of state    : {}'.format(self.EOS)
+        s = ['Progenitor mass : {}'.format(self.progenitor_mass),
+             'Eq. of state    : {}'.format(self.EOS)
              ]
         return mod + '\n'.join(s)
 
@@ -1226,6 +1228,7 @@ class Kuroda_2020(SupernovaModel):
         mod = '**Kuroda_2020 Model**: {}\n\n'.format(self.filename)
         s = ['|Parameter|Value|',
              '|:---------|:-----:|',
+             '|Progenitor mass | ${0.value:g}$ {0.unit:latex}|'.format(self.progenitor_mass),
              '|EOS | {}|'.format(self.EOS)
              ]
         return mod + '\n'.join(s)
