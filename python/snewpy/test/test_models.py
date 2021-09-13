@@ -8,7 +8,7 @@ from snewpy.flavor_transformation import NoTransformation
 from snewpy.models import Nakazato_2013, Tamborra_2014, OConnor_2015, \
                           Sukhbold_2015, Bollig_2016, Walk_2018, \
                           Walk_2019, Fornax_2019, Warren_2020, \
-                          Kuroda_2020, Fornax_2021
+                          Kuroda_2020, Fornax_2021, Zha_2021
 
 from astropy import units as u
 
@@ -260,7 +260,7 @@ class TestModels(unittest.TestCase):
 
     def test_Fornax_2021(self):
         """
-        Instantiate a set of 'Fornax 2019' models
+        Instantiate a set of 'Fornax 2021' models
         """
         for mass in ['12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '25', '26', '26.99']:
             mfile = 'models/Fornax_2021/lum_spec_{}M_r10000_dat.h5'.format(mass)
@@ -277,4 +277,25 @@ class TestModels(unittest.TestCase):
             self.assertEqual(type(f), dict)
             self.assertEqual(len(f), len(Flavor))
             self.assertEqual(f[Flavor.NU_E].unit, u.erg/(u.MeV * u.s))
+
+    def test_Zha_2021(self):
+        """
+        Instantiate a set of 'Zha 2021' models
+        """
+        for mass in ['16', '17', '18', '19', '19.89', '20', '21', '22.39', '23', '24', '25', '26', '30', '33']:
+            mfile = 'models/Zha_2021/s{}.dat'.format(mass)
+            model = Zha_2021(mfile)
+
+            self.assertEqual(model.progenitor_mass, float(mass)*u.Msun)
+            self.assertEqual(model.EOS, 'STOS_B145')
+
+            # Check that times are in proper units.
+            t = model.get_time()
+            self.assertTrue(t.unit, u.s)
+
+            # Check that we can compute flux dictionaries.
+            f = model.get_initial_spectra(0*u.s, 10*u.MeV)
+            self.assertEqual(type(f), dict)
+            self.assertEqual(len(f), len(Flavor))
+            self.assertEqual(f[Flavor.NU_E].unit, 1./(u.erg * u.s))
 
