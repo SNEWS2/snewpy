@@ -1,4 +1,4 @@
-# SNEWPy: Supernova Neutrino Early Warning Models for Python
+# SNEWPY: Supernova Neutrino Early Warning Models for Python
 
 [![DOI](https://zenodo.org/badge/221705586.svg)](https://zenodo.org/badge/latestdoi/221705586)
 ![tests](https://github.com/SNEWS2/snewpy/actions/workflows/tests.yml/badge.svg)
@@ -8,8 +8,8 @@ Collection of models from the community in common format for use by the SNEWS te
 
 ## Installation
 
-Run `pip install snewpy` to install SNEWPy.
-After installation you can run `python -c 'import snewpy; snewpy.get_models()'` to download supernova models supported by SNEWPy. By default, they will be downloaded to a subdirectory named `SNEWPY-models/<model_name>/` in the current directory.
+Run `pip install snewpy` to install SNEWPY.
+After installation you can run `python -c 'import snewpy; snewpy.get_models()'` to download supernova models supported by SNEWPY. By default, they will be downloaded to a subdirectory named `SNEWPY-models/<model_name>/` in the current directory.
 
 ## Dependencies 
 
