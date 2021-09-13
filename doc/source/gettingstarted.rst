@@ -4,7 +4,7 @@ Getting Started
 Installation
 ------------
 
-To use SNEWPy, first install it using pip:
+To use SNEWPY, first install it using pip:
 
 .. code-block:: console
 
@@ -16,7 +16,7 @@ To use SNEWPy, first install it using pip:
 Download Supernova Models
 -------------------------
 
-SNEWPy includes a large number of supernova models from different simulation groups.
+SNEWPY includes a large number of supernova models from different simulation groups.
 Since these models have a size of several 100 MB, they are not included in the initial install.
 Instead, after installing, run the following command to download models you want to use:
 
@@ -85,4 +85,4 @@ This will generate the following figure:
 The SNEWPY repository contains many Jupyter notebooks in ``doc/nb/`` with sample code
 showing different models or how to apply flavor transformations to the neutrino fluxes.
 
-More advanced usage of SNEWPy requires SNOwGLoBES and is described in the following section.
+More advanced usage of SNEWPY requires SNOwGLoBES and is described in the following section.
