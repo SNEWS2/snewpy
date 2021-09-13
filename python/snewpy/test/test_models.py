@@ -13,23 +13,31 @@ import numpy as np
 
 class TestModels(unittest.TestCase):
 
-    def test_Nakazato_vanilla(self):
+    def test_Nakazato_2013(self):
         """
-        Instantiate a 'Nakazato 2013' model
+        Instantiate a set of 'Nakazato 2013' models
         """
         xform = NoTransformation()
-        mfile = 'models/Nakazato_2013/nakazato-shen-z0.004-t_rev100ms-s13.0.fits'
-        model = Nakazato_2013(mfile)
 
-        self.assertEqual(model.EOS, 'SHEN')
-        self.assertEqual(model.progenitor_mass, 13.*u.Msun)
-        self.assertEqual(model.revival_time, 100.*u.ms)
+        for z in [0.004, 0.02]:
+            for trev in [100, 200, 300]:
+                for mass in [13., 20., 50.]:
+                    mfile = 'models/Nakazato_2013/nakazato-shen-z{}-t_rev{}ms-s{:.1f}.fits'.format(z, trev, mass)
+                    model = Nakazato_2013(mfile)
 
-        self.assertEqual(model.time[0], -50*u.ms)
+                    self.assertEqual(model.EOS, 'SHEN')
+                    self.assertEqual(model.progenitor_mass, mass*u.Msun)
+                    self.assertEqual(model.revival_time, trev*u.ms)
+                    self.assertEqual(model.metallicity, z)
 
-#        tunit = model.time.unit
-#        Eunit = model.meanE[Flavor.NU_E].unit
-#
-#        t = -50*u.ms
-#        self.assertTrue(np.interp(t.to(tunit), model.time, model.meanE[Flavor.NU_E])*Eunit == 6.79147181061522*u.MeV)
+                    # Check that times are in proper units.
+                    t = model.get_time()
+                    self.assertTrue(t.unit, u.s)
+                    self.assertEqual(model.time[0], -50*u.ms)
+
+                    # Check that we can compute flux dictionaries.
+                    f = model.get_initial_spectra(0*u.s, 10*u.MeV)
+                    self.assertEqual(type(f), dict)
+                    self.assertEqual(len(f), len(Flavor))
+                    self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
 
