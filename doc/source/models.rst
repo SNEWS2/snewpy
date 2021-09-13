@@ -1,10 +1,6 @@
 Supernova Models: ``snewpy.models``
 ===================================
 
-.. warning::
-
-   This was automatically generated from docstrings in ``models.py`` and still needs some editing.
-
 Base Class for Supernova Models
 -------------------------------
 .. autoclass:: snewpy.models.SupernovaModel
