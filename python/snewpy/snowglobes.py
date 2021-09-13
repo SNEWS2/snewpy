@@ -752,7 +752,7 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
                 print('\n'*3)
 
 
-def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False, return_tables=False, verbose=False, remove_generated_files=True):
+def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False, verbose=False, remove_generated_files=True):
     """Collates SNOwGLoBES output files and generates plots or returns a data table.
 
     Parameters
@@ -765,8 +765,6 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
         Name of detector. If ``"all"``, will use all detectors supported by SNOwGLoBES.
     skip_plots: bool
         If False, it gives as output the plot of the energy distribution for each time bin and for each interaction channel.
-    return_tables: bool
-        If True, the data tables are returned as output. 
     verbose : bool
         Whether to generate verbose output, e.g. for debugging.
     remove_generated_files: bool
@@ -774,9 +772,8 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
 
     Returns
     -------
-    dict or None
-        If ``return_tables`` is set to ``True``, it returns the data tables. It provides a Table per time bin. The tables contain in the first column the energy bins, in the remaining columns, the number of events for each interaction channel in the detector.
-        
+    dict
+        Dictionary of data tables: One table per time bin; each table contains in the first column the energy bins, in the remaining columns the number of events for each interaction channel in the detector.
     """
     model_dir, tarball = os.path.split(os.path.abspath(tarball_path))
 
@@ -1107,15 +1104,13 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
             continue
     tar.close()
 
-    if return_tables:
-        returned_tables = {}
-        for file in os.listdir(SNOwGLoBESdir + "/out"):
-            if "Collated" in str(file):
-                returned_tables[file] = {}
-                fstream = open(SNOwGLoBESdir + "/out/"+file, 'r')
+    returned_tables = {}
+    for file in os.listdir(SNOwGLoBESdir + "/out"):
+        if "Collated" in str(file):
+            returned_tables[file] = {}
+            with open(SNOwGLoBESdir + "/out/"+file, 'r') as fstream:
                 returned_tables[file]['header'] = fstream.readline()
-                fstream.close()
-                returned_tables[file]['data'] = np.loadtxt(SNOwGLoBESdir + "/out/" + file, skiprows=2, unpack=True)
+            returned_tables[file]['data'] = np.loadtxt(SNOwGLoBESdir + "/out/" + file, skiprows=2, unpack=True)
 
     #removes all snowglobes output files, collated files, and .png's made for this snewpy run
     if remove_generated_files:
@@ -1130,5 +1125,4 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
     except OSError:
         pass
 
-    if return_tables:
-        return returned_tables
+    return returned_tables
