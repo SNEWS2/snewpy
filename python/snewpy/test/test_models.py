@@ -223,14 +223,16 @@ class TestModels(unittest.TestCase):
                 model = Warren_2020(mfile)
 
                 self.assertEqual(model.progenitor_mass, float(mass)*u.Msun)
+                self.assertEqual(model.turbmixing_param, mixing)
+                self.assertEqual(model.EOS, 'LS220')
 
-#            # Check that times are in proper units.
-#            t = model.get_time()
-#            self.assertTrue(t.unit, u.s)
-#
-#            # Check that we can compute flux dictionaries.
-#            f = model.get_initial_spectra(0*u.s, 10*u.MeV, theta=23*u.degree, phi=22*u.degree)
-#            self.assertEqual(type(f), dict)
-#            self.assertEqual(len(f), len(Flavor))
-#            self.assertEqual(f[Flavor.NU_E].unit, u.erg/(u.MeV * u.s))
-#
+                # Check that times are in proper units.
+                t = model.get_time()
+                self.assertTrue(t.unit, u.s)
+
+                # Check that we can compute flux dictionaries.
+                f = model.get_initial_spectra(0*u.s, 10*u.MeV)
+                self.assertEqual(type(f), dict)
+                self.assertEqual(len(f), len(Flavor))
+                self.assertEqual(f[Flavor.NU_E].unit, 1./(u.erg * u.s))
+
