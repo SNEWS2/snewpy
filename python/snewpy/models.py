@@ -1018,7 +1018,7 @@ class Warren_2020(SupernovaModel):
         # Set model metadata.
         self.filename = os.path.basename(filename)
         self.EOS = eos
-        self.progenitor_mass = float(filename.split('_')[-1].strip('m%.h5')) * u.Msun
+        self.progenitor_mass = float(filename.split('_')[-1][1:-3]) * u.Msun
         self.turbmixing_param = float(filename.split('_')[-2].strip('a%'))
 
         # Get grid of model times.
@@ -1251,7 +1251,12 @@ class Fornax_2019(SupernovaModel):
         # Set up model metadata.
         self.filename = filename
 
-        self.progenitor_mass = float(filename.split('_')[-1][:-4]) * u.Msun
+        mass_str = filename.split('_')[-1]
+        if 'M' in mass_str:
+            self.progenitor_mass = float(mass_str[:-4]) * u.Msun
+        else:
+            mass_str = filename.split('_')[-2]
+            self.progenitor_mass = float(mass_str[:-1]) * u.Msun
 
         self.fluxunit = 1e50 * u.erg/(u.s*u.MeV)
         self.time = None
@@ -1637,7 +1642,7 @@ class Fornax_2021(SupernovaModel):
             Absolute or relative path to FITS file with model data.
         """
         # Set up model metadata.
-        self.progenitor_mass = float(filename.split('_')[-3][:-1]) * u.Msun
+        self.progenitor_mass = float(filename.split('/')[-1].split('_')[2][:-1]) * u.Msun
 
         # Conversion of flavor to key name in the model HDF5 file.
         self._flavorkeys = { Flavor.NU_E : 'nu0',
