@@ -35,9 +35,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from astropy import units as u
 
+import snewpy.models
 from snewpy.flavor_transformation import *
-from snewpy.models import *
-from snewpy.neutrino import MassHierarchy
+from snewpy.neutrino import Flavor, MassHierarchy
 
 mpl.use('Agg')
 
@@ -53,7 +53,7 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
     model_path : str
         Input file containing neutrino flux information from supernova model.
     model_type : str
-        Format of input file. See snewpy.models documentation for possible values.
+        Format of input file. Matches the name of the corresponding class in :py:mod:`snewpy.models`.
     transformation_type : str
         Name of flavor transformation. See snewpy.flavor_transformation documentation for possible values.
     d : int or float
@@ -70,11 +70,9 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
     str
         Path of compressed .tar file with neutrino flux data.
     """
-    # Chooses model format. model_format_dict associates the model format name with it's class
-    model_class_dict = {'Nakazato_2013': Nakazato_2013, 'Sukhbold_2015': Sukhbold_2015, 'Bollig_2016': Bollig_2016, 'OConnor_2015': OConnor_2015, 'Fornax_2019': Fornax_2019_3D, 'Fornax_2021': Fornax_2021_2D, 'Warren_2020': Warren_2020, 'Analytic3Species': Analytic3Species, 'Zha_2021': Zha_2021, 'Tamborra_2014': Tamborra_2014, 'Walk_2018': Walk_2018, 'Walk_2019': Walk_2019, 'Kuroda_2020': Kuroda_2020}
-    model_class = model_class_dict[model_type]
+    model_class = getattr(snewpy.models, model_type)
 
-    # chooses flavor transformation, works in the same way as model_format
+    # Choose flavor transformation. Use dict to associate the transformation name with its class.
     flavor_transformation_dict = {'NoTransformation': NoTransformation(), 'AdiabaticMSW_NMO': AdiabaticMSW(mh=MassHierarchy.NORMAL), 'AdiabaticMSW_IMO': AdiabaticMSW(mh=MassHierarchy.INVERTED), 'NonAdiabaticMSWH_NMO': NonAdiabaticMSWH(mh=MassHierarchy.NORMAL), 'NonAdiabaticMSWH_IMO': NonAdiabaticMSWH(mh=MassHierarchy.INVERTED), 'TwoFlavorDecoherence': TwoFlavorDecoherence(), 'ThreeFlavorDecoherence': ThreeFlavorDecoherence(), 'NeutrinoDecay_NMO': NeutrinoDecay(mh=MassHierarchy.NORMAL), 'NeutrinoDecay_IMO': NeutrinoDecay(mh=MassHierarchy.INVERTED)}
     flavor_transformation = flavor_transformation_dict[transformation_type]
 
@@ -159,7 +157,7 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
     model_path : str
         Input file containing neutrino flux information from supernova model.
     model_type : str
-        Format of input file. See snewpy.models documentation for possible values.
+        Format of input file. Matches the name of the corresponding class in :py:mod:`snewpy.models`.
     transformation_type : str
         Name of flavor transformation. See snewpy.flavor_transformation documentation for possible values.
     d : int or float
@@ -176,12 +174,9 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
     str
         Path of compressed .tar file with neutrino flux data.
     """
+    model_class = getattr(snewpy.models, model_type)
 
-    # Chooses model format. model_format_dict associates the model format name with it's class
-    model_class_dict = {'Nakazato_2013': Nakazato_2013, 'Sukhbold_2015': Sukhbold_2015, 'Bollig_2016': Bollig_2016, 'OConnor_2015': OConnor_2015, 'Fornax_2019': Fornax_2019_3D, 'Fornax_2021': Fornax_2021_2D, 'Warren_2020': Warren_2020, 'Analytic3Species': Analytic3Species, 'Zha_2021': Zha_2021, 'Tamborra_2014': Tamborra_2014, 'Walk_2018': Walk_2018, 'Walk_2019': Walk_2019, 'Kuroda_2020': Kuroda_2020}
-    model_class = model_class_dict[model_type]
-
-    # chooses flavor transformation, works in the same way as model_format
+    # Choose flavor transformation. Use dict to associate the transformation name with its class.
     flavor_transformation_dict = {'NoTransformation': NoTransformation(), 'AdiabaticMSW_NMO': AdiabaticMSW(mh=MassHierarchy.NORMAL), 'AdiabaticMSW_IMO': AdiabaticMSW(mh=MassHierarchy.INVERTED), 'NonAdiabaticMSWH_NMO': NonAdiabaticMSWH(mh=MassHierarchy.NORMAL), 'NonAdiabaticMSWH_IMO': NonAdiabaticMSWH(mh=MassHierarchy.INVERTED), 'TwoFlavorDecoherence': TwoFlavorDecoherence(), 'ThreeFlavorDecoherence': ThreeFlavorDecoherence(), 'NeutrinoDecay_NMO': NeutrinoDecay(mh=MassHierarchy.NORMAL), 'NeutrinoDecay_IMO': NeutrinoDecay(mh=MassHierarchy.INVERTED)}
     flavor_transformation = flavor_transformation_dict[transformation_type]
 

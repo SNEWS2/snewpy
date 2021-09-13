@@ -115,8 +115,8 @@ def skip(app, what, name, obj, would_skip, options):
             return True
     if name == "get_initial_spectra":
         containing_class = obj.__qualname__.split(".")[0]
-        if not containing_class in ("SupernovaModel", "Fornax_2019_3D"):
-            # Fornax_2019_3D has additional parameters theta, phi -> should appear in documentation
+        if not containing_class in ("SupernovaModel", "Fornax_2019"):
+            # Fornax_2019 has additional parameters theta, phi -> should appear in documentation
             return True
 
     if name in ("prob_ee", "prob_eebar", "prob_ex", "prob_exbar", "prob_xe", "prob_xebar", "prob_xx", "prob_xxbar"):
