@@ -4,9 +4,9 @@ Using SNEWPy as a Front End for SNOwGLoBES
 
 Install SNOwGLoBES
 ------------------
-Important parts of SNEWPy’s functionality require the `SNOwGLoBES <https://github.com/SNOwGLoBES/snowglobes>`_ and
+Important parts of SNEWPy’s functionality require the `SNOwGLoBES <https://github.com/SNOwGLoBES/snowglobes>`_ (v1.2 recommended) and
 `GLoBES <https://www.mpi-hd.mpg.de/personalhomes/globes/>`_ libraries, which need to be installed separately.
-(See their respective documentation for instructions.)
+(See the respective documentation for instructions.)
 
 
 Usage
