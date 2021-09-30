@@ -39,17 +39,17 @@ tmid = (tstart+tend)*0.5
 #call to_snowglobes
 #There are two options, here we use generate_fluence
 print("Preparing fluences...")
-tarredfile = to_snowglobes.generate_fluence(modeldir, filename, modeltype, transformation, distance, outfile,tstart,tend)
+tarredfile = snowglobes.generate_fluence(modeldir+filename, modeltype, transformation, distance, outfile,tstart,tend)
 print("Done fluences...")
 
 print("Running snowglobes...")
 #now run snowglobes, this will loop over all the fluence files in `tarredfile`
-run_snowglobes.go(SNOwGLoBES_path, modeldir, tarredfile, detector_input=detector,verbose=False)
+snowglobes.simulate(SNOwGLoBES_path, tarredfile, detector_input=detector,verbose=False)
 print("Done snowglobes...")
 
 #now collate results of output of snowglobes
 print("Collating...")
-tables = from_snowglobes.collate(SNOwGLoBES_path, modeldir, tarredfile, detector_input=detector,skip_plots=True,return_tables=True,verbose=False)
+tables = snowglobes.collate(SNOwGLoBES_path, tarredfile, detector_input=detector,skip_plots=True,verbose=False)
 
 #read results from snowglobes and put lightcurve in output file for snewpdag
 fout = open(output_path+"snewpy_output_"+detector+"_"+modeltype+"_"+filename+"_1msbin.txt", "a")
