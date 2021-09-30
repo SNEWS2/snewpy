@@ -6,5 +6,9 @@ build/
 dist/
 *.egg-info/
 
+# default directory for downloaded model files
+SNEWPY_models/
+
 # editor-specific
+.ipynb_checkpoints/
 .vscode/

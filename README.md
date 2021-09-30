@@ -1,13 +1,15 @@
-# SNEWPy: Supernova Neutrino Early Warning Models for Python
+# SNEWPY: Supernova Neutrino Early Warning Models for Python
 
 [![DOI](https://zenodo.org/badge/221705586.svg)](https://zenodo.org/badge/latestdoi/221705586)
+![tests](https://github.com/SNEWS2/snewpy/actions/workflows/tests.yml/badge.svg)
 [![Documentation Status](https://readthedocs.org/projects/snewpy/badge/?version=latest)](https://snewpy.readthedocs.io/en/latest/?badge=latest)
 
 Collection of models from the community in common format for use by the SNEWS teams
 
 ## Installation
 
-Run `python setup.py develop` or `python setup.py install --user` to install the modules in your user area and have access to the snewpy package in your Python environment.
+Run `pip install snewpy` to install SNEWPY.
+After installation you can run `python -c 'import snewpy; snewpy.get_models()'` to download supernova models supported by SNEWPY. By default, they will be downloaded to a subdirectory named `SNEWPY-models/<model_name>/` in the current directory.
 
 ## Dependencies 
 
@@ -41,7 +43,6 @@ This is a walkthrough to install GLoBES and SNOwGLoBES locally in the users home
 
 
 ## Usage
-The core code is found in `python/snewpy'. Example scripts which show
+The core code is found in `python/snewpy/`. Example scripts which show
 how the software can be used are available in the
-`python/snewpy/scripts` subfolder as well as notebooks in doc/nb
-
+`python/snewpy/scripts/` subfolder as well as notebooks in `doc/nb/`.

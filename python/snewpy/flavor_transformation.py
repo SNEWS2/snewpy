@@ -18,52 +18,148 @@ class FlavorTransformation(ABC):
     """Generic interface to compute neutrino and antineutrino survival probability."""
 
     @abstractmethod
-    def prob_ee(self):
+    def prob_ee(self, t, E):
         """Electron neutrino survival probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        float or ndarray
+            Transition probability.
         """
         pass
 
     @abstractmethod
-    def prob_ex(self):
+    def prob_ex(self, t, E):
         """X -> e neutrino transition probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        float or ndarray
+            Transition probability.
         """
         pass
 
     @abstractmethod
-    def prob_xx(self):
+    def prob_xx(self, t, E):
         """Flavor X neutrino survival probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        float or ndarray
+            Transition probability.
         """
         pass
 
     @abstractmethod
-    def prob_xe(self):
+    def prob_xe(self, t, E):
         """e -> X neutrino transition probability.
-        """
-        pass    
 
-    @abstractmethod
-    def prob_eebar(self):
-        """Electron antineutrino survival probability.
-        """
-        pass    
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
 
-    @abstractmethod
-    def prob_exbar(self):
-        """X -> e antineutrino transition probability.
-        """
-        pass   
-
-    @abstractmethod
-    def prob_xxbar(self):
-        """X -> X antineutrino survival probability.
+        Returns
+        -------
+        float or ndarray
+            Transition probability.
         """
         pass
 
     @abstractmethod
-    def prob_xebar(self):
-        """e -> X antineutrino transition probability.
+    def prob_eebar(self, t, E):
+        """Electron antineutrino survival probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        float or ndarray
+            Transition probability.
         """
-        pass    
+        pass
+
+    @abstractmethod
+    def prob_exbar(self, t, E):
+        """X -> e antineutrino transition probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        float or ndarray
+            Transition probability.
+        """
+        pass
+
+    @abstractmethod
+    def prob_xxbar(self, t, E):
+        """X -> X antineutrino survival probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        float or ndarray
+            Transition probability.
+        """
+        pass
+
+    @abstractmethod
+    def prob_xebar(self, t, E):
+        """e -> X antineutrino transition probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        float or ndarray
+            Transition probability.
+        """
+        pass
 
 
 class NoTransformation(FlavorTransformation):
@@ -1028,6 +1124,8 @@ class NeutrinoDecay(FlavorTransformation):
         -------
         Gamma : float
             Decay width of the neutrino mass, in units of 1/length.
+
+        :meta private:
         """
         return self.m*c.c / (E*self.tau)
 
@@ -1046,23 +1144,14 @@ class NeutrinoDecay(FlavorTransformation):
         prob : float or ndarray
             Transition probability.
         """
-        pe_array = []
-
         # NMO case.
         if self.mass_order == MassHierarchy.NORMAL:
-            for energy in E:
-                pe_array.append(
-                    self.De1*(1-np.exp(-self.gamma(energy)*self.d)) +
-                    self.De3*np.exp(-self.gamma(energy)*self.d))
-            pe_array = np.array(pe_array)
+            pe_array = self.De1*(1-np.exp(-self.gamma(E)*self.d)) + \
+                       self.De3*np.exp(-self.gamma(E)*self.d)
         # IMO case.
         else:
-            for energy in E:
-                pe_array.append(
-                    self.De2*np.exp(-self.gamma(energy)*self.d) +
-                    self.De3*(1-np.exp(-self.gamma(energy)*self.d)))
-            pe_array = np.array(pe_array)
-
+            pe_array = self.De2*np.exp(-self.gamma(E)*self.d) + \
+                       self.De3*(1-np.exp(-self.gamma(E)*self.d))
         return pe_array
 
     def prob_ex(self, t, E):
@@ -1153,23 +1242,14 @@ class NeutrinoDecay(FlavorTransformation):
         prob : float or ndarray
             Transition probability.
         """
-        pxbar_array = []
-
         # NMO case.
         if self.mass_order == MassHierarchy.NORMAL:
-            for energy in E:
-                pxbar_array.append(
-                    self.De1*(1-np.exp(-self.gamma(energy)*self.d)) +
-                    self.De2 + self.De3*np.exp(-self.gamma(energy)*self.d))
-            pxbar_array = np.array(pxbar_array)
+            pxbar_array = self.De1*(1-np.exp(-self.gamma(E)*self.d)) + \
+                          self.De2 + self.De3*np.exp(-self.gamma(E)*self.d)
         # IMO case.
         else:
-            for energy in E:
-                pxbar_array.append(
-                    self.De1 + self.De2*np.exp(-self.gamma(energy)*self.d) +
-                    self.De3*(1-np.exp(-self.gamma(energy)*self.d)))
-            pxbar_array = np.array(pxbar_array)
-
+            pxbar_array = self.De1 + self.De2*np.exp(-self.gamma(E)*self.d) + \
+                          self.De3*(1-np.exp(-self.gamma(E)*self.d))
         return pxbar_array
 
     def prob_xxbar(self, t, E):
@@ -1205,17 +1285,25 @@ class NeutrinoDecay(FlavorTransformation):
             Transition probability.
         """
         return (1. - self.prob_eebar(t,E)) / 2.       
-    
-    
-        
+
+
 class AdiabaticMSWes(FlavorTransformation):
-    
+    """A four-neutrino mixing prescription. The assumptions used are that:
+
+    1. the fourth neutrino mass is the heaviest but not so large that the electron-sterile resonances
+       are inside the neutrinosphere;
+    2. the “outer” or H' electron-sterile MSW resonance is adiabatic;
+    3. the “inner” or H'' electron-sterile MSW resonance (where the electron fraction = 1/3) is non-adiabatic.
+
+    For further insight see, for example, Esmaili, Peres, and Serpico, Phys. Rev. D 90, 033013 (2014).
+    """
     def __init__(self, mix_angles, mh=MassHierarchy.NORMAL):
         """Initialize transformation matrix.
 
         Parameters
         ----------
         mix_angles : tuple
+            Values for mixing angles (theta12, theta13, theta23, theta14).
         mh : MassHierarchy
             MassHierarchy.NORMAL or MassHierarchy.INVERTED.
         """
@@ -1388,17 +1476,25 @@ class AdiabaticMSWes(FlavorTransformation):
             return ( 1 - self.De1 - self.Ds1 ) / 2
         else:
             return ( 1 - self.De3 - self.Ds3 ) / 2     
-        
-        
+
 
 class NonAdiabaticMSWes(FlavorTransformation):
-    
+    """A four-neutrino mixing prescription. The assumptions used are that:
+
+    1. the fourth neutrino mass is the heaviest but not so large that the electron-sterile resonances
+       are inside the neutrinosphere;
+    2. the “outer” or H' electron-sterile MSW resonance is non-adiabatic;
+    3. the “inner” or H'' electron-sterile MSW resonance (where the electron fraction = 1/3) is non-adiabatic.
+
+    For further insight see, for example, Esmaili, Peres, and Serpico, Phys. Rev. D 90, 033013 (2014).
+    """
     def __init__(self, mix_angles, mh=MassHierarchy.NORMAL):
         """Initialize transformation matrix.
-
+        
         Parameters
         ----------
         mix_angles : tuple
+            Values for mixing angles (theta12, theta13, theta23, theta14).
         mh : MassHierarchy
             MassHierarchy.NORMAL or MassHierarchy.INVERTED.
         """

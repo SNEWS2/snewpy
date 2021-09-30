@@ -18,7 +18,7 @@ import os
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath('../../python/'))
 
 # -- General configuration ------------------------------------------------
 
@@ -30,6 +30,7 @@ import os
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
     'sphinx.ext.doctest',
     'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
@@ -98,6 +99,35 @@ pygments_style = 'sphinx'
 
 # If true, keep warnings as "system message" paragraphs in the built documents.
 #keep_warnings = False
+
+
+# -- Options for autodoc/napoleon -----------------------------------------
+
+# Napoleon settings (see https://www.sphinx-doc.org/en/master/usage/extensions/napoleon.html)
+napoleon_google_docstring = False
+napoleon_numpy_docstring = True
+napoleon_use_rtype = False
+
+
+def skip(app, what, name, obj, would_skip, options):
+    if name == "get_time":
+        if not obj.__qualname__.startswith("SupernovaModel"):
+            return True
+    if name == "get_initial_spectra":
+        containing_class = obj.__qualname__.split(".")[0]
+        if not containing_class in ("SupernovaModel", "Fornax_2019"):
+            # Fornax_2019 has additional parameters theta, phi -> should appear in documentation
+            return True
+
+    if name in ("prob_ee", "prob_eebar", "prob_ex", "prob_exbar", "prob_xe", "prob_xebar", "prob_xx", "prob_xxbar"):
+        if not obj.__qualname__.startswith("FlavorTransformation"):
+            return True
+
+    return None
+
+
+def setup(app):
+    app.connect("autodoc-skip-member", skip)
 
 
 # -- Options for HTML output ----------------------------------------------

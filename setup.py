@@ -35,13 +35,13 @@ setup_keywords['long_description'] = ''
 if os.path.exists('README.md'):
     with open('README.md') as readme:
         setup_keywords['long_description'] = readme.read()
+    setup_keywords['long_description_content_type'] = 'text/markdown'
 #
 # Set other keywords for the setup function.
 #
-if os.path.isdir('bin'):
-    # Treat everything in bin as a script to be installed.
-    setup_keywords['scripts'] = \
-    [fname for fname in glob(os.path.join('bin', '*'))]
+# Use entry_points to let `pip` create executable scripts for each target platform.
+# See https://setuptools.readthedocs.io/en/latest/userguide/entry_point.html
+# setup_keywords['entry_points'] = {'console_scripts': ['to_snowglobes = snewpy.to_snowglobes:generate_time_series', ], },
 setup_keywords['provides'] = [setup_keywords['name']]
 setup_keywords['requires'] = ['Python (>3.3.0)']
 setup_keywords['zip_safe'] = False
@@ -49,8 +49,7 @@ setup_keywords['use_2to3'] = False
 setup_keywords['packages'] = find_packages('python')
 setup_keywords['package_dir'] = {'': 'python'}
 setup_keywords['cmdclass'] = {'version': SetVersion, 'sdist': DistutilsSdist}
-setup_keywords['test_suite']='tests'
-setup_keywords['tests_require']=['pytest']
+setup_keywords['test_suite']='snewpy.test.snewpy_test_suite.snewpy_test_suite'
 
 requires = []
 with open('requirements.txt', 'r') as f:
