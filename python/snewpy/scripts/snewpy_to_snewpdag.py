@@ -1,5 +1,5 @@
 
-from snewpy import to_snowglobes, run_snowglobes, from_snowglobes
+from snewpy import snowglobes
 import numpy as np
 from astropy import units as u
 
@@ -19,12 +19,11 @@ modeldir = SNEWPY_models_base+"/"+modeltype+"/"
 model = 's20.0c_3D_dir1'
 filename = model
 
-#set desired oscillation prescription
+#set desired flavor transformation prescription
 transformation = 'AdiabaticMSW_NMO'
 
-#to_snowglobes creates a tarred file of snowglobes fluences
-#this is stored in the model types directory in the snewpy/models
-#the full path is returned from to_snowglobes
+#snewpy.snowglobes creates a tarred file of snowglobes fluences
+#this is stored in the model types directory in snewpy/models
 outfile = modeltype+"_"+model+"_"+transformation
 
 #Specify sequence of time intervals, one fluence
@@ -36,22 +35,21 @@ tstart = np.linspace(window_tstart,window_tend,window_bins,endpoint=False)*u.s
 tend = tstart + (window_tend-window_tstart)/window_bins*u.s
 tmid = (tstart+tend)*0.5
 
-#call to_snowglobes
-#There are two options, here we use generate_fluence
+#Generate fluence file for SNOwGLoBES (there are two options, here we use generate_fluence)
 print("Preparing fluences...")
 tarredfile = snowglobes.generate_fluence(modeldir+filename, modeltype, transformation, distance, outfile,tstart,tend)
 print("Done fluences...")
 
 print("Running snowglobes...")
-#now run snowglobes, this will loop over all the fluence files in `tarredfile`
+#now run SNOwGLoBES, this will loop over all the fluence files in `tarredfile`
 snowglobes.simulate(SNOwGLoBES_path, tarredfile, detector_input=detector,verbose=False)
 print("Done snowglobes...")
 
-#now collate results of output of snowglobes
+#now collate results of output of SNOwGLoBES
 print("Collating...")
 tables = snowglobes.collate(SNOwGLoBES_path, tarredfile, detector_input=detector,skip_plots=True,verbose=False)
 
-#read results from snowglobes and put lightcurve in output file for snewpdag
+#read results from SNOwGLoBES and put lightcurve in output file for snewpdag
 fout = open(output_path+"snewpy_output_"+detector+"_"+modeltype+"_"+filename+"_1msbin.txt", "a")
 nevents = np.zeros(len(tmid))
 for i in range(len(tmid)):
