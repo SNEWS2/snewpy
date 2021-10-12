@@ -165,9 +165,9 @@ transformation in the mantle of the star and during propagation to Earth.
 The third module, `snewpy.snowglobes`, interfaces with SNOwGLoBES itself:
 First, it can generate either a time series of neutrino spectra at Earth—the
 “neutrinocurve”—or the spectral fluence. The module is then able to
-run the generated data files through all neutrino detector models available in
-SNOwGLoBES to compute the expected event rates before collating the
-output from SNOwGLoBES into a signal data file per detector per interaction channel.
+run the generated data files through SNOwGLoBES, which computes the expected
+event rates in different neutrino detector models, before collating the output
+from SNOwGLoBES into a signal data file per detector per interaction channel.
 
 Instead of using it as a complete simulation pipeline, SNEWPY can also be
 integrated into other software thanks to its modular design.
