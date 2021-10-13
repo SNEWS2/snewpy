@@ -18,14 +18,17 @@ Contribute Code or Documentation
 --------------------------------
 
 **Your contributions to SNEWPY are welcome!**
-To contribute, please clone the GitHub repository, make your changes and
-`submit a pull request <https://github.com/SNEWS2/snewpy/pulls>`_.
-If you plan larger changes, it’s probably a good idea to open an issue first
-to coordinate our work.
+For minor changes, simply submit a pull request. If you plan larger changes,
+it’s probably a good idea to open an issue first to coordinate our work.
+
+To contribute, first clone the GitHub repository (``git clone https://github.com/SNEWS2/snewpy.git``),
+then make your changes and install your modified version locally using
+``pip install .`` from the base directory of the repository. Once you’re happy
+with your changes, please `submit a pull request <https://github.com/SNEWS2/snewpy/pulls>`_.
 
 SNEWPY uses the `unittest <https://docs.python.org/3/library/unittest.html>`_
-module for automated testing. Tests will run when you submit a pull request.
-In addition, you can run them manually using ``python -m unittest python/snewpy/test/test_*.py``.
+module for automated testing. Tests will run when you submit a pull request
+or you can run them manually using ``python -m unittest python/snewpy/test/test_*.py``.
 
 
 Contribute Supernova Models
