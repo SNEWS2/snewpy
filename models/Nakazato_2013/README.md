@@ -12,7 +12,7 @@ Supernova Relic Neutrino Background and Metallicity Evolution of Galaxies*,
 K. Nakazato, E. Mochida, Y. Niino, and H. Suzuki, 
 [Astrophys. J. 804 (2015) 75](http://dx.doi.org/10.1088/0004-637X/804/1/75), [arXiv:1503.01236](http://arxiv.org/abs/1503.01236).
 
-For the BH model with LS220 EOS, the citation is: *Numerical Study of Stellar Core
+For the BH model with Togashi EOS, the citation is: *Numerical Study of Stellar Core
 Collapse and Neutrino Emission Using the Nuclear Equation of State Obtained by the Variational Method*,
 K. Nakazato, K. Sumiyoshi, and H. Togashi, 
 [Publ. Astron. Soc. Jpn. 73 (2021) 639-651](https://doi.org/10.1093/pasj/psab026), [arXiv:2103.14386](http://arxiv.org/abs/2103.14386).

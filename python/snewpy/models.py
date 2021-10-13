@@ -384,8 +384,8 @@ class Analytic3Species(SupernovaModel):
 
 
 class Nakazato_2013(SupernovaModel):
-    """Set up a model based on simulations from Nakazato et al., ApJ S 205:2,
-    2013 and ApJ 804:75, 2015. See also http://asphwww.ph.noda.tus.ac.jp/snn/.
+    """Set up a model based on simulations from Nakazato et al., ApJ S 205:2
+    (2013), ApJ 804:75 (2015), PASJ 73:639 (2021). See also http://asphwww.ph.noda.tus.ac.jp/snn/.
     """
 
     def __init__(self, filename):
