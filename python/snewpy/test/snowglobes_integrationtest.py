@@ -48,4 +48,4 @@ class TestSNOwGLoBES(unittest.TestCase):
         #Super-K has 32kT inner volume
         print("Total events in Super-K-like detector:" , 0.32*total_events)
 
-        self.assertAlmostEqual(total_events, 4044.8412744167954)
+        self.assertAlmostEqual(0.32 * total_events, 4044.8412744167954)
