@@ -1,0 +1,63 @@
+# Workflow that installs SNOwGLoBES and runs an integration test
+
+name: Integration Tests
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the main branch
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on.
+    runs-on: ubuntu-latest
+    strategy:
+      # Add a list of python versions we want to use for testing.
+      matrix:
+        python-version: '3.9'
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Install SNEWPY
+        run: |
+          python setup.py install --user
+      - name: Install SNOwGLoBES
+        run: |
+          pwd
+          echo $GITHUB_WORKSPACE
+          mkdir opt
+          cd opt
+          wget https://www.mpi-hd.mpg.de/personalhomes/globes/download/globes-3.2.17.tar.gz
+          tar -zxf globes-3.2.17.tar.gz
+          cd globes-3.2.17/
+          ./configure --prefix=$GITHUB_WORKSPACE/opt/globes-3.2.17-install  --disable-binary
+          make
+          make install
+          cd $GITHUB_WORKSPACE/opt/globes-3.2.17-install
+          export GLB_DIR=${PWD}
+          cd ..
+          # Install SNOwGLoBES
+          git clone https://github.com/SNOwGLoBES/snowglobes.git
+          cd snowglobes
+          export SNOWGLOBES=${PWD}
+          cd src
+          make
+          make install
+      - name: Run Integration Test
+        run: |
+          pwd
+          python python/snewpy/scripts/SNEWS2.0_rate_table_singleexample.py
