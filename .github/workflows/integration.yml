@@ -16,7 +16,7 @@ jobs:
     strategy:
       # Add a list of python versions we want to use for testing.
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
         python-version: ['3.9']
 
     steps:
