@@ -4,7 +4,7 @@ The Jupyter notebooks in this directory contain different examples for how to us
 
 ## AnalyticFluence
 
-This notebook demonstrates how to generate your own supernova model by manually specifying the luminosity, mean energy and mean squared energy for all three neutrino flavors.
+This notebook demonstrates how to use the `Analytic3Species` class from `snewpy.models` to create an analytic supernova model by specifying the luminosity, mean energy and mean squared energy for three neutrino flavors.
 
 ## AnalyticModel
 
