@@ -717,6 +717,130 @@ class Walk_2019(_GarchingArchiveModel):
              ]
         return mod + '\n'.join(s)
 
+class OConnor_2013(SupernovaModel):
+    """Set up a model based on the black hole formation simulation in O'Connor & Ott (2013). 
+    """
+    def __init__(self, base, mass=15, eos='LS220'):
+        """Initialize model.
+
+        Parameters
+        ----------
+        filename : str
+            Absolute or relative path to file prefix, we add nue/nuebar/nux
+        eos : string
+            Equation of state used in simulation
+        """
+
+        # Open luminosity file.
+        tf = tarfile.open(base+'{}_timeseries.tar.gz'.format(eos))
+        
+        # Extract luminosity data.
+        dataname = 's{:d}_{}_timeseries.dat'.format(mass, eos)
+        datafile = tf.extractfile(dataname)
+        simtab = ascii.read(datafile, names=['TIME', 'L_NU_E', 'L_NU_E_BAR', 'L_NU_X',
+                                               'E_NU_E', 'E_NU_E_BAR', 'E_NU_X',
+                                               'RMS_NU_E', 'RMS_NU_E_BAR', 'RMS_NU_X'])
+        
+        simtab['ALPHA_NU_E'] = (2.0*simtab['E_NU_E']**2 - simtab['RMS_NU_E']**2)/(simtab['RMS_NU_E']**2 - simtab['E_NU_E']**2)
+        simtab['ALPHA_NU_E_BAR'] = (2.0*simtab['E_NU_E_BAR']**2 - simtab['RMS_NU_E_BAR']**2)/(simtab['RMS_NU_E_BAR']**2 - simtab['E_NU_E_BAR']**2)
+        simtab['ALPHA_NU_X'] = (2.0*simtab['E_NU_X']**2 - simtab['RMS_NU_X']**2)/(simtab['RMS_NU_X']**2 - simtab['E_NU_X']**2)
+
+        #note, here L_NU_X is already divided by 4
+
+        self.filename = datafile
+        self.EOS = eos
+        self.progenitor_mass = mass * u.Msun
+
+        # Get grid of model times.
+        self.time = simtab['TIME'] * u.s
+
+        # Set up dictionary of luminosity, mean energy and shape parameter
+        # alpha, keyed by neutrino flavor (NU_E, NU_X, NU_E_BAR, NU_X_BAR).
+        self.luminosity = {}
+        self.meanE = {}
+        self.pinch = {}
+
+        for flavor in Flavor:
+            # Note: file only contains NU_E, NU_E_BAR, and NU_X, so double up
+            # the use of NU_X for NU_X_BAR.
+            _flav = Flavor.NU_X if flavor == Flavor.NU_X_BAR else flavor
+
+            self.luminosity[flavor] = simtab['L_{}'.format(_flav.name)] * u.erg/u.s
+            self.meanE[flavor] = simtab['E_{}'.format(_flav.name)] * u.MeV
+            self.pinch[flavor] = simtab['ALPHA_{}'.format(_flav.name)]
+
+    def get_time(self):
+        """Get grid of model times.
+
+        Returns
+        -------
+        time : ndarray
+            Grid of times used in the model.
+        """
+        return self.time
+
+    def get_initial_spectra(self, t, E, flavors=Flavor):
+        """Get neutrino spectra/luminosity curves before oscillation.
+
+        Parameters
+        ----------
+        t : astropy.Quantity
+            Time to evaluate initial spectra.
+        E : astropy.Quantity or ndarray of astropy.Quantity
+            Energies to evaluate the initial spectra.
+        flavors: iterable of snewpy.neutrino.Flavor
+            Return spectra for these flavors only (default: all)
+
+        Returns
+        -------
+        initialspectra : dict
+            Dictionary of model spectra, keyed by neutrino flavor.
+        """
+        initialspectra = {}
+
+        # Avoid division by zero in energy PDF below.
+        E[E==0] = np.finfo(float).eps * E.unit
+
+        # Estimate L(t), <E_nu(t)> and alpha(t). Express all energies in erg.
+        E = E.to_value('erg')
+
+        # Make sure input time uses the same units as the model time grid, or
+        # the interpolation will not work correctly.
+        t = t.to(self.time.unit)
+
+        for flavor in flavors:
+            # Use np.interp rather than scipy.interpolate.interp1d because it
+            # can handle dimensional units (astropy.Quantity).
+            L  = get_value(np.interp(t, self.time, self.luminosity[flavor].to('erg/s')))
+            Ea = get_value(np.interp(t, self.time, self.meanE[flavor].to('erg')))
+            a  = np.interp(t, self.time, self.pinch[flavor])
+
+            # For numerical stability, evaluate log PDF and then exponentiate.
+            initialspectra[flavor] = \
+                np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a)
+                       - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea)) / (u.erg * u.s)
+
+        return initialspectra
+
+    def __str__(self):
+        """Default representation of the model.
+        """
+        mod = 'OConnor_2015 Model: {}\n'.format(self.filename)
+        s = ['Progenitor mass : {}'.format(self.progenitor_mass),
+             'Eq. of state    : {}'.format(self.EOS)
+             ]
+        return mod + '\n'.join(s)
+
+    def _repr_markdown_(self):
+        """Markdown representation of the model, for Jupyter notebooks.
+        """
+        mod = '**OConnor_2015 Model**: {}\n\n'.format(self.filename)
+        s = ['|Parameter|Value|',
+             '|:---------|:-----:|',
+             '|Progenitor mass | ${0.value:g}$ {0.unit:latex}|'.format(self.progenitor_mass),
+             '|EOS | {}|'.format(self.EOS)
+             ]
+        return mod + '\n'.join(s)
 
 class OConnor_2015(SupernovaModel):
     """Set up a model based on the black hole formation simulation in O'Connor (2015). 
