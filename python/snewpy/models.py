@@ -725,8 +725,10 @@ class OConnor_2013(SupernovaModel):
 
         Parameters
         ----------
-        filename : str
-            Absolute or relative path to file prefix, we add nue/nuebar/nux
+        base : str
+            Path of directory containing model files
+        mass : int
+            Progenitor mass
         eos : string
             Equation of state used in simulation
         """
