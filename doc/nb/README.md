@@ -6,10 +6,6 @@ The Jupyter notebooks in this directory contain different examples for how to us
 
 This notebook demonstrates how to use the `Analytic3Species` class from `snewpy.models` to create an analytic supernova model by specifying the luminosity, mean energy and mean squared energy for three neutrino flavors.
 
-## AnalyticModel
-
-TODO
-
 ## FlavorTransformation
 
 This notebook demonstrates the flavor transformations available in `snewpy.flavor_transformation`. It was used to produce many of the figures in the SNEWPY ApJ paper.
