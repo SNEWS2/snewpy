@@ -117,13 +117,13 @@ affiliations:
     index: 20
   - name: Georgia Institute of Technology, Atlanta, GA, USA
     index: 21
-date: 13 September 2021
+date: 1 November 2021
 bibliography: paper.bib
 
 # Optional fields if submitting to a AAS journal too, see this blog post:
 # https://blog.joss.theoj.org/2018/12/a-new-collaboration-with-aas-publishing
-aas-doi: 10.3847/xxxxx # <- update this with the DOI from AAS once you know it.
-aas-journal: The Astrophysical Journal # <- The name of the AAS journal.
+aas-doi: 10.3847/1538-4357/ac350f # <- update this with the DOI from AAS once you know it.
+aas-journal: Astrophysical Journal # <- The name of the AAS journal.
 ---
 
 
