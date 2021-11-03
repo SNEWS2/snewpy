@@ -41,6 +41,7 @@ from snewpy.neutrino import Flavor, MassHierarchy
 
 mpl.use('Agg')
 
+logger = logging.getLogger(__name__)
 
 def generate_time_series(model_path, model_type, transformation_type, d, output_filename=None, ntbins=30, deltat=None):
     """Generate time series files in SNOwGLoBES format.
@@ -674,83 +675,31 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     #This is the place where you can comment out any detectors you don't want to run
     #This runs the entire module, for each detector configuration
 
+
+    det_materials = { 'icecube':'water',
+                      'wc100kt30prct':'water',
+                      'wc100kt15prct':'water',
+                      'hyperk30prct':'water',
+                      'km3net':'water',
+                      'ar40kt':'argon',
+                      'novaND':'nova_soup',
+                      'novaFD':'nova_soup',
+                      'scint20k':'scint',
+                      'halo1':'lead',
+                      'halo2':'lead'
+                      }
+
+    if detector_input == "all":
+        detector_input=list(det_materials.keys())
+    if isinstance(detector_input,str):
+        detector_input=[detector_input]
+
+    logger.info(f'detector_input={detector_input}')
+
     for IndividualFluxFile in FluxFileNameStems:
-        if (verbose):
-            print(IndividualFluxFile)
-        position = FluxFileNameStems.index(IndividualFluxFile) + 1
-        total = len(FluxFileNameStems)
-        percent_calc = (position/total)*100
-        percentage_done = str(round(percent_calc, 2))
-
-        if detector_input == "all":
-            if (verbose):
-                print("Running all detectors")
-            if format_globes_for_supernova(IndividualFluxFile, "water", "icecube", "weight") == "Complete":
-                if verbose:
-                    print("Finished {0}||icecube".format(IndividualFluxFile))
-            if format_globes_for_supernova(IndividualFluxFile, "water", "wc100kt30prct", "weight") == "Complete":
-                if verbose:
-                    print("Finished {0}||wc100kt30prct".format(IndividualFluxFile))
-            #if format_globes_for_supernova(IndividualFluxFile, "water", "wc100kt30prct_he", "weight") == "Complete":
-                # if verbose: print("Finished {0}||wc100kt30prct_he".format(IndividualFluxFile))
-            if format_globes_for_supernova(IndividualFluxFile, "water", "wc100kt15prct", "weight") == "Complete":
-                if verbose:
-                    print("Finished {0}||wc100kt15prct".format(IndividualFluxFile))
-            #if format_globes_for_supernova(IndividualFluxFile, "water", "hyperk30prct", "weight") == "Complete": #not working
-                # if verbose: print("Finished {0}||hyperk30prct".format(IndividualFluxFile))
-            if format_globes_for_supernova(IndividualFluxFile, "argon", "ar40kt", "weight") == "Complete":
-                if verbose:
-                    print("Finished {0}||ar40kt".format(IndividualFluxFile))
-            if format_globes_for_supernova(IndividualFluxFile, "lead", "halo1", "weight") == "Complete":
-                if verbose:
-                    print("Finished {0}||halo1".format(IndividualFluxFile))
-            if format_globes_for_supernova(IndividualFluxFile, "lead", "halo2", "weight") == "Complete":
-                if verbose:
-                    print("Finished {0}||halo2".format(IndividualFluxFile))
-            #if format_globes_for_supernova(IndividualFluxFile, "argon", "ar40kt_he", "weight") == "Complete":
-                # if verbose: print("Finished {0}||ar40kt_he".format(IndividualFluxFile))
-            if format_globes_for_supernova(IndividualFluxFile, "scint", "scint20kt", "weight") == "Complete":
-                if verbose:
-                    print("Finished {0}||scint20kt".format(IndividualFluxFile))
-            if format_globes_for_supernova(IndividualFluxFile, "nova_soup", "novaND", "weight") == "Complete":
-                if verbose:
-                    print("Finished {0}||novaND".format(IndividualFluxFile))
-            if format_globes_for_supernova(IndividualFluxFile, "nova_soup", "novaFD", "weight") == "Complete":
-                if verbose:
-                    print("Finished {0}||novaFD".format(IndividualFluxFile))
-            fluxes_list.append(IndividualFluxFile)
-            if verbose:
-                print("\n\n\nCalculations are " + percentage_done + "% completed.\n\n\n")
-        else:  # This is called if you choose to input a single detector in SNEWPY.py, and just run that one
-            if verbose:
-                print("Running selected detector:", detector_input)
-            if detector_input in ("icecube", "wc100kt30prct", "wc100kt30prct_he", "wc100kt15prct", "hyperk30prct", "km3net"):
-                detector_material = "water"
-            elif detector_input in ("ar40kt_he", "ar40kt"):
-                detector_material = "argon"
-            elif detector_input in ("novaND", "novaFD"):
-                detector_material = "nova_soup"
-            elif detector_input in ("scint20kt",):
-                detector_material = "scint"
-            elif detector_input in ("halo1", "halo2"):
-                detector_material = "lead"
-            else:
-                print("Unanticipated value for detector input")
-
-            detector_output = detector_input
-            if verbose:
-                print("Detector material:", detector_material)
-            if format_globes_for_supernova(IndividualFluxFile, detector_material, detector_input, "weight") == "Complete":
-                if verbose:
-                    print("Finished {0}||{1}".format(IndividualFluxFile, detector_output))
-            fluxes_list.append(IndividualFluxFile)
-            if (verbose):
-                print('\n'*3)
-            if (int(percent_calc) % 10 == 0):
-                print("Calculations are " + percentage_done + "% completed. (", position, " of ", total, ")")
-            if (verbose):
-                print('\n'*3)
-
+        for det in detector_input:
+            format_globes_for_supernova(IndividualFluxFile, det_materials[det],det, "weight")
+        fluxes_list.append(IndividualFluxFile)
 
 def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False, verbose=False, remove_generated_files=True):
     """Collates SNOwGLoBES output files and generates plots or returns a data table.
