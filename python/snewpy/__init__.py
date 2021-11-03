@@ -36,8 +36,11 @@ def get_models(models=None, download_dir="SNEWPY_models"):
     elif models == None:
         # Select model(s) to download
         print(f"Available models in this version of SNEWPY: {list(model_urls.keys())}")
-        selected = input("\nType a model name, 'all' to download all models or <Enter> to cancel: ").strip()
+        if not model_urls:
+            print("Error: `get_models()` only works after installing SNEWPY via `pip install snewpy`. If you have cloned the git repo, model files are available in the `models/` folder.")
+            return False
 
+        selected = input("\nType a model name, 'all' to download all models or <Enter> to cancel: ").strip()
         if selected == "all":
             models = model_urls.keys()
         elif selected == "":
