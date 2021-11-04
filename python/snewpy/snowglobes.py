@@ -442,7 +442,7 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
                                         fl=flux_fname.stem,ch=c["name"], det=detector_name,
                                         sm="_smeared" if do_smear else "")
             output_fname = str(input_fname).replace('unweighted','weighted')
-            data = load_datafile(f)
+            data = load_datafile(input_fname)
             if len(data):
                 data['events']*=c["weight"]
                 np.savetxt(output_fname, data, fmt='%11g')
