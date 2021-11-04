@@ -31,6 +31,7 @@ import zipfile
 from pathlib import Path
 import subprocess
 import traceback
+import itertools
 import pdb
 
 import matplotlib as mpl
@@ -319,6 +320,25 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
 
     return os.path.join(model_dir, tfname)
 
+det_materials = { 'icecube':'water',
+                  'wc100kt30prct':'water',
+                  'wc100kt15prct':'water',
+                  'hyperk30prct':'water',
+                  'km3net':'water',
+                  'ar40kt':'argon',
+                  'novaND':'nova_soup',
+                  'novaFD':'nova_soup',
+                  'scint20kt':'scint',
+                  'halo1':'lead',
+                  'halo2':'lead'
+                  }
+
+categories_map = {'water': ["nc_", "*_e_", "ibd", "nue_O16", "nuebar_O16"],
+                  'lead' : ["nc_", "*_e_", "nue_Pb208_1n", "nue_Pb208_2n"],
+                  'argon': ["nc_", "*_e_", "nue_Ar40", "nuebar_Ar40"],
+                  'scint': ["nc_", "*_e_", "ibd", "nue_C12", "nuebar_C12", "nue_C13"],
+                  'nova_soup':["nc_", "*_e_", "ibd", "nue_C12", "nuebar_C12"]
+                 }
 
 def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     """Takes as input the neutrino flux files and configures and runs the supernova script inside SNOwGLoBES, which outputs calculated event rates expected for a given (set of) detector(s). These event rates are given as a function of the neutrino energy and time, for each interaction channel.
@@ -339,7 +359,7 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     #prepare output folder
     output_dir = sng/'out'
     output_dir.mkdir(exist_ok=True)
-    flux_dir = sng/'flux'
+    flux_dir = sng/'fluxes'
     #extract flux files
     with tarfile.open(tarball_path,'r') as f:
         flux_files = f.getnames() 
@@ -421,9 +441,10 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
                 events[:,1]*=c["weight"]
                 np.savetxt(output_fname, events, fmt='%11g')
 
-    def run_simulation(flux_fname, channel_name, detector_name, do_apply_weight=False):
+    def run_simulation(flux_fname, detector_name, do_apply_weight=False):
         """this function runs supernova"""
-        channel_fname = sng/f'channels/channels_{channel_name}.dat'
+        material = det_materials[detector_name]
+        channel_fname = sng/f'channels/channels_{material}.dat'
         channels = load_channels(channel_fname)
         globes_fname = sng/'supernova.glb'
         with open(globes_fname,'w') as output:
@@ -440,19 +461,7 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     #THE DRIVER
     #This is the place where you can comment out any detectors you don't want to run
     #This runs the entire module, for each detector configuration
-    det_materials = { 'icecube':'water',
-                      'wc100kt30prct':'water',
-                      'wc100kt15prct':'water',
-                      'hyperk30prct':'water',
-                      'km3net':'water',
-                      'ar40kt':'argon',
-                      'novaND':'nova_soup',
-                      'novaFD':'nova_soup',
-                      'scint20kt':'scint',
-                      'halo1':'lead',
-                      'halo2':'lead'
-                      }
-
+  
     if detector_input == "all":
         detector_input=list(det_materials.keys())
     if isinstance(detector_input,str):
@@ -461,7 +470,7 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     for flux_fname in flux_files:
         for det in detector_input:
             try:
-                run_simulation(flux_dir/flux_fname, det_materials[det],det, "weight")
+                run_simulation(flux_dir/flux_fname, det, "weight")
             except Exception as e:
                 logger.exception(f'Failed processing "{det}" with "{flux_fname}": '+traceback.format_exc())
 
@@ -489,26 +498,20 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
         Dictionary of data tables: One table per time bin; each table contains in the first column the energy bins, in the remaining columns the number of events for each interaction channel in the detector.
     """
     sng = Path(SNOwGLoBESdir)
-    #Determines type of input file
-
+    homebase = sng/'out'
+    #Determine the files list
     with tarfile.open(tarball_path,'r') as f:
         flux_files = f.getnames() 
-
     flux_files = [f for f in flux_files if f.endswith('.dat')]
-    #Determining the configuration of the files and directories within the tarfile and defining variables for uniformity
-    FluxFileNameStems = [Path(f).stem for f in flux_files]
 
-    smearvals = ["_smeared_w", "_smeared_u", "nts_w", "nts_u"]
-    #weightvals = ["_weighted", "unweighted"]
 
     FilesToCleanup = []
 
-    #Add_funct sums up relevant files from output generated above
     def add_funct(flux, detector, smear, *arg):
-
+        """Add_funct sums up relevant files from output generated above"""
         #Defining different variables for the combinatoric iterations
         #And reformatting some variables for different naming uses
-        if smear == "_smeared_w" or smear == "nts_w":
+        if smear.endswith('_w'):
             weight_value = "weighted"
         else:
             weight_value = "unweighted"
@@ -524,51 +527,43 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
             x_label = "Neutrino Energy (GeV)"
             y_label = "Interaction Events"
 
-        if detector == "ar40kt_eve":
-            detector_label = "ar40kt"
-            detector_label2 = "ar40kt"
-        elif detector == "ar40kt_he":
-            detector_label = "ar40kt he"
-            detector_label2 = "ar40kt_he"
-        elif detector == "wc100kt30prct_eve":
-            detector_label = "wc100kt30prct"
-            detector_label2 = "wc100kt30prct"
-        elif detector == "wc100kt30prct_he":
-            detector_label = "wc100kt30prct he"
-            detector_label2 = "wc100kt30prct_he"
-        else:
-            detector_label = detector
-            detector_label2 = detector
-
+        #a map to redefine detector labels
+        det_labels_map={
+            "ar40kt_eve":"ar40kt",
+            "wc100kt30prct_eve":"wc100kt30prct"
+            }
+        det_label = det_labels_map.get(detector,detector)
+            
         colors = ["k", "r", "g", "y", "b", "m", "c"]  # colors of graphed values
         compile_dict = {}
 
-        sng = Path(SNOwGLoBESdir)
-        homebase = sng/'out'
         events_all = []
         for input_val in arg:
             pattern = "{0}_{1}*{2}*{3}*".format(flux,input_val, detector, smear)
             #Loop over files, corresponding to given pattern
             matching_files = list(homebase.glob(pattern))
-            #Read all the files into a 32 arrays (Npoins * Nfiles)
-            data_list=[np.loadtxt(f,comments=['---','Total','#']) for f in matching_files]
-            Es,Ns=np.stack(data_list).T
-            #check that all energies are equal along the axis
-            assert np.all(Es.T==Es[:,0])
-            #sum up values and store them in list
-            events_all.append(Ns.sum(axis=1))
-        
+            if matching_files:
+                #Read all the files into a 2D array (Npoins * Nfiles)
+                data_list=[np.loadtxt(f,comments=['---','Total','#']) for f in matching_files]
+                Es,Ns=np.stack(data_list).T
+                #check that all energies are equal along the axis
+                assert np.all(Es.T==Es[:,0])
+                #sum up values and store them in list
+                events_all.append(Ns.sum(axis=1))
+        if not events_all:
+            return
+        pdb.set_trace()
         events_all = [Es[:,0]]+events_all
         events_all = np.stack(events_all, axis=-1)
         #Creates the condensed data file & applies formatting
         # this part making new files with only useful info
         condensed_file = sng/'out/Collated_{0}_{1}_events_{2}_{3}.dat'.format(
-                             flux, detector_label2, smear_value, weight_value)
+                             flux, det_label, smear_value, weight_value)
         FilesToCleanup.append(condensed_file)
         header = 'Energy(GeV) '+' '.join(f'{a:20s}' for a in arg)+'\n'+'-'*100
         np.savetxt(condensed_file,events_all, header=header, fmt='%23.15g')
-        
         pdb.set_trace()
+
         if (skip_plots is False):
             r = 0
 
@@ -635,86 +630,39 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
             plt.clf()
 
     #flux details                 # detector, smeared/unsmeared, *arg reaction placeholders
+    smearvals = ["_smeared_w", "_smeared_u", "nts_w", "nts_u"]
+    #weightvals = ["_weighted", "unweighted"]
 
     #The driver, runs through the addition function for every detector
     #The values at the end correspond to the different categories that each file is being summed into
     if detector_input == "all":
-        for single_flux in FluxFileNameStems:
+        detector_input=list(det_materials.keys())
+    if isinstance(detector_input,str):
+        detector_input=[detector_input]
+    logger.info(f'detector_input={detector_input}')
+    for flux_file in flux_files:
+        for det in detector_input:
             for smearval in smearvals:
-                add_funct(str(single_flux), "wc100kt15prct", smearval, "nc_", "*_e_", "ibd", "nue_O16", "nuebar_O16")  # everything after smearval corresponds to a *arg value
-                add_funct(str(single_flux), "wc100kt30prct", smearval, "nc_", "*_e_", "ibd", "nue_O16", "nuebar_O16")
-                add_funct(str(single_flux), "wc100kt30prct_he", smearval, "nc_", "*_e_", "ibd", "nue_O16", "nuebar_O16")
-                add_funct(str(single_flux), "halo1", smearval, "nc_", "*_e_", "nue_Pb208_1n", "nue_Pb208_2n")
-                add_funct(str(single_flux), "halo2", smearval, "nc_", "*_e_", "nue_Pb208_1n", "nue_Pb208_2n")
-                add_funct(str(single_flux), "ar40kt_eve", smearval, "nc_", "*_e_", "nue_Ar40", "nuebar_Ar40")
-                add_funct(str(single_flux), "ar40kt_he", smearval, "nc_", "*_e_", "nue_Ar40", "nuebar_Ar40")
-                add_funct(str(single_flux), "icecube", smearval, "nc_", "*_e_", "ibd", "nue_O16", "nuebar_O16")
-                add_funct(str(single_flux), "hyperk30prct", smearval, "nc_", "*_e_", "ibd", "nue_O16", "nuebar_O16")
-                add_funct(str(single_flux), "scint20kt", smearval, "nc_", "*_e_", "ibd", "nue_C12", "nuebar_C12", "nue_C13")
-                add_funct(str(single_flux), "novaND", smearval, "nc_", "*_e_", "ibd", "nue_C12", "nuebar_C12")
-                add_funct(str(single_flux), "novaFD", smearval, "nc_", "*_e_", "ibd", "nue_C12", "nuebar_C12")
-
-            flux_position = FluxFileNameStems.index(single_flux) + 1
-            total_fluxes = len(FluxFileNameStems)
-            plot_percent_calc = (flux_position/total_fluxes)*100
-            plot_percentage_done = str(round(plot_percent_calc, 2))
-            if (verbose):
-                print('\n'*3)
-            if (verbose):
-                print("Plots are " + plot_percentage_done + "% completed.")
-            if (verbose):
-                print('\n'*3)
-    else:  # if just one detector is inputted in SNEWPY.py
-        for single_flux in FluxFileNameStems:
-            for smearval in smearvals:
-                if (verbose):
-                    print("Running inputted detector")
-                if detector_input in ("wc100kt15prct", "wc100kt30prct", "wc100kt30prct_he", "icecube", "hyperk30prct", "km3net"):
-                    sum_categories = ["nc_", "*_e_", "ibd", "nue_O16", "nuebar_O16"]
-                elif detector_input in ("halo1", "halo2"):
-                    sum_categories = ["nc_", "*_e_", "nue_Pb208_1n", "nue_Pb208_2n"]
-                elif detector_input in ("ar40kt", "ar40kt_he"):
-                    sum_categories = ["nc_", "*_e_", "nue_Ar40", "nuebar_Ar40"]
-                elif detector_input in ("scint20kt"):
-                    sum_categories = ["nc_", "*_e_", "ibd", "nue_C12", "nuebar_C12", "nue_C13"]
-                elif detector_input in ("novaND", "novaFD"):
-                    sum_categories = ["nc_", "*_e_", "ibd", "nue_C12", "nuebar_C12"]
-                else:
-                    print("Unanticipated value for detector input")
-                argList1 = [str(single_flux), detector_input, smearval]
-                argList1.extend(sum_categories)
-                add_funct(*argList1)
-
-                flux_position = FluxFileNameStems.index(single_flux) + 1
-                total_fluxes = len(FluxFileNameStems)
-                plot_percent_calc = (flux_position/total_fluxes)*100
-                plot_percentage_done = str(round(plot_percent_calc, 2))
-            if (verbose):
-                print('\n'*3)
-            if (verbose):
-                print("Plots are " + plot_percentage_done + "% completed.")
-            if (verbose):
-                print('\n'*3)
+                add_funct(flux_file, det, smearval,*categories_map[det_materials[det]])
 
     #Now create tarball output
     #Makes a tarfile with the condensed data files and plots
-    tar = tarfile.open(model_dir + "/" + outputnamestem + "_SNOprocessed.tar.gz", "w:gz")
-    for file in os.listdir(SNOwGLoBESdir + "/out"):
-        if "Collated" in str(file):
-            tar.add(SNOwGLoBESdir + "/out/" + file, arcname=outputnamestem+'_SNOprocessed/'+file)
-        elif ".png" in str(file):
-            tar.add(SNOwGLoBESdir + "/out/" + file, arcname=outputnamestem+'_SNOprocessed/'+file)
-        else:
-            continue
-    tar.close()
+    output_fname = tarball_path.rsplit('.tar',1)[0]+'_SNOprocessed'
+    outname = Path(output_fname).name #name in archive
+    with tarfile.open(output_fname+'.tar.gz', "w:gz") as tar:
+        for file in homebase.glob('*Collated*'):
+            tar.add(file, arcname=outname+'/'+str(file))
+        for file in homebase.glob('*.png'):
+            tar.add(file, arcname=outname+'/'+str(file))
 
+    #collect the returned tables
     returned_tables = {}
-    for file in os.listdir(SNOwGLoBESdir + "/out"):
-        if "Collated" in str(file):
-            returned_tables[file] = {}
-            with open(SNOwGLoBESdir + "/out/"+file, 'r') as fstream:
-                returned_tables[file]['header'] = fstream.readline()
-            returned_tables[file]['data'] = np.loadtxt(SNOwGLoBESdir + "/out/" + file, skiprows=2, unpack=True)
+    for file in homebase.glob('*Collated*'):
+            data = np.loadtxt(file, skiprows=2, unpack=True)
+            with open(file, 'r') as f:
+                header= f.readline()
+                header=header.lstrip('#')
+            returned_tables[file.name] = {'data':data,'header':header}
 
     #removes all snowglobes output files, collated files, and .png's made for this snewpy run
     if remove_generated_files:
@@ -722,8 +670,8 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
             os.remove(file)
 
     #Removes all the fluxfiles unzipped from the tarfile
-    for file in FluxFileNameStems:
-        os.remove(SNOwGLoBESdir + "/fluxes/" + file + extension)
+    for file in flux_files:
+        (sng/'fluxes'/file).unlink()
     try:
         os.remove(SNOwGLoBESdir + "/fluxes/parameterinfo")
     except OSError:
