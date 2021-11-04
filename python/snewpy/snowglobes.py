@@ -352,10 +352,10 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     re_tgt  = re.compile('target_mass\s?=.*\n')
 
     def load_channels(fname):
-        """load a table of channels from file"""
-        table = np.loadtxt(fname, dtype=str)
-        Channel = namedtuple('Channel',['name','number','parity','flavor','weight'])
-        return [Channel(*c) for c in table]
+        logger.info(f'reading channels from {fname}')
+        table = np.loadtxt(fname, dtype=[('name','U100'),('number',int),('parity','U1'),('flavor','U1'),('weight',float)])
+        logger.info(f'channels={table}')
+        return table
     
     def load_target_masses(fname):
         t = np.loadtxt(fname, dtype=[('name','U100'),('mass','f'),('factor','f')])
@@ -363,7 +363,6 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
         return dict(zip(t['name'],tgt_mass))
 
     tgt_masses = load_target_masses(sng/'detector_configurations.dat')
-    logger.info(f'Target masses are: {tgt_masses}')
 
     def cat(fname):
         with open(fname,'r') as f:
@@ -376,9 +375,13 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     # this function runs supernova
     def format_globes_for_supernova(FluxNameStem, ChannelName, ExpConfigName, NoWeight=1, extension=extension):
 
-        def prepare_globes_file(output, flux_fname, channel_fname, detector_name):
+
+        channel_fname = sng/f'channels/channels_{ChannelName}.dat'
+        channels = load_channels(channel_fname)
+
+        def prepare_globes_file(output, flux_fname, channels, detector_name):
             """Function to write the snowglobes configuration to file """
-            logger.info(f'Prepare globes run for [flux={flux_fname}, chan={channel_fname},det={detector_name}]')
+            logger.info(f'Prepare globes run for [flux={flux_fname}, det={detector_name}]')
             if flux_fname.is_file()==False:
                 raise FileNotFoundError(flux_fname)
             #write preamble
@@ -388,16 +391,14 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
             s = re_flux.sub(f'flux_file=   "{flux_fname.relative_to(sng)}"\n',s)
             output.write(s)
 
-            channels = load_channels(channel_fname)
             # smearing for each channel
             for c in channels:
-                output.write(f'include "{sng}/smear/smear_{c.name}_{detector_name}.dat"\n')
+                output.write(f'include \"{sng}/smear/smear_{c["name"]}_{detector_name}.dat"\n')
 
             # Writes modified DETECTOR to GLOBESFILE; replace the mass with the calculated TargetMass
             s = cat(sng/'glb/detector.glb')
             s = re_tgt.sub(f'target_mass=  {tgt_masses[detector_name]:13.6f}\n',s)
             output.write(s)
-
 
             # Now the cross-sections.  Note that some of these are repeated even though
             # it is not necessary (xscns for several flavors can be in the same file).
@@ -405,15 +406,15 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
 
             output.write("\n\n /******** Cross-sections *********/\n \n")
             for c in channels:
-                output.write(f'cross(#{c.name})< @cross_file= "{sng}/xscns/xs_{c.name}.dat" >\n')
+                output.write(f'cross(#{c["name"]})< @cross_file= "{sng}/xscns/xs_{c["name"]}.dat" >\n')
             output.write("\n /******** Channels *********/\n \n")
             
             for c in channels:
-                output.write(f'channel(#{c.name}_signal)<\n')
-                output.write('      @channel= #supernova_flux:  {0}:    {1}:     {1}:    #{2}:    #{2}_smear\n'.format(c.parity,c.flavor,c.name))
+                output.write(f'channel(#{c["name"]}_signal)<\n')
+                output.write('      @channel= #supernova_flux:  {0}:    {1}:     {1}:    #{2}:    #{2}_smear\n'.format(c["parity"],c["flavor"],c["name"]))
                 # Get the post-smearing efficiencies by channel
                 try: 
-                    for l in open(sng/f'effic/effic_{c.name}_{detector_name}.dat'):
+                    for l in open(sng/f'effic/effic_{c["name"]}_{detector_name}.dat'):
                         output.write('       @post_smearing_efficiencies = '+l)
                 except IOError as e:
                     logger.warning(str(e))
@@ -425,10 +426,9 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
 
         output_fname = sng/f'supernova_{ExpConfigName}.glb'
         flux_fname = flux_dir/f'{FluxNameStem}.{extension}'
-        channel_fname = sng/f'channels/channels_{ChannelName}.dat'
 
         with open(output_fname,'w') as output:
-            prepare_globes_file(output,flux_fname,channel_fname, ExpConfigName)
+            prepare_globes_file(output,flux_fname,channels, ExpConfigName)
 
         # Runs supernova
         os.chdir(sng)
@@ -438,82 +438,26 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
         # Calls apply_weights to format the output of supernova
 
         if NoWeight != 1:
-            if (verbose):
-                print("Applying channel weighting factors to output")
-
-            apply_weights("unsmeared", FluxNameStem, channel_fname, ExpConfigName)
-            apply_weights("smeared", FluxNameStem, channel_fname, ExpConfigName)
+            logger.info("Applying channel weighting factors to output")
+            for do_smear in (True,False):
+                apply_weights(ExpConfigName, flux_fname, channels, do_smear)
 
 
-    #######################################################################
-    #This function applies the weights to the weightedfilename via tempfile
-
-    def apply_weights(smearing, FluxNameStem, ChannelFileName, ExpConfigName):
-        # Opens CHANFILE in order for the code to be able to find all of the output files (from supernova)
-
-        #formats for naming of the files
-        if smearing == "unsmeared":
-            smear_input = ""  # snowglobes1.2 does not insert "_unsmeared" into its output filenames
-        elif smearing == "smeared":
-            smear_input = "_smeared"
-        else:
-            print("Invalid smearing input")
-
-        CHANFILE = open(ChannelFileName)
-
-        for line in CHANFILE:
-
-            clean_line = re.sub('\s*', '', line)
-            clean_line = re.sub('\s+', ' ', line)
-
-            TempArray = clean_line.split(' ')
-
-            ChanName = TempArray[0]
-            NumTargetFactordraft = TempArray[4]
-            if NumTargetFactordraft[-1] == ".":
-                NumTargetFactor = float(NumTargetFactordraft[:-1])  # the weighting factor
-            else:
-                NumTargetFactor = float(NumTargetFactordraft)
-
-            # Write weighted file
-            # This applies the weighting factor to unweighted data and reformats a few lines for consistency
-            UnweightFileName = "{0}/out/{1}_{2}_{3}_events{4}_unweighted.dat".format(
-                SNOwGLoBESdir, FluxNameStem, ChanName, ExpConfigName, smear_input)
-            WeightedFileName = "{0}/out/{1}_{2}_{3}_events{4}_weighted.dat".format(
-                SNOwGLoBESdir, FluxNameStem, ChanName, ExpConfigName, smear_input)
-
-            with open(UnweightFileName, "r") as f:
-                WEIGHT = open(WeightedFileName, "w")
-                for line in f:
-
-                    clean_line = re.sub('\s*', '', line)
-                    clean_line = re.sub('\s+', ' ', line)
-
-                    if "---" in line:
-                        WEIGHT.write(line + "\n")
-                    elif "Total:" in line:
-                        continue
-                    else:
-                        TempArray2 = clean_line.split(' ')
-                        Enbin = TempArray2[0]
-                        Evrate = TempArray2[1]
-                        if Enbin != "":  # writing the new weighted lines to a file
-                            newline = "{0}            {1} ".format(Enbin, float(Evrate) * float(NumTargetFactor))
-                            WEIGHT.write(newline + "\n")
-                        elif Enbin == "" and Evrate == "0.05" or Evrate == "0.051":
-                            newline = "{0}            {1} ".format(
-                                Evrate, float(TempArray2[2]) * float(NumTargetFactor))
-                            WEIGHT.write(newline + "\n")
-                        else:
-                            continue
-                WEIGHT.close()
-        CHANFILE.close()
+    def apply_weights(detector_name, flux_fname, channels, do_smear):
+        for c in channels:
+            input_fname = sng/'out/{fl}_{ch}_{det}_events{sm}_unweighted.dat'.format(
+                                        fl=flux_fname.stem,ch=c["name"], det=detector_name,
+                                        sm="_smeared" if do_smear else "")
+            output_fname = str(input_fname).replace('unweighted','weighted')
+            
+            events = np.loadtxt(input_fname,comments=['---','Total','#']) 
+            if len(events):
+                events[:,1]*=c["weight"]
+                np.savetxt(output_fname, events, fmt='%11g')
 
     #THE DRIVER
     #This is the place where you can comment out any detectors you don't want to run
     #This runs the entire module, for each detector configuration
-
-
     det_materials = { 'icecube':'water',
                       'wc100kt30prct':'water',
                       'wc100kt15prct':'water',
@@ -539,7 +483,8 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
             try:
                 format_globes_for_supernova(flux_file, det_materials[det],det, "weight")
             except Exception as e:
-                logger.warning(e)
+                logger.warning(f'Failed processing "{det}" with "{flux_file}":'+str(e))
+                #raise
 
 def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False, verbose=False, remove_generated_files=True):
     """Collates SNOwGLoBES output files and generates plots or returns a data table.
