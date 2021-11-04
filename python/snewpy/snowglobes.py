@@ -31,8 +31,7 @@ import zipfile
 from pathlib import Path
 import subprocess
 import traceback
-
-from subprocess import call
+import pdb
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -489,41 +488,15 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
     dict
         Dictionary of data tables: One table per time bin; each table contains in the first column the energy bins, in the remaining columns the number of events for each interaction channel in the detector.
     """
-    model_dir, tarball = os.path.split(os.path.abspath(tarball_path))
-
+    sng = Path(SNOwGLoBESdir)
     #Determines type of input file
 
-    if ".tar.bz2" in str(tarball):
-        outputnamestem = tarball[0:str(tarball).rfind(".tar.bz2")]
-        tar = tarfile.open(tarball_path)
-        TarballFileNames = tar.getnames()
-        tar.close()
-    elif ".tar.gz" in str(tarball):
-        outputnamestem = tarball[0:str(tarball).rfind(".tar.gz")]
-        tar = tarfile.open(tarball_path)
-        TarballFileNames = tar.getnames()
-        tar.close()
-    elif ".zip" in str(tarball):
-        outputnamestem = tarball[0:str(tarball).rfind(".zip")]
-        zip = zipfile.ZipFile(tarball_path)
-        TarballFileNames = zip.namelist()
-        zip.close()
-    else:
-        print("Invalid Tar file")
+    with tarfile.open(tarball_path,'r') as f:
+        flux_files = f.getnames() 
 
+    flux_files = [f for f in flux_files if f.endswith('.dat')]
     #Determining the configuration of the files and directories within the tarfile and defining variables for uniformity
-
-    FluxFileNameStems = []
-    extension = '.dat'
-    for IndividualFile in TarballFileNames:
-        extension_beginning = str(IndividualFile).rfind(".")
-        if extension_beginning > -1:
-            extension = str(IndividualFile[extension_beginning:])
-            ExtensionFound = str(IndividualFile).rfind(extension)
-            # gets rid of extension at the end of flux files
-            FluxFileNameStems.append(str(IndividualFile)[0:ExtensionFound])
-        else:
-            continue
+    FluxFileNameStems = [Path(f).stem for f in flux_files]
 
     smearvals = ["_smeared_w", "_smeared_u", "nts_w", "nts_u"]
     #weightvals = ["_weighted", "unweighted"]
@@ -532,7 +505,6 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
 
     #Add_funct sums up relevant files from output generated above
     def add_funct(flux, detector, smear, *arg):
-        homebase = SNOwGLoBESdir + "/out/"
 
         #Defining different variables for the combinatoric iterations
         #And reformatting some variables for different naming uses
@@ -571,91 +543,32 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
         colors = ["k", "r", "g", "y", "b", "m", "c"]  # colors of graphed values
         compile_dict = {}
 
-        #Splits values from each file into Energy and Events, then sums appropriate ones
+        sng = Path(SNOwGLoBESdir)
+        homebase = sng/'out'
+        events_all = []
         for input_val in arg:
-            flux_filenames = os.listdir(homebase)
-            final_dict = {}
-            temp_dict = {}
-            for afile in flux_filenames:  # Does the actual summing of essential values in each file
-                name_iteration = "{0}_{1}*{2}*{3}*".format(flux, input_val, detector, smear)
-                if fnmatch.fnmatch(afile, name_iteration):  # and "Collated" not in str(afile):
-                    FilesToCleanup.append(homebase+"/"+afile)
-                    with open("{0}/{1}".format(homebase, afile)) as fileinsides:
-                        #Splits each line & converts Energy and Events into floats
-                        for line in fileinsides.readlines():
-                            content = line.split()
-                            if not content:
-                                continue
-                            elif content[0].startswith('---'):
-                                break
-                            energy = float(content[0])
-                            events = float(content[1])
-
-                            temp_dict[energy] = events
-                            if len(final_dict) < len(temp_dict):
-                                final_dict[energy] = 0
-
-                    for energy in temp_dict:
-                        final_dict[energy] = final_dict[energy] + temp_dict[energy]  # sums appropriate values #here
-
-                if len(compile_dict) < len(final_dict):
-                    for energy in final_dict:
-                        compile_dict[energy] = []
-
-            for k, v in list(final_dict.items()):
-                # This is the dictionary with energy bins and lists of events corresponding to interaction type
-                compile_dict[k].append(v)
-
+            pattern = "{0}_{1}*{2}*{3}*".format(flux,input_val, detector, smear)
+            #Loop over files, corresponding to given pattern
+            matching_files = list(homebase.glob(pattern))
+            #Read all the files into a 32 arrays (Npoins * Nfiles)
+            data_list=[np.loadtxt(f,comments=['---','Total','#']) for f in matching_files]
+            Es,Ns=np.stack(data_list).T
+            #check that all energies are equal along the axis
+            assert np.all(Es.T==Es[:,0])
+            #sum up values and store them in list
+            events_all.append(Ns.sum(axis=1))
+        
+        events_all = [Es[:,0]]+events_all
+        events_all = np.stack(events_all, axis=-1)
         #Creates the condensed data file & applies formatting
         # this part making new files with only useful info
-        condensed_file = "{0}/out/Collated_{1}_{2}_events_{3}_{4}.dat".format(
-            SNOwGLoBESdir, flux, detector_label2, smear_value, weight_value)
+        condensed_file = sng/'out/Collated_{0}_{1}_events_{2}_{3}.dat'.format(
+                             flux, detector_label2, smear_value, weight_value)
         FilesToCleanup.append(condensed_file)
-        new_f = open(condensed_file, "w")
-        if len(arg) == 4:
-            new_f.write("Energy(GeV)            {0}                    {1}                    {2}                {3}".format(
-                arg[0], arg[1], arg[2], arg[3]))
-        elif len(arg) == 5:
-            new_f.write("Energy(GeV)            {0}                    {1}                    {2}                {3}                    {4}".format(
-                arg[0], arg[1], arg[2], arg[3], arg[4]))
-        else:
-            new_f.write("Energy(GeV)            {0}                    {1}                    {2}                {3}                    {4}                    {5}".format(
-                arg[0], arg[1], arg[2], arg[3], arg[4], arg[5]))
-        new_f.write("\n")
-        new_f.write("-"*100)
-        new_f.write("\n")
-
-        #converts the dictionary into readable info
-        for key in compile_dict:
-            first_space_num = 23 - len(str(key))
-            first_space = " " * first_space_num
-            value = list(compile_dict[key])
-            if len(value) != 1:
-                i = 0
-                while i < len(value):  # Formats the lines so that there are sufficient spaces between each value for them to be readable
-                    if len(str(value[i])) > 16:
-                        separation_space_num = 23-len(str(round(value[i], 16)))
-                        separation_space = " " * separation_space_num
-                        value[i] = str(round(value[i], 16)) + separation_space
-                        i += 1
-                    else:
-                        separation_space_num = 23-len(str(round(value[i], 15)))
-                        separation_space = " " * separation_space_num
-                        value[i] = str(round(value[i], 15)) + separation_space
-                        i += 1
-                if len(arg) == 4:
-                    new_f.write("{0}{1}{2}{3}{4}{5}".format(key, first_space, value[0], value[1], value[2], value[3]))
-                elif len(arg) == 5:
-                    # for normal, next is for spreadsheet counting
-                    new_f.write("{0}{1}{2}{3}{4}{5}{6}".format(key, first_space,
-                                value[0], value[1], value[2], value[3], value[4]))
-                else:
-                    # for normal, next is for spreadsheet counting
-                    new_f.write("{0}{1}{2}{3}{4}{5}{6}{7}".format(key, first_space,
-                                value[0], value[1], value[2], value[3], value[4], value[5]))
-            new_f.write('\n')
-        new_f.close()
-
+        header = 'Energy(GeV) '+' '.join(f'{a:20s}' for a in arg)+'\n'+'-'*100
+        np.savetxt(condensed_file,events_all, header=header, fmt='%23.15g')
+        
+        pdb.set_trace()
         if (skip_plots is False):
             r = 0
 
