@@ -340,6 +340,20 @@ categories_map = {'water': ["nc_", "*_e_", "ibd", "nue_O16", "nuebar_O16"],
                   'nova_soup':["nc_", "*_e_", "ibd", "nue_C12", "nuebar_C12"]
                  }
 
+def load_datafile(f):
+    """ Read data from  snowglobes output file"""
+    return np.loadtxt(f,comments=['---','Total','#'], dtype=[('energy','f8'),('events','f8')])
+
+def load_channels(fname):
+    t = np.loadtxt(fname, dtype=[('name','U100'),('number','u4'),('parity','U1'),('flavor','U1'),('weight','f8')])
+    return t
+
+def load_target_masses(fname):
+    t = np.loadtxt(fname, dtype=[('name','U100'),('mass','f8'),('factor','f8')])
+    tgt_mass = t['mass']*t['factor']
+    return dict(zip(t['name'],tgt_mass))
+
+
 def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     """Takes as input the neutrino flux files and configures and runs the supernova script inside SNOwGLoBES, which outputs calculated event rates expected for a given (set of) detector(s). These event rates are given as a function of the neutrino energy and time, for each interaction channel.
 
@@ -370,15 +384,6 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     #regexps to use
     re_flux = re.compile('flux_file\s?=.*\n')
     re_tgt  = re.compile('target_mass\s?=.*\n')
-
-    def load_channels(fname):
-        t = np.loadtxt(fname, dtype=[('name','U100'),('number','u4'),('parity','U1'),('flavor','U1'),('weight','f8')])
-        return t
-    
-    def load_target_masses(fname):
-        t = np.loadtxt(fname, dtype=[('name','U100'),('mass','f8'),('factor','f8')])
-        tgt_mass = t['mass']*t['factor']
-        return dict(zip(t['name'],tgt_mass))
 
     tgt_masses = load_target_masses(sng/'detector_configurations.dat')
 
@@ -437,10 +442,10 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
                                         fl=flux_fname.stem,ch=c["name"], det=detector_name,
                                         sm="_smeared" if do_smear else "")
             output_fname = str(input_fname).replace('unweighted','weighted')
-            events = np.loadtxt(input_fname,comments=['---','Total','#']) 
-            if len(events):
-                events[:,1]*=c["weight"]
-                np.savetxt(output_fname, events, fmt='%11g')
+            data = load_datafile(f)
+            if len(data):
+                data['events']*=c["weight"]
+                np.savetxt(output_fname, data, fmt='%11g')
 
     def run_simulation(flux_fname, detector_name, do_apply_weight=False):
         """this function runs supernova"""
@@ -545,15 +550,16 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
             matching_files = list(homebase.glob(pattern))
             if matching_files:
                 #Read all the files into a 2D array (Npoins * Nfiles)
-                data_list=[np.loadtxt(f,comments=['---','Total','#']) for f in matching_files]
-                Es,Ns=np.stack(data_list).T
+                data=np.stack([load_datafile(f) for f in matching_files])
                 #check that all energies are equal along the axis
-                assert np.all(Es.T==Es[:,0])
+                Es = data['energy']
+                assert np.all(Es==Es[0])
                 #sum up values and store them in list
-                events_all.append(Ns.sum(axis=1))
+                events_all.append(data['events'].sum(axis=0))
         if not events_all:
             return
-        events_all = [Es[:,0]]+events_all
+        pdb.set_trace()
+        events_all = [Es[0].T]+events_all
         events_all = np.stack(events_all, axis=-1)
         #Creates the condensed data file & applies formatting
         # this part making new files with only useful info
