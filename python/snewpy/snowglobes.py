@@ -600,51 +600,28 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
                 name_iteration = "{0}_{1}*{2}*{3}*".format(flux, input_val, detector, smear)
                 if fnmatch.fnmatch(afile, name_iteration):  # and "Collated" not in str(afile):
                     FilesToCleanup.append(homebase+"/"+afile)
-                    fileinsides = open("{0}/{1}".format(homebase, afile))  # fine
-
-                    lines = fileinsides.readlines()
-                    lines.pop(-1)  # removes empty lines
-                    lines.pop(-1)
-                    lines.pop(-1)
-                    if "unweight" in str(afile):
-                        lines.pop(0)
-
-                    #Splits each line & converts Energy and Events into floats
-                    for line in lines:
-                        if "." in line:
-
-                            #Determining which characters in the line compose the energy bin and corresponding event rate
-                            first_char = line.find("0")  # finds first character in a line
-                            end_energy = line.find(" ", first_char, -1)  # finds the last character of the energy value
-                            if end_energy == -1:
-                                # alternative last character of the energy value
-                                end_energy = line.find("\t", first_char, -1)
-                            # determines approximately where event value is located in the line
-                            event_found = line.find(".", end_energy, -1)
-                            begin_event = line.rfind(" ", end_energy, event_found)  # first character of event value
-                            end_event = line.find(" ", event_found, -1)  # last character of event value
-                            if end_event == -1:
-                                end_event = len(line)  # alternative last character of event value
-                                begin_event = end_energy + 1  # alternative first character of event value
-
-                            Energy = float((line[first_char:end_energy]))  # Complete energy characters
-                            Events = float((line[begin_event + 1: (end_event)]))  # Complete event characters
-                            temp_dict[Energy] = Events
-                            if len(final_dict) < len(temp_dict):
-                                final_dict[Energy] = 0
-                            else:
+                    with open("{0}/{1}".format(homebase, afile)) as fileinsides:
+                        #Splits each line & converts Energy and Events into floats
+                        for line in fileinsides.readlines():
+                            content = line.split()
+                            if not content:
                                 continue
-                        else:
-                            print("empty line")
+                            elif content[0].startswith('---'):
+                                break
+                            energy = float(content[0])
+                            events = float(content[1])
 
-                    for value in temp_dict:
-                        final_dict[value] = final_dict[value] + temp_dict[value]  # sums appropriate values #here
-                    fileinsides.close()
+                            temp_dict[energy] = events
+                            if len(final_dict) < len(temp_dict):
+                                final_dict[energy] = 0
+
+                    for energy in temp_dict:
+                        final_dict[energy] = final_dict[energy] + temp_dict[energy]  # sums appropriate values #here
+
                 if len(compile_dict) < len(final_dict):
-                    for k, v in list(final_dict.items()):
-                        compile_dict[k] = []
-                else:
-                    continue
+                    for energy in final_dict:
+                        compile_dict[energy] = []
+
             for k, v in list(final_dict.items()):
                 # This is the dictionary with energy bins and lists of events corresponding to interaction type
                 compile_dict[k].append(v)
