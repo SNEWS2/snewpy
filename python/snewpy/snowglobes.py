@@ -449,7 +449,7 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
                       'ar40kt':'argon',
                       'novaND':'nova_soup',
                       'novaFD':'nova_soup',
-                      'scint20k':'scint',
+                      'scint20kt':'scint',
                       'halo1':'lead',
                       'halo2':'lead'
                       }
