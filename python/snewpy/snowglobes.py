@@ -29,7 +29,8 @@ import re
 import tarfile
 import zipfile
 from pathlib import Path
-from collections import namedtuple
+import subprocess
+import traceback
 
 from subprocess import call
 
@@ -339,22 +340,20 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     #prepare output folder
     output_dir = sng/'out'
     output_dir.mkdir(exist_ok=True)
-    #extract flux files
     flux_dir = sng/'flux'
-
+    #extract flux files
     with tarfile.open(tarball_path,'r') as f:
         flux_files = f.getnames() 
         f.extractall(path=flux_dir)
      
-    FluxFileNameStems = [Path(f).stem for f in flux_files if f.endswith('.dat')]
+    flux_files = [Path(f) for f in flux_files if f.endswith('.dat')]
+    logger.debug(f'Flux files = {flux_files}')
     #regexps to use
     re_flux = re.compile('flux_file\s?=.*\n')
     re_tgt  = re.compile('target_mass\s?=.*\n')
 
     def load_channels(fname):
-        logger.info(f'reading channels from {fname}')
         table = np.loadtxt(fname, dtype=[('name','U100'),('number',int),('parity','U1'),('flavor','U1'),('weight',float)])
-        logger.info(f'channels={table}')
         return table
     
     def load_target_masses(fname):
@@ -364,84 +363,53 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
 
     tgt_masses = load_target_masses(sng/'detector_configurations.dat')
 
-    def cat(fname):
-        with open(fname,'r') as f:
-            return f.read()
+    def prepare_globes_file(output, flux_fname, channels, detector_name):
+        """Function to write the snowglobes configuration to file """
+        logger.debug(f'Prepare globes run for [flux={flux_fname}, det={detector_name}]')
 
-    extension='dat'
-    ##################################################################################################
-    #The main function that reformats data from a bunch of different files in order to run supernova.c
+        def cat(fname):
+            with open(fname,'r') as f:
+                return f.read()
+        if flux_fname.is_file()==False:
+            raise FileNotFoundError(flux_fname)
+        #write preamble
+        output.write(cat(sng/'glb/preamble.glb'))
+        #write flux, substituted with input argument
+        s = cat(sng/'glb/flux.glb')
+        s = re_flux.sub(f'flux_file=   "{flux_fname.relative_to(sng)}"\n',s)
+        output.write(s)
 
-    # this function runs supernova
-    def format_globes_for_supernova(FluxNameStem, ChannelName, ExpConfigName, NoWeight=1, extension=extension):
+        # smearing for each channel
+        for c in channels:
+            output.write(f'include \"{sng}/smear/smear_{c["name"]}_{detector_name}.dat"\n')
 
+        # Writes modified DETECTOR to GLOBESFILE; replace the mass with the calculated TargetMass
+        s = cat(sng/'glb/detector.glb')
+        s = re_tgt.sub(f'target_mass=  {tgt_masses[detector_name]:13.6f}\n',s)
+        output.write(s)
 
-        channel_fname = sng/f'channels/channels_{ChannelName}.dat'
-        channels = load_channels(channel_fname)
+        # Now the cross-sections.  Note that some of these are repeated even though
+        # it is not necessary (xscns for several flavors can be in the same file).
+        # This is just to make a consistent loop over channels.
+        output.write("\n\n /******** Cross-sections *********/\n \n")
+        for c in channels:
+            output.write(f'cross(#{c["name"]})< @cross_file= "{sng}/xscns/xs_{c["name"]}.dat" >\n')
 
-        def prepare_globes_file(output, flux_fname, channels, detector_name):
-            """Function to write the snowglobes configuration to file """
-            logger.info(f'Prepare globes run for [flux={flux_fname}, det={detector_name}]')
-            if flux_fname.is_file()==False:
-                raise FileNotFoundError(flux_fname)
-            #write preamble
-            output.write(cat(sng/'glb/preamble.glb'))
-            #write flux, substituted with input argument
-            s = cat(sng/'glb/flux.glb')
-            s = re_flux.sub(f'flux_file=   "{flux_fname.relative_to(sng)}"\n',s)
-            output.write(s)
-
-            # smearing for each channel
-            for c in channels:
-                output.write(f'include \"{sng}/smear/smear_{c["name"]}_{detector_name}.dat"\n')
-
-            # Writes modified DETECTOR to GLOBESFILE; replace the mass with the calculated TargetMass
-            s = cat(sng/'glb/detector.glb')
-            s = re_tgt.sub(f'target_mass=  {tgt_masses[detector_name]:13.6f}\n',s)
-            output.write(s)
-
-            # Now the cross-sections.  Note that some of these are repeated even though
-            # it is not necessary (xscns for several flavors can be in the same file).
-            # This is just to make a consistent loop over channels.
-
-            output.write("\n\n /******** Cross-sections *********/\n \n")
-            for c in channels:
-                output.write(f'cross(#{c["name"]})< @cross_file= "{sng}/xscns/xs_{c["name"]}.dat" >\n')
-            output.write("\n /******** Channels *********/\n \n")
-            
-            for c in channels:
-                output.write(f'channel(#{c["name"]}_signal)<\n')
-                output.write('      @channel= #supernova_flux:  {0}:    {1}:     {1}:    #{2}:    #{2}_smear\n'.format(c["parity"],c["flavor"],c["name"]))
-                # Get the post-smearing efficiencies by channel
-                try: 
-                    for l in open(sng/f'effic/effic_{c["name"]}_{detector_name}.dat'):
+        output.write("\n /******** Channels *********/\n \n")
+        for c in channels:
+            output.write(f'channel(#{c["name"]}_signal)<\n')
+            output.write('      @channel= #supernova_flux:  {0}:    {1}:     {1}:    #{2}:    #{2}_smear\n'.format(c["parity"],c["flavor"],c["name"]))
+            # Get the post-smearing efficiencies by channel
+            try: 
+                with open(sng/f'effic/effic_{c["name"]}_{detector_name}.dat') as f:
+                    for l in f:
                         output.write('       @post_smearing_efficiencies = '+l)
-                except IOError as e:
-                    logger.warning(str(e))
-                finally:
-                    output.write("\n>\n\n")
-            #write postamble
-            output.write(cat(sng/'glb/postamble.glb'))
-
-
-        output_fname = sng/f'supernova_{ExpConfigName}.glb'
-        flux_fname = flux_dir/f'{FluxNameStem}.{extension}'
-
-        with open(output_fname,'w') as output:
-            prepare_globes_file(output,flux_fname,channels, ExpConfigName)
-
-        # Runs supernova
-        os.chdir(sng)
-        ComString = "{0} {1} {2} {3}".format(sng/"bin/supernova", FluxNameStem, channel_fname, ExpConfigName)
-        call(ComString, shell=True)
-
-        # Calls apply_weights to format the output of supernova
-
-        if NoWeight != 1:
-            logger.info("Applying channel weighting factors to output")
-            for do_smear in (True,False):
-                apply_weights(ExpConfigName, flux_fname, channels, do_smear)
-
+            except IOError as e:
+                logger.warning("Failed to open efficiency: "+traceback.format_exc())
+            finally:
+                output.write("\n>\n\n")
+        #write postamble
+        output.write(cat(sng/'glb/postamble.glb'))
 
     def apply_weights(detector_name, flux_fname, channels, do_smear):
         for c in channels:
@@ -449,11 +417,26 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
                                         fl=flux_fname.stem,ch=c["name"], det=detector_name,
                                         sm="_smeared" if do_smear else "")
             output_fname = str(input_fname).replace('unweighted','weighted')
-            
             events = np.loadtxt(input_fname,comments=['---','Total','#']) 
             if len(events):
                 events[:,1]*=c["weight"]
                 np.savetxt(output_fname, events, fmt='%11g')
+
+    def run_simulation(flux_fname, channel_name, detector_name, do_apply_weight=False):
+        """this function runs supernova"""
+        channel_fname = sng/f'channels/channels_{channel_name}.dat'
+        channels = load_channels(channel_fname)
+        globes_fname = sng/'supernova.glb'
+        with open(globes_fname,'w') as output:
+            prepare_globes_file(output,flux_fname,channels, detector_name)
+        # Runs supernova
+        os.chdir(sng)
+        subprocess.run(['bin/supernova', flux_fname.stem,channel_fname, detector_name])
+        # Calls apply_weights to format the output of supernova
+        if do_apply_weight:
+            logger.debug("Applying channel weighting factors to output")
+            for do_smear in (True,False):
+                apply_weights(detector_name,flux_fname,channels,do_smear)
 
     #THE DRIVER
     #This is the place where you can comment out any detectors you don't want to run
@@ -475,16 +458,13 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
         detector_input=list(det_materials.keys())
     if isinstance(detector_input,str):
         detector_input=[detector_input]
-
     logger.info(f'detector_input={detector_input}')
-
-    for flux_file in FluxFileNameStems:
+    for flux_fname in flux_files:
         for det in detector_input:
             try:
-                format_globes_for_supernova(flux_file, det_materials[det],det, "weight")
+                run_simulation(flux_dir/flux_fname, det_materials[det],det, "weight")
             except Exception as e:
-                logger.warning(f'Failed processing "{det}" with "{flux_file}":'+str(e))
-                #raise
+                logger.exception(f'Failed processing "{det}" with "{flux_fname}": '+traceback.format_exc())
 
 def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False, verbose=False, remove_generated_files=True):
     """Collates SNOwGLoBES output files and generates plots or returns a data table.
