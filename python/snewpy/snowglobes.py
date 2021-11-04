@@ -348,8 +348,8 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
      
     FluxFileNameStems = [Path(f).stem for f in flux_files if f.endswith('.dat')]
     #regexps to use
-    re_flux = re.compile('flux_file=.*\n')
-    re_tgt  = re.compile('target_mass=.*\n')
+    re_flux = re.compile('flux_file\s?=.*\n')
+    re_tgt  = re.compile('target_mass\s?=.*\n')
 
     def load_channels(fname):
         """load a table of channels from file"""
@@ -363,6 +363,7 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
         return dict(zip(t['name'],tgt_mass))
 
     tgt_masses = load_target_masses(sng/'detector_configurations.dat')
+    logger.info(f'Target masses are: {tgt_masses}')
 
     def cat(fname):
         with open(fname,'r') as f:
@@ -412,7 +413,7 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
                 output.write('      @channel= #supernova_flux:  {0}:    {1}:     {1}:    #{2}:    #{2}_smear\n'.format(c.parity,c.flavor,c.name))
                 # Get the post-smearing efficiencies by channel
                 try: 
-                    for l in open(sng/f'effic/effic_{c.name}_{ExpConfigName}.dat'):
+                    for l in open(sng/f'effic/effic_{c.name}_{detector_name}.dat'):
                         output.write('       @post_smearing_efficiencies = '+l)
                 except IOError as e:
                     logger.warning(str(e))
@@ -422,7 +423,7 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
             output.write(cat(sng/'glb/postamble.glb'))
 
 
-        output_fname = sng/'supernova.glb'
+        output_fname = sng/f'supernova_{ExpConfigName}.glb'
         flux_fname = flux_dir/f'{FluxNameStem}.{extension}'
         channel_fname = sng/f'channels/channels_{ChannelName}.dat'
 
