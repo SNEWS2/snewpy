@@ -372,11 +372,11 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     re_tgt  = re.compile('target_mass\s?=.*\n')
 
     def load_channels(fname):
-        table = np.loadtxt(fname, dtype=[('name','U100'),('number',int),('parity','U1'),('flavor','U1'),('weight',float)])
-        return table
+        t = np.loadtxt(fname, dtype=[('name','U100'),('number','u4'),('parity','U1'),('flavor','U1'),('weight','f8')])
+        return t
     
     def load_target_masses(fname):
-        t = np.loadtxt(fname, dtype=[('name','U100'),('mass','f'),('factor','f')])
+        t = np.loadtxt(fname, dtype=[('name','U100'),('mass','f8'),('factor','f8')])
         tgt_mass = t['mass']*t['factor']
         return dict(zip(t['name'],tgt_mass))
 
@@ -404,7 +404,8 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
 
         # Writes modified DETECTOR to GLOBESFILE; replace the mass with the calculated TargetMass
         s = cat(sng/'glb/detector.glb')
-        s = re_tgt.sub(f'target_mass=  {tgt_masses[detector_name]:13.6f}\n',s)
+        mass = tgt_masses[detector_name] 
+        s = re_tgt.sub(f'target_mass=  {mass:13.6f}\n',s)
         output.write(s)
 
         # Now the cross-sections.  Note that some of these are repeated even though
@@ -539,7 +540,7 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
 
         events_all = []
         for input_val in arg:
-            pattern = "{0}_{1}*{2}*{3}*".format(flux,input_val, detector, smear)
+            pattern = "{0}_{1}*{2}*{3}*.dat".format(flux,input_val, detector, smear)
             #Loop over files, corresponding to given pattern
             matching_files = list(homebase.glob(pattern))
             if matching_files:
@@ -552,7 +553,6 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
                 events_all.append(Ns.sum(axis=1))
         if not events_all:
             return
-        pdb.set_trace()
         events_all = [Es[:,0]]+events_all
         events_all = np.stack(events_all, axis=-1)
         #Creates the condensed data file & applies formatting
@@ -562,7 +562,6 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
         FilesToCleanup.append(condensed_file)
         header = 'Energy(GeV) '+' '.join(f'{a:20s}' for a in arg)+'\n'+'-'*100
         np.savetxt(condensed_file,events_all, header=header, fmt='%23.15g')
-        pdb.set_trace()
 
         if (skip_plots is False):
             r = 0
@@ -643,7 +642,7 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
     for flux_file in flux_files:
         for det in detector_input:
             for smearval in smearvals:
-                add_funct(flux_file, det, smearval,*categories_map[det_materials[det]])
+                add_funct(Path(flux_file).stem, det, smearval,*categories_map[det_materials[det]])
 
     #Now create tarball output
     #Makes a tarfile with the condensed data files and plots
