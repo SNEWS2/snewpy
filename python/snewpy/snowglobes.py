@@ -558,7 +558,6 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
                 events_all.append(data['events'].sum(axis=0))
         if not events_all:
             return
-        pdb.set_trace()
         events_all = [Es[0].T]+events_all
         events_all = np.stack(events_all, axis=-1)
         #Creates the condensed data file & applies formatting
