@@ -28,6 +28,9 @@ import os
 import re
 import tarfile
 import zipfile
+from pathlib import Path
+from collections import namedtuple
+
 from subprocess import call
 
 import matplotlib as mpl
@@ -331,267 +334,104 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     verbose : bool
         Whether to generate verbose output, e.g. for debugging.
     """
+    
+    sng = Path(SNOwGLoBESdir)
+    #prepare output folder
+    output_dir = sng/'out'
+    output_dir.mkdir(exist_ok=True)
+    #extract flux files
+    flux_dir = sng/'flux'
 
-    #Extracts data from tarfile and sets up lists of paths and fluxfilenames for later use
+    with tarfile.open(tarball_path,'r') as f:
+        flux_files = f.getnames() 
+        f.extractall(path=flux_dir)
+     
+    FluxFileNameStems = [Path(f).stem for f in flux_files if f.endswith('.dat')]
+    #regexps to use
+    re_flux = re.compile('flux_file=.*\n')
+    re_tgt  = re.compile('target_mass=.*\n')
 
-    if tarfile.is_tarfile(tarball_path):  # extracts tarfile
-        if (verbose):
-            print("Valid Tar file")
-        tar = tarfile.open(tarball_path)
-        TarballFileNames = tar.getnames()
-        tar.extractall(path=SNOwGLoBESdir + "/fluxes")
-        tar.close()
-        if (verbose):
-            print("Tar file data extracted")
-    elif zipfile.is_zipfile(tarball_path):  # extracts zipfile
-        if (verbose):
-            print("Valid Zip file")
-        zip = zipfile.ZipFile(tarball_path)
-        TarballFileNames = zip.namelist()
-        for fileName in TarballFileNames:
-            if str(fileName)[0] == "." or str(fileName)[0] == "_":
-                continue
-            else:
-                zip.extract(fileName, path=SNOwGLoBESdir + "/fluxes")
-                if (verbose):
-                    print("zipfile extracted")
-        zip.close()
-        if (verbose):
-            print("Zip file data extracted")
-    else:
-        print("Invalid Tarfile")  # doesn't accept anything other than tar and zip files
+    def load_channels(fname):
+        """load a table of channels from file"""
+        table = np.loadtxt(fname, dtype=str)
+        Channel = namedtuple('Channel',['name','number','parity','flavor','weight'])
+        return [Channel(*c) for c in table]
+    
+    def load_target_masses(fname):
+        t = np.loadtxt(fname, dtype=[('name','U100'),('mass','f'),('factor','f')])
+        tgt_mass = t['mass']*t['factor']
+        return dict(zip(t['name'],tgt_mass))
 
-    #Creates a new out folder if one does not exist
+    tgt_masses = load_target_masses(sng/'detector_configurations.dat')
 
-    out_folder = "{0}/out".format(SNOwGLoBESdir)
-    try:
-        os.mkdir(out_folder)
-    except OSError as e:
-        if (verbose):
-            print("out folder already exists")
-    else:
-        if (verbose):
-            print("out folder made")
+    def cat(fname):
+        with open(fname,'r') as f:
+            return f.read()
 
-    #Creates directories for each flux file within the out folder
-
-    FluxFileNameStems = []
-    #extension = '.dat'
-    for IndividualFile in TarballFileNames:
-        extension_beginning = str(IndividualFile).rfind(".")
-        if extension_beginning > -1:
-            extension = str(IndividualFile[extension_beginning:])
-            ExtensionFound = str(IndividualFile).rfind(extension)
-            # gets rid of extension at the end of flux files
-            FluxFileNameStems.append(str(IndividualFile)[0:ExtensionFound])
-        else:
-            continue
-
+    extension='dat'
     ##################################################################################################
     #The main function that reformats data from a bunch of different files in order to run supernova.c
 
     # this function runs supernova
     def format_globes_for_supernova(FluxNameStem, ChannelName, ExpConfigName, NoWeight=1, extension=extension):
-        ExeName = "bin/supernova"  # Supernova
-        ChannelFileName = "{0}/channels/channels_{1}.dat".format(SNOwGLoBESdir, ChannelName)
 
-        GlobesFileName = "{0}/supernova.glb".format(SNOwGLoBESdir)
-        GLOBESFILE = open(GlobesFileName, 'w')
-        GLOBESFILE.truncate(0)
-
-        # Write PREAMBLE to GLOBESFILE
-
-        PREAMBLE = open("{0}/glb/preamble.glb".format(SNOwGLoBESdir))
-
-        for line in PREAMBLE:
-
-            GLOBESFILE.write(line)
-
-        PREAMBLE.close()
-
-        # Checks FluxFileNamePath existence
-
-        FluxFileNamePath = "fluxes/" + FluxNameStem + extension
-        if not os.path.isfile(SNOwGLoBESdir+"/"+FluxFileNamePath):
-            print(("Flux file name {0} not found".format(FluxFileNamePath)))
-            return "Incomplete"
-
-        # Write modified FLUX to GLOBESFILE; replace the flux file name with the input argument
-
-        FLUX = open("{0}/glb/flux.glb".format(SNOwGLoBESdir))
-
-        for line in FLUX:
-            if "flux_file" in line:
-                line = "        @flux_file=  \"{0}\"\n".format(FluxFileNamePath)
-            GLOBESFILE.write(line)
-
-        FLUX.close()
-
-        # Now go through the channels and put in the relevant lines
-
-        # First, smearing for each channel
-
-        # Checks channel existence
-        if not os.path.isfile(ChannelFileName):
-            print(("Channel file name {0} not found".format(ChannelFileName)))
-            return "Incomplete"
-
-        # Grabs channel name from each line in CHANFILE and write it (modified) to GLOBESFILE
-        CHANFILE = open(ChannelFileName)
-
-        for line in CHANFILE:
-
-            clean_line = re.sub('\s*', '', line)
-            clean_line = re.sub('\s+', ' ', line)
-
-            TempArray = clean_line.split(' ')
-            ChanName = TempArray[0]
-
-            GLOBESFILE.write("include \"{0}/smear/smear_{1}_{2}.dat\"\n".format(SNOwGLoBESdir, ChanName, ExpConfigName))
-
-        CHANFILE.close()
-
-        # Checks DetectorFileNamePath existence
-
-        DetectorFileName = "detector_configurations.dat"
-        DetectorFileNamePath = "{0}/{1}".format(SNOwGLoBESdir, DetectorFileName)
-
-        if not os.path.isfile(DetectorFileNamePath):
-            print(("Detector file name {0} not found".format(DetectorFileName)))
-            return "Incomplete"
-
-        # Defines Masses and NormFact (hashes, A.K.A. dictionaries) for later use
-
-        DETFILENAME = open(DetectorFileNamePath)
-        Masses = {}
-        NormFact = {}
-        for line in DETFILENAME:
-
-            if line[-1] == "\n":
-                line = line[:-1]
-
-            if "#" in line:
-                continue
-
-            clean_line = re.sub('\s*', '', line)
-            clean_line = re.sub('\s+', ' ', line)
-
-            TempArray = clean_line.split(' ')
-            DetName = TempArray[0]
-            Masses[DetName] = TempArray[1]
-            NormFact[DetName] = TempArray[2]
-
-            if (DetName == "" or Masses == "" or NormFact == ""):
-                continue
-        DETFILENAME.close()
-
-        # Mass and target normalization by species
-
-        # Checks Masses[ExpConfigName] existence
-
-        if not Masses.get(ExpConfigName):
-            print("Error: please enter a valid experiment configuration")
-            return "Incomplete"
-
-        TargetMass = format(float(Masses[ExpConfigName]) * float(NormFact[ExpConfigName]), "13.6f")
-
-        # Writes modified DETECTOR to GLOBESFILE; replace the mass with the calculated TargetMass
-
-        DETECTOR = open("{0}/glb/detector.glb".format(SNOwGLoBESdir))
-
-        for line in DETECTOR:
-
-            if "mass" in line:
-                line = "$target_mass=  {0}".format(TargetMass)
-
-            GLOBESFILE.write(line)
-
-        DETECTOR.close()
-        # Now the cross-sections.  Note that some of these are repeated even though
-        # it is not necessary (xscns for several flavors can be in the same file).
-        # This is just to make a consistent loop over channels.
-
-        GLOBESFILE.write("\n\n /******** Cross-sections *********/\n \n")
-
-        # Writes a modified CHANFILE to GLOBESFILE
-
-        CHANFILE = open(ChannelFileName)
-
-        for line in CHANFILE:
-
-            clean_line = re.sub('\s*', '', line)
-            clean_line = re.sub('\s+', ' ', line)
-
-            TempArray = clean_line.split(' ')
-
-            ChanName = TempArray[0]
-
-            GLOBESFILE.write("cross(#{0})<\n".format(ChanName))
-            GLOBESFILE.write("      @cross_file= \"{0}/xscns/xs_{1}.dat\"\n".format(SNOwGLoBESdir, ChanName))
-            GLOBESFILE.write(">\n")
-
-        CHANFILE.close()
-        # Now, the channel definitions
-
-        GLOBESFILE.write("\n /******** Channels *********/\n \n")
-
-        # Checks ChannelFileName existence
-
-        if not os.path.isfile(ChannelFileName):
-            print(("Channel file name {0} not found".format(ChannelFileName)))
-            return "Incomplete"
-
-        # Writes a modified CHANFILE and EFF_FILE to GLOBESFILE
-        CHANFILE = open(ChannelFileName)
-
-        for line in CHANFILE:
-
-            clean_line = re.sub('\s*', '', line)
-            clean_line = re.sub('\s+', ' ', line)
-
-            TempArray = clean_line.split(' ')
-
-            ChanName = TempArray[0]
-            CpState = TempArray[2]
-            InFlav = TempArray[3]
-
-            GLOBESFILE.write("channel(#{0}_signal)<\n".format(ChanName))
-            GLOBESFILE.write("      @channel= #supernova_flux:  {0}:    {1}:     {2}:    #{3}:    #{4}_smear\n".format(
-                CpState, InFlav, InFlav,                                                                         ChanName, ChanName))
-
-            # Get the post-smearing efficiencies by channel
-
-            EffFile = "{0}/effic/effic_{1}_{2}.dat".format(SNOwGLoBESdir, ChanName, ExpConfigName)
-            try:
-                EFF_FILE = open(EffFile)
-            except IOError:
-                GLOBESFILE.write("\n>\n\n")
-                continue
-            else:
-                for line in EFF_FILE:
-                    GLOBESFILE.write("       @post_smearing_efficiencies = {0}".format(line))
-
-                GLOBESFILE.write("\n>\n\n")
-
-                EFF_FILE.close()
-        CHANFILE.close()
-
-        # End matter
-
-        # Writes POSTAMBLE to GLOBESFILE
-
-        POSTAMBLE = open("{0}/glb/postamble.glb".format(SNOwGLoBESdir))
-
-        for line in POSTAMBLE:
-
-            GLOBESFILE.write(line)
-
-        POSTAMBLE.close()
-        GLOBESFILE.close()
+        def prepare_globes_file(output, flux_fname, channel_fname, detector_name):
+            """Function to write the snowglobes configuration to file """
+            logger.info(f'Prepare globes run for [flux={flux_fname}, chan={channel_fname},det={detector_name}]')
+            if flux_fname.is_file()==False:
+                raise FileNotFoundError(flux_fname)
+            #write preamble
+            output.write(cat(sng/'glb/preamble.glb'))
+            #write flux, substituted with input argument
+            s = cat(sng/'glb/flux.glb')
+            s = re_flux.sub(f'flux_file=   "{flux_fname.relative_to(sng)}"\n',s)
+            output.write(s)
+
+            channels = load_channels(channel_fname)
+            # smearing for each channel
+            for c in channels:
+                output.write(f'include "{sng}/smear/smear_{c.name}_{detector_name}.dat"\n')
+
+            # Writes modified DETECTOR to GLOBESFILE; replace the mass with the calculated TargetMass
+            s = cat(sng/'glb/detector.glb')
+            s = re_tgt.sub(f'target_mass=  {tgt_masses[detector_name]:13.6f}\n',s)
+            output.write(s)
+
+
+            # Now the cross-sections.  Note that some of these are repeated even though
+            # it is not necessary (xscns for several flavors can be in the same file).
+            # This is just to make a consistent loop over channels.
+
+            output.write("\n\n /******** Cross-sections *********/\n \n")
+            for c in channels:
+                output.write(f'cross(#{c.name})< @cross_file= "{sng}/xscns/xs_{c.name}.dat" >\n')
+            output.write("\n /******** Channels *********/\n \n")
+            
+            for c in channels:
+                output.write(f'channel(#{c.name}_signal)<\n')
+                output.write('      @channel= #supernova_flux:  {0}:    {1}:     {1}:    #{2}:    #{2}_smear\n'.format(c.parity,c.flavor,c.name))
+                # Get the post-smearing efficiencies by channel
+                try: 
+                    for l in open(sng/f'effic/effic_{c.name}_{ExpConfigName}.dat'):
+                        output.write('       @post_smearing_efficiencies = '+l)
+                except IOError as e:
+                    logger.warning(str(e))
+                finally:
+                    output.write("\n>\n\n")
+            #write postamble
+            output.write(cat(sng/'glb/postamble.glb'))
+
+
+        output_fname = sng/'supernova.glb'
+        flux_fname = flux_dir/f'{FluxNameStem}.{extension}'
+        channel_fname = sng/f'channels/channels_{ChannelName}.dat'
+
+        with open(output_fname,'w') as output:
+            prepare_globes_file(output,flux_fname,channel_fname, ExpConfigName)
 
         # Runs supernova
-        os.chdir(SNOwGLoBESdir)
-        ComString = "{0} {1} {2} {3}".format(ExeName, FluxNameStem, ChannelFileName, ExpConfigName)
+        os.chdir(sng)
+        ComString = "{0} {1} {2} {3}".format(sng/"bin/supernova", FluxNameStem, channel_fname, ExpConfigName)
         call(ComString, shell=True)
 
         # Calls apply_weights to format the output of supernova
@@ -600,10 +440,9 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
             if (verbose):
                 print("Applying channel weighting factors to output")
 
-            apply_weights("unsmeared", FluxNameStem, ChannelFileName, ExpConfigName)
-            apply_weights("smeared", FluxNameStem, ChannelFileName, ExpConfigName)
+            apply_weights("unsmeared", FluxNameStem, channel_fname, ExpConfigName)
+            apply_weights("smeared", FluxNameStem, channel_fname, ExpConfigName)
 
-        return "Complete"
 
     #######################################################################
     #This function applies the weights to the weightedfilename via tempfile
@@ -669,8 +508,6 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
                 WEIGHT.close()
         CHANFILE.close()
 
-    fluxes_list = []  # for a list of IndividualFluxFileName files
-
     #THE DRIVER
     #This is the place where you can comment out any detectors you don't want to run
     #This runs the entire module, for each detector configuration
@@ -696,10 +533,12 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
 
     logger.info(f'detector_input={detector_input}')
 
-    for IndividualFluxFile in FluxFileNameStems:
+    for flux_file in FluxFileNameStems:
         for det in detector_input:
-            format_globes_for_supernova(IndividualFluxFile, det_materials[det],det, "weight")
-        fluxes_list.append(IndividualFluxFile)
+            try:
+                format_globes_for_supernova(flux_file, det_materials[det],det, "weight")
+            except Exception as e:
+                logger.warning(e)
 
 def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False, verbose=False, remove_generated_files=True):
     """Collates SNOwGLoBES output files and generates plots or returns a data table.
