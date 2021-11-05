@@ -393,8 +393,8 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     flux_files = [Path(f) for f in flux_files if f.endswith('.dat')]
     logger.debug(f'Flux files = {flux_files}')
     #regexps to use
-    re_flux = re.compile('flux_file\s?=.*\n')
-    re_tgt  = re.compile('target_mass\s?=.*\n')
+    re_flux = re.compile(r'flux_file\s?=.*\n')
+    re_tgt  = re.compile(r'target_mass\s?=.*\n')
 
     tgt_masses = load_target_masses(sng/'detector_configurations.dat')
 
@@ -633,8 +633,12 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
         for det in detector_input:
             for is_smeared in [True,False]:
                 for is_weighted in [True,False]:
-                    produced_files+= add_funct(Path(flux_file).stem, det, is_smeared, is_weighted,
+                    try:
+                        res = add_funct(Path(flux_file).stem, det, is_smeared, is_weighted,
                                                     *categories_map[det_materials[det]])
+                        produced_files+=res #store produced files in list
+                    except Exception as e:
+                        logger.warning(f'Failed to collate {flux_file} for {det}: {e}')
 
     #Now create tarball output
     #Makes a tarfile with the condensed data files and plots
