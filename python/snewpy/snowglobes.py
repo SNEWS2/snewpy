@@ -361,7 +361,7 @@ def _gen_datafile_name(flux,channel=None,detector=None, is_smeared:bool=False,is
               'events_smeared' if is_smeared else 'events',
               'weighted' if is_weighted else 'unweighted']
     #remove empty tokens
-    tokens = [t for t in tokens if t is not '']
+    tokens = [t for t in tokens if t]
     #assemble filename
     return '_'.join(tokens)+'.dat'
 
@@ -530,6 +530,7 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
         logger.debug(f'Collating data for flux={flux}, detector={detector}')
         produced_files = []
         events_all = []
+        channels= []
         for val in args:
             pattern = _gen_datafile_name(flux,val,detector,is_smeared,is_weighted)
             #Loop over files, corresponding to given pattern
@@ -543,8 +544,9 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
                 assert np.all(Es==Es[0])
                 #sum up values and store them in list
                 events_all.append(data['events'].sum(axis=0))
+                channels.append(val)
             else:
-                raise ValueError(f'No files found for pattern {pattern}')
+                logger.warning(f'No files found for pattern {pattern}')
         if not events_all:
             raise ValueError(f'No data collated for [{flux},{detector},{args}]')
         events_all = [Es[0].T]+events_all
@@ -636,13 +638,12 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
 
     #Now create tarball output
     #Makes a tarfile with the condensed data files and plots
-    output_fname = tarball_path.rsplit('.tar',1)[0]+'_SNOprocessed'
+    output_fname = str(tarball_path).rsplit('.tar',1)[0]+'_SNOprocessed'
     outname = Path(output_fname).name #name in archive
     with tarfile.open(output_fname+'.tar.gz', "w:gz") as tar:
         for file in produced_files:
             tar.add(file, arcname=outname+'/'+str(file))
 
-    pdb.set_trace()
     #collect the returned tables
     returned_tables = {}
     for file in produced_files:
@@ -658,7 +659,7 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
     if remove_generated_files:
         for file in produced_files:
             logger.info(f'Removing {file}')
-            #os.remove(file)
+            Path(file).unlink()
 
     #Removes all the fluxfiles unzipped from the tarfile
     for file in flux_files:
@@ -667,5 +668,4 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
         os.remove(SNOwGLoBESdir + "/fluxes/parameterinfo")
     except OSError:
         pass
-    pdb.set_trace()
     return returned_tables
