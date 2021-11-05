@@ -1211,6 +1211,11 @@ class Warren_2020(SupernovaModel):
             Ea = get_value(np.interp(t, self.time, self.meanE[flavor].to('erg')))
             a  = np.interp(t, self.time, self.pinch[flavor])
 
+            # Sanity check to avoid invalid values of Ea, alpha, and L.
+            initialspectra[flavor] = np.zeros_like(E, dtype=float) / (u.erg*u.s)
+            if L <= 0. or Ea <= 0. or a <= -2.:
+                continue
+
             # For numerical stability, evaluate log PDF and then exponentiate.
             initialspectra[flavor] = \
                 np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a)
