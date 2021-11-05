@@ -667,7 +667,7 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
 
     #Removes all the fluxfiles unzipped from the tarfile
     for file in flux_files:
-        (sng/'fluxes'/file).unlink()
+        (sng/'fluxes'/file).unlink(missing_ok=True)
     try:
         os.remove(SNOwGLoBESdir + "/fluxes/parameterinfo")
     except OSError:
