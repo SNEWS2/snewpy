@@ -1214,7 +1214,7 @@ class Warren_2020(SupernovaModel):
             # Sanity check to avoid invalid values of Ea, alpha, and L.
             initialspectra[flavor] = np.zeros_like(E, dtype=float) / (u.erg*u.s)
             if L <= 0. or Ea <= 0. or a <= -2.:
-                return initialspectra
+                continue
 
             # For numerical stability, evaluate log PDF and then exponentiate.
             initialspectra[flavor] = \
