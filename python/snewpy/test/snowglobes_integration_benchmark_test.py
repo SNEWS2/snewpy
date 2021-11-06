@@ -6,8 +6,7 @@ import pytest
 #mark all tests in this file
 
 snowglobes_dir = os.environ.get('SNOWGLOBES','')
-pytestmark = [pytest.mark.snowglobes, 
-              pytest.mark.skipif(not snowglobes_dir, reason='Missing $SNOWGLOBES env')]
+pytestmark = pytest.mark.snowglobes 
 
 basedir = Path.cwd()
 outdir = Path(snowglobes_dir)/'out'
