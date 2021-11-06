@@ -3,6 +3,7 @@ from pathlib import Path
 import numpy as np
 import os
 import pytest
+import tarfile
 #mark all tests in this file
 
 snowglobes_dir = os.environ.get('SNOWGLOBES','')
@@ -22,7 +23,7 @@ fluence_file = model_file.parent/f'{fluence_name}.tar.bz2'
 output_archive = model_file.parent/f'{fluence_name}_SNOprocessed.tar.gz'
 
 #checks setup
-reference_archive = basedir/f'python/snewpy/test/reference_data/{fluence_name}.tar.gz' 
+reference_archive = basedir/'python/snewpy/test/reference_data'/output_archive.name
 
 from snewpy import snowglobes
 
@@ -36,18 +37,6 @@ def _cleanup(path, pattern='*.*'):
 def _read_data(fname):
     return np.loadtxt(fname,comments=['---','Total','#','Energy'], dtype='f8')
 
-def _check_file_in_directory(ref_file, check_dir):
-    """ check that *check_dir* has a file 
-    with the same name and contents as *ref_file* """
-    file=Path(ref_file)
-    check_file = Path(check_dir)/file.name
-    assert check_file!=file
-    assert check_file.exists()
-    d0 = read_data(file)
-    if d0.size>0:
-        d1 = read_data(check_file)
-        print(d0-d1)
-        assert np.allclose(d0,d1)
 #--------------------------------------------
 #main steps defined here
 def generate():
@@ -96,9 +85,9 @@ class Test_SNOwGLoBES_steps:
     def test_simulate(self):
         simulate()
         #get files in output_dir
-        files = list(outdir.glob('{fluence_name}*.dat'))
+        files = list(outdir.glob(f'{fluence_name}*.dat'))
         #make sure we got many files
-        assert len(files)>1000
+        assert len(files)>100
         for f in files:
             #and they're big enough
             assert f.stat().size_t>100
@@ -106,9 +95,9 @@ class Test_SNOwGLoBES_steps:
     def test_collate(self):
         tables = collate()
         assert tables
-        files = list(outdir.glob('Collate_{fluence_name}*.dat'))
+        files = list(outdir.glob(f'Collate_{fluence_name}*.dat'))
         #make sure we got many files
-        assert len(files)>1000
+        assert len(files)>100
         for f in files:
             #and they're big enough
             assert f.stat().st_size>1024 #1KB
@@ -123,29 +112,32 @@ def test_run_snoglobes():
     assert output_archive.stat().st_size>102400 #100KB
 
 
-#Prepare output directories for comparing archive files
-@pytest.fixture
-def temp_dirs(tmpdir):
-    dirs = [tmpdir/'ref', tmpdir/'new']
-    for d in dirs:
-        d.mkdir()
-    return dirs
-
+#@pytest.mark.skipif(Path(reference_archive).exists() == False, reason=f'No reference file {reference_archive} for check')
 @pytest.mark.crosscheck
-@pytest.mark.skipif(Path(reference_archive).exists() == False, reason='No reference file for check')
-def test_output_files_matches_reference(temp_dirs):
+def test_output_files_matches_reference(tmpdir):
     #check that each reference file has the same value
-    new_dir,ref_dir = temp_dirsz
+    new_dir = tmpdir/'new'
+    ref_dir = tmpdir/'ref'
     #first extract all files
     with tarfile.open(output_archive) as t:
         t.extractall(new_dir)
     with tarfile.open(reference_archive) as t:
         t.extractall(ref_dir)
+    #archive files are in a directory
+    ref_dir = ref_dir/reference_archive.stem
+    new_dir = new_dir/reference_archive.stem
     #now check that each file in the ref_dir is contained in the new_dir
-    ref_files = list(ref_dir.glob('*.dat'))
-    assert len(ref_files)>0
+    ref_files = list(Path(ref_dir).glob(f'*.dat'))
     for ref_file in ref_files:
         if ref_file.stat().st_size>0:
-            _check_file_in_directory(ref_file, new_dir)
+            check_file=Path(check_dir)/ref_file.relative_to(ref_dir)
+            assert check_file!=file
+            assert check_file.exists()
+            d0 = read_data(file)
+            if d0.size>0:
+                d1 = read_data(check_file)
+                print(d0-d1)
+                assert np.allclose(d0,d1)
+
 
 
