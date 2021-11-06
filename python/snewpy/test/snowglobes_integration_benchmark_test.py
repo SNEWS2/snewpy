@@ -4,10 +4,12 @@ import numpy as np
 import os
 import pytest
 #mark all tests in this file
-pytestmark = pytest.mark.snowglobes
+
+snowglobes_dir = os.environ.get('SNOWGLOBES','')
+pytestmark = [pytest.mark.snowglobes, 
+              pytest.mark.skipif(not snowglobes_dir, reason='Missing $SNOWGLOBES env')]
 
 basedir = Path.cwd()
-snowglobes_dir = os.environ['SNOWGLOBES']
 outdir = Path(snowglobes_dir)/'out'
 
 #simulation setup
