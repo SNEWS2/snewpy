@@ -9,6 +9,7 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+    types: [review_requested, ready_for_review]
 
 jobs:
   build:
@@ -27,6 +28,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install pytest pytest-benchmark 
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
       - name: Install SNEWPY
         run: |
@@ -50,6 +52,11 @@ jobs:
           cd src
           make
           make install
-      - name: Run Integration Test
+      - name: Run Integration Tests
         run: |
+          export SNOWGLOBES=${GITHUB_WORKSPACE}/opt/snowglobes
           python -m unittest python/snewpy/test/snowglobes_integrationtest.py
+          pytest -m 'crosscheck' 
+          pytest --benchmark-only --benchmark-json output.json
+      - name: Publish benchmark results
+        uses: nils-braun/pytest-benchmark-commenter@v2
