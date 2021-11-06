@@ -21,7 +21,7 @@ fluence_file = model_file.parent/f'{fluence_name}.tar.bz2'
 output_archive = model_file.parent/f'{fluence_name}_SNOprocessed.tar.gz'
 
 #checks setup
-reference_archive = basedir/f'reference_{fluence_name}.tar.gz' 
+reference_archive = basedir/f'python/snewpy/test/reference_data/{fluence_name}.tar.gz' 
 
 from snewpy import snowglobes
 
