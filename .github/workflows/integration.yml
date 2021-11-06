@@ -52,12 +52,11 @@ jobs:
           cd src
           make
           make install
-      - name: Run Integration Test#1
+      - name: Run Integration Tests
         run: |
+          export SNOWGLOBES=${GITHUB_WORKSPACE}/opt/snowglobes
           python -m unittest python/snewpy/test/snowglobes_integrationtest.py
-      - name: Run Integration Test#2
-        run: pytest -m 'crosscheck' 
-      - name: Run benchmark test
-        run: pytest --benchmark-only --benchmark-json output.json
+          pytest -m 'crosscheck' 
+          pytest --benchmark-only --benchmark-json output.json
       - name: Publish benchmark results
         uses: nils-braun/pytest-benchmark-commenter@v2
