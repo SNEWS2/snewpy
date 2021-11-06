@@ -3,7 +3,8 @@ from pathlib import Path
 import numpy as np
 import os
 import pytest
-
+#mark all tests in this file
+pytestmark = pytest.mark.snowglobes
 
 basedir = Path.cwd()
 snowglobes_dir = os.environ['SNOWGLOBES']
@@ -71,49 +72,47 @@ def collate():
 
 #-------------------------------------------
 @pytest.mark.timing
-def test_benchmark_generate(benchmark):
-    benchmark(generate)
+class TestExecutionTime:
+    def test_time_to_generate(self,benchmark):
+        benchmark(generate)
 
-@pytest.mark.timing
-def test_benchmark_simulate(benchmark):
-    benchmark(simulate)
+    def test_time_to_simulate(self,benchmark):
+        benchmark(simulate)
 
-@pytest.mark.timing
-def test_benchmark_collate(benchmark):
-    benchmark(collate)
+    def test_time_to_collate(self,benchmark):
+        benchmark(collate)
+
 #-------------------------------------------
-@pytest.mark.snoglobes_steps
-def test_generate():
-    #cleanup fluence file
-    fluence_file.unlink(missing_ok=True)
-    #generate a new fluence file
-    result = generate()
-    assert result == str(fluence_file)
-    assert fluence_file.exists()
+class Test_SNOwGLoBES_steps:
+    def test_generate(self):
+        #cleanup fluence file
+        fluence_file.unlink(missing_ok=True)
+        #generate a new fluence file
+        result = generate()
+        assert result == str(fluence_file)
+        assert fluence_file.exists()
 
-@pytest.mark.snoglobes_steps
-def test_simulate():
-    simulate()
-    #get files in output_dir
-    files = list(outdir.glob('{fluence_name}*.dat'))
-    #make sure we got many files
-    assert len(files)>1000
-    for f in files:
-        #and they're big enough
-        assert f.stat().size_t>100
+    def test_simulate(self):
+        simulate()
+        #get files in output_dir
+        files = list(outdir.glob('{fluence_name}*.dat'))
+        #make sure we got many files
+        assert len(files)>1000
+        for f in files:
+            #and they're big enough
+            assert f.stat().size_t>100
 
-@pytest.mark.snoglobes_steps
-def test_collate():
-    tables = collate()
-    assert tables
-    files = list(outdir.glob('Collate_{fluence_name}*.dat'))
-    #make sure we got many files
-    assert len(files)>1000
-    for f in files:
-        #and they're big enough
-        assert f.stat().st_size>1024 #1KB
+    def test_collate(self):
+        tables = collate()
+        assert tables
+        files = list(outdir.glob('Collate_{fluence_name}*.dat'))
+        #make sure we got many files
+        assert len(files)>1000
+        for f in files:
+            #and they're big enough
+            assert f.stat().st_size>1024 #1KB
 #---------------------------------------------
-@pytest.mark.integration
+@pytest.mark.crosscheck
 def test_run_snoglobes():
     fluence_file.unlink(missing_ok=True)
     generate()
@@ -131,7 +130,7 @@ def temp_dirs(tmpdir):
         d.mkdir()
     return dirs
 
-@pytest.mark.integration
+@pytest.mark.crosscheck
 @pytest.mark.skipif(Path(reference_archive).exists() == False, reason='No reference file for check')
 def test_output_files_matches_reference(temp_dirs):
     #check that each reference file has the same value
