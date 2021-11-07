@@ -28,7 +28,7 @@ class SNOwGLoBES:
         df = pd.read_table(path,names=['name','mass','factor'], delim_whitespace=True, comment='#')
         df['tgt_mass']=df.mass*df.factor
         self.detectors=df.set_index('name').T
-        logger.info(f'read masses for detectors {self.detectors}')
+        logger.info(f'read masses for detectors {list(self.detectors)}')
         logger.debug(f'detectors: {self.detectors}')
        
     def _load_channels(self, chan_dir):
@@ -98,12 +98,14 @@ class Runner:
                 #load the data from file
                 try:
                     E,N = np.loadtxt(fname, comments=['--','Total'], unpack=True)
+                    channel=self.channels.loc[int(channum)]
+                    smeared= 'smeared'  if '_smeared' in fname.stem else 'unsmeared'
+                    data[(channel['name'],smeared,'unweighted')] = N
+                    data[(channel['name'],smeared,'weighted')] = N*channel['weight']
+                except ValueError:
+                    logger.error(f'Failed reading data from file {fname}')
                 finally:
                     fname.unlink() #cleanup file
-                channel=self.channels.loc[int(channum)]
-                smeared= 'smeared'  if '_smeared' in fname.stem else 'unsmeared'
-                data[(channel['name'],smeared,'unweighted')] = N
-                data[(channel['name'],smeared,'weighted')] = N*channel['weight']
         #collect everything to pandas DataFrame
         df = pd.DataFrame(data, index = E)
         df.index.rename('E', inplace=True)
@@ -117,14 +119,15 @@ class Runner:
         #write configuration file:
         with open(self.base_dir/'supernova.glb','w') as f:
             f.write(cfg)
-
         r = subprocess.run(['bin/supernova', self.flux_file.stem, chan_file, self.detector],
-                cwd=self.base_dir,check=True, capture_output=True)
-        output = r.stdout.decode('utf_8').split('\n') 
-        logger.debug(output)
-        if(r.stderr):
-            logger.error(r.stderr.decode('utf_8'))
-        tables = self._parse_output(output)
-        return tables
+                cwd=self.base_dir, capture_output=True)
+        stdout = r.stdout.decode('utf_8')
+        stderr = r.stderr.decode('utf_8')
+        if(stderr):
+            logger.error('Run failed: \n'+stderr)
+        if(r.returncode==0):
+            tables = self._parse_output(stdout.split('\n'))
+            return tables
+        
 
 
