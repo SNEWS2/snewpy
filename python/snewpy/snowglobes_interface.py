@@ -21,8 +21,8 @@ class SNOwGLoBES:
         self._load_channels(self.base_dir/'channels')
         self._load_efficiencies(self.base_dir/'effic')
 
-        env = jinja2.Environment(loader=jinja2.FileSystemLoader('templates'))
-        self.template = env.get_template('supernova_template.glb')
+        env = jinja2.Environment(loader=jinja2.PackageLoader('snewpy'))
+        self.template = env.get_template('supernova.glb')
 
     def _load_detectors(self, path):
         df = pd.read_table(path,names=['name','mass','factor'], delim_whitespace=True, comment='#')
