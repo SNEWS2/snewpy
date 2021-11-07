@@ -1,3 +1,13 @@
+"""
+Python interface for `SNOwGLoBES` v1.2
+
+Usage:
+>>> from snewpy.snowglobes_interface import SNOwGLoBES
+>>> sng = SNOwGLoBES() 
+>>> result = sng.run('./Bollig_2016_s11.2c_AdiabaticMSW_NMO.dat', detector='icecube', material='water')
+>>> results.smeared.weighted.sum().sum() #get results, summed over all energies and all channels:
+320622.97449880163
+"""
 from pathlib import Path
 import jinja2
 import pandas as pd
@@ -5,7 +15,6 @@ import numpy as np
 import os
 
 import logging
-#logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 from dataclasses import dataclass
@@ -58,9 +67,10 @@ class SNOwGLoBES:
         logger.debug(f'efficiencies: {self.efficiencies}')
        
     def run(self, flux_file, detector, material):
-        assert material in self.materials
-        assert detector in self.detectors
-        assert detector in self.efficiencies
+        if not material in self.materials:
+            raise ValueError(f'material "{material}" is not in {self.materials}')
+        if not  detector in self.detectors:
+            raise ValueError(f'detector "{detector}" is not in {list(self.detectors)}')
 
         assert Path(flux_file).exists()
         return Runner(self,Path(flux_file),detector,material).run()
