@@ -14,20 +14,28 @@ def get_material(detector):
     elif detector.startswith('scint'):
         return 'scint'
 
-det_mats =[ ('water','icecube',      123),
-            ('water','wc100kt15prct',123),
-            ('argon','ar40kt',       123),
-            ('nova_soup','novaND',   123),
-            ('nova_soup','novaFD',   123),
-            ('lead','halo1',         123),
-            ('lead','halo2',         123)]
+det_mats =[ ('water','icecube',      320e3),
+            ('water','wc100kt30prct',4044.8/0.32),
+            ('argon','ar40kt',       2700),
+            ('nova_soup','novaND',   40),
+            ('nova_soup','novaFD',   1900),
+            ('lead','halo1',         4),
+            ('lead','halo2',         53)]
 
 @pytest.mark.parametrize('material, detector, expected_total',det_mats)
 def test_snowglobes(detector, material, expected_total):
     sng = SNOwGLoBES()
-    flux = './test_Kuroda_2020_AdiabaticMSW_NMO.dat'
+    flux = './Bollig_2016_s11.2c_AdiabaticMSW_NMO.dat'
     result = {}
     material = get_material(detector)
     data = sng.run(flux,detector,material)
     total = data.weighted.smeared.sum().sum()
-    assert total == pytest.approx(expected_total)
+    assert total == pytest.approx(expected_total, 0.1)
+
+from snewpy.snowglobes import simulate
+
+def test_simulate():
+   r = simulate(None,'./Bollig_2016_s11.2c_AdiabaticMSW_NMO.tar.bz2','all')
+   print(r)
+   assert False
+
