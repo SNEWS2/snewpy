@@ -51,7 +51,9 @@ cross(#{{ chan.name }})< @cross_file= "{{ xsec_dir }}/xs_{{ chan.name }}.dat" >
 {% for chan in channels %}
 channel(#{{chan.name}}_signal)<
       @channel= #supernova_flux:  {{ chan.parity }}:    {{ chan.flavor }}:     {{ chan.flavor }}:    #{{ chan.name }}:    #{{ chan.name }}_smear
+       {% if efficiency -%}
        @post_smearing_efficiencies = {{ efficiency[chan.name] }}
+       {%- endif %}
 >
 {% endfor %}
 
