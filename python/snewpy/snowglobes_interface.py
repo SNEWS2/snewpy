@@ -21,8 +21,22 @@ from dataclasses import dataclass
 import subprocess
 
 class SNOwGLoBES:
-    def __init__(self, base_dir=None):
-        """ SNOwGLoBES interface """
+    def __init__(self, base_dir:Path=''):
+        """ SNOwGLoBES interface
+
+        Args:
+            base_dir
+                Path to the SNOwGLoBES installation
+                If empty, try to get it from $SNOWGLOBES environment var
+
+        On construction SNOwGLoBES will read: 
+
+        * detectors from `<base_dir>/detector_configurations.dat`,
+        * channels  from `<base_dir>/channels/channel_*.dat`
+        * efficiencies from `<base_dir>/effic/effic_*.dat`
+
+        After that use :meth:`SNOwGLoBES.run` method to run the simulation for specific detector and flux file.
+        """
         if not base_dir:
             base_dir = os.environ['SNOWGLOBES']
         self.base_dir = Path(base_dir)
@@ -33,7 +47,7 @@ class SNOwGLoBES:
         env = jinja2.Environment(loader=jinja2.PackageLoader('snewpy'))
         self.template = env.get_template('supernova.glb')
 
-    def _load_detectors(self, path):
+    def _load_detectors(self, path:Path):
         df = pd.read_table(path,names=['name','mass','factor'], delim_whitespace=True, comment='#')
         df['tgt_mass']=df.mass*df.factor
         self.detectors=df.set_index('name').T
@@ -66,7 +80,25 @@ class SNOwGLoBES:
         logger.info(f'read efficiencies for materials: {list(self.efficiencies.keys())}')
         logger.debug(f'efficiencies: {self.efficiencies}')
        
-    def run(self, flux_file, detector, material):
+    def run(self, flux_file:Path, detector:str, material:str) -> pd.DataFrame:
+        """ Run the SNOwGLoBES simulation for given configuration,
+        collect the resulting data and return it in `pandas.DataFrame`
+
+        Args:
+            flux_file
+                A path to the text file with the flux table
+            detector
+                Detector name, known to SNOwGLoBES
+            material
+                Material name, known to SNOwGLoBES
+
+        Returns:
+            pd.DataFrame
+                The table, containing Energy (GeV) as index values, 
+                and number of events for each energy bin, for all interaction channels.
+                Columns are hierarchical: (is_weighted, is_smeared, channel),
+                so one can easily access :code:`data.weighted.unsmeared.ibd` 
+        """
         if not material in self.materials:
             raise ValueError(f'material "{material}" is not in {self.materials}')
         if not  detector in self.detectors:
@@ -74,7 +106,6 @@ class SNOwGLoBES:
 
         assert Path(flux_file).exists()
         return Runner(self,Path(flux_file),detector,material).run()
-
 @dataclass    
 class Runner:
     sng: SNOwGLoBES
