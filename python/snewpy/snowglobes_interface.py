@@ -78,6 +78,9 @@ class Runner:
         self.det_config=self.sng.detectors[self.detector]
         self.base_dir=self.sng.base_dir
         self.out_dir=self.base_dir/'out'
+        if not self.efficiency:
+            logger.warning(f'Missing efficiencies for detector={self.detector}!')
+            
     def _generate_globes_config(self):
         cfg =  self.sng.template.render(flux_file=self.flux_file.resolve(),
                                     detector=self.detector,
