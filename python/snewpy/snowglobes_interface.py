@@ -81,7 +81,7 @@ class SNOwGLoBES:
         logger.info(f'read efficiencies for materials: {list(self.efficiencies.keys())}')
         logger.debug(f'efficiencies: {self.efficiencies}')
        
-    def run(self, flux_files, detector:str, material:str) -> pd.DataFrame:
+    def run(self, flux_files, detector:str, material:str):
         """ Run the SNOwGLoBES simulation for given configuration,
         collect the resulting data and return it in `pandas.DataFrame`
 
@@ -94,11 +94,17 @@ class SNOwGLoBES:
                 Material name, known to SNOwGLoBES
 
         Returns:
-            pd.DataFrame
-                The table, containing Energy (GeV) as index values, 
+            list(pd.DataFrame)
+                List with the data table for each flux_file, keeping the order.
+                Each table containing Energy (GeV) as index values, 
                 and number of events for each energy bin, for all interaction channels.
                 Columns are hierarchical: (is_weighted, is_smeared, channel),
                 so one can easily access :code:`data.weighted.unsmeared.ibd` 
+        Raises:
+            ValueError:
+                if material or detector value is invalid
+            RuntimeError:
+                if SNOwGLoBES run has failed
         """
         if not material in self.materials:
             raise ValueError(f'material "{material}" is not in {self.materials}')
