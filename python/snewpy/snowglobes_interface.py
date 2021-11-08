@@ -118,7 +118,7 @@ class SNOwGLoBES:
         tasks = [Runner(self,Path(f),detector,material).run() for f in flux_files]
         results = await asyncio.gather(*tasks, return_exceptions=False)
         return results
-        
+
 @dataclass
 class Runner:
     sng: SNOwGLoBES
@@ -190,9 +190,11 @@ class Runner:
         stdout = stdout.decode('utf_8')
         stderr = stderr.decode('utf_8')
         if(stderr):
-            logger.error('Run failed: \n'+stderr)
+            logger.error('Run errors: \n'+stderr)
         if(p.returncode==0):
             tables = self._parse_output(stdout.split('\n'))
             return tables
+        else:
+            raise RuntimeError('SNOwGLoBES run failed:\n'+stderr)
         
  
