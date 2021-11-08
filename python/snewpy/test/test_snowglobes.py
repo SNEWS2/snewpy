@@ -20,18 +20,6 @@ def test_generate_fluence(sng,model,transformation):
     with tarfile.open(fname) as tar:
         tar.extractall(model_path.parent)
 
-def get_material(detector):
-    if detector.startswith('wc') or detector.startswith('ice'):
-        return 'water'
-    elif detector.startswith('ar'):
-        return 'argon'
-    elif detector.startswith('nova'):
-        return 'nova_soup'
-    elif detector.startswith('halo'):
-        return 'lead'
-    elif detector.startswith('scint'):
-        return 'scint'
-
 #numbers from SNEWSv2 paper - for approximate checks 
 crosscheck_table=[  ('icecube',          320e3),
                     ('wc100kt30prct',4044.8/0.32),
@@ -50,10 +38,9 @@ def sng():
 def test_snowglobes_crosscheck(sng, detector, expected_total):
     flux = './models/Bollig_2016/fluence_Bollig_2016_s11.2c_AdiabaticMSW_NMO.dat'
     material = get_material(detector)
-    data = sng.run(flux,detector,material)
+    data = sng.run(flux,detector)
     total = data[0].weighted.smeared.sum().sum()
     assert total == pytest.approx(expected_total, 0.1)
-
 
 def process(tarball_name):
     simulate(None,tarball_name,'icecube')
