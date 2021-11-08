@@ -321,6 +321,7 @@ from snewpy.snowglobes_interface import SNOwGLoBES
 from pathlib import Path
 from tqdm import tqdm
 from tempfile import TemporaryDirectory
+import pandas as pd
 
 def get_material(detector):
     if detector.startswith('wc') or detector.startswith('ice'):
@@ -335,6 +336,7 @@ def get_material(detector):
         return 'lead'
     elif detector.startswith('scint'):
         return 'scint'
+
 
 
 def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
@@ -358,19 +360,19 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     elif isinstance(detector_input,str):
         detector_input = [detector_input]
     
+    result = {}
     #Extracts data from tarfile and sets up lists of paths and fluxfilenames for later use
     with TemporaryDirectory(prefix='snowglobes') as tempdir:
         with tarfile.open(tarball_path) as tar:
             tar.extractall(tempdir)
 
         flux_files = list(Path(tempdir).glob('*.dat'))
-        result = {}
         for det in tqdm(detector_input, desc='Detectors'):
             mat = get_material(det)
             res=sng.run(flux_files, det, mat)
+
             result[det]=dict(zip((f.name for f in flux_files),res))
     return result 
-
 
 def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False, verbose=False, remove_generated_files=True):
     """Collates SNOwGLoBES output files and generates plots or returns a data table.
@@ -414,7 +416,9 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
         t = t.reorder_levels(table.columns.names, axis=1)
         return t
 
-    tables = simulate(SNOwGLoBESdir,tarball_path,detector_input) 
+    #read the results from storage
+    tables = simulate(SNOwGLoBESdir, tarball_path,detector_input)
+
     #save collated files:
     outdir = Path('./') 
     with TemporaryDirectory(prefix='snowglobes') as tempdir:
@@ -432,6 +436,7 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
                     #optionally plot the results
                     if (skip_plots is False):
                         table.plot()
+                        plt.title('Channels for {det}')
                         plt.savefig(filename.with_suffix('.png'))
         #Make a tarfile with the condensed data files and plots
         tarball_path = Path(tarball_path)
