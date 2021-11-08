@@ -371,7 +371,7 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
             mat = get_material(det)
             res=sng.run(flux_files, det, mat)
 
-            result[det]=dict(zip((f.name for f in flux_files),res))
+            result[det]=dict(zip((f'Collate_{f.name}' for f in flux_files),res))
     return result 
 
 def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False, verbose=False, remove_generated_files=True):
