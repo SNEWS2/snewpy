@@ -22,9 +22,12 @@ det_mats =[ ('water','icecube',      320e3),
             ('lead','halo1',         4),
             ('lead','halo2',         53)]
 
+@pytest.fixture(autouse=True)
+def sng():
+    return SNOwGLoBES()
+
 @pytest.mark.parametrize('material, detector, expected_total',det_mats)
-def test_snowglobes(detector, material, expected_total):
-    sng = SNOwGLoBES()
+def test_snowglobes(sng,detector, material, expected_total):
     flux = './Bollig_2016_s11.2c_AdiabaticMSW_NMO.dat'
     result = {}
     material = get_material(detector)
@@ -32,10 +35,18 @@ def test_snowglobes(detector, material, expected_total):
     total = data.weighted.smeared.sum().sum()
     assert total == pytest.approx(expected_total, 0.1)
 
-from snewpy.snowglobes import simulate
+from snewpy.snowglobes import simulate, generate_time_series
+from pathlib import Path
 
-def test_simulate():
-   r = simulate(None,'./Bollig_2016_s11.2c_AdiabaticMSW_NMO.tar.bz2','all')
-   print(r)
-   assert False
+@pytest.mark.parametrize('model',['Bollig_2016/s11.2c', 'Bollig_2016/s27.0c'])
+@pytest.mark.parametrize('transformation',['AdiabaticMSW_NMO','AdiabaticMSW_IMO'])
+def test_generate_time_series(sng,model,transformation):
+    model_path = Path('./models')/model
+    model_type = model_path.parent.stem
+    output_name = f'{model.replace("/","_")}_{transformation}_times_'
+    generate_time_series(model_path,model_type, transformation, d=10, output_filename=output_name)
+
+def test_simulate(benchmark):
+    tarball_name='./models/Bollig_2016/Bollig_2016_s27.0c_AdiabaticMSW_IMO_times_kpc.tar.bz2'
+    r = benchmark(simulate, None,tarball_name,'icecube')
 
