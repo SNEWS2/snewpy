@@ -45,7 +45,7 @@ class SNOwGLoBES:
         self._load_channels(self.base_dir/'channels')
         self._load_efficiencies(self.base_dir/'effic')
 
-        env = jinja2.Environment(loader=jinja2.PackageLoader('snewpy'))
+        env = jinja2.Environment(loader=jinja2.PackageLoader('snewpy'), enable_async=True)
         self.template = env.get_template('supernova.glb')
 
     def _load_detectors(self, path:Path):
@@ -135,15 +135,15 @@ class Runner:
         if not self.efficiency:
             logger.warning(f'Missing efficiencies for detector={self.detector}!')
             
-    def _generate_globes_config(self):
-        cfg =  self.sng.template.render(flux_file=self.flux_file.resolve(),
+    async def _generate_globes_config(self):
+        cfg =  self.sng.template.render_async(flux_file=self.flux_file.resolve(),
                                     detector=self.detector,
                                     target_mass=self.det_config.tgt_mass,
                                     smear_dir=self.base_dir/'smear',
                                     xsec_dir =self.base_dir/'xscns',
                                     channels =list(self.channels.itertuples()),
                                     efficiency =self.efficiency)
-        return cfg
+        return await cfg
 
     def _parse_output(self, output):
         data = {}
@@ -171,7 +171,7 @@ class Runner:
 
     async def run(self):
         """write configuration file and run snowglobes"""
-        cfg = self._generate_globes_config()
+        cfg = await self._generate_globes_config()
         chan_file = self.sng.chan_dir/f'channels_{self.material}.dat'
         #this section is exclusive to one process at a time, 
         # because snowglobes must  read the "$SNOGLOBES/supernova.glb" file
