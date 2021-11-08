@@ -6,7 +6,6 @@ import tarfile
 
 pytestmark=pytest.mark.snowglobes
 
-
 models = ['Bollig_2016/s11.2c', 'Bollig_2016/s27.0c']
 transformations = ['AdiabaticMSW_NMO','AdiabaticMSW_IMO']
 
@@ -59,7 +58,8 @@ def test_snowglobes_crosscheck(sng, detector, expected_total):
 def process(tarball_name):
     simulate(None,tarball_name,'icecube')
     collate(None, tarball_name,'icecube')
-    
+
+@pytest.mark.timing    
 def test_simulation_chain_benchmark(benchmark):
     tarball_name='./models/Bollig_2016/fluence_Bollig_2016_s27.0c_AdiabaticMSW_IMO.tar.bz2'
     r = benchmark(process,tarball_name)
