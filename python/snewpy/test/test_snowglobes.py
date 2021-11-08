@@ -35,7 +35,7 @@ def test_snowglobes(sng,detector, material, expected_total):
     total = data.weighted.smeared.sum().sum()
     assert total == pytest.approx(expected_total, 0.1)
 
-from snewpy.snowglobes import simulate, generate_time_series
+from snewpy.snowglobes import simulate,collate, generate_time_series
 from pathlib import Path
 
 @pytest.mark.parametrize('model',['Bollig_2016/s11.2c', 'Bollig_2016/s27.0c'])
@@ -50,3 +50,6 @@ def test_simulate(benchmark):
     tarball_name='./models/Bollig_2016/Bollig_2016_s27.0c_AdiabaticMSW_IMO_times_kpc.tar.bz2'
     r = benchmark(simulate, None,tarball_name,'icecube')
 
+def test_collate():
+    tarball_name='./models/Bollig_2016/Bollig_2016_s27.0c_AdiabaticMSW_IMO_times_kpc.tar.bz2'
+    collate(None, tarball_name,'icecube')
