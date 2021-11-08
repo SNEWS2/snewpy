@@ -2,7 +2,7 @@
 """Integration test based on SNEWS2.0_rate_table_singleexample.py
 """
 import unittest
-
+import os
 from snewpy import snowglobes
 
 
@@ -12,8 +12,8 @@ class TestSNOwGLoBES(unittest.TestCase):
         """Integration test based on SNEWS2.0_rate_table_singleexample.py
         """
         # Hardcoded paths on GitHub Action runner machines
-        SNOwGLoBES_path = "/home/runner/work/snewpy/snewpy/opt/snowglobes/"
-        SNEWPY_model_dir = "/home/runner/work/snewpy/snewpy/models/"
+        SNOwGLoBES_path = os.environ['SNOWGLOBES']
+        SNEWPY_model_dir = "models/"
 
         distance = 10  # Supernova distance in kpc
         detector = "wc100kt30prct" #SNOwGLoBES detector for water Cerenkov
@@ -38,13 +38,9 @@ class TestSNOwGLoBES(unittest.TestCase):
         # Use results to print the number of events in different interaction channels
         key = f"Collated_{outfile}_{detector}_events_smeared_weighted.dat"
         total_events = 0
-        for i, channel in enumerate(tables[key]['header'].split()):
-            if i == 0:
-                continue
-            n_events = sum(tables[key]['data'][i])
-            total_events += n_events
-            print(f"{channel:10}: {n_events:.3f} events")
-
+        table = tables[key]
+        n_events_per_channel = table.sum()
+        total_events = n_events_per_channel.sum()
         #Super-K has 32kT inner volume
         print("Total events in Super-K-like detector:" , 0.32*total_events)
 
