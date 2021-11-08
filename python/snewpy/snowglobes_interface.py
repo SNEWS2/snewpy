@@ -21,6 +21,22 @@ from dataclasses import dataclass
 import subprocess
 import asyncio
 
+def guess_material(detector):
+    if detector.startswith('wc') or detector.startswith('ice'):
+        return 'water'
+    elif detector.startswith('d2O'):
+        return 'heavywater'
+    elif detector.startswith('ar'):
+        return 'argon'
+    elif detector.startswith('nova'):
+        return 'nova_soup'
+    elif detector.startswith('halo'):
+        return 'lead'
+    elif detector.startswith('scint'):
+        return 'scint'
+    else: 
+        raise ValueError(f'Please provide material for {detector}')
+
 class SNOwGLoBES:
     def __init__(self, base_dir:Path=''):
         """ SNOwGLoBES interface
@@ -81,7 +97,7 @@ class SNOwGLoBES:
         logger.info(f'read efficiencies for materials: {list(self.efficiencies.keys())}')
         logger.debug(f'efficiencies: {self.efficiencies}')
        
-    def run(self, flux_files, detector:str, material:str):
+    def run(self, flux_files, detector:str, material:str=None):
         """ Run the SNOwGLoBES simulation for given configuration,
         collect the resulting data and return it in `pandas.DataFrame`
 
@@ -91,7 +107,7 @@ class SNOwGLoBES:
             detector
                 Detector name, known to SNOwGLoBES
             material
-                Material name, known to SNOwGLoBES
+                Material name, known to SNOwGLoBES. If None, we'll try to guess it
 
         Returns:
             list(pd.DataFrame)
@@ -106,10 +122,13 @@ class SNOwGLoBES:
             RuntimeError:
                 if SNOwGLoBES run has failed
         """
-        if not material in self.materials:
-            raise ValueError(f'material "{material}" is not in {self.materials}')
         if not  detector in self.detectors:
             raise ValueError(f'detector "{detector}" is not in {list(self.detectors)}')
+        if material is None:
+            material = guess_material(detector)
+        if not material in self.materials:
+            raise ValueError(f'material "{material}" is not in {self.materials}')
+ 
         if isinstance(flux_files,str):
             flux_files = [flux_files]
 

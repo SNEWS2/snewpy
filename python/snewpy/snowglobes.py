@@ -321,23 +321,6 @@ from snewpy.snowglobes_interface import SNOwGLoBES
 from pathlib import Path
 from tqdm import tqdm
 from tempfile import TemporaryDirectory
-import pandas as pd
-
-def get_material(detector):
-    if detector.startswith('wc') or detector.startswith('ice'):
-        return 'water'
-    elif detector.startswith('d2O'):
-        return 'heavywater'
-    elif detector.startswith('ar'):
-        return 'argon'
-    elif detector.startswith('nova'):
-        return 'nova_soup'
-    elif detector.startswith('halo'):
-        return 'lead'
-    elif detector.startswith('scint'):
-        return 'scint'
-
-
 
 def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     """Takes as input the neutrino flux files and configures and runs the supernova script inside SNOwGLoBES, which outputs calculated event rates expected for a given (set of) detector(s). These event rates are given as a function of the neutrino energy and time, for each interaction channel.
@@ -368,10 +351,9 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
 
         flux_files = list(Path(tempdir).glob('*.dat'))
         for det in tqdm(detector_input, desc='Detectors'):
-            mat = get_material(det)
-            res=sng.run(flux_files, det, mat)
+            res=sng.run(flux_files, det)
 
-            result[det]=dict(zip((f'Collate_{f.name}' for f in flux_files),res))
+            result[det]=dict(zip((f.stem for f in flux_files),res))
     return result 
 
 def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False, verbose=False, remove_generated_files=True):
@@ -419,20 +401,24 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
     #read the results from storage
     tables = simulate(SNOwGLoBESdir, tarball_path,detector_input)
 
+    #dict for old-style results, for backward compatibiity
+    results = {}
     #save collated files:
     outdir = Path('./') 
     with TemporaryDirectory(prefix='snowglobes') as tempdir:
         tempdir = Path(tempdir)
         for det in tables:
+            results[det] = {}
             for flux,t in tables[det].items():
                 t = aggregate_channels(t,nc='nc_',e='_e')
                 for w in ['weighted','unweighted']:
                     for s in ['smeared','unsmeared']:
-                       table = t[w][s]
-                    filename = tempdir/f'Collated_{Path(flux).stem}_{det}_{s}_{w}'
-                    #save results to text files
-                    with open(filename.with_suffix('.dat'),'w') as f:
-                        f.write(table.to_string(float_format='%23.15g'))
+                        table = t[w][s]
+                        filename = tempdir/f'Collated_{flux}_{det}_events_{s}_{w}.dat'
+                        results[filename.name] = table
+                        #save results to text files
+                        with open(filename,'w') as f:
+                            f.write(table.to_string(float_format='%23.15g'))
                     #optionally plot the results
                     if (skip_plots is False):
                         table.plot()
@@ -445,5 +431,6 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
             for file in tempdir.iterdir():
                 tar.add(file,arcname=fname.stem+'/'+file.name)
         logging.info(f'Created archive: {fname}')
-       
+    return results 
+
        
