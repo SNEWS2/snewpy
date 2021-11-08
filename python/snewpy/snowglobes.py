@@ -367,10 +367,8 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
         result = {}
         for det in tqdm(detector_input, desc='Detectors'):
             mat = get_material(det)
-            res = {}
-            for f in tqdm(flux_files, desc=det+'/'+mat):
-                res[f.stem]=sng.run(f, det, mat)
-            result[det]=res
+            res=sng.run(flux_files, det, mat)
+            result[det]=dict(zip(flux_files,res))
     return result 
 
 
