@@ -3,6 +3,7 @@ scipy
 astropy
 pandas == 1.3.4
 Jinja2==3.0.2
+tables
 tqdm
 matplotlib
 h5py

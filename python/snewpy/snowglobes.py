@@ -321,6 +321,7 @@ from snewpy.snowglobes_interface import SNOwGLoBES
 from pathlib import Path
 from tqdm import tqdm
 from tempfile import TemporaryDirectory
+import pandas as pd
 
 def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     """Takes as input the neutrino flux files and configures and runs the supernova script inside SNOwGLoBES, which outputs calculated event rates expected for a given (set of) detector(s). These event rates are given as a function of the neutrino energy and time, for each interaction channel.
@@ -352,8 +353,13 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
         flux_files = list(Path(tempdir).glob('*.dat'))
         for det in tqdm(detector_input, desc='Detectors'):
             res=sng.run(flux_files, det)
-
             result[det]=dict(zip((f.stem for f in flux_files),res))
+
+    #save result to the hdf5 storage
+    with pd.HDFStore('simulate.hdf5','w') as store:
+        for det,tables in result.items():
+            for flux_file,table in tables.items():
+                store.put(f'{det}/{flux_file}',table)
     return result 
 
 def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False, verbose=False, remove_generated_files=True):
@@ -398,8 +404,21 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
         t = t.reorder_levels(table.columns.names, axis=1)
         return t
 
+    sng = SNOwGLoBES(SNOwGLoBESdir)
+    if detector_input == 'all':
+        detector_input = list(sng.detectors)
+    elif isinstance(detector_input,str):
+        detector_input = [detector_input]
+
+    #first read the flux file names from tarfile
+    with tarfile.open(tarball_path,'r') as tar:
+        flux_files =[Path(f).stem for f in tar.getnames() if f.endswith('.dat')]
     #read the results from storage
-    tables = simulate(SNOwGLoBESdir, tarball_path,detector_input)
+    with pd.HDFStore('simulate.hdf5') as store:
+        tables = {det:{file: store.get(f'{det}/{file}') for file in flux_files} for det in detector_input}
+    
+    #This output is similar to what produced by:
+    #tables = simulate(SNOwGLoBESdir, tarball_path,detector_input)
 
     #dict for old-style results, for backward compatibiity
     results = {}
