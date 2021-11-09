@@ -442,7 +442,7 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
                         with open(filename,'w') as f:
                             f.write(table.to_string(float_format='%23.15g'))
                         #format the results for the output
-                        header = 'Energy'+' '.join(list(table.columns))
+                        header = 'Energy '+' '.join(list(table.columns))
                         data = table.to_numpy().T
                         index = table.index.to_numpy()
                         data = np.concatenate([[index],data])
