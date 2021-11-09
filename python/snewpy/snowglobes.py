@@ -323,6 +323,8 @@ from tqdm import tqdm
 from tempfile import TemporaryDirectory
 import pandas as pd
 
+hdf5name = 'simulate.hdf5'
+
 def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     """Takes as input the neutrino flux files and configures and runs the supernova script inside SNOwGLoBES, which outputs calculated event rates expected for a given (set of) detector(s). These event rates are given as a function of the neutrino energy and time, for each interaction channel.
 
@@ -356,7 +358,8 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
             result[det]=dict(zip((f.stem for f in flux_files),res))
 
     #save result to the hdf5 storage
-    with pd.HDFStore('simulate.hdf5','w') as store:
+    logging.info(f'Saving simulation results to {hdf5name}')
+    with pd.HDFStore(hdf5name,'w') as store:
         for det,tables in result.items():
             for flux_file,table in tables.items():
                 store.put(f'{det}/{flux_file}',table)
@@ -414,7 +417,8 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
     with tarfile.open(tarball_path,'r') as tar:
         flux_files =[Path(f).stem for f in tar.getnames() if f.endswith('.dat')]
     #read the results from storage
-    with pd.HDFStore('simulate.hdf5') as store:
+    logging.info(f'Reading tables from {hdf5name}')
+    with pd.HDFStore(hdf5name) as store:
         tables = {det:{file: store.get(f'{det}/{file}') for file in flux_files} for det in detector_input}
     
     #This output is similar to what produced by:
@@ -434,11 +438,16 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
                     for s in ['smeared','unsmeared']:
                         table = t[w][s]
                         filename = tempdir/f'Collated_{flux}_{det}_events_{s}_{w}.dat'
-                        results[filename.name] = table
                         #save results to text files
                         with open(filename,'w') as f:
                             f.write(table.to_string(float_format='%23.15g'))
-                    #optionally plot the results
+                        #format the results for the output
+                        header = 'Energy'+' '.join(list(table.columns))
+                        data = table.to_numpy().T
+                        index = table.index.to_numpy()
+                        data = np.concatenate([[index],data])
+                        results[filename.name] = {'header':header,'data':data}
+                   #optionally plot the results
                     if (skip_plots is False):
                         table.plot()
                         plt.title('Channels for {det}')
