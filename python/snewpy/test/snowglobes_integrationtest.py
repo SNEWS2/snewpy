@@ -38,9 +38,13 @@ class TestSNOwGLoBES(unittest.TestCase):
         # Use results to print the number of events in different interaction channels
         key = f"Collated_{outfile}_{detector}_events_smeared_weighted.dat"
         total_events = 0
-        table = tables[key]
-        n_events_per_channel = table.sum()
-        total_events = n_events_per_channel.sum()
+        for i, channel in enumerate(tables[key]['header'].split()):
+            if i == 0:
+                continue
+            n_events = sum(tables[key]['data'][i])
+            total_events += n_events
+            print(f"{channel:10}: {n_events:.3f} events")
+
         #Super-K has 32kT inner volume
         print("Total events in Super-K-like detector:" , 0.32*total_events)
 
