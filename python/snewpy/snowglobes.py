@@ -447,11 +447,11 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
                         index = table.index.to_numpy()
                         data = np.concatenate([[index],data])
                         results[filename.name] = {'header':header,'data':data}
-                   #optionally plot the results
-                    if (skip_plots is False):
-                        table.plot()
-                        plt.title('Channels for {det}')
-                        plt.savefig(filename.with_suffix('.png'))
+                        #optionally plot the results
+                        if (skip_plots is False):
+                            table.plot()
+                            plt.title(f'Channels for {det}')
+                            plt.savefig(filename.with_suffix('.png'))
         #Make a tarfile with the condensed data files and plots
         tarball_path = Path(tarball_path)
         fname = tarball_path.parent/f'Collated_{tarball_path.stem}_SNOprocessed.tar.gz'
