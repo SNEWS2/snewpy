@@ -323,7 +323,7 @@ from tqdm import tqdm
 from tempfile import TemporaryDirectory
 import pandas as pd
 
-hdf5name = 'simulate.hdf5'
+cache_file = 'simulate.npy'
 
 def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     """Takes as input the neutrino flux files and configures and runs the supernova script inside SNOwGLoBES, which outputs calculated event rates expected for a given (set of) detector(s). These event rates are given as a function of the neutrino energy and time, for each interaction channel.
@@ -357,12 +357,9 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
             res=sng.run(flux_files, det)
             result[det]=dict(zip((f.stem for f in flux_files),res))
 
-    #save result to the hdf5 storage
-    logging.info(f'Saving simulation results to {hdf5name}')
-    with pd.HDFStore(hdf5name,'w') as store:
-        for det,tables in result.items():
-            for flux_file,table in tables.items():
-                store.put(f'{det}/{flux_file}',table)
+    # save result to file for re-use in collate()
+    logging.info(f'Saving simulation results to {cache_file}')
+    np.save(cache_file, result)
     return result 
 
 re_chan_label = re.compile('nu(e|mu|tau)(bar|)_([A-Z][a-z]*)(\d*)_?(.*)')
@@ -455,10 +452,8 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
     with tarfile.open(tarball_path,'r') as tar:
         flux_files =[Path(f).stem for f in tar.getnames() if f.endswith('.dat')]
     #read the results from storage
-    logging.info(f'Reading tables from {hdf5name}')
-    with pd.HDFStore(hdf5name) as store:
-        tables = {det:{file: store.get(f'{det}/{file}') for file in flux_files} for det in detector_input}
-    
+    logging.info(f'Reading tables from {cache_file}')
+    tables = np.load(cache_file, allow_pickle=True).tolist()
     #This output is similar to what produced by:
     #tables = simulate(SNOwGLoBESdir, tarball_path,detector_input)
 
