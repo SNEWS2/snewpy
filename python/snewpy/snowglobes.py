@@ -365,6 +365,25 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
                 store.put(f'{det}/{flux_file}',table)
     return result 
 
+re_chan_label = re.compile('nu(e|mu|tau)(bar|)_([A-Z][a-z]*)(\d*)_?(.*)')
+def get_channel_label(c):
+    mapp = {'nc':'NeutralCurrent',
+            'ibd':'Inverse Beta Decay',
+            'e':r'${\nu}_x+e^-$'}
+    def gen_label(m):
+        flv,bar,Nuc,num,res = m.groups()
+        if flv!='e':
+            flv='\\'+flv
+        if bar:
+            bar='\\'+bar
+        s = f'${bar}{{\\nu}}_{flv}$ '+f'${{}}^{{{num}}}{Nuc}$ '+res
+        return s
+
+    if c in mapp:
+        return mapp[c]
+    else: 
+        return re_chan_label.sub(gen_label, c) 
+
 def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False, verbose=False, remove_generated_files=True):
     """Collates SNOwGLoBES output files and generates plots or returns a data table.
 
@@ -406,6 +425,25 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
         t = t.unstack(levels)
         t = t.reorder_levels(table.columns.names, axis=1)
         return t
+        
+    def do_plot(table, params):
+        #plotting the events from given table
+        flux,det,weighted,smeared = params
+        for c in table.columns:
+            if table[c].max() > 0.1:
+                plt.plot(table[c],drawstyle='steps',label=get_channel_label(c), lw=1)
+        plt.xlim(right=0.10)
+        plt.ylim(bottom=0.10)
+        plt.yscale('log')
+        plt.legend(bbox_to_anchor=(0.5, 0.5, 0.5, 0.5), loc='best', borderaxespad=0)  # formats complete graph
+        smear_title = 'Interaction' if smeared=='unsmeared' else 'Detected'
+        plt.title(f'{flux} {det.capitalize()} {weighted.capitalize()} {smear_title} Events')
+        if smeared=='smeared':
+            plt.xlabel('Detected Energy (GeV)')
+            plt.ylabel('Events')  
+        else:
+            plt.xlabel('Neutrino Energy (GeV)')
+            plt.ylabel('Interaction Events')  
 
     sng = SNOwGLoBES(SNOwGLoBESdir)
     if detector_input == 'all':
@@ -437,7 +475,8 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
                 for w in ['weighted','unweighted']:
                     for s in ['smeared','unsmeared']:
                         table = t[w][s]
-                        filename = tempdir/f'Collated_{flux}_{det}_events_{s}_{w}.dat'
+                        filename_base = f'{flux}_{det}_events_{s}_{w}'
+                        filename = tempdir/f'Collated_{filename_base}.dat'
                         #save results to text files
                         with open(filename,'w') as f:
                             f.write(table.to_string(float_format='%23.15g'))
@@ -448,18 +487,19 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
                         data = np.concatenate([[index],data])
                         results[filename.name] = {'header':header,'data':data}
                         #optionally plot the results
-                        if (skip_plots is False):
-                            table.plot()
-                            plt.title(f'Channels for {det}')
-                            plt.savefig(filename.with_suffix('.png'))
+                        if skip_plots is False:
+                            plt.figure(dpi=300)
+                            do_plot(table,(flux,det,w,s))
+                            filename = tempdir/f'{filename_base}_log_plot.png'
+                            plt.savefig(filename.with_suffix('.png'), dpi=300, bbox_inches='tight')
         #Make a tarfile with the condensed data files and plots
         tarball_path = Path(tarball_path)
-        tarball_stem = tarball_path.stem.removesuffix('.tar')
-        output_fname = tarball_path.parent/f'{tarball_stem}_SNOprocessed'
-        with tarfile.open(output_fname.with_suffix('.tar.gz'), "w:gz") as tar:
+        output_name = tarball_path.stem.removesuffix('.tar')+'_SNOprocessed'
+        output_path = tarball_path.parent/(output_name+'.tar.gz')
+        with tarfile.open(output_path, "w:gz") as tar:
             for file in tempdir.iterdir():
-                tar.add(file,arcname=output_fname.stem+'/'+file.name)
-        logging.info(f'Created archive: {output_fname}')
+                tar.add(file,arcname=output_name+'/'+file.name)
+        logging.info(f'Created archive: {output_path}')
     return results 
 
        
