@@ -488,9 +488,8 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
                             filename = tempdir/f'{filename_base}_log_plot.png'
                             plt.savefig(filename.with_suffix('.png'), dpi=300, bbox_inches='tight')
         #Make a tarfile with the condensed data files and plots
-        tarball_path = Path(tarball_path)
-        output_name = tarball_path.stem.removesuffix('.tar')+'_SNOprocessed'
-        output_path = tarball_path.parent/(output_name+'.tar.gz')
+        output_name = tarball_path[tarball_path.rfind('.tar'):]+'_SNOprocessed'
+        output_path = Path(tarball_path).parent/(output_name+'.tar.gz')
         with tarfile.open(output_path, "w:gz") as tar:
             for file in tempdir.iterdir():
                 tar.add(file,arcname=output_name+'/'+file.name)
