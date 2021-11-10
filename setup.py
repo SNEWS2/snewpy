@@ -58,6 +58,9 @@ with open('requirements.txt', 'r') as f:
         if line.strip():
             requires.append(line.strip())
 setup_keywords['install_requires'] = requires
+setup_keywords['extras_require'] = {  # Optional
+    'dev': ['pytest', 'pytest-benchmark'],
+}
 #
 # Internal data directories.
 #
