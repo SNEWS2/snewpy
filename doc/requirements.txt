@@ -4,3 +4,4 @@ astropy
 matplotlib
 numpydoc
 h5py
+pandas
