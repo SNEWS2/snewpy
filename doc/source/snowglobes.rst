@@ -14,3 +14,8 @@ Usage
 .. automodule:: snewpy.snowglobes
    :members:
    :member-order: bysource
+ 
+Low-level interface
+-------------------
+.. automodule:: snewpy.snowglobes_interface
+ 

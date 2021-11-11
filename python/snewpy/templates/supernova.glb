@@ -1,0 +1,74 @@
+%!GLoBES
+/* Copyright 2005 Patrick Huber
+ *
+ *
+ * For supernova nus: based on Daedalus code by Rachel Carr
+ */
+
+$version="1.8.1"
+
+/* ######## Baseline setting ######## */
+
+$profiletype = 		1         /* standard earth density profile */
+$baseline =             1.5       /* km */
+
+
+/* ####### Energy window ####### */
+
+$bins =                 200
+$emin =                 0.0005     /* GeV */
+$emax =                 0.100     /* GeV */
+
+$sampling_points = 	200
+$sampling_min = 	0.0005     /* GeV */
+$sampling_max = 	0.100     /* GeV */
+
+/* ########  Flux data ######## */
+
+nuflux(#supernova_flux)<
+	@flux_file=   "{{ flux_file }}"
+	@time =       1                  /* 1 file unit (1 supernova)*/
+	@power =      1                    
+	@norm =       0.0677
+>
+
+{%- for chan in channels %}
+include "{{ smear_dir }}/smear_{{ chan.name }}_{{ detector }}.dat"
+{%- endfor %}
+
+/* ####### Detector settings ####### */
+
+$target_mass=       {{target_mass}}
+
+ /******** Cross-sections *********/
+ 
+{% for chan in channels -%}
+cross(#{{ chan.name }})< @cross_file= "{{ xsec_dir }}/xs_{{ chan.name }}.dat" >
+{% endfor %}
+
+ /******** Channels *********/
+ 
+{% for chan in channels %}
+channel(#{{chan.name}}_signal)<
+      @channel= #supernova_flux:  {{ chan.parity }}:    {{ chan.flavor }}:     {{ chan.flavor }}:    #{{ chan.name }}:    #{{ chan.name }}_smear
+       {% if efficiency -%}
+       @post_smearing_efficiencies = {{ efficiency[chan.name] }}
+       {%- endif %}
+>
+{% endfor %}
+
+/*  Need at least one rule although osc code not used.  This signal will be present in any configuration */
+
+rule(#nue_e_events)<
+        @signal = 1.0@#nue_e_signal
+        @signalerror = 0.011 : 0.00005
+        @background = 0.0@#nue_e_signal
+        @backgrounderror = 0.011 : 0.00005
+        @sys_on_function = "chiSpectrumTilt"
+	@sys_off_function = "chiNoSysSpectrum"
+	@energy_window = 0.0005 : 0.100          /* Range of analysis: 5 MeV < E_vis < 55 MeV */
+>
+
+
+
+/**********************END**********************/
