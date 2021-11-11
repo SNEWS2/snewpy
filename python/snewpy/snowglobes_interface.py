@@ -1,12 +1,33 @@
 """
-Python interface for `SNOwGLoBES` v1.2
+Module ``snewpy.snowglobes_interface`` contains a low-level python interface for `SNOwGLoBES` v1.2
 
-Usage:
->>> from snewpy.snowglobes_interface import SNOwGLoBES
->>> sng = SNOwGLoBES() 
->>> result = sng.run('./Bollig_2016_s11.2c_AdiabaticMSW_NMO.dat', detector='icecube', material='water')
->>> results.smeared.weighted.sum().sum() #get results, summed over all energies and all channels:
-320622.97449880163
+:class:`SNOwGLoBES` manages the input and output files of SNOwGLoBES application, 
+and allows running the simulation over one or several 
+Setup::
+
+    from snewpy.snowglobes_interface import SNOwGLoBES
+    sng = SNOwGLoBES() 
+
+Run the simulation for one or more flux files, 
+and get the resulting tables as pandas.DataFrames for each input file::
+    
+    flux_files = ['./fluence_timeBin1.dat','fluence_timeBin2.dat']
+    result = sng.run(flux_files, detector='icecube')
+    #get results, summed over all energies and all channels:
+    Ntotal_0 = results[0].smeared.weighted.sum().sum()
+    Ntotal_1 = results[1].smeared.weighted.sum().sum()
+
+Reading the detector and configurations, used by SNOwGLoBES:
+
+    sng.detectors #returns a table of detectors known to SNOwGLoBES
+    sng.channels #a dictionary: list of channels for each detector
+    sng.efficiencies #channel detection efficiencies for each detector
+
+Reference:
+
+.. autoclass:: SNOwGLoBES
+   :members:
+
 """
 from pathlib import Path
 import jinja2
@@ -39,12 +60,14 @@ def guess_material(detector):
 
 class SNOwGLoBES:
     def __init__(self, base_dir:Path=''):
-        """ SNOwGLoBES interface
+        """ SNOwGLoBES interface 
 
-        Args:
-            base_dir
-                Path to the SNOwGLoBES installation
-                If empty, try to get it from $SNOWGLOBES environment var
+        Parameters
+        ----------
+        base_dir: Path or None
+            Path to the SNOwGLoBES installation
+            If empty, try to get it from $SNOWGLOBES environment var
+
 
         On construction SNOwGLoBES will read: 
 
@@ -101,26 +124,31 @@ class SNOwGLoBES:
         """ Run the SNOwGLoBES simulation for given configuration,
         collect the resulting data and return it in `pandas.DataFrame`
 
-        Args:
-            flux_files
-                An iterable of flux table filenames to process, or a single filename
-            detector
-                Detector name, known to SNOwGLoBES
-            material
-                Material name, known to SNOwGLoBES. If None, we'll try to guess it
+        Parameters
+        -----------
+        flux_files: list(str) or str
+            An iterable of flux table filenames to process, or a single filename
+        detector: str
+            Detector name, known to SNOwGLoBES
+        material: str or None
+            Material name, known to SNOwGLoBES. If None, we'll try to guess it
 
-        Returns:
-            list(pd.DataFrame)
-                List with the data table for each flux_file, keeping the order.
-                Each table containing Energy (GeV) as index values, 
-                and number of events for each energy bin, for all interaction channels.
-                Columns are hierarchical: (is_weighted, is_smeared, channel),
-                so one can easily access :code:`data.weighted.unsmeared.ibd` 
-        Raises:
-            ValueError:
-                if material or detector value is invalid
-            RuntimeError:
-                if SNOwGLoBES run has failed
+        Returns
+        --------
+        list(pd.DataFrame)
+            List with the data table for each flux_file, keeping the order.
+            Each table containing Energy (GeV) as index values, 
+            and number of events for each energy bin, for all interaction channels.
+            Columns are hierarchical: (is_weighted, is_smeared, channel),
+            so one can easily access :code:`data.weighted.unsmeared.ibd` 
+
+        Raises
+        ------
+        ValueError
+            if material or detector value is invalid
+        RuntimeError
+            if SNOwGLoBES run has failed
+
         """
         if not  detector in self.detectors:
             raise ValueError(f'detector "{detector}" is not in {list(self.detectors)}')
