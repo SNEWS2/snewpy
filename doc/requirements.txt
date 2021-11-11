@@ -4,4 +4,6 @@ astropy
 matplotlib
 numpydoc
 h5py
-pandas
+pandas == 1.3.4
+Jinja2==3.0.2
+tqdm
