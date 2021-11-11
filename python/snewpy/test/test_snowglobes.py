@@ -3,6 +3,7 @@ import numpy as np
 from snewpy.snowglobes import simulate,collate, generate_time_series, generate_fluence, SNOwGLoBES
 from pathlib import Path
 import tarfile
+import asyncio
 
 pytestmark=pytest.mark.snowglobes
 
@@ -49,3 +50,11 @@ def process(tarball_name):
 def test_simulation_chain_benchmark(benchmark):
     tarball_name='./models/Bollig_2016/fluence_Bollig_2016_s27.0c_AdiabaticMSW_IMO.tar.bz2'
     r = benchmark(process,tarball_name)
+
+def test_running_from_async_loop(sng):
+    async def main():
+        flux = './models/Bollig_2016/fluence_Bollig_2016_s11.2c_AdiabaticMSW_NMO.dat'
+        detector='icecube'
+        data = sng.run(flux, detector)
+        return data
+    asyncio.run(main())
