@@ -40,6 +40,7 @@ logger = logging.getLogger(__name__)
 
 from dataclasses import dataclass
 import subprocess
+from concurrent.futures import ThreadPoolExecutor
 import asyncio
 
 def guess_material(detector):
@@ -161,13 +162,15 @@ class SNOwGLoBES:
             flux_files = [flux_files]
 
         #make a function to collect results from asyncio
-        async def do_run():
-            self.lock = asyncio.Lock() #global lock, ensuring that snowglobes files aren't mixed!
-            return await self.run_async(flux_files,detector,material)
+        def do_run():
+            return asyncio.run(self.run_async(flux_files,detector,material))
 
-        return asyncio.run(do_run())
- 
+        with ThreadPoolExecutor() as executor:
+            task = executor.submit(do_run)
+            return task.result()
+
     async def run_async(self, flux_files, detector:str, material:str):
+        self.lock = asyncio.Lock() #global lock, ensuring that snowglobes files aren't mixed!
         tasks = [Runner(self,Path(f),detector,material).run() for f in flux_files]
         results = await asyncio.gather(*tasks, return_exceptions=False)
         return results
