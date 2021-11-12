@@ -319,7 +319,7 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
 
 from snewpy.snowglobes_interface import SNOwGLoBES
 from pathlib import Path
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from tempfile import TemporaryDirectory
 import pandas as pd
 
@@ -353,7 +353,9 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
             tar.extractall(tempdir)
 
         flux_files = list(Path(tempdir).glob('*.dat'))
-        for det in tqdm(detector_input, desc='Detectors'):
+        if len(detector_input)>0:
+            detector_input = tqdm(detector_input, desc='Detectors', leave=False)
+        for det in detector_input:
             res=sng.run(flux_files, det)
             result[det]=dict(zip((f.stem for f in flux_files),res))
 
