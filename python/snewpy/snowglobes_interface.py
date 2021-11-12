@@ -136,12 +136,13 @@ class SNOwGLoBES:
 
         Returns
         --------
-        list(pd.DataFrame)
+        list(pd.DataFrame or Exception)
             List with the data table for each flux_file, keeping the order.
             Each table containing Energy (GeV) as index values, 
             and number of events for each energy bin, for all interaction channels.
             Columns are hierarchical: (is_weighted, is_smeared, channel),
-            so one can easily access :code:`data.weighted.unsmeared.ibd` 
+            so one can easily access :code:`data.weighted.unsmeared.ibd`.
+            If run failed with exception, an exception will be returned.
 
         Raises
         ------
@@ -172,7 +173,7 @@ class SNOwGLoBES:
     async def run_async(self, flux_files, detector:str, material:str):
         self.lock = asyncio.Lock() #global lock, ensuring that snowglobes files aren't mixed!
         tasks = [Runner(self,Path(f),detector,material).run() for f in flux_files]
-        results = await asyncio.gather(*tasks, return_exceptions=False)
+        results = await asyncio.gather(*tasks, return_exceptions=True)
         return results
 
 @dataclass
