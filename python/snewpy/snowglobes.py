@@ -343,6 +343,7 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     sng = SNOwGLoBES(SNOwGLoBESdir)
     if detector_input == 'all':
         detector_input = list(sng.detectors)
+        detector_input.remove('d2O')
     elif isinstance(detector_input,str):
         detector_input = [detector_input]
     
