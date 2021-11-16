@@ -88,6 +88,7 @@ class SNOwGLoBES:
         self._load_detectors(self.base_dir/'detector_configurations.dat')
         self._load_channels(self.base_dir/'channels')
         self._load_efficiencies(self.base_dir/'effic')
+        self._load_smearing(self.base_dir/'smear')
 
         env = jinja2.Environment(loader=jinja2.PackageLoader('snewpy'), enable_async=True)
         self.template = env.get_template('supernova.glb')
@@ -124,6 +125,19 @@ class SNOwGLoBES:
         self.efficiencies = result 
         logger.info(f'read efficiencies for materials: {list(self.efficiencies.keys())}')
         logger.debug(f'efficiencies: {self.efficiencies}')
+
+    def _load_smearing(self, path):
+        result = {}
+        for detector in self.detectors:
+            res_det = {}
+            for file in path.glob(f'smear*_{detector}.dat'):
+                channel =  file.stem[len('smear_'):-len(detector)-1]
+                res_det[channel]= file
+            result[detector]=res_det
+        self.smearings = result 
+        logger.info(f'read efficiencies for materials: {list(self.efficiencies.keys())}')
+        logger.debug(f'efficiencies: {self.efficiencies}')
+
        
     def run(self, flux_files, detector:str, material:str=None):
         """ Run the SNOwGLoBES simulation for given configuration,
@@ -164,6 +178,8 @@ class SNOwGLoBES:
             raise ValueError(f'Material "{material}" is not in {self.materials}')
         if not self.efficiencies[detector]:
             logger.warning(f'Missing efficiencies for detector={detector}! Results will assume 100% efficiency')
+        if not self.smearings[detector]:
+            logger.warning(f'Missing smearing for detector={detector}! Results will not be smeared')
         if isinstance(flux_files,str):
             flux_files = [flux_files]
 
@@ -191,6 +207,7 @@ class Runner:
     def __post_init__(self):
         self.channels=self.sng.channels[self.material]
         self.efficiency=self.sng.efficiencies[self.detector]
+        self.smearing=self.sng.smearings[self.detector]
         self.det_config=self.sng.detectors[self.detector]
         self.base_dir=self.sng.base_dir
         self.out_dir=self.base_dir/'out'
@@ -199,7 +216,7 @@ class Runner:
         cfg =  self.sng.template.render_async(flux_file=self.flux_file.resolve(),
                                     detector=self.detector,
                                     target_mass=self.det_config.tgt_mass,
-                                    smear_dir=self.base_dir/'smear',
+                                    smearing=self.smearing,
                                     xsec_dir =self.base_dir/'xscns',
                                     channels =list(self.channels.itertuples()),
                                     efficiency =self.efficiency)

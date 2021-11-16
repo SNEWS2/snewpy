@@ -32,9 +32,16 @@ nuflux(#supernova_flux)<
 	@norm =       0.0677
 >
 
-{%- for chan in channels %}
-include "{{ smear_dir }}/smear_{{ chan.name }}_{{ detector }}.dat"
+{%- for f in smearing %}
+include "{{ smearing[f] }}"
 {%- endfor %}
+
+/* configuration for no smearing */
+energy(#no_smear)< 
+    @type=1 
+    @sigma_function= #standard
+    @sigma_e={0,0,1e-5} 
+    >
 
 /* ####### Detector settings ####### */
 
@@ -50,7 +57,7 @@ cross(#{{ chan.name }})< @cross_file= "{{ xsec_dir }}/xs_{{ chan.name }}.dat" >
  
 {% for chan in channels %}
 channel(#{{chan.name}}_signal)<
-      @channel= #supernova_flux:  {{ chan.parity }}:    {{ chan.flavor }}:     {{ chan.flavor }}:    #{{ chan.name }}:    #{{ chan.name }}_smear
+      @channel= #supernova_flux:  {{ chan.parity }}:    {{ chan.flavor }}:     {{ chan.flavor }}:    #{{ chan.name }}:  #{{ chan.name if smearing[chan.name] else "no" }}_smear
        {% if efficiency -%}
        @post_smearing_efficiencies = {{ efficiency[chan.name] }}
        {%- endif %}
