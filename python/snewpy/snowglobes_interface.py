@@ -1,29 +1,30 @@
 """
-Module ``snewpy.snowglobes_interface`` contains a low-level python interface for `SNOwGLoBES` v1.2
+The module ``snewpy.snowglobes_interface`` contains a low-level Python interface for SNOwGLoBES v1.2.
 
-:class:`SNOwGLoBES` manages the input and output files of SNOwGLoBES application, 
-and allows running the simulation over one or several 
-Setup::
+The class: class: `SNOwGLoBES` manages the input and output files of the SNOwGLoBES application,
+and allows running the simulation for one or several setups::
 
     from snewpy.snowglobes_interface import SNOwGLoBES
-    sng = SNOwGLoBES() 
+    sng = SNOwGLoBES()
 
-Method :meth:`SNOwGLoBES.run` performs the simulation for one or more flux files, 
-and returns the resulting tables as a list with a `pandas.DataFrame`_ for each input file::
-    
-    flux_files = ['fluxes/fluence_timeBin1.dat','fluxes/fluence_timeBin2.dat']
+The method :meth:`SNOwGLoBES.run` performs the simulation for one or more flux files,
+and returns the resulting tables as a list containing a `pandas.DataFrame`_ for each input file::
+
+    flux_files = ['fluxes/fluence_timeBin1.dat', 'fluxes/fluence_timeBin2.dat']
     result = sng.run(flux_files, detector='icecube')
-    #get results, summed over all energies and all channels:
+
+    # get results, summed over all energies and all channels:
     Ntotal_0 = results[0].smeared.weighted.sum().sum()
     Ntotal_1 = results[1].smeared.weighted.sum().sum()
-    #get only sum of ibd channel
+
+    # get only sum of ibd channel
     Nibd_1 = results[1].smeared.weighted.ibd.sum()
 
 Reading the detector and configurations, used by SNOwGLoBES::
 
-    sng.detectors #a table of detectors known to SNOwGLoBES
-    sng.channels #a dictionary: list of channels for each detector
-    sng.efficiencies #channel detection efficiencies for each detector
+    sng.detectors  # a table of detectors known to SNOwGLoBES
+    sng.channels  # a dictionary: list of channels for each detector
+    sng.efficiencies  # channel detection efficiencies for each detector
 
 .. _pandas.DataFrame: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
 
@@ -43,7 +44,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 from dataclasses import dataclass
-import subprocess
 from concurrent.futures import ThreadPoolExecutor
 import asyncio
 
