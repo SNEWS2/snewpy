@@ -318,8 +318,6 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
     return os.path.join(model_dir, tfname)
 
 
-cache_file = 'simulate.npy'
-
 def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     """Takes as input the neutrino flux files and configures and runs the supernova script inside SNOwGLoBES, which outputs calculated event rates expected for a given (set of) detector(s). These event rates are given as a function of the neutrino energy and time, for each interaction channel.
 
@@ -356,6 +354,7 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
             result[det]=dict(zip((f.stem for f in flux_files),res))
 
     # save result to file for re-use in collate()
+    cache_file = tarball_path[:tarball_path.rfind('.tar')] + '.npy'
     logging.info(f'Saving simulation results to {cache_file}')
     np.save(cache_file, result)
     return result 
@@ -441,6 +440,7 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
             plt.ylabel('Interaction Events')  
 
     #read the results from storage
+    cache_file = tarball_path[:tarball_path.rfind('.tar')] + '.npy'
     logging.info(f'Reading tables from {cache_file}')
     tables = np.load(cache_file, allow_pickle=True).tolist()
     #This output is similar to what produced by:
