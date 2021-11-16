@@ -8,20 +8,24 @@ Setup::
     from snewpy.snowglobes_interface import SNOwGLoBES
     sng = SNOwGLoBES() 
 
-Run the simulation for one or more flux files, 
-and get the resulting tables as pandas.DataFrames for each input file::
+Method :meth:`SNOwGLoBES.run` performs the simulation for one or more flux files, 
+and returns the resulting tables as a list with a `pandas.DataFrame`_ for each input file::
     
-    flux_files = ['./fluence_timeBin1.dat','fluence_timeBin2.dat']
+    flux_files = ['fluxes/fluence_timeBin1.dat','fluxes/fluence_timeBin2.dat']
     result = sng.run(flux_files, detector='icecube')
     #get results, summed over all energies and all channels:
     Ntotal_0 = results[0].smeared.weighted.sum().sum()
     Ntotal_1 = results[1].smeared.weighted.sum().sum()
+    #get only sum of ibd channel
+    Nibd_1 = results[1].smeared.weighted.ibd.sum()
 
-Reading the detector and configurations, used by SNOwGLoBES:
+Reading the detector and configurations, used by SNOwGLoBES::
 
-    sng.detectors #returns a table of detectors known to SNOwGLoBES
+    sng.detectors #a table of detectors known to SNOwGLoBES
     sng.channels #a dictionary: list of channels for each detector
     sng.efficiencies #channel detection efficiencies for each detector
+
+.. _pandas.DataFrame: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
 
 Reference:
 
@@ -66,7 +70,7 @@ class SNOwGLoBES:
         Parameters
         ----------
         base_dir: Path or None
-            Path to the SNOwGLoBES installation
+            Path to the SNOwGLoBES installation.
             If empty, try to get it from $SNOWGLOBES environment var
 
 
@@ -141,8 +145,8 @@ class SNOwGLoBES:
             Each table containing Energy (GeV) as index values, 
             and number of events for each energy bin, for all interaction channels.
             Columns are hierarchical: (is_weighted, is_smeared, channel),
-            so one can easily access :code:`data.weighted.unsmeared.ibd`.
-            If run failed with exception, an exception will be returned.
+            so one can easily access the desired final table. 
+            If run failed with exception, this exception will be returned (not raised).
 
         Raises
         ------
