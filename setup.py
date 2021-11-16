@@ -60,6 +60,7 @@ with open('requirements.txt', 'r') as f:
 setup_keywords['install_requires'] = requires
 setup_keywords['extras_require'] = {  # Optional
     'dev': ['pytest', 'pytest-benchmark'],
+    'docs':['numpydoc']
 }
 #
 # Internal data directories.
