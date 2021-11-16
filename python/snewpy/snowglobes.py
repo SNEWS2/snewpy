@@ -21,14 +21,11 @@ There are three basic steps to using SNOwGLoBES from SNEWPY:
 
 from __future__ import unicode_literals
 
-import fnmatch
 import io
 import logging
 import os
 import re
 import tarfile
-import zipfile
-from subprocess import call
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -321,7 +318,6 @@ from snewpy.snowglobes_interface import SNOwGLoBES
 from pathlib import Path
 from tqdm.auto import tqdm
 from tempfile import TemporaryDirectory
-import pandas as pd
 
 cache_file = 'simulate.npy'
 
