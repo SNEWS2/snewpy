@@ -26,15 +26,19 @@ import logging
 import os
 import re
 import tarfile
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from astropy import units as u
+from tqdm.auto import tqdm
 
 import snewpy.models
 from snewpy.flavor_transformation import *
 from snewpy.neutrino import Flavor, MassHierarchy
+from snewpy.snowglobes_interface import SNOwGLoBES
 
 mpl.use('Agg')
 
@@ -313,11 +317,6 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
 
     return os.path.join(model_dir, tfname)
 
-
-from snewpy.snowglobes_interface import SNOwGLoBES
-from pathlib import Path
-from tqdm.auto import tqdm
-from tempfile import TemporaryDirectory
 
 cache_file = 'simulate.npy'
 
