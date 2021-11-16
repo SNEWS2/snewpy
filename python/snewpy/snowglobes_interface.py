@@ -157,12 +157,13 @@ class SNOwGLoBES:
 
         """
         if not  detector in self.detectors:
-            raise ValueError(f'detector "{detector}" is not in {list(self.detectors)}')
+            raise ValueError(f'Detector "{detector}" is not in {list(self.detectors)}')
         if material is None:
             material = guess_material(detector)
         if not material in self.materials:
-            raise ValueError(f'material "{material}" is not in {self.materials}')
- 
+            raise ValueError(f'Material "{material}" is not in {self.materials}')
+        if not self.efficiencies[detector]:
+            logger.warning(f'Missing efficiencies for detector={detector}! Results will assume 100% efficiency')
         if isinstance(flux_files,str):
             flux_files = [flux_files]
 
@@ -193,8 +194,6 @@ class Runner:
         self.det_config=self.sng.detectors[self.detector]
         self.base_dir=self.sng.base_dir
         self.out_dir=self.base_dir/'out'
-        if not self.efficiency:
-            logger.warning(f'Missing efficiencies for detector={self.detector}!')
             
     async def _generate_globes_config(self):
         cfg =  self.sng.template.render_async(flux_file=self.flux_file.resolve(),
