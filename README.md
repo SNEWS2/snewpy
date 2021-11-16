@@ -67,6 +67,7 @@ This is a walkthrough to install GLoBES and SNOwGLoBES locally in the users home
 ## Usage and Documentation
 Example scripts which show how SNEWPY can be used are available in the
 `python/snewpy/scripts/` subfolder as well as notebooks in `doc/nb/`.
+Most downloadable models also include a Jupyter notebook with simple usage examples.
 
 A paper describing SNEWPY and the underlying physics is available at [arXiv:2109.08188](https://arxiv.org/abs/2109.08188).
 
