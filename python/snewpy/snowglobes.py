@@ -445,15 +445,6 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
             plt.xlabel('Neutrino Energy (GeV)')
             plt.ylabel('Interaction Events')  
 
-    sng = SNOwGLoBES(SNOwGLoBESdir)
-    if detector_input == 'all':
-        detector_input = list(sng.detectors)
-    elif isinstance(detector_input,str):
-        detector_input = [detector_input]
-
-    #first read the flux file names from tarfile
-    with tarfile.open(tarball_path,'r') as tar:
-        flux_files =[Path(f).stem for f in tar.getnames() if f.endswith('.dat')]
     #read the results from storage
     logging.info(f'Reading tables from {cache_file}')
     tables = np.load(cache_file, allow_pickle=True).tolist()
@@ -463,7 +454,6 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
     #dict for old-style results, for backward compatibiity
     results = {}
     #save collated files:
-    outdir = Path('./') 
     with TemporaryDirectory(prefix='snowglobes') as tempdir:
         tempdir = Path(tempdir)
         for det in tables:
