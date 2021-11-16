@@ -21,23 +21,24 @@ There are three basic steps to using SNOwGLoBES from SNEWPY:
 
 from __future__ import unicode_literals
 
-import fnmatch
 import io
 import logging
 import os
 import re
 import tarfile
-import zipfile
-from subprocess import call
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from astropy import units as u
+from tqdm.auto import tqdm
 
 import snewpy.models
 from snewpy.flavor_transformation import *
 from snewpy.neutrino import Flavor, MassHierarchy
+from snewpy.snowglobes_interface import SNOwGLoBES
 
 mpl.use('Agg')
 
@@ -317,14 +318,6 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
     return os.path.join(model_dir, tfname)
 
 
-from snewpy.snowglobes_interface import SNOwGLoBES
-from pathlib import Path
-from tqdm.auto import tqdm
-from tempfile import TemporaryDirectory
-import pandas as pd
-
-cache_file = 'simulate.npy'
-
 def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     """Takes as input the neutrino flux files and configures and runs the supernova script inside SNOwGLoBES, which outputs calculated event rates expected for a given (set of) detector(s). These event rates are given as a function of the neutrino energy and time, for each interaction channel.
 
@@ -361,6 +354,7 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
             result[det]=dict(zip((f.stem for f in flux_files),res))
 
     # save result to file for re-use in collate()
+    cache_file = tarball_path[:tarball_path.rfind('.tar')] + '.npy'
     logging.info(f'Saving simulation results to {cache_file}')
     np.save(cache_file, result)
     return result 
@@ -445,16 +439,8 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
             plt.xlabel('Neutrino Energy (GeV)')
             plt.ylabel('Interaction Events')  
 
-    sng = SNOwGLoBES(SNOwGLoBESdir)
-    if detector_input == 'all':
-        detector_input = list(sng.detectors)
-    elif isinstance(detector_input,str):
-        detector_input = [detector_input]
-
-    #first read the flux file names from tarfile
-    with tarfile.open(tarball_path,'r') as tar:
-        flux_files =[Path(f).stem for f in tar.getnames() if f.endswith('.dat')]
     #read the results from storage
+    cache_file = tarball_path[:tarball_path.rfind('.tar')] + '.npy'
     logging.info(f'Reading tables from {cache_file}')
     tables = np.load(cache_file, allow_pickle=True).tolist()
     #This output is similar to what produced by:
@@ -463,7 +449,6 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
     #dict for old-style results, for backward compatibiity
     results = {}
     #save collated files:
-    outdir = Path('./') 
     with TemporaryDirectory(prefix='snowglobes') as tempdir:
         tempdir = Path(tempdir)
         for det in tables:
