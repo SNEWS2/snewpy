@@ -16,12 +16,13 @@ The best way to give feedback, request features or report problems is to
 Contribute Code or Documentation
 --------------------------------
 **Your contributions to SNEWPY are welcome!**
+
 To contribute, please clone the GitHub repository::
 
     git clone git@github.com:SNEWS2/snewpy.git
     cd snewpy/
 
-then install the package with the dependencies for the development::
+then make your changes and install the package with the dependencies for the development::
     
     pip install ".[dev]"
 
@@ -31,14 +32,14 @@ or, if you want to build the documentation::
     cd doc/
     make html
 
-After you make your changes please 
+Once you're happy with your changes, please 
 `submit a pull request <https://github.com/SNEWS2/snewpy/pulls>`_.
 If you plan larger changes, it’s probably a good idea to open an issue first
 to coordinate our work.
 
 SNEWPY uses the `unittest <https://docs.python.org/3/library/unittest.html>`_
-module for automated testing. Tests will run when you submit a pull request.
-In addition, you can run them manually using ``python -m unittest python/snewpy/test/test_*.py``.
+module for automated testing. Tests will run when you submit a pull request
+or you can run them manually using ``python -m unittest python/snewpy/test/test_*.py``.
 
 Contribute Supernova Models
 ---------------------------

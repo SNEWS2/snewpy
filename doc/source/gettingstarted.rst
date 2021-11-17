@@ -79,7 +79,7 @@ This example script shows how to use SNEWPY to compare the luminosity of two dif
 
 This will generate the following figure:
 
-.. image:: luminosity-comparison.pdf
+.. image:: luminosity-comparison.*
 
 
 The SNEWPY repository contains many Jupyter notebooks in ``doc/nb/`` with sample code
