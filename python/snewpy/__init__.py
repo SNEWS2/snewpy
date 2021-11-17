@@ -95,6 +95,7 @@ def get_models(models=None, download_dir="SNEWPY_models"):
             exceptions.append(result.exception())
     if exceptions:
         print(f"ERROR: {len(exceptions)} exceptions occured. ({exceptions})")
+        print("Please check your internet connection and try again later. If this persists, please report it at https://github.com/SNEWS2/snewpy/issues")
         exit(1)
     pool.shutdown(wait=False)
 
