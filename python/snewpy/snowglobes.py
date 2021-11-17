@@ -40,8 +40,6 @@ from snewpy.flavor_transformation import *
 from snewpy.neutrino import Flavor, MassHierarchy
 from snewpy.snowglobes_interface import SNOwGLoBES
 
-mpl.use('Agg')
-
 logger = logging.getLogger(__name__)
 
 def generate_time_series(model_path, model_type, transformation_type, d, output_filename=None, ntbins=30, deltat=None):
