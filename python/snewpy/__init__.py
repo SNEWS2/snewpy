@@ -82,7 +82,7 @@ def get_models(models=None, download_dir="SNEWPY_models"):
 
         for url in model_urls[model]:
             local_file = model_dir + url.split(model, maxsplit=1)[1]
-            if os.path.exists(local_file) and local_file.find('README') == -1:
+            if os.path.exists(local_file) and local_file.find('README') == -1 and local_file.find('.ipynb') == -1:
                 print(f"File '{local_file}' already exists. Skipping download.")
             else:
                 if not os.path.isdir(os.path.dirname(local_file)):
