@@ -49,19 +49,20 @@ import asyncio
 
 def guess_material(detector):
     if detector.startswith('wc') or detector.startswith('ice'):
-        return 'water'
+        mat = 'water'
     elif detector.startswith('d2O'):
-        return 'heavywater'
+        mat = 'heavywater'
     elif detector.startswith('ar'):
-        return 'argon'
+        mat = 'argon'
     elif detector.startswith('nova'):
-        return 'nova_soup'
+        mat = 'nova_soup'
     elif detector.startswith('halo'):
-        return 'lead'
+        mat = 'lead'
     elif detector.startswith('scint'):
-        return 'scint'
+        mat = 'scint'
     else: 
         raise ValueError(f'Please provide material for {detector}')
+    return mat
 
 class SNOwGLoBES:
     def __init__(self, base_dir:Path=''):
@@ -219,7 +220,9 @@ class Runner:
                                     smearing=self.smearing,
                                     xsec_dir =self.base_dir/'xscns',
                                     channels =list(self.channels.itertuples()),
-                                    efficiency =self.efficiency)
+                                    efficiency =self.efficiency,
+                                    nbins = 400 if self.detector.endswith('_he') else 200
+                                    )
         return await cfg
 
     def _parse_output(self, output):
