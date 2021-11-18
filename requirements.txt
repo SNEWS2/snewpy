@@ -3,3 +3,4 @@ scipy
 astropy
 matplotlib
 h5py
+pandas
