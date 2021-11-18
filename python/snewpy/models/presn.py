@@ -2,11 +2,13 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 from astropy import units as u
+from .base import SupernovaModel
+from snewpy.neutrino import Flavor
 
 def _interpolate(x,y,z,new_x=None, new_y=None, logx=True):
     if(new_x is not None): #interpolate in T
         if(logx):
-            z = interp1d(np.log(x),np.log(z)
+            z = np.interp1d(np.log(x),np.log(z)
                          ,axis=1, bounds_error=False, fill_value=0)(np.log(new_x))
             z = np.exp(z)
         else:
@@ -17,33 +19,45 @@ def _interpolate(x,y,z,new_x=None, new_y=None, logx=True):
         y = new_y
     return x,y,np.nan_to_num(z)
 
+def _interp_time(t0,v0, dt=1e-3):
+    "dilog interpolation"
+    lt0 = np.log(t0+dt)
+    lv0 = np.log(v0)
+    lv1 = interp1d(lt0,lv0, axis=0)
+    def v1(t1):
+        return np.exp(lv1(np.log(t1+dt)))
+    return v1
+
 class Odrzywolek_2010(SupernovaModel):
     def __init__(self, fname):
-
-        df = pd.read_csv(fname,delim_whitespace=True, skiprows=1, 
-                     names=['step','time','Q','R','Eavg','Sigma','a','alpha','b'])
-        self.a     = np.expand_dims(df.a,0)
-        self.alpha = np.expand_dims(df.alpha,0)
-        self.b     = np.expand_dims(df.b,0)
-        self.times = df.time.values * u.s
-        self.ex_ratio=0.36 #nuX/nuE ratio from Odrzywolek paper: (arXiv:astro-ph/0311012)
-
+        df = pd.read_csv(fname,delim_whitespace=True, skiprows=1, usecols=[1,6,7,8],
+                     names=['time','a','alpha','b'], index_col='time')
+        #interpolated in time
+        self.df_t = _interp_time(df.index,df) 
+        self.times = df.index.to_numpy()
+        self.factor = {}
+        for f in Flavor:
+            if f.is_electron:
+                self.factor[f]=1.
+            else:
+                #nuX/nuE ratio from Odrzywolek paper: (arXiv:astro-ph/0311012)
+                self.factor[f]=0.36 
+                
     def get_time(self):
-        return self.times
+        return -self.times*u.s 
 
     def get_initial_spectra(self, t, E, flavors=Flavor):
-        Enu = np.expand_dims(E,1)
-        self.luminosity = a*Enu**alpha*np.exp(-b*Enu) / u.MeV
-        self.times = df.time.values
-    
-        t = t.to_value('s')
+        #negative t for time before SN
+        t = -t.to_value('s')
         E = E.to_value('MeV')
-        ts,es,L = _interpolate(self.times,self.energies,self.luminosity,new_x=t,new_y=E)
-        result  = {}
-        for f in flavors:
-           result[f] = L/u.
-           if not f.is_electron:
-            result[f]*=self.ex_ratio
+        df = self.df_t(t)
+        a,alpha,b = df.T
+        Enu   = np.expand_dims(E,1)
+        a     = np.expand_dims(a,0)
+        alpha = np.expand_dims(alpha,0)
+        b     = np.expand_dims(b,0)
+        fluence = a*Enu**alpha*np.exp(-b*Enu)/(u.MeV*u.s)
+        result  = {f:fluence*self.factor[f] for f in flavors}
         return result
 
 class Patton_2019(SupernovaModel):
@@ -64,30 +78,30 @@ class Patton_2019(SupernovaModel):
 
 class Kato(SupernovaModel):
     def __init__(self, path):
-    fluxes = {}
-    for flv in ['nue','nueb','nux','nuxb']:
-        if flv.startswith('nue'):
-            pth = f'{path}/total_{flv}'
-            ts,step = np.loadtxt(f'{pth}/lightcurve_{flv}_all.dat', usecols=[0,3]).T
-            fname1 = f'{pth}/spe_all'
-        if flv.startswith('nux'):
-            pth = f'{path}/total_nux'
-            ts,step = np.loadtxt(f'{pth}/lightcurve.dat', usecols=[1,0]).T
-            if flv=='nux':
-                fname1 = f'{pth}/spe_sum_mu_nu'
-            else:
-                fname1 = f'{pth}/spe_sum_mu'
-        d2NdEdT = []
-        for s in step:
-            es,dNdE = np.loadtxt(f'{fname1}{s:05.0f}.dat').T
-            d2NdEdT+=[dNdE]
+        fluxes = {}
+        for flv in ['nue','nueb','nux','nuxb']:
+            if flv.startswith('nue'):
+                pth = f'{path}/total_{flv}'
+                ts,step = np.loadtxt(f'{pth}/lightcurve_{flv}_all.dat', usecols=[0,3]).T
+                fname1 = f'{pth}/spe_all'
+            if flv.startswith('nux'):
+                pth = f'{path}/total_nux'
+                ts,step = np.loadtxt(f'{pth}/lightcurve.dat', usecols=[1,0]).T
+                if flv=='nux':
+                    fname1 = f'{pth}/spe_sum_mu_nu'
+                else:
+                    fname1 = f'{pth}/spe_sum_mu'
+            d2NdEdT = []
+            for s in step:
+                es,dNdE = np.loadtxt(f'{fname1}{s:05.0f}.dat').T
+                d2NdEdT+=[dNdE]
 
-        d2NdEdT = np.stack(d2NdEdT).T
-        fluxes[flv] = _interpolate(ts,es,d2NdEdT,new_x=Ts, new_y=Es)
-    fluxes['e'] = fluxes.pop('nue')
-    fluxes['x'] = fluxes.pop('nux')
-    fluxes['ebar'] = fluxes.pop('nueb')
-    fluxes['xbar'] = fluxes.pop('nuxb')
-    
-    return fluxes
+            d2NdEdT = np.stack(d2NdEdT).T
+            fluxes[flv] = _interpolate(ts,es,d2NdEdT,new_x=Ts, new_y=Es)
+        fluxes['e'] = fluxes.pop('nue')
+        fluxes['x'] = fluxes.pop('nux')
+        fluxes['ebar'] = fluxes.pop('nueb')
+        fluxes['xbar'] = fluxes.pop('nuxb')
+        
+        return fluxes
 
