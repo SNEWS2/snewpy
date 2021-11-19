@@ -27,7 +27,6 @@ def _interp_TE(times, energies, array, ax_t=1, ax_e=2):
 
     return _f
 
-
 class Odrzywolek_2010(SupernovaModel):
     def __init__(self, fname):
         df = pd.read_csv(
@@ -73,14 +72,7 @@ class Patton_2019(SupernovaModel):
             fname,
             comment="#",
             delim_whitespace=True,
-            names=[
-                "time",
-                "Enu",
-                Flavor.NU_E,
-                Flavor.NU_E_BAR,
-                Flavor.NU_X,
-                Flavor.NU_X_BAR,
-            ],
+            names=["time","Enu",Flavor.NU_E,Flavor.NU_E_BAR,Flavor.NU_X,Flavor.NU_X_BAR],
             usecols=range(6),
         )
 
@@ -104,33 +96,37 @@ class Patton_2019(SupernovaModel):
         return self.times * u.hour
 
 
-class Kato(SupernovaModel):
+class Kato_2017(SupernovaModel):
     def __init__(self, path):
         fluxes = {}
-        for flv in ["nue", "nueb", "nux", "nuxb"]:
-            if flv.startswith("nue"):
-                pth = f"{path}/total_{flv}"
-                ts, step = np.loadtxt(
-                    f"{pth}/lightcurve_{flv}_all.dat", usecols=[0, 3]
-                ).T
-                fname1 = f"{pth}/spe_all"
-            if flv.startswith("nux"):
-                pth = f"{path}/total_nux"
-                ts, step = np.loadtxt(f"{pth}/lightcurve.dat", usecols=[1, 0]).T
-                if flv == "nux":
-                    fname1 = f"{pth}/spe_sum_mu_nu"
-                else:
-                    fname1 = f"{pth}/spe_sum_mu"
+        #reading the time steps values:
+        times, step = np.loadtxt(f"{path}/total_nue/lightcurve_nue_all.dat", usecols=[0, 3]).T
+
+        file_base = {Flavor.NU_E: 'total_nue/spe_all',
+                 Flavor.NU_E_BAR:'total_nueb/spe_all',
+                 Flavor.NU_X:    'total_nux/spe_sum_mu_nu',
+                 Flavor.NU_X_BAR:'total_nux/spe_sum_mu'
+                 }
+        for flv,file_base in file_base.items():
             d2NdEdT = []
             for s in step:
-                es, dNdE = np.loadtxt(f"{fname1}{s:05.0f}.dat").T
+                energies, dNdE = np.loadtxt(f"{path}/{file_base}{s:05.0f}.dat").T
                 d2NdEdT += [dNdE]
+            fluxes[flv] = np.stack(d2NdEdT)
+        self.energies = energies
+        self.times = times
+        self.array = np.stack([fluxes[f] for f in Flavor], axis=0)
+        self.interpolated = _interp_TE(
+            self.times, self.energies, self.array, ax_t=1, ax_e=2
+        )
 
-            d2NdEdT = np.stack(d2NdEdT).T
-            fluxes[flv] = _interpolate(ts, es, d2NdEdT, new_x=Ts, new_y=Es)
-        fluxes["e"] = fluxes.pop("nue")
-        fluxes["x"] = fluxes.pop("nux")
-        fluxes["ebar"] = fluxes.pop("nueb")
-        fluxes["xbar"] = fluxes.pop("nuxb")
+    def get_initial_spectra(self, t, E, flavors=Flavor):
+        t = np.array(-t.to_value("s"), ndmin=1)
+        E = np.array(E.to_value("MeV"), ndmin=1)
+        flux = self.interpolated(t, E) / (u.MeV * u.s)
+        return {f: flux[f].T for f in flavors}
 
-        return fluxes
+    def get_time(self):
+        return self.times * u.hour
+
+
