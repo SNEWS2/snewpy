@@ -10,6 +10,7 @@ from scipy.special import loggamma, gamma, lpmv
 
 import os
 
+from warnings import warn
 from snewpy.neutrino import Flavor
 from snewpy.flavor_transformation import *
 
@@ -59,7 +60,7 @@ class SupernovaModel(ABC):
 
         :meta private:
         """
-        print("[WARNING] Please use `get_initial_spectra()` instead of `get_initialspectra()`!")
+        warn("Please use `get_initial_spectra()` instead of `get_initialspectra()`!", DeprecationWarning)
         return self.get_initial_spectra(*args)
 
     def get_transformed_spectra(self, t, E, flavor_xform):
@@ -106,9 +107,8 @@ class SupernovaModel(ABC):
 
         :meta private:
         """
-        print("[WARNING] Please use `get_transformed_spectra()` instead of `get_oscillatedspectra()`!")
+        warn("Please use `get_transformed_spectra()` instead of `get_oscillatedspectra()`!", DeprecationWarning)
         return self.get_transformed_spectra(*args)
-
 
 def get_value(x):
     """If quantity x has is an astropy Quantity with units, return just the
