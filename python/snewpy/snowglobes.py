@@ -40,8 +40,19 @@ from tempfile import TemporaryDirectory
 import snewpy.models
 from snewpy.flavor_transformation import *
 from snewpy.neutrino import Flavor, MassHierarchy
-from scipy.integrate import cumulative_trapezoid
 from pathlib import Path
+from scipy.integrate import cumulative_trapezoid
+
+def _integrate_bins(bin_edges, array, axis):
+    """Integrate the array along an axis"""
+    cumtrapz = cumulative_trapezoid(
+        array, x=bin_edges,
+        initial = 0,
+        axis=axis
+    )
+    result = np.diff(cumtrapz,axis=axis)
+    return result
+
 
 def generate_time_series(model_path, model_type, transformation_type, d, output_filename=None, ntbins=30, deltat=None):
     """Generate time series files in SNOwGLoBES format.
@@ -84,25 +95,21 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
     tmin = snmodel.get_time()[0].to_value('s')
     tmax = snmodel.get_time()[-1].to_value('s')
     if deltat is not None:
-        tedges = np.arange(tmin, tmax, dt)
+        tedges = np.arange(tmin, tmax, deltat) << u.s
     else:
-        tedges = np.linspace(tmin,tmax,ntbins+1)
-
-    times = 0.5*(tedges[1:] + tedges[:-1])<<u.s
+        tedges = np.linspace(tmin,tmax,ntbins+2) << u.s
+    times = 0.5*(tedges[1:] + tedges[:-1])
     dt = np.diff(tedges)
 
     energy = np.linspace(0, 100, 501) * u.MeV
-    osc_fluence = snmodel.get_transformed_flux(times,energy,flavor_transformation, d*u.kpc)
+    osc_fluence = snmodel.get_transformed_flux(tedges,energy,flavor_transformation, d*u.kpc)
     #construct a 3D array (Flavors * Time * Energy)
     osc_fluence_array = np.stack([osc_fluence[f] for f in sorted(osc_fluence)],axis=0)
+    #get rid of the units
+    osc_fluence_array = osc_fluence_array.to_value('1/(MeV*s*cm**2)')
     #integrate the flux in each energy bin
-    cumtrapz = cumulative_trapezoid(
-            osc_fluence_array.to('1/(MeV*s*cm**2)'),
-            x=energy.to('MeV'),
-            initial = 0,
-            axis=2
-        )
-    osc_fluence_array=np.diff(cumtrapz, axis=2)
+    osc_fluence_array=_integrate_bins(energy,osc_fluence_array,axis=2)
+    osc_fluence_array=_integrate_bins(tedges,osc_fluence_array,axis=1)
     with TemporaryDirectory() as tempdir:
         tempdir = Path(tempdir)
         #creates file in tar archive that gives information on parameters
@@ -122,18 +129,18 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
                       'aNuTau':osc_fluence[Flavor.NU_X_BAR]
                       }
 
-            header = f'# TBinMid={t:g}sec TBinWidth={dt[i]:g}s EBinWidth=0.2MeV Fluence at Earth for this timebin in neutrinos per cm^2\n'
-            header+='#'+' '.join(f'{key:>16}' for key in table)
+            header = f'TBinMid={t:g}sec TBinWidth={dt[i]:g}s EBinWidth=0.2MeV Fluence at Earth for this timebin in neutrinos per cm^2\n'
+            header+=' '.join(f'{key:>16}' for key in table)
             # Generate energy + number flux table.
             table = np.stack(list(table.values()))
 
             filename = f'{model_path.stem}.tbin{i+1:01d}.{transformation_type}'+\
                 f'.{tmin:.3f},{tmax:.3f},{ntbins:01d}-{d:.1f}kpc.dat'
-            np.savetxt(tempdir/filename, table, header=header, fmt='%17.8E')
+            np.savetxt(tempdir/filename, table.T, header=header, fmt='%17.8E',delimiter='')
 
         # Save all to tar file
         if output_filename is None:
-            output_filename = f'{model_path.stem}.{transformation_type}.{tmin:.3f},{tmax:.3f},{ntbins:d}-{d:.1f}'
+            output_filename = f'{model_path.stem}.{transformation_type}.{tmin:.3f} s,{tmax:.3f} s,{ntbins:d}-{d:.1f}'
         output_filename=model_path.parent/f'{output_filename}kpc.tar.bz2'
         with tarfile.open(output_filename, 'w:bz2') as tar:
             for f in tempdir.iterdir():
