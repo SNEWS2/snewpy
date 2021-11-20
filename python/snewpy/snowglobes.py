@@ -34,13 +34,14 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from astropy import units as u
+import pandas as pd
+from tempfile import TemporaryDirectory
 
 import snewpy.models
 from snewpy.flavor_transformation import *
 from snewpy.neutrino import Flavor, MassHierarchy
-
-mpl.use('Agg')
-
+from scipy.integrate import cumulative_trapezoid
+from pathlib import Path
 
 def generate_time_series(model_path, model_type, transformation_type, d, output_filename=None, ntbins=30, deltat=None):
     """Generate time series files in SNOwGLoBES format.
@@ -76,74 +77,69 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
     flavor_transformation_dict = {'NoTransformation': NoTransformation(), 'AdiabaticMSW_NMO': AdiabaticMSW(mh=MassHierarchy.NORMAL), 'AdiabaticMSW_IMO': AdiabaticMSW(mh=MassHierarchy.INVERTED), 'NonAdiabaticMSWH_NMO': NonAdiabaticMSWH(mh=MassHierarchy.NORMAL), 'NonAdiabaticMSWH_IMO': NonAdiabaticMSWH(mh=MassHierarchy.INVERTED), 'TwoFlavorDecoherence': TwoFlavorDecoherence(), 'ThreeFlavorDecoherence': ThreeFlavorDecoherence(), 'NeutrinoDecay_NMO': NeutrinoDecay(mh=MassHierarchy.NORMAL), 'NeutrinoDecay_IMO': NeutrinoDecay(mh=MassHierarchy.INVERTED)}
     flavor_transformation = flavor_transformation_dict[transformation_type]
 
-    model_dir, model_file = os.path.split(os.path.abspath(model_path))
+    model_path = Path(model_path)
     snmodel = model_class(model_path)
 
     # Subsample the model time. Default to 30 time slices.
-    tmin = snmodel.get_time()[0]
-    tmax = snmodel.get_time()[-1]
+    tmin = snmodel.get_time()[0].to_value('s')
+    tmax = snmodel.get_time()[-1].to_value('s')
     if deltat is not None:
-        dt = deltat
-        ntbins = int((tmax-tmin)/dt)
+        tedges = np.arange(tmin, tmax, dt)
     else:
-        dt = (tmax - tmin) / (ntbins+1)
+        tedges = np.linspace(tmin,tmax,ntbins+1)
 
-    tedges = np.arange(tmin/u.s, tmax/u.s, dt/u.s)*u.s
-    times = 0.5*(tedges[1:] + tedges[:-1])
+    times = 0.5*(tedges[1:] + tedges[:-1])<<u.s
+    dt = np.diff(tedges)
 
-    # Generate output.
-    if output_filename is not None:
-        tfname = output_filename + 'kpc.tar.bz2'
-    else:
-        model_file_root, _ = os.path.splitext(model_file)  # strip extension (if present)
-        tfname = model_file_root + '.' + transformation_type + '.{:.3f},{:.3f},{:d}-{:.1f}'.format(tmin, tmax, ntbins, d) + 'kpc.tar.bz2'
-
-    with tarfile.open(os.path.join(model_dir, tfname), 'w:bz2') as tf:
+    energy = np.linspace(0, 100, 501) * u.MeV
+    osc_fluence = snmodel.get_transformed_flux(times,energy,flavor_transformation, d*u.kpc)
+    #construct a 3D array (Flavors * Time * Energy)
+    osc_fluence_array = np.stack([osc_fluence[f] for f in sorted(osc_fluence)],axis=0)
+    #integrate the flux in each energy bin
+    cumtrapz = cumulative_trapezoid(
+            osc_fluence_array.to('1/(MeV*s*cm**2)'),
+            x=energy.to('MeV'),
+            initial = 0,
+            axis=2
+        )
+    osc_fluence_array=np.diff(cumtrapz, axis=2)
+    with TemporaryDirectory() as tempdir:
+        tempdir = Path(tempdir)
         #creates file in tar archive that gives information on parameters
-        output = '\n'.join(map(str, transformation_type)).encode('ascii')
-        tf.addfile(tarfile.TarInfo(name='parameterinfo'), io.BytesIO(output))
+        with open(tempdir/'parameterinfo','w') as f:
+            f.write('\n'.join(map(str, transformation_type)))
 
-        MeV = 1.60218e-6 * u.erg
-        energy = np.linspace(0, 100, 501) * MeV  # 1MeV
-
+        energy = energy[:-1].to_value('GeV')
         # Loop over sampled times.
         for i, t in enumerate(times):
-            osc_spectra = snmodel.get_transformed_spectra(t, energy, flavor_transformation)
+            osc_fluence = osc_fluence_array[:,i,:]
+            table = {'E(GeV)': energy, 
+                      'NuE' :  osc_fluence[Flavor.NU_E],
+                      'NuMu':  osc_fluence[Flavor.NU_X],
+                      'NuTau': osc_fluence[Flavor.NU_X],
+                      'aNuE':  osc_fluence[Flavor.NU_E_BAR],
+                      'aNuMu': osc_fluence[Flavor.NU_X_BAR],
+                      'aNuTau':osc_fluence[Flavor.NU_X_BAR]
+                      }
 
-            osc_fluence = {}
-            table = []
-
-            table.append('# TBinMid={:g}sec TBinWidth={:g}s EBinWidth=0.2MeV Fluence at Earth for this timebin in neutrinos per cm^2'.format(t, dt))
-            table.append('# E(GeV)	NuE	NuMu	NuTau	aNuE	aNuMu	aNuTau')
-
+            header = f'# TBinMid={t:g}sec TBinWidth={dt[i]:g}s EBinWidth=0.2MeV Fluence at Earth for this timebin in neutrinos per cm^2\n'
+            header+='#'+' '.join(f'{key:>16}' for key in table)
             # Generate energy + number flux table.
-            for j, E in enumerate(energy):
-                for flavor in Flavor:
-                    osc_fluence[flavor] = osc_spectra[flavor][j] * dt * 0.2 * MeV / (4.*np.pi*(d*1000*3.086e+18)**2)
+            table = np.stack(list(table.values()))
 
-                s = '{:17.8E}'.format(E/(1e3 * MeV))
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_E])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_X])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_X])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_E_BAR])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_X_BAR])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_X_BAR])
-                table.append(s)
-                logging.debug(s)
+            filename = f'{model_path.stem}.tbin{i+1:01d}.{transformation_type}'+\
+                f'.{tmin:.3f},{tmax:.3f},{ntbins:01d}-{d:.1f}kpc.dat'
+            np.savetxt(tempdir/filename, table, header=header, fmt='%17.8E')
 
-            # Encode energy/flux table and output to file in tar archive.
-            output = '\n'.join(table).encode('ascii')
+        # Save all to tar file
+        if output_filename is None:
+            output_filename = f'{model_path.stem}.{transformation_type}.{tmin:.3f},{tmax:.3f},{ntbins:d}-{d:.1f}'
+        output_filename=model_path.parent/f'{output_filename}kpc.tar.bz2'
+        with tarfile.open(output_filename, 'w:bz2') as tar:
+            for f in tempdir.iterdir():
+                tar.add(f)
 
-            extension = ".dat"
-            model_file_root, _ = os.path.splitext(model_file)
-            filename = model_file_root + '.tbin{:01d}.'.format(i+1) + transformation_type + \
-                '.{:.3f},{:.3f},{:01d}-{:.1f}kpc{}'.format(tmin/u.s, tmax/u.s, ntbins, d, extension)
-
-            info = tarfile.TarInfo(name=filename)
-            info.size = len(output)
-            tf.addfile(info, io.BytesIO(output))
-
-    return os.path.join(model_dir, tfname)
+    return output_filename
 
 
 def generate_fluence(model_path, model_type, transformation_type, d, output_filename=None, tstart=None, tend=None):
