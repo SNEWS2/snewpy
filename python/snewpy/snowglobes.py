@@ -137,7 +137,7 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
         output_filename=model_path.parent/f'{output_filename}kpc.tar.bz2'
         with tarfile.open(output_filename, 'w:bz2') as tar:
             for f in tempdir.iterdir():
-                tar.add(f)
+                tar.add(f, arcname=f.name)
 
     return output_filename
 
