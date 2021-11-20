@@ -41,8 +41,8 @@ class SupernovaModel(ABC):
 
         Parameters
         ----------
-        t : astropy.Quantity
-            Time to evaluate initial spectra.
+        t : astropy.Quantity or ndarray of astropy.Quantity
+            Times to evaluate initial spectra.
         E : astropy.Quantity or ndarray of astropy.Quantity
             Energies to evaluate the initial spectra.
         flavors: iterable of snewpy.neutrino.Flavor
@@ -110,6 +110,29 @@ class SupernovaModel(ABC):
         warn("Please use `get_transformed_spectra()` instead of `get_oscillatedspectra()`!", DeprecationWarning)
         return self.get_transformed_spectra(*args)
 
+    def get_transformed_flux(self, t, E, flavor_xform, distance=10*u.kpc):
+        """Get neutrino fluence at the given distance
+
+        Parameters
+        ----------
+        t : astropy.Quantity
+            Time to evaluate initial and oscillated spectra.
+        E : astropy.Quantity or ndarray of astropy.Quantity
+            Energies to evaluate the initial and oscillated spectra.
+        flavor_xform : FlavorTransformation
+            An instance from the flavor_transformation module.
+        distance: astropy.Quantity
+            Distance to supernova
+
+        Returns
+        -------
+        dict
+            Dictionary with the neutrino flux (neutrinos/cm^2/MeV/s), keyed by flavor
+        """
+        spec = self.get_oscillatedspectra(t,E,flavor_xform)
+        factor = 1/(4*np.pi*(distance.to('cm'))**2) 
+        return {f: spec[f]*factor for f in spec}
+
 def get_value(x):
     """If quantity x has is an astropy Quantity with units, return just the
     value.
@@ -171,6 +194,7 @@ class PinchedModel(SupernovaModel):
         # the interpolation will not work correctly.
         t = t.to(self.time.unit)
 
+        E  = np.expand_dims(E, axis=0)
         for flavor in flavors:
             # Use np.interp rather than scipy.interpolate.interp1d because it
             # can handle dimensional units (astropy.Quantity).
@@ -180,8 +204,9 @@ class PinchedModel(SupernovaModel):
 
             # Sanity check to avoid invalid values of Ea, alpha, and L.
             initialspectra[flavor] = np.zeros_like(E, dtype=float) / (u.erg*u.s)
-            if L <= 0. or Ea <= 0. or a <= -2.:
-                continue
+            L  = np.expand_dims(L, axis=1)
+            Ea = np.expand_dims(Ea,axis=1)
+            a  = np.expand_dims(a, axis=1)
             # For numerical stability, evaluate log PDF and then exponentiate.
             initialspectra[flavor] = \
               np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a)
