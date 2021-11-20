@@ -42,6 +42,7 @@ from snewpy.flavor_transformation import *
 from snewpy.neutrino import Flavor, MassHierarchy
 from pathlib import Path
 from scipy.integrate import cumulative_trapezoid
+from contextlib import contextmanager
 
 def _integrate_bins(bin_edges, array, axis):
     """Integrate the array along an axis"""
@@ -53,6 +54,47 @@ def _integrate_bins(bin_edges, array, axis):
     result = np.diff(cumtrapz,axis=axis)
     return result
 
+
+def _save_flux_table(energy, flux, filename, t, dt):
+    table = {'E(GeV)': energy, 
+             'NuE' :  flux[Flavor.NU_E],
+             'NuMu':  flux[Flavor.NU_X],
+             'NuTau': flux[Flavor.NU_X],
+             'aNuE':  flux[Flavor.NU_E_BAR],
+             'aNuMu': flux[Flavor.NU_X_BAR],
+             'aNuTau':flux[Flavor.NU_X_BAR]
+             }
+
+    header = f'TBinMid={t:g}sec TBinWidth={dt:g}s EBinWidth=0.2MeV Fluence at Earth for this timebin in neutrinos per cm^2\n'
+    header+=' '.join(f'{key:>16}' for key in table)
+# Generate energy + number flux table.
+    table = np.stack(list(table.values()))
+    np.savetxt(filename, table.T, header=header, fmt='%17.8E',delimiter='')
+
+
+def _load_model(model_path, model_type): 
+    model_class = getattr(snewpy.models.ccsn, model_type)
+    return model_class(model_path)
+
+
+def _load_transformation(transformation_type:str):
+     # Choose flavor transformation. Use dict to associate the transformation name with its class.
+    flavor_transformation_dict = {'NoTransformation': NoTransformation(), 'AdiabaticMSW_NMO': AdiabaticMSW(mh=MassHierarchy.NORMAL), 'AdiabaticMSW_IMO': AdiabaticMSW(mh=MassHierarchy.INVERTED), 'NonAdiabaticMSWH_NMO': NonAdiabaticMSWH(mh=MassHierarchy.NORMAL), 'NonAdiabaticMSWH_IMO': NonAdiabaticMSWH(mh=MassHierarchy.INVERTED), 'TwoFlavorDecoherence': TwoFlavorDecoherence(), 'ThreeFlavorDecoherence': ThreeFlavorDecoherence(), 'NeutrinoDecay_NMO': NeutrinoDecay(mh=MassHierarchy.NORMAL), 'NeutrinoDecay_IMO': NeutrinoDecay(mh=MassHierarchy.INVERTED)}
+    return flavor_transformation_dict[transformation_type]
+
+@contextmanager
+def _archive_dir(tar_filename):
+    """ Context manager to create a temporary dir, return it to the user.
+    An exit of the context: pack all files in the directory to the tar archive and delete the dir
+    """
+    with TemporaryDirectory() as tempdir:
+        tempdir = Path(tempdir)
+        #return the path to user
+        yield tempdir
+        #pack and close
+        with tarfile.open(tar_filename, 'w:bz2') as tar:
+            for f in tempdir.iterdir():
+                tar.add(f, arcname=f.name)
 
 def generate_time_series(model_path, model_type, transformation_type, d, output_filename=None, ntbins=30, deltat=None):
     """Generate time series files in SNOwGLoBES format.
@@ -82,14 +124,10 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
     str
         Path of compressed .tar file with neutrino flux data.
     """
-    model_class = getattr(snewpy.models.ccsn, model_type)
-
-    # Choose flavor transformation. Use dict to associate the transformation name with its class.
-    flavor_transformation_dict = {'NoTransformation': NoTransformation(), 'AdiabaticMSW_NMO': AdiabaticMSW(mh=MassHierarchy.NORMAL), 'AdiabaticMSW_IMO': AdiabaticMSW(mh=MassHierarchy.INVERTED), 'NonAdiabaticMSWH_NMO': NonAdiabaticMSWH(mh=MassHierarchy.NORMAL), 'NonAdiabaticMSWH_IMO': NonAdiabaticMSWH(mh=MassHierarchy.INVERTED), 'TwoFlavorDecoherence': TwoFlavorDecoherence(), 'ThreeFlavorDecoherence': ThreeFlavorDecoherence(), 'NeutrinoDecay_NMO': NeutrinoDecay(mh=MassHierarchy.NORMAL), 'NeutrinoDecay_IMO': NeutrinoDecay(mh=MassHierarchy.INVERTED)}
-    flavor_transformation = flavor_transformation_dict[transformation_type]
 
     model_path = Path(model_path)
-    snmodel = model_class(model_path)
+    snmodel = _load_model(model_path,model_type)
+    flavor_transformation = _load_transformation(transformation_type)
 
     # Subsample the model time. Default to 30 time slices.
     tmin = snmodel.get_time()[0].to_value('s')
@@ -110,41 +148,23 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
     #integrate the flux in each energy bin
     osc_fluence_array=_integrate_bins(energy,osc_fluence_array,axis=2)
     osc_fluence_array=_integrate_bins(tedges,osc_fluence_array,axis=1)
-    with TemporaryDirectory() as tempdir:
-        tempdir = Path(tempdir)
+    # Save all to tar file
+    if output_filename is None:
+        output_filename = f'{model_path.stem}.{transformation_type}.{tmin:.3f} s,{tmax:.3f} s,{ntbins:d}-{d:.1f}'
+    output_filename=model_path.parent/f'{output_filename}kpc.tar.bz2'
+
+    with _archive_dir(output_filename) as tempdir:
         #creates file in tar archive that gives information on parameters
         with open(tempdir/'parameterinfo','w') as f:
-            f.write('\n'.join(map(str, transformation_type)))
+            f.write(transformation_type)
 
         energy = energy[:-1].to_value('GeV')
         # Loop over sampled times.
         for i, t in enumerate(times):
             osc_fluence = osc_fluence_array[:,i,:]
-            table = {'E(GeV)': energy, 
-                      'NuE' :  osc_fluence[Flavor.NU_E],
-                      'NuMu':  osc_fluence[Flavor.NU_X],
-                      'NuTau': osc_fluence[Flavor.NU_X],
-                      'aNuE':  osc_fluence[Flavor.NU_E_BAR],
-                      'aNuMu': osc_fluence[Flavor.NU_X_BAR],
-                      'aNuTau':osc_fluence[Flavor.NU_X_BAR]
-                      }
-
-            header = f'TBinMid={t:g}sec TBinWidth={dt[i]:g}s EBinWidth=0.2MeV Fluence at Earth for this timebin in neutrinos per cm^2\n'
-            header+=' '.join(f'{key:>16}' for key in table)
-            # Generate energy + number flux table.
-            table = np.stack(list(table.values()))
-
             filename = f'{model_path.stem}.tbin{i+1:01d}.{transformation_type}'+\
-                f'.{tmin:.3f},{tmax:.3f},{ntbins:01d}-{d:.1f}kpc.dat'
-            np.savetxt(tempdir/filename, table.T, header=header, fmt='%17.8E',delimiter='')
-
-        # Save all to tar file
-        if output_filename is None:
-            output_filename = f'{model_path.stem}.{transformation_type}.{tmin:.3f} s,{tmax:.3f} s,{ntbins:d}-{d:.1f}'
-        output_filename=model_path.parent/f'{output_filename}kpc.tar.bz2'
-        with tarfile.open(output_filename, 'w:bz2') as tar:
-            for f in tempdir.iterdir():
-                tar.add(f, arcname=f.name)
+                       f'.{tmin:.3f},{tmax:.3f},{ntbins:01d}-{d:.1f}kpc.dat'
+            _save_flux_table(energy,osc_fluence,tempdir/filename,t,dt[i])
 
     return output_filename
 
@@ -177,14 +197,10 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
     str
         Path of compressed .tar file with neutrino flux data.
     """
-    model_class = getattr(snewpy.models.ccsn, model_type)
-
-    # Choose flavor transformation. Use dict to associate the transformation name with its class.
-    flavor_transformation_dict = {'NoTransformation': NoTransformation(), 'AdiabaticMSW_NMO': AdiabaticMSW(mh=MassHierarchy.NORMAL), 'AdiabaticMSW_IMO': AdiabaticMSW(mh=MassHierarchy.INVERTED), 'NonAdiabaticMSWH_NMO': NonAdiabaticMSWH(mh=MassHierarchy.NORMAL), 'NonAdiabaticMSWH_IMO': NonAdiabaticMSWH(mh=MassHierarchy.INVERTED), 'TwoFlavorDecoherence': TwoFlavorDecoherence(), 'ThreeFlavorDecoherence': ThreeFlavorDecoherence(), 'NeutrinoDecay_NMO': NeutrinoDecay(mh=MassHierarchy.NORMAL), 'NeutrinoDecay_IMO': NeutrinoDecay(mh=MassHierarchy.INVERTED)}
-    flavor_transformation = flavor_transformation_dict[transformation_type]
-
-    model_dir, model_file = os.path.split(os.path.abspath(model_path))
-    snmodel = model_class(model_path)
+    
+    model_path = Path(model_path)
+    snmodel = _load_model(model_path,model_name)
+    flavor_transformation = _load_transformation(transformation_type)
 
     #set the timings up
     #default if inputs are None: full time window of the model
