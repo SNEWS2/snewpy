@@ -24,33 +24,34 @@ class SupernovaModel(ABC):
         """Default representation of the model.
         """
         # self.__class__ will be something like 
-        s = f"{self.__class__.__name__}"
+        mod = f"{self.__class__.__name__} Model"
         try:
-            s +=f': {self.filename}\n'
+            mod +=f': {self.filename}'
         except:
-            s +='\n'
+            pass
+        s = [mod]
         for name, v in self.metadata.items():
-            s += f"{name:16} : {v}\n"
-        return s
+            s +=[f"{name:16} : {v}"]
+        return '\n'.join(s)
         
     def _repr_markdown_(self):
         """Markdown representation of the model, for Jupyter notebooks.
         """
-        s = f'**{self.__class__.__name__} Model**'
+        mod = f'**{self.__class__.__name__} Model**'
         try:
-            s +=f': {self.filename}\n\n'
+            mod +=f': {self.filename}'
         except:
-            s +='\n\n'
-
+            pass
+        s = [mod,'']
         if self.metadata:
-            s += '|Parameter|Value|\n'
-            s += '|:---------|:-----:|\n'
+            s += ['|Parameter|Value|',
+                  '|:--------|:----:|']
             for name, v in self.metadata.items():
                 try: 
-                    s += f"|{name:20} | ${v.value:g}$ {v.unit:latex}|\n"
+                    s += [f"|{name} | ${v.value:g}$ {v.unit:latex}|"]
                 except:
-                    s += f"|{name:20} | {v} |\n"
-        return s
+                    s += [f"|{name} | {v} |"]
+        return '\n'.join(s)
 
     @abstractmethod
     def get_time(self):
