@@ -44,7 +44,7 @@ from pathlib import Path
 from scipy.integrate import cumulative_trapezoid
 from scipy.interpolate import interp1d
 from contextlib import contextmanager
-
+import pdb
 def _cumulative_integral(bin_edges, array, axis):
     """Integrate the array along an axis"""
     return  cumulative_trapezoid(
@@ -54,10 +54,18 @@ def _cumulative_integral(bin_edges, array, axis):
     )
 
 
+def _integrate_bins0(bin_edges, array, axis):
+    """Integrate the array along an axis: nearest interpolation"""
+    newaxes = list(range(array.ndim))
+    newaxes.remove(axis)
+    binw = np.diff(bin_edges,append=bin_edges[-1])
+    binw = np.expand_dims(binw,newaxes)
+    return array*binw
+
 def _integrate_bins(bin_edges, array, axis):
-    """Integrate the array along an axis"""
+    """Integrate the array along an axis: linear interpolation"""
     cumtrapz= _cumulative_integral(bin_edges, array, axis)
-    result = np.diff(cumtrapz, axis=axis)
+    result = np.diff(cumtrapz, axis=axis, prepend=0)
     return result
 
 
@@ -146,15 +154,15 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
     dt = np.diff(tedges)
 
     energy = np.linspace(0, 100, 501) * u.MeV
-    flux = snmodel.get_transformed_flux(tedges,energy,flavor_transformation, d*u.kpc)
+    flux = snmodel.get_transformed_flux(times,energy,flavor_transformation, d*u.kpc)
     #construct a 3D array (Flavors * Time * Energy)
     flux_array = np.stack([flux[f] for f in sorted(flux)],axis=0)
     #get rid of the units
     flux_array = flux_array.to_value('1/(MeV*s*cm**2)')
     #integrate the flux in each energy bin
-    flux_array=_integrate_bins(energy,flux_array,axis=2)
+    flux_array=_integrate_bins0(energy.to_value('MeV'),flux_array,axis=2)
     #integrate the flux in each time bin
-    flux_array=_integrate_bins(tedges,flux_array,axis=1)
+    flux_array=_integrate_bins0(times.to_value('s'),flux_array,axis=1)
     # Save all to tar file
     if output_filename is None:
         output_filename = f'{model_path.stem}.{transformation_type}.{tmin:.3f} s,{tmax:.3f} s,{ntbins:d}-{d:.1f}'
@@ -165,7 +173,7 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
         with open(tempdir/'parameterinfo','w') as f:
             f.write(transformation_type)
 
-        energy = energy[:-1].to_value('GeV')
+        energy = energy.to_value('GeV')
         # Loop over sampled times.
         for i, t in enumerate(times):
             fluence = flux_array[:,i,:]
@@ -229,7 +237,7 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
     #get rid of the units
     flux = flux.to_value('1/(MeV*s*cm**2)')
     #integrate the flux in each energy bin
-    flux=_integrate_bins(energy,flux,axis=2)
+    flux=_integrate_bins0(energy.to_value('MeV'),flux,axis=2)
     #integrate the flux to make definite integrals using interpolation
     flux_cumulative = cumulative_trapezoid(flux,x=times.to_value('s'),axis=1, initial=0)
     flux_integral = interp1d(times,flux_cumulative,axis=1,fill_value=0)
@@ -239,7 +247,7 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
         output_filename =f'{model_path.stem}.{transformation_type}.{tmin:.3f},{tmax:.3f},{nbin:d}-{d:.1f}kpc'
     output_filename = model_path.parent/f'{output_filename}.tar.bz2'
 
-    energy = energy[:-1].to_value('GeV')
+    energy = energy.to_value('GeV')
     with _archive_dir(output_filename) as tempdir:
         #creates file in tar archive that gives information on parameters
         with open(tempdir/'parameterinfo','w') as f:
