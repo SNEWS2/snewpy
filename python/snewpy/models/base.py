@@ -16,16 +16,41 @@ from snewpy.flavor_transformation import *
 
 class SupernovaModel(ABC):
     """Base class defining an interface to a supernova model."""
-    
+    metadata = {}
     def __init__(self):
         pass
 
     def __repr__(self):
-        if hasattr(self, "filename"):
-            # self.__class__ will be something like 
-            return f"{self.__class__.__name__}('{self.filename}')"
-        else:
-            return super().__repr__()
+        """Default representation of the model.
+        """
+        # self.__class__ will be something like 
+        s = f"{self.__class__.__name__}"
+        try:
+            s +=f': {self.filename}\n'
+        except:
+            s +='\n'
+        for name, v in self.metadata.items():
+            s += f"{name:16} : {v}\n"
+        return s
+        
+    def _repr_markdown_(self):
+        """Markdown representation of the model, for Jupyter notebooks.
+        """
+        s = f'**{self.__class__.__name__} Model**'
+        try:
+            s +=f': {self.filename}\n\n'
+        except:
+            s +='\n\n'
+
+        if self.metadata:
+            s += '|Parameter|Value|\n'
+            s += '|:---------|:-----:|\n'
+            for name, v in self.metadata.items():
+                try: 
+                    s += f"|{name:20} | ${v.value:g}$ {v.unit:latex}|\n"
+                except:
+                    s += f"|{name:20} | {v} |\n"
+        return s
 
     @abstractmethod
     def get_time(self):
@@ -211,7 +236,10 @@ class _GarchingArchiveModel(PinchedModel):
         self.filename = os.path.basename(filename)
         self.EOS = eos
         self.progenitor_mass = float( (self.filename.split('s'))[1].split('c')[0] )  * u.Msun
-
+        self.metadata = {
+            'Progenitor mass':self.progenitor_mass,
+            'EOS':self.EOS,
+            }
         # Read through the several ASCII files for the chosen simulation and
         # merge the data into one giant table.
         mergtab = None
