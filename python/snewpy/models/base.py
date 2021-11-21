@@ -16,9 +16,8 @@ from snewpy.flavor_transformation import *
 
 class SupernovaModel(ABC):
     """Base class defining an interface to a supernova model."""
-    metadata = {}
     def __init__(self):
-        pass
+        self.metadata = {}
 
     def __repr__(self):
         """Default representation of the model.
