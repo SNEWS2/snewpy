@@ -79,7 +79,7 @@ jobs:
           export GLB_DIR=${GITHUB_WORKSPACE}/opt/globes-3.2.17-install
           # Install SNOwGLoBES
           cd ${GITHUB_WORKSPACE}/opt/
-          git clone https://github.com/SNOwGLoBES/snowglobes.git
+          git clone --depth 1 --branch ${{steps.snowglobes_tag.output.latest}} https://github.com/SNOwGLoBES/snowglobes.git
           cd snowglobes
           export SNOWGLOBES=${PWD}
           cd src
