@@ -51,7 +51,7 @@ jobs:
         id: snowglobes_tag
         run: |
           tag=$(git ls-remote --sort='version:refname' --tags --refs https://github.com/SNOwGLoBES/snowglobes.git | tail -1 | cut -d'/' -f3)
-          echo '::set-output name=latest::${tag}'
+          echo "::set-output name=latest::${tag}"
 
       - name: Caching SNOwGLoBES
         uses: actions/cache@v2
