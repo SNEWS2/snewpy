@@ -60,7 +60,7 @@ class SupernovaModel(ABC):
 
         :meta private:
         """
-        warn("Please use `get_initial_spectra()` instead of `get_initialspectra()`!", DeprecationWarning)
+        warn("Please use `get_initial_spectra()` instead of `get_initialspectra()`!", FutureWarning)
         return self.get_initial_spectra(*args)
 
     def get_transformed_spectra(self, t, E, flavor_xform):
@@ -107,7 +107,7 @@ class SupernovaModel(ABC):
 
         :meta private:
         """
-        warn("Please use `get_transformed_spectra()` instead of `get_oscillatedspectra()`!", DeprecationWarning)
+        warn("Please use `get_transformed_spectra()` instead of `get_oscillatedspectra()`!", FutureWarning)
         return self.get_transformed_spectra(*args)
 
     def get_transformed_flux(self, t, E, flavor_xform, distance=10*u.kpc):
@@ -129,7 +129,7 @@ class SupernovaModel(ABC):
         dict
             Dictionary with the neutrino flux (neutrinos/cm^2/MeV/s), keyed by flavor
         """
-        spec = self.get_oscillatedspectra(t,E,flavor_xform)
+        spec = self.get_transformed_spectra(t,E,flavor_xform)
         factor = 1/(4*np.pi*(distance.to('cm'))**2) 
         return {f: spec[f]*factor for f in spec}
 
