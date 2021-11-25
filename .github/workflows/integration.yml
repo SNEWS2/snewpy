@@ -58,5 +58,5 @@ jobs:
           python -m unittest python/snewpy/test/snowglobes_integrationtest.py
           pytest -m 'snowglobes' --benchmark-json output.json
       - name: Publish benchmark results
-        if: ${{ GITHUB_EVENT_NAME != "push" }}
+        if: ${{ github.event_name == 'pull_request' }}
         uses: nils-braun/pytest-benchmark-commenter@v2
