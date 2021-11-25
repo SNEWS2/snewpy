@@ -13,6 +13,7 @@ import os
 from warnings import warn
 from snewpy.neutrino import Flavor
 from snewpy.flavor_transformation import *
+from snewpy.flux import Flux
 
 class SupernovaModel(ABC):
     """Base class defining an interface to a supernova model."""
@@ -131,7 +132,9 @@ class SupernovaModel(ABC):
         """
         spec = self.get_transformed_spectra(t,E,flavor_xform)
         factor = 1/(4*np.pi*(distance.to('cm'))**2) 
-        return {f: spec[f]*factor for f in spec}
+        flavors = list(sorted(spec))
+        spec_array = np.stack([spec[f] for f in flavors], axis=0) * factor
+        return Flux(data=spec_array,Flavor=flavors, Enu=E, time=t)
 
 def get_value(x):
     """If quantity x has is an astropy Quantity with units, return just the
