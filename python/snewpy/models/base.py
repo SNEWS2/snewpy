@@ -17,16 +17,41 @@ from snewpy.flux import Flux
 
 class SupernovaModel(ABC):
     """Base class defining an interface to a supernova model."""
-    
     def __init__(self):
-        pass
+        self.metadata = {}
 
     def __repr__(self):
-        if hasattr(self, "filename"):
-            # self.__class__ will be something like 
-            return f"{self.__class__.__name__}('{self.filename}')"
-        else:
-            return super().__repr__()
+        """Default representation of the model.
+        """
+        # self.__class__ will be something like 
+        mod = f"{self.__class__.__name__} Model"
+        try:
+            mod +=f': {self.filename}'
+        except:
+            pass
+        s = [mod]
+        for name, v in self.metadata.items():
+            s +=[f"{name:16} : {v}"]
+        return '\n'.join(s)
+        
+    def _repr_markdown_(self):
+        """Markdown representation of the model, for Jupyter notebooks.
+        """
+        mod = f'**{self.__class__.__name__} Model**'
+        try:
+            mod +=f': {self.filename}'
+        except:
+            pass
+        s = [mod,'']
+        if self.metadata:
+            s += ['|Parameter|Value|',
+                  '|:--------|:----:|']
+            for name, v in self.metadata.items():
+                try: 
+                    s += [f"|{name} | ${v.value:g}$ {v.unit:latex}|"]
+                except:
+                    s += [f"|{name} | {v} |"]
+        return '\n'.join(s)
 
     @abstractmethod
     def get_time(self):
@@ -242,7 +267,10 @@ class _GarchingArchiveModel(PinchedModel):
         self.filename = os.path.basename(filename)
         self.EOS = eos
         self.progenitor_mass = float( (self.filename.split('s'))[1].split('c')[0] )  * u.Msun
-
+        self.metadata = {
+            'Progenitor mass':self.progenitor_mass,
+            'EOS':self.EOS,
+            }
         # Read through the several ASCII files for the chosen simulation and
         # merge the data into one giant table.
         mergtab = None

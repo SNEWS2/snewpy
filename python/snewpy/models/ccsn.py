@@ -76,18 +76,6 @@ class Analytic3Species(PinchedModel):
             self.meanE[flavor] = simtab['E_{}'.format(_flav.name)] * u.MeV
             self.pinch[flavor] = simtab['ALPHA_{}'.format(_flav.name)]
 
-    def __str__(self):
-        """Default representation of the model.
-        """
-        mod = 'Analytic Model: {}\n'.format(self.filename)
-        return mod
-
-    def _repr_markdown_(self):
-        """Markdown representation of the model, for Jupyter notebooks.
-        """
-        mod = '**Analytic Model**: {}\n\n'.format(self.filename)
-        return mod  
-
 
 class Nakazato_2013(PinchedModel):
     """Set up a model based on simulations from Nakazato et al., ApJ S 205:2
@@ -115,6 +103,12 @@ class Nakazato_2013(PinchedModel):
             self.revival_time = 0 * u.ms
             self.EOS = filename.split('-')[-4].upper()
 
+        self.metadata = {
+            'Progenitor mass':self.progenitor_mass,
+            'EOS':self.EOS,
+            'Metallicity':self.metallicity,
+            'Revival time':self.revival_time
+            }
         # Read FITS table using the astropy reader.
         simtab = Table.read(filename)
         self.filename = os.path.basename(filename)
@@ -137,30 +131,6 @@ class Nakazato_2013(PinchedModel):
             self.meanE[flavor] = simtab['E_{}'.format(_flav.name)].to('MeV')
             self.pinch[flavor] = simtab['ALPHA_{}'.format(_flav.name)]
 
-    def __str__(self):
-        """Default representation of the model.
-        """
-        mod = 'Nakazato_2013 Model: {}\n'.format(self.filename)
-        s = ['Progenitor mass : {}'.format(self.progenitor_mass),
-             'Metallicity     : {}'.format(self.metallicity),
-             'Revival time    : {}'.format(self.revival_time),
-             'Eq. of state    : {}'.format(self.EOS)
-             ]
-        return mod + '\n'.join(s)
-        
-    def _repr_markdown_(self):
-        """Markdown representation of the model, for Jupyter notebooks.
-        """
-        mod = '**Nakazato_2013 Model**: {}\n\n'.format(self.filename)
-        s = ['|Parameter|Value|',
-             '|:---------|:-----:|',
-             '|Progenitor mass | ${0.value:g}$ {0.unit:latex}|'.format(self.progenitor_mass),
-             '|Metallicity | ${:g}$|'.format(self.metallicity),
-             '|Revival time | ${0.value:g}$ {0.unit:latex}|'.format(self.revival_time),
-             '|EOS | {}|'.format(self.EOS)
-             ]
-        return mod + '\n'.join(s)
-
 
 class Sukhbold_2015(PinchedModel):
     """Set up a model based on simulations from Sukhbold et al., ApJ 821:38,2016. Models were shared privately by email.
@@ -177,6 +147,11 @@ class Sukhbold_2015(PinchedModel):
         # Store model metadata.
         self.progenitor_mass = float(filename.split('-')[-1].strip('z%.fits')) * u.Msun
         self.EOS = filename.split('-')[-2]
+
+        self.metadata = {
+            'Progenitor mass':self.progenitor_mass,
+            'EOS':self.EOS,
+            }
 
         # Read FITS table using the astropy unified Table reader.
         simtab = Table.read(filename)
@@ -195,103 +170,24 @@ class Sukhbold_2015(PinchedModel):
             self.luminosity[flavor] = simtab['L_{}'.format(flavor.name)].to('erg/s')
             self.meanE[flavor] = simtab['E_{}'.format(flavor.name)].to('MeV')
             self.pinch[flavor] = simtab['ALPHA_{}'.format(flavor.name)]
-            
-    def __str__(self):
-        """Default representation of the model.
-        """
-        mod = 'Sukhbold_2015 Model: {}\n'.format(self.filename)
-        s = ['Progenitor mass : {}'.format(self.progenitor_mass),
-             'Eq. of state    : {}'.format(self.EOS)
-             ]
-        return mod + '\n'.join(s)
-
-    def _repr_markdown_(self):
-        """Markdown representation of the model, for Jupyter notebooks.
-        """
-        mod = '**Sukhbold_2015 Model**: {}\n\n'.format(self.filename)
-        s = ['|Parameter|Value|',
-             '|:---------|:-----:|',
-             '|Progenitor mass | ${0.value:g}$ {0.unit:latex}|'.format(self.progenitor_mass),
-             '|EOS | {}|'.format(self.EOS)
-             ]
-        return mod + '\n'.join(s)
 
 
 class Tamborra_2014(_GarchingArchiveModel):
     """Set up a model based on 3D simulations from [Tamborra et al., PRD 90:045032, 2014](https://arxiv.org/abs/1406.0006). Data files are from the Garching Supernova Archive.
     """
-
-    def __str__(self):
-        """Default representation of the model.
-        """
-        mod = 'Tamborra_2014 Model: {}\n'.format(self.filename)
-        s = ['Progenitor mass : {}'.format(self.progenitor_mass),
-             'Eq. of state    : {}'.format(self.EOS)
-             ]
-        return mod + '\n'.join(s)
-
-    def _repr_markdown_(self):
-        """Markdown representation of the model, for Jupyter notebooks.
-        """
-        mod = '**Tamborra_2014 Model**: {}\n\n'.format(self.filename)
-        s = ['|Parameter|Value|',
-             '|:---------|:-----:|',
-             '|Progenitor mass | ${0.value:g}$ {0.unit:latex}|'.format(self.progenitor_mass),
-             '|EOS | {}|'.format(self.EOS)
-             ]
-        return mod + '\n'.join(s)
-
+    pass
 
 class Bollig_2016(_GarchingArchiveModel):
     """Set up a model based on simulations from Bollig et al. (2016). Models were taken, with permission, from the Garching Supernova Archive.
     """
-    def __str__(self):
-        """Default representation of the model.
-        """
-        mod = 'Bollig_2016 Model: {}\n'.format(self.filename)
-        s = ['Progenitor mass : {}'.format(self.progenitor_mass),
-             'Eq. of state    : {}'.format(self.EOS)
-             ]
-        return mod + '\n'.join(s)
+    pass
 
-    def _repr_markdown_(self):
-        """Markdown representation of the model, for Jupyter notebooks.
-        """
-        mod = '**Bollig_2016 Model**: {}\n\n'.format(self.filename)
-        s = ['|Parameter|Value|',
-             '|:---------|:-----:|',
-             '|Progenitor mass | ${0.value:g}$ {0.unit:latex}|'.format(self.progenitor_mass),
-             '|EOS | {}|'.format(self.EOS)
-             ]
-        return mod + '\n'.join(s)
-
-      
 class Walk_2018(_GarchingArchiveModel):
     """Set up a model based on SASI-dominated simulations from [Walk et al.,
     PRD 98:123001, 2018](https://arxiv.org/abs/1807.02366). Data files are from
     the Garching Supernova Archive.
     """
-
-    def __str__(self):
-        """Default representation of the model.
-        """
-        mod = 'Walk_2018 Model: {}\n'.format(self.filename)
-        s = ['Progenitor mass : {}'.format(self.progenitor_mass),
-             'Eq. of state    : {}'.format(self.EOS)
-             ]
-        return mod + '\n'.join(s)
-
-    def _repr_markdown_(self):
-        """Markdown representation of the model, for Jupyter notebooks.
-        """
-        mod = '**Walk_2018 Model**: {}\n\n'.format(self.filename)
-        s = ['|Parameter|Value|',
-             '|:---------|:-----:|',
-             '|Progenitor mass | ${0.value:g}$ {0.unit:latex}|'.format(self.progenitor_mass),
-             '|EOS | {}|'.format(self.EOS)
-             ]
-        return mod + '\n'.join(s)
-
+    pass
 
 class Walk_2019(_GarchingArchiveModel):
     """Set up a model based on SASI-dominated simulations from [Walk et al.,
@@ -299,25 +195,8 @@ class Walk_2019(_GarchingArchiveModel):
     from the Garching Supernova Archive.
     """
 
-    def __str__(self):
-        """Default representation of the model.
-        """
-        mod = 'Walk_2019 Model: {}\n'.format(self.filename)
-        s = ['Progenitor mass : {}'.format(self.progenitor_mass),
-             'Eq. of state    : {}'.format(self.EOS)
-             ]
-        return mod + '\n'.join(s)
+    pass
 
-    def _repr_markdown_(self):
-        """Markdown representation of the model, for Jupyter notebooks.
-        """
-        mod = '**Walk_2019 Model**: {}\n\n'.format(self.filename)
-        s = ['|Parameter|Value|',
-             '|:---------|:-----:|',
-             '|Progenitor mass | ${0.value:g}$ {0.unit:latex}|'.format(self.progenitor_mass),
-             '|EOS | {}|'.format(self.EOS)
-             ]
-        return mod + '\n'.join(s)
 
 class OConnor_2013(PinchedModel):
     """Set up a model based on the black hole formation simulation in O'Connor & Ott (2013). 
@@ -355,6 +234,10 @@ class OConnor_2013(PinchedModel):
         self.EOS = eos
         self.progenitor_mass = mass * u.Msun
 
+        self.metadata = {
+            'Progenitor mass':self.progenitor_mass,
+            'EOS':self.EOS,
+        }
         # Get grid of model times.
         self.time = simtab['TIME'] * u.s
 
@@ -372,26 +255,6 @@ class OConnor_2013(PinchedModel):
             self.luminosity[flavor] = simtab['L_{}'.format(_flav.name)] * u.erg/u.s
             self.meanE[flavor] = simtab['E_{}'.format(_flav.name)] * u.MeV
             self.pinch[flavor] = simtab['ALPHA_{}'.format(_flav.name)]
-
-    def __str__(self):
-        """Default representation of the model.
-        """
-        mod = 'OConnor_2015 Model: {}\n'.format(self.filename)
-        s = ['Progenitor mass : {}'.format(self.progenitor_mass),
-             'Eq. of state    : {}'.format(self.EOS)
-             ]
-        return mod + '\n'.join(s)
-
-    def _repr_markdown_(self):
-        """Markdown representation of the model, for Jupyter notebooks.
-        """
-        mod = '**OConnor_2015 Model**: {}\n\n'.format(self.filename)
-        s = ['|Parameter|Value|',
-             '|:---------|:-----:|',
-             '|Progenitor mass | ${0.value:g}$ {0.unit:latex}|'.format(self.progenitor_mass),
-             '|EOS | {}|'.format(self.EOS)
-             ]
-        return mod + '\n'.join(s)
 
 class OConnor_2015(PinchedModel):
     """Set up a model based on the black hole formation simulation in O'Connor (2015). 
@@ -427,6 +290,10 @@ class OConnor_2015(PinchedModel):
         self.EOS = eos
         self.progenitor_mass = 40 * u.Msun
 
+        self.metadata = {
+            'Progenitor mass':self.progenitor_mass,
+            'EOS':self.EOS,
+        }
         # Get grid of model times.
         self.time = simtab['TIME'] * u.s
 
@@ -444,26 +311,6 @@ class OConnor_2015(PinchedModel):
             self.luminosity[flavor] = simtab['L_{}'.format(_flav.name)] * u.erg/u.s
             self.meanE[flavor] = simtab['E_{}'.format(_flav.name)] * u.MeV
             self.pinch[flavor] = simtab['ALPHA_{}'.format(_flav.name)]
-
-    def __str__(self):
-        """Default representation of the model.
-        """
-        mod = 'OConnor_2015 Model: {}\n'.format(self.filename)
-        s = ['Progenitor mass : {}'.format(self.progenitor_mass),
-             'Eq. of state    : {}'.format(self.EOS)
-             ]
-        return mod + '\n'.join(s)
-
-    def _repr_markdown_(self):
-        """Markdown representation of the model, for Jupyter notebooks.
-        """
-        mod = '**OConnor_2015 Model**: {}\n\n'.format(self.filename)
-        s = ['|Parameter|Value|',
-             '|:---------|:-----:|',
-             '|Progenitor mass | ${0.value:g}$ {0.unit:latex}|'.format(self.progenitor_mass),
-             '|EOS | {}|'.format(self.EOS)
-             ]
-        return mod + '\n'.join(s)
 
 class Zha_2021(PinchedModel):
     """Set up a model based on the hadron-quark phse transition models from Zha et al. 2021. 
@@ -507,6 +354,10 @@ class Zha_2021(PinchedModel):
         self.EOS = eos
         self.progenitor_mass =  float(basename[1:])* u.Msun
 
+        self.metadata = {
+            'Progenitor mass':self.progenitor_mass,
+            'EOS':self.EOS,
+        }
         # Get grid of model times.
         self.time = simtab['TIME'] * u.s
 
@@ -524,27 +375,6 @@ class Zha_2021(PinchedModel):
             self.luminosity[flavor] = simtab['L_{}'.format(_flav.name)] * u.erg/u.s
             self.meanE[flavor] = simtab['E_{}'.format(_flav.name)] * u.MeV
             self.pinch[flavor] = simtab['ALPHA_{}'.format(_flav.name)]
-
-    def __str__(self):
-        """Default representation of the model.
-        """
-        mod = 'Zha_2021 Model: {}\n'.format(self.filename)
-        s = ['Progenitor mass : {}'.format(self.progenitor_mass),
-             'Eq. of state    : {}'.format(self.EOS)
-             ]
-        return mod + '\n'.join(s)
-
-    def _repr_markdown_(self):
-        """Markdown representation of the model, for Jupyter notebooks.
-        """
-        mod = '**Zha_2021 Model**: {}\n\n'.format(self.filename)
-        s = ['|Parameter|Value|',
-             '|:---------|:-----:|',
-             '|Progenitor mass | ${0.value:g}$ {0.unit:latex}|'.format(self.progenitor_mass),
-             '|EOS | {}|'.format(self.EOS)
-             ]
-        return mod + '\n'.join(s)    
-
 
 class Warren_2020(PinchedModel):
     """Set up a model based on simulations from Warren et al., ApJ 898:139, 2020.
@@ -590,6 +420,11 @@ class Warren_2020(PinchedModel):
         self.progenitor_mass = float(filename.split('_')[-1][1:-3]) * u.Msun
         self.turbmixing_param = float(filename.split('_')[-2].strip('a%'))
 
+        self.metadata = {
+            'Progenitor mass':self.progenitor_mass,
+            'Turb. mixing param.':self.turbmixing_param,
+            'EOS':self.EOS,
+        }
         # Get grid of model times.
         self.time = simtab['TIME'] * u.s
 
@@ -607,29 +442,6 @@ class Warren_2020(PinchedModel):
             self.luminosity[flavor] = simtab['L_{}'.format(_flav.name)] * u.erg/u.s
             self.meanE[flavor] = simtab['E_{}'.format(_flav.name)] * u.MeV
             self.pinch[flavor] = simtab['ALPHA_{}'.format(_flav.name)]
-
-    def __str__(self):
-        """Default representation of the model.
-        """
-        mod = 'Warren_2020 Model: {}\n'.format(self.filename)
-        s = ['Progenitor mass : {}'.format(self.progenitor_mass),
-             'Turb. mix param : {}'.format(self.turbmixing_param),
-             'Eq. of state    : {}'.format(self.EOS)
-             ]
-        return mod + '\n'.join(s)
-
-    def _repr_markdown_(self):
-        """Markdown representation of the model, for Jupyter notebooks.
-        """
-        mod = '**Warren_2020 Model**: {}\n\n'.format(self.filename)
-        s = ['|Parameter|Value|',
-             '|:---------|:-----:|',
-             '|Progenitor mass | ${0.value:g}$ {0.unit:latex}|'.format(self.progenitor_mass),
-             '|Turb. mixing param. | {}|'.format(self.turbmixing_param),
-             '|EOS | {}|'.format(self.EOS)
-             ]
-        return mod + '\n'.join(s)
-
 
 class Kuroda_2020(PinchedModel):
     """Set up a model based on simulations from Kuroda et al. (2020)."""
@@ -649,6 +461,10 @@ class Kuroda_2020(PinchedModel):
         self.EOS = eos
         self.progenitor_mass = mass
 
+        self.metadata = {
+            'Progenitor mass':self.progenitor_mass,
+            'EOS':self.EOS,
+            }
         # Read ASCII data.
         simtab = Table.read(filename, format='ascii')
 
@@ -676,27 +492,6 @@ class Kuroda_2020(PinchedModel):
             # There is no pinch parameter so use alpha=2.0.
             self.pinch[flavor] = np.full_like(self.meanE[flavor].value, 2.)
 
-    def __str__(self):
-        """Default representation of the model.
-        """
-        mod = 'Kuroda_2020 Model: {}\n'.format(self.filename)
-        s = ['Progenitor mass : {}'.format(self.progenitor_mass),
-             'Eq. of state    : {}'.format(self.EOS)
-             ]
-        return mod + '\n'.join(s)
-
-    def _repr_markdown_(self):
-        """Markdown representation of the model, for Jupyter notebooks.
-        """
-        mod = '**Kuroda_2020 Model**: {}\n\n'.format(self.filename)
-        s = ['|Parameter|Value|',
-             '|:---------|:-----:|',
-             '|Progenitor mass | ${0.value:g}$ {0.unit:latex}|'.format(self.progenitor_mass),
-             '|EOS | {}|'.format(self.EOS)
-             ]
-        return mod + '\n'.join(s)
-
-
 class Fornax_2019(SupernovaModel):
     """Model based 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019. Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/.
     """
@@ -721,6 +516,9 @@ class Fornax_2019(SupernovaModel):
             mass_str = filename.split('_')[-2]
             self.progenitor_mass = float(mass_str[:-1]) * u.Msun
 
+        self.metadata = {
+            'Progenitor mass':self.progenitor_mass,
+            }
         self.fluxunit = 1e50 * u.erg/(u.s*u.MeV)
         self.time = None
 
@@ -1073,25 +871,6 @@ class Fornax_2019(SupernovaModel):
 
         return initialspectra
 
-    def __str__(self):
-        """Default representation of the model.
-        """
-        mod = 'Fornax 3D Model: {}\n'.format(self.filename)
-        s = ['Progenitor mass : {}'.format(self.progenitor_mass)
-            ]
-        return mod + '\n'.join(s)
-
-    def _repr_markdown_(self):
-        """Markdown representation of the model, for Jupyter notebooks.
-        """
-        mod = '**Fornax 3D Model**: {}\n\n'.format(self.filename)
-        s = ['|Parameter|Value|',
-             '|:---------|:-----:|',
-             '|Progenitor mass | ${0.value:g}$ {0.unit:latex}|'.format(self.progenitor_mass),
-            ]
-        return mod + '\n'.join(s)
-
-
 class Fornax_2021(SupernovaModel):
     """Model based on axisymmetric simulations from A. Burrows and D.  Vartanyan, Nature 589:29, 2021. Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.2d/.
     """
@@ -1106,7 +885,9 @@ class Fornax_2021(SupernovaModel):
         """
         # Set up model metadata.
         self.progenitor_mass = float(filename.split('/')[-1].split('_')[2][:-1]) * u.Msun
-
+        self.metadata = {
+            'Progenitor mass':self.progenitor_mass,
+            }
         # Conversion of flavor to key name in the model HDF5 file.
         self._flavorkeys = { Flavor.NU_E : 'nu0',
                              Flavor.NU_E_BAR : 'nu1',
@@ -1206,25 +987,6 @@ class Fornax_2021(SupernovaModel):
                 raise ValueError('Unrecognized interpolation type "{}"'.format(interpolation))
 
         return initialspectra
-
-    def __str__(self):
-        """Default representation of the model.
-        """
-        mod = 'Fornax 2D Model: {}\n'.format(self._h5file.filename)
-        s = ['Progenitor mass : {}'.format(self.progenitor_mass)
-            ]
-        return mod + '\n'.join(s)
-
-    def _repr_markdown_(self):
-        """Markdown representation of the model, for Jupyter notebooks.
-        """
-        mod = '**Fornax 2D Model**: {}\n\n'.format(self._h5file.filename)
-        s = ['|Parameter|Value|',
-             '|:---------|:-----:|',
-             '|Progenitor mass | ${0.value:g}$ {0.unit:latex}|'.format(self.progenitor_mass),
-            ]
-        return mod + '\n'.join(s)
-
 
 class SNOwGLoBES:
     """A model that does not inherit from SupernovaModel (yet) and imports a group of SNOwGLoBES files."""

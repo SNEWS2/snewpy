@@ -4,7 +4,7 @@ from scipy.interpolate import interp1d
 from astropy import units as u
 from .base import SupernovaModel
 from snewpy.neutrino import Flavor
-
+from pathlib import Path
 
 def _interp_T(t0, v0, dt=1e-3, dv=1e-10, axis=0):
     "dilog interpolation"
@@ -47,6 +47,9 @@ class Odrzywolek_2010(SupernovaModel):
             else:
                 # nuX/nuE ratio from Odrzywolek paper: (arXiv:astro-ph/0311012)
                 self.factor[f] = 0.36
+        self.filename = Path(fname).stem
+        self.progenitor_mass = float(self.filename.split('_')[0][1:]) * u.Msun
+        self.metadata = {'Progenitor Mass': self.progenitor_mass}
 
     def get_time(self):
         return -self.times * u.s
@@ -85,6 +88,9 @@ class Patton_2019(SupernovaModel):
         self.interpolated = _interp_TE(
             self.times, self.energies, self.array, ax_t=1, ax_e=2
         )
+        self.filename = Path(fname).stem
+        self.progenitor_mass = float(self.filename.split('_')[-1].rstrip('SolarMass')) * u.Msun
+        self.metadata = {'Progenitor Mass': self.progenitor_mass}
 
     def get_initial_spectra(self, t, E, flavors=Flavor):
         t = np.array(-t.to_value("hour"), ndmin=1)
@@ -119,6 +125,9 @@ class Kato_2017(SupernovaModel):
         self.interpolated = _interp_TE(
             self.times, self.energies, self.array, ax_t=1, ax_e=2
         )
+        self.filename = Path(path).stem
+        self.progenitor_mass = float(self.filename.strip('m')) * u.Msun
+        self.metadata = {'Progenitor Mass': self.progenitor_mass}
 
     def get_initial_spectra(self, t, E, flavors=Flavor):
         t = np.array(-t.to_value("s"), ndmin=1)
