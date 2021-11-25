@@ -82,7 +82,7 @@ def get_models(models=None, download_dir="SNEWPY_models"):
 
         for url in model_urls[model]:
             local_file = model_dir + url.split(model, maxsplit=1)[1]
-            if os.path.exists(local_file) and local_file.find('README') == -1:
+            if os.path.exists(local_file) and local_file.find('README') == -1 and local_file.find('.ipynb') == -1:
                 print(f"File '{local_file}' already exists. Skipping download.")
             else:
                 if not os.path.isdir(os.path.dirname(local_file)):
@@ -95,6 +95,7 @@ def get_models(models=None, download_dir="SNEWPY_models"):
             exceptions.append(result.exception())
     if exceptions:
         print(f"ERROR: {len(exceptions)} exceptions occured. ({exceptions})")
+        print("Please check your internet connection and try again later. If this persists, please report it at https://github.com/SNEWS2/snewpy/issues")
         exit(1)
     pool.shutdown(wait=False)
 

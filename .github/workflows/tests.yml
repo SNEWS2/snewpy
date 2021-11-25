@@ -43,4 +43,4 @@ jobs:
       # Run the unit tests
       - name: Test with pytest
         run: |
-          pytest
+          pytest -m 'not snowglobes'
