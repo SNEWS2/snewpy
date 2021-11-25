@@ -260,7 +260,7 @@ class Runner:
             with open(self.base_dir/'supernova.glb','w') as f:
                 f.write(cfg)
             #run the snowglobes process:
-            p = await asyncio.create_subprocess_exec('bin/supernova', self.flux_file.stem, chan_file, self.detector,
+            p = await asyncio.create_subprocess_exec('bin/supernova', self.flux_file.stem, str(chan_file), self.detector,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 cwd=self.base_dir)
