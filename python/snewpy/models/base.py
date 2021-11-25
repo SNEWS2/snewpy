@@ -222,19 +222,19 @@ class PinchedModel(SupernovaModel):
         # the interpolation will not work correctly.
         t = t.to(self.time.unit)
 
-        E  = np.expand_dims(E, axis=0)
+        E  = np.expand_dims(E, axis=1)
         for flavor in flavors:
             # Use np.interp rather than scipy.interpolate.interp1d because it
             # can handle dimensional units (astropy.Quantity).
-            L  = get_value(np.interp(t, self.time, self.luminosity[flavor].to('erg/s')))
+            L  = get_value(np.interp(t, self.time, self.luminosity[flavor].to('erg/s'),left=0,right=0))
             Ea = get_value(np.interp(t, self.time, self.meanE[flavor].to('erg')))
             a  = np.interp(t, self.time, self.pinch[flavor])
 
             # Sanity check to avoid invalid values of Ea, alpha, and L.
             initialspectra[flavor] = np.zeros_like(E, dtype=float) / (u.erg*u.s)
-            L  = np.expand_dims(L, axis=1)
-            Ea = np.expand_dims(Ea,axis=1)
-            a  = np.expand_dims(a, axis=1)
+            L  = np.expand_dims(L, axis=0)
+            Ea = np.expand_dims(Ea,axis=0)
+            a  = np.expand_dims(a, axis=0)
             # For numerical stability, evaluate log PDF and then exponentiate.
             result = \
               np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a)
