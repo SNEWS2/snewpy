@@ -44,43 +44,25 @@ from pathlib import Path
 from scipy.integrate import cumulative_trapezoid
 from scipy.interpolate import interp1d
 from contextlib import contextmanager
+from snewpy.flux import Flux
 import pdb
-def _cumulative_integral(bin_edges, array, axis):
-    """Integrate the array along an axis"""
-    return  cumulative_trapezoid(
-        array, x=bin_edges,
-        initial = 0,
-        axis=axis
-    )
 
-
-def _integrate_bins0(bin_edges, array, axis):
-    """Integrate the array along an axis: nearest interpolation"""
-    newaxes = list(range(array.ndim))
-    newaxes.remove(axis)
-    binw = np.diff(bin_edges,append=bin_edges[-1])
-    binw = np.expand_dims(binw,newaxes)
-    return array*binw
-
-def _integrate_bins(bin_edges, array, axis):
-    """Integrate the array along an axis: linear interpolation"""
-    cumtrapz= _cumulative_integral(bin_edges, array, axis)
-    result = np.diff(cumtrapz, axis=axis, prepend=0)
-    return result
-
-
-def _save_flux_table(energy, flux, filename, t, dt):
-    table = {'E(GeV)': energy, 
-             'NuE' :  flux[Flavor.NU_E],
-             'NuMu':  flux[Flavor.NU_X],
-             'NuTau': flux[Flavor.NU_X],
-             'aNuE':  flux[Flavor.NU_E_BAR],
-             'aNuMu': flux[Flavor.NU_X_BAR],
-             'aNuTau':flux[Flavor.NU_X_BAR]
+def save_flux_table(flux: Flux, filename : str, header = None):
+    energy = flux.axes['Enu']
+    if isinstance(energy,u.Quantity):
+        energy = energy.to_value('GeV')
+    data = flux.array
+    if isinstance(data,u.Quantity):
+        data = data.to_value('1/(MeV*cm**2)')
+    table = {'E(GeV)':energy,
+             'NuE' :  data[Flavor.NU_E],
+             'NuMu':  data[Flavor.NU_X],
+             'NuTau': data[Flavor.NU_X],
+             'aNuE':  data[Flavor.NU_E_BAR],
+             'aNuMu': data[Flavor.NU_X_BAR],
+             'aNuTau':data[Flavor.NU_X_BAR]
              }
-
-    header = f'TBinMid={t:g}sec TBinWidth={dt:g}s EBinWidth=0.2MeV Fluence at Earth for this timebin in neutrinos per cm^2\n'
-    header+=' '.join(f'{key:>16}' for key in table)
+    header += ' '.join(f'{key:>16}' for key in table)
     # Generate energy + number flux table.
     table = np.stack(list(table.values()))
     np.savetxt(filename, table.T, header=header, fmt='%17.8E',delimiter='')
@@ -155,14 +137,8 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
 
     energy = np.linspace(0, 100, 501) * u.MeV
     flux = snmodel.get_transformed_flux(times,energy,flavor_transformation, d*u.kpc)
-    #construct a 3D array (Flavors * Time * Energy)
-    flux_array = np.stack([flux[f] for f in sorted(flux)],axis=0)
-    #get rid of the units
-    flux_array = flux_array.to_value('1/(MeV*s*cm**2)')
-    #integrate the flux in each energy bin
-    flux_array=_integrate_bins0(energy.to_value('MeV'),flux_array,axis=2)
-    #integrate the flux in each time bin
-    flux_array=_integrate_bins0(times.to_value('s'),flux_array,axis=1)
+    #multiply flux by the bin sizes
+    flux.array*=0.2*dt[0]
     # Save all to tar file
     if output_filename is None:
         output_filename = f'{model_path.stem}.{transformation_type}.{tmin:.3f} s,{tmax:.3f} s,{ntbins:d}-{d:.1f}'
@@ -172,14 +148,13 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
         #creates file in tar archive that gives information on parameters
         with open(tempdir/'parameterinfo','w') as f:
             f.write(transformation_type)
-
-        energy = energy.to_value('GeV')
         # Loop over sampled times.
         for i, t in enumerate(times):
-            fluence = flux_array[:,i,:]
             filename = f'{model_path.stem}.tbin{i+1:01d}.{transformation_type}'+\
                        f'.{tmin:.3f},{tmax:.3f},{ntbins:01d}-{d:.1f}kpc.dat'
-            _save_flux_table(energy,fluence,tempdir/filename,t,dt[i])
+            save_flux_table(flux[:,:,i],tempdir/filename, 
+                            header=f'TBinMid={t:g}sec TBinWidth={dt[0]:g}s EBinWidth=0.2MeV Fluence at Earth for this timebin in neutrinos per cm^2\n'
+            )
 
     return output_filename
 
@@ -232,36 +207,29 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
     energy = np.linspace(0, 100, 501) * u.MeV
     times = snmodel.get_time()
     flux = snmodel.get_transformed_flux(times,energy,flavor_transformation, d*u.kpc)
-    #construct a 3D array (Flavors * Time * Energy)
-    flux = np.stack([flux[f] for f in sorted(flux)],axis=0)
-    #get rid of the units
-    flux = flux.to_value('1/(MeV*s*cm**2)')
-    #integrate the flux in each energy bin
-    flux=_integrate_bins0(energy.to_value('MeV'),flux,axis=2)
-    #integrate the flux to make definite integrals using interpolation
-    flux_cumulative = cumulative_trapezoid(flux,x=times.to_value('s'),axis=1, initial=0)
-    flux_integral = interp1d(times,flux_cumulative,axis=1,fill_value=0)
 
+    #multiply flux by the bin sizes
+    flux.array*=0.2
+    fluence = flux.integral('time',list(zip(tstart,tend)))
+    if nbin==1: fluence=[fluence]
     # Generate output
     if output_filename is None:
         output_filename =f'{model_path.stem}.{transformation_type}.{tmin:.3f},{tmax:.3f},{nbin:d}-{d:.1f}kpc'
     output_filename = model_path.parent/f'{output_filename}.tar.bz2'
 
-    energy = energy.to_value('GeV')
     with _archive_dir(output_filename) as tempdir:
         #creates file in tar archive that gives information on parameters
         with open(tempdir/'parameterinfo','w') as f:
             f.write(transformation_type)
 
         for i,(ta,tb) in enumerate(zip(tstart,tend)):
-            tc = 0.5*(tb+ta)
+            t = 0.5*(tb+ta)
             dt = tb-ta
-            fluence = flux_integral(tb)-flux_integral(ta)
-
             filename = f'{model_path.stem}.tbin{i+1:01d}.{transformation_type}'+\
                        f'.{tmin:.3f},{tmax:.3f},{nbin:01d}-{d:.1f}kpc.dat'
-            _save_flux_table(energy,fluence,tempdir/filename,tc,dt)
-
+            save_flux_table(fluence[i],tempdir/filename,
+                            header=f'TBinMid={t:g}sec TBinWidth={dt:g}s EBinWidth=0.2MeV Fluence at Earth for this timebin in neutrinos per cm^2\n'
+            )
     return output_filename
 
 

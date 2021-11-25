@@ -159,7 +159,7 @@ class SupernovaModel(ABC):
         factor = 1/(4*np.pi*(distance.to('cm'))**2) 
         flavors = list(sorted(spec))
         spec_array = np.stack([spec[f] for f in flavors], axis=0) * factor
-        return Flux(data=spec_array,Flavor=flavors, Enu=E, time=t)
+        return Flux(data=spec_array.to('1/(s*MeV*cm**2)'),Flavor=flavors, Enu=E, time=t)
 
 def get_value(x):
     """If quantity x has is an astropy Quantity with units, return just the
