@@ -25,7 +25,7 @@ class Flux(object):
         """
 
         self.array = data
-        self.axes= {**axes}
+        self.axes= {a:u.Quantity(axes[a]) for a in axes}
         self._axnum = {name:num for num,name in enumerate(self.axes)}
         self._integral = {}
         self.shape = self.array.shape
@@ -78,8 +78,8 @@ class Flux(object):
 
         Returns
         -------
-        np.ndarray
-            Flux integrated along the given axis
+        Flux
+            The flux integrated along the given axis with linear interpolation
         """
 
         fint = self._integral.get(axname,self._init_integral(axname))
@@ -91,8 +91,10 @@ class Flux(object):
         try:
             limits = u.Quantity(limits, ndmin=2)
         except TypeError:
-            limits = u.Quantity([np.Quantity(l) for l in lims], ndmin=2)
-        #limits = np.clip(limits,xmin,xmax)
+            limits = u.Quantity([u.Quantity(l) for l in limits], ndmin=2)
+
+        limits = limits.clip(xmin,xmax)
+        limits = limits.to(ax.unit)
         newaxes = {**self.axes}
         newaxes.pop(axname)
         newarr = fint(limits[:,1])-fint(limits[:,0])
