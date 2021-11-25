@@ -107,6 +107,7 @@ pygments_style = 'sphinx'
 napoleon_google_docstring = False
 napoleon_numpy_docstring = True
 napoleon_use_rtype = False
+autoclass_content = 'both'
 
 
 def skip(app, what, name, obj, would_skip, options):
