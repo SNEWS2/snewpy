@@ -40,13 +40,13 @@ from snewpy.flux import Flux
 from snewpy.snowglobes_interface import SNOwGLoBES
 
 
-def save_flux_table(flux: Flux, filename: str, header=None):
+def save_flux_table(flux: Flux, filename: str, header=''):
     energy = flux.axes['Enu']
     if isinstance(energy, u.Quantity):
         energy = energy.to_value('GeV')
     data = flux.array
     if isinstance(data, u.Quantity):
-        data = data.to_value('1/(MeV*cm**2)')
+        data = data.to_value('1/(MeV*cm**2*s)')
     table = {'E(GeV)': energy,
              'NuE':    data[Flavor.NU_E],
              'NuMu':   data[Flavor.NU_X],
