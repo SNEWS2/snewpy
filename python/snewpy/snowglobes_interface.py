@@ -192,7 +192,7 @@ class SNOwGLoBES:
         self.lock = threading.Lock() #global lock, ensuring that snowglobes files aren't mixed!
         with ThreadPoolExecutor() as executor:
             result = executor.map(do_run, flux_files)
-            return result
+            return list(result)
 
 @dataclass
 class Runner:
