@@ -45,7 +45,8 @@ logger = logging.getLogger(__name__)
 
 from dataclasses import dataclass
 from concurrent.futures import ThreadPoolExecutor
-import asyncio
+import threading
+import subprocess
 
 def guess_material(detector):
     if detector.startswith('wc') or detector.startswith('ice'):
@@ -184,19 +185,14 @@ class SNOwGLoBES:
         if isinstance(flux_files,str):
             flux_files = [flux_files]
 
-        #make a function to collect results from asyncio
-        def do_run():
-            return asyncio.run(self.run_async(flux_files,detector,material))
+        def do_run(file):
+            result =  Runner(self,Path(file),detector,material).run()
+            return result
 
+        self.lock = threading.Lock() #global lock, ensuring that snowglobes files aren't mixed!
         with ThreadPoolExecutor() as executor:
-            task = executor.submit(do_run)
-            return task.result()
-
-    async def run_async(self, flux_files, detector:str, material:str):
-        self.lock = asyncio.Lock() #global lock, ensuring that snowglobes files aren't mixed!
-        tasks = [Runner(self,Path(f),detector,material).run() for f in flux_files]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        return results
+            result = executor.map(do_run, flux_files)
+            return result
 
 @dataclass
 class Runner:
@@ -213,8 +209,8 @@ class Runner:
         self.base_dir=self.sng.base_dir
         self.out_dir=self.base_dir/'out'
             
-    async def _generate_globes_config(self):
-        cfg =  self.sng.template.render_async(flux_file=self.flux_file.resolve(),
+    def _generate_globes_config(self):
+        cfg =  self.sng.template.render(flux_file=self.flux_file.resolve(),
                                     detector=self.detector,
                                     target_mass=self.det_config.tgt_mass,
                                     smearing=self.smearing,
@@ -223,7 +219,7 @@ class Runner:
                                     efficiency =self.efficiency,
                                     nbins = 400 if self.detector.endswith('_he') else 200
                                     )
-        return await cfg
+        return cfg
 
     def _parse_output(self, output):
         data = {}
@@ -249,26 +245,23 @@ class Runner:
         df.columns.rename(['channel','is_smeared','is_weighted'], inplace=True)
         return df.reorder_levels([2,1,0], axis='columns')
 
-    async def run(self):
+    def run(self):
         """write configuration file and run snowglobes"""
-        cfg = await self._generate_globes_config()
+        cfg = self._generate_globes_config()
         chan_file = self.sng.chan_dir/f'channels_{self.material}.dat'
         #this section is exclusive to one process at a time, 
         # because snowglobes must  read the "$SNOGLOBES/supernova.glb" file
-        async with self.sng.lock:
+        with self.sng.lock:
             #write configuration file:
             with open(self.base_dir/'supernova.glb','w') as f:
                 f.write(cfg)
             #run the snowglobes process:
-            p = await asyncio.create_subprocess_exec('bin/supernova', self.flux_file.stem, str(chan_file), self.detector,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
+            p = subprocess.run(['bin/supernova', self.flux_file.stem, str(chan_file), self.detector],
+                capture_output=True,
                 cwd=self.base_dir)
-            #collect the output
-            stdout,stderr = await p.communicate()
         #process the output
-        stdout = stdout.decode('utf_8')
-        stderr = stderr.decode('utf_8')
+        stdout = p.stdout.decode('utf_8')
+        stderr = p.stderr.decode('utf_8')
         if(stderr):
             logger.error('Run errors: \n'+stderr)
         if(p.returncode==0):
