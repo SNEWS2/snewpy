@@ -104,12 +104,23 @@ class SNOwGLoBES:
         logger.debug(f'detectors: {self.detectors}')
        
     def _load_channels(self, chan_dir):
+
+        def _read_binning(fname):
+            with open(fname) as f:
+                l = f.readline().strip()
+                if not l.startswith('%'):
+                    l = '% 200 0.0005 0.100 200 0.0005 0.100'
+                tokens = l.split(' ')[1:]
+                return dict(zip(['nsamples','smin','smax','nbins','emin','emax'],tokens))
+
         self.channels = {}
+        self.binning = {}
         all_channels = []
         for f in chan_dir.glob('channels_*.dat'):
             material = f.stem[len('channels_'):]
             df = pd.read_table(f,delim_whitespace=True, index_col=1, comment='%', names=['name','n','parity','flavor','weight'])
             self.channels[material] = df
+            self.binning[material] = _read_binning(f)
         self.materials = list(self.channels.keys())
         self.chan_dir = chan_dir
         logger.info(f'read channels for  materials: {self.materials}')
@@ -206,6 +217,7 @@ class Runner:
     
     def __post_init__(self):
         self.channels=self.sng.channels[self.material]
+        self.binning=self.sng.binning[self.material]
         self.efficiency=self.sng.efficiencies[self.detector]
         self.smearing=self.sng.smearings[self.detector]
         self.det_config=self.sng.detectors[self.detector]
@@ -220,7 +232,7 @@ class Runner:
                                     xsec_dir =self.base_dir/'xscns',
                                     channels =list(self.channels.itertuples()),
                                     efficiency =self.efficiency,
-                                    nbins = 400 if self.detector.endswith('_he') else 200
+                                    **self.binning
                                     )
         return cfg
 
