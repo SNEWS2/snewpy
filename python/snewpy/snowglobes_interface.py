@@ -47,6 +47,7 @@ from dataclasses import dataclass
 from concurrent.futures import ThreadPoolExecutor
 import threading
 import subprocess
+from tqdm.auto import tqdm
 
 def guess_material(detector):
     if detector.startswith('wc') or detector.startswith('ice'):
@@ -184,15 +185,17 @@ class SNOwGLoBES:
             logger.warning(f'Missing smearing for detector={detector}! Results will not be smeared')
         if isinstance(flux_files,str):
             flux_files = [flux_files]
+        
+        with tqdm(total=len(flux_files), leave=False, desc='Flux files') as progressbar:
+            def do_run(file):
+                result =  Runner(self,Path(file),detector,material).run()
+                progressbar.update()
+                return result
 
-        def do_run(file):
-            result =  Runner(self,Path(file),detector,material).run()
-            return result
-
-        self.lock = threading.Lock() #global lock, ensuring that snowglobes files aren't mixed!
-        with ThreadPoolExecutor() as executor:
-            result = executor.map(do_run, flux_files)
-            return list(result)
+            self.lock = threading.Lock() #global lock, ensuring that snowglobes files aren't mixed!
+            with ThreadPoolExecutor() as executor:
+                result = executor.map(do_run, flux_files)
+                return list(result)
 
 @dataclass
 class Runner:
