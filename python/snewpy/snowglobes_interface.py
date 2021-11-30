@@ -39,9 +39,13 @@ import jinja2
 import pandas as pd
 import numpy as np
 import os
+import itertools
+from tempfile import TemporaryDirectory
 
 import logging
 logger = logging.getLogger(__name__)
+
+from snewpy.flux import Flux
 
 from dataclasses import dataclass
 from concurrent.futures import ThreadPoolExecutor
@@ -49,6 +53,12 @@ import threading
 import subprocess
 from tqdm.auto import tqdm
 
+def get_value(x):
+    try:
+        return x.to_value()
+    except AttributeError:
+        return x
+ 
 def guess_material(detector):
     if detector.startswith('wc') or detector.startswith('ice'):
         mat = 'water'
@@ -151,8 +161,48 @@ class SNOwGLoBES:
         self.smearings = result 
         logger.info(f'read efficiencies for materials: {list(self.efficiencies.keys())}')
         logger.debug(f'efficiencies: {self.efficiencies}')
+   
+    def run_flux(self, flux: Flux, detector: str, material: str, integrate_E:bool = False):
+        """ Run snowglobes on the given :class:`Flux` object
+        Parameters
+        ----------
+        flux: :class:`Flux`
+            neutrino flux with dimensions <Flavor[4], Enu[N], *extra>
+        detector: str
+            Detector name, known to SNOwGLoBES
+        material: str or None
+            Material name, known to SNOwGLoBES. If None, we'll try to guess it
+        integrate_E: bool
+            If true - output (trapezoid) integral over E, 
+            otherwise return table with all energy bins
 
-       
+        Returns
+        -------
+        :class:`pandas.DataFrame` or :class:`pandas.Series`
+            A table with *weighted*.*smeared* event rates for the given flux. 
+            The columns contain interaction channels and values 
+            for all extra dimensions present in the flux
+            The index contains energies in GeV if ``integrate_E==False``.
+            Otherwise just Series object
+         """
+        extra_dimensions = {name: get_value(ax) for name,ax in flux.axes.items()}
+        extra_dimensions.pop('Flavor')
+        extra_dimensions.pop('Enu')
+        T = flux.axes['time']
+        with TemporaryDirectory() as tempdir:
+            tempdir = Path(tempdir).absolute()
+            fluxfiles = flux.to_snowglobes(tempdir/'flux_{idx}.dat')
+            result = self.run(fluxfiles,detector, material)
+        df = pd.concat( [r.weighted.smeared for r in result], 
+                        keys=list(itertools.product(*extra_dimensions.values())),
+                        names=list(extra_dimensions.keys()),
+                        axis=1)
+        if integrate_E:
+            E_MeV = df.index*1e3
+            return pd.Series(np.trapz(x=E_MeV,y=df.to_numpy(), axis=0), index=df.columns)
+        else:
+            return df
+
     def run(self, flux_files, detector:str, material:str=None):
         """ Run the SNOwGLoBES simulation for given configuration,
         collect the resulting data and return it in `pandas.DataFrame`
