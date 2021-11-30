@@ -17,7 +17,7 @@ jobs:
     strategy:
       # Add a list of python versions we want to use for testing.
       matrix:
-        python-version: ['3.9']
+        python-version: ['3.7', '3.8', '3.9', '3.10']
 
     steps:
       - uses: actions/checkout@v2
@@ -58,4 +58,5 @@ jobs:
           python -m unittest python/snewpy/test/snowglobes_integrationtest.py
           pytest -m 'snowglobes' --benchmark-json output.json
       - name: Publish benchmark results
+        if: ${{ github.event_name == 'pull_request' }}
         uses: nils-braun/pytest-benchmark-commenter@v2
