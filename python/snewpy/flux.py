@@ -220,6 +220,7 @@ class Flux(object):
 
     def to_snowglobes(self, filename: str, header=""):
         """Save this flux to the SNOwGLoBES format.
+
         Parameters
         ----------
         filename: str
@@ -241,16 +242,16 @@ class Flux(object):
         User should provide a filename *template*, which will be filled with
         standard python ``str.format`` method, substituting variables listed below
 
-        Template variables::
+        :Template variables: (``<dimension>`` stands for name of specific dimension)
 
-        ``{idx}``
-            indices of extra dimensions bin, with ``_`` between them.
-        ``{<dimension>}``
-            Value of the given dimension
-        ``{n_<dimension>}``
-            Bin number of the given dimension
+            ``"{idx}"``
+                indices of extra dimensions bin, with ``_`` between them.
+            ``"{<dimension>}"``
+                Value of the given dimension
+            ``"{n_<dimension>}"``
+                Bin number of the given dimension
 
-        Example::
+        :Example:
 
             >>> #create flux with one extra dimension - time
             >>> flux = Flux(data=np.ones(shape=[4,10,5]),
@@ -259,12 +260,12 @@ class Flux(object):
                             time= np.linspace(0,10,5)*u.s)
             >>> flux
             Flux: <Flavor[4](0.0:3.0) x Enu[10](0.0 MeV:100.0 MeV) x time[5](0.0 s:10.0 s)>
-            >>> flux.to_snowglobes('tmp/flux.idx{idx}.tbin{n_time}.{time}.dat')
-            ['tmp/flux.idx0.tbin0.0.0_s.dat',
-             'tmp/flux.idx1.tbin1.2.5_s.dat',
-             'tmp/flux.idx2.tbin2.5.0_s.dat',
-             'tmp/flux.idx3.tbin3.7.5_s.dat',
-             'tmp/flux.idx4.tbin4.10.0_s.dat']
+            >>> flux.to_snowglobes('tmp/flux.idx{idx}_tbin{n_time}_{time}.dat')
+            ['tmp/flux.idx0_tbin0_0.0_s.dat',
+             'tmp/flux.idx1_tbin1_2.5_s.dat',
+             'tmp/flux.idx2_tbin2_5.0_s.dat',
+             'tmp/flux.idx3_tbin3_7.5_s.dat',
+             'tmp/flux.idx4_tbin4_10.0_s.dat']
         """
         # prepare the iterables to loop over
         loop_axes = {ax: range(len(self.axes[ax])) for ax in self.axes}
