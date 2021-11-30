@@ -14,6 +14,7 @@ class Flux(object):
     """Neutrino flux container. This is a helper class to store and manipulate
     flux tables, produced by SupernovaModels.
     """
+
     def __init__(self, data, **axes):
         """
         Parameters
@@ -54,7 +55,7 @@ class Flux(object):
             iter(args)
         except TypeError:
             args = [args]
-        args = [a if isinstance(a, slice) else slice(a, a+1) for a in args]
+        args = [a if isinstance(a, slice) else slice(a, a + 1) for a in args]
         array = self.array.__getitem__(tuple(args))
         newaxes = {**self.axes}
         for arg, ax in zip(args, self.axes):
@@ -92,7 +93,9 @@ class Flux(object):
         x = self.axes[axname]
         axnum = self.get_axis_num(axname)
         cumulative = cumulative_trapezoid(self.array, x=x, axis=axnum, initial=0)
-        self._integral[axname] = interp1d(x=x, y=cumulative, fill_value=0, axis=axnum, bounds_error=False)
+        self._integral[axname] = interp1d(
+            x=x, y=cumulative, fill_value=0, axis=axnum, bounds_error=False
+        )
 
     def squeeze(self, axis: Optional[Union[str, int]] = None) -> Flux:
         """remove a given dimension with length 1
@@ -170,7 +173,7 @@ class Flux(object):
         limits = limits.to(ax.unit)
         newaxes = {**self.axes}
         newaxes.pop(axname)
-        newarr = fint(limits[:, 1])-fint(limits[:, 0])
+        newarr = fint(limits[:, 1]) - fint(limits[:, 0])
         try:
             newarr = newarr.squeeze(axis=axnum)
             return Flux(newarr, **newaxes)
@@ -179,11 +182,13 @@ class Flux(object):
             return [Flux(arr, **newaxes) for arr in newarr]
 
     def __repr__(self):
-        s = 'Flux: <'+' x '.join([f'{name}[{len(val)}]({val.min()}:{val.max()})'
-                                 for name, val in self.axes.items()])+'>'
-        return s
+        s = [
+            f"{name}[{len(val)}]({val.min()}:{val.max()})"
+            for name, val in self.axes.items()
+        ]
+        return f"Flux: <{' x '.join(s)}>"
 
-    def _save_to_snowglobes(self, filename: str, header: str = ''):
+    def _save_to_snowglobes(self, filename: str, header: str = ""):
         """save flux to GLoBES format text file.
         The flux dimensions must be <Flavor[4] x Enu[N]>
         Parameters
@@ -193,27 +198,28 @@ class Flux(object):
         header: str
             Optional header to be added at the beginning
         """
-        energy = self.axes['Enu']
+        energy = self.axes["Enu"]
         if isinstance(energy, u.Quantity):
-            energy = energy.to_value('GeV')
+            energy = energy.to_value("GeV")
         data = self.array
         if isinstance(data, u.Quantity):
-            data = data.to_value('1/(MeV*cm**2*s)')
-        table = {'E(GeV)': energy,
-                 'NuE':    data[Flavor.NU_E],
-                 'NuMu':   data[Flavor.NU_X],
-                 'NuTau':  data[Flavor.NU_X],
-                 'aNuE':   data[Flavor.NU_E_BAR],
-                 'aNuMu':  data[Flavor.NU_X_BAR],
-                 'aNuTau': data[Flavor.NU_X_BAR]
-                 }
-        header += ' '.join(f'{key:>16}' for key in table)
+            data = data.to_value("1/(MeV*cm**2*s)")
+        table = {
+            "E(GeV)": energy,
+            "NuE": data[Flavor.NU_E],
+            "NuMu": data[Flavor.NU_X],
+            "NuTau": data[Flavor.NU_X],
+            "aNuE": data[Flavor.NU_E_BAR],
+            "aNuMu": data[Flavor.NU_X_BAR],
+            "aNuTau": data[Flavor.NU_X_BAR],
+        }
+        header += " ".join(f"{key:>16}" for key in table)
         # Generate energy + number flux table.
         table = np.stack(list(table.values()))
-        np.savetxt(filename, table.T, header=header, fmt='%17.8E', delimiter='')
+        np.savetxt(filename, table.T, header=header, fmt="%17.8E", delimiter="")
 
-    def to_snowglobes(self, filename: str, header=''):
-        """ Save this flux to the SNOwGLoBES format.
+    def to_snowglobes(self, filename: str, header=""):
+        """Save this flux to the SNOwGLoBES format.
         Parameters
         ----------
         filename: str
@@ -233,21 +239,21 @@ class Flux(object):
         When extra dimensions are present, this method loops over them and makes a file
         for each value in extra dimensions.
         User should provide a filename *template*, which will be filled with
-        standard python ``str.format`` method, substituting variables listed below 
+        standard python ``str.format`` method, substituting variables listed below
 
         Template variables::
 
         ``{idx}``
-            indices of extra dimensions bin, with ``_`` between them. 
-        ``{<dimension>}`` 
+            indices of extra dimensions bin, with ``_`` between them.
+        ``{<dimension>}``
             Value of the given dimension
-        ``{n_<dimension>}`` 
+        ``{n_<dimension>}``
             Bin number of the given dimension
 
         Example::
 
             >>> #create flux with one extra dimension - time
-            >>> flux = Flux(data=np.ones(shape=[4,10,5]), 
+            >>> flux = Flux(data=np.ones(shape=[4,10,5]),
                             Flavor=list(sorted(Flavor)),
                             Enu = np.linspace(0,100,10)*u.MeV,
                             time= np.linspace(0,10,5)*u.s)
@@ -260,26 +266,28 @@ class Flux(object):
              'tmp/flux.idx3.tbin3.7.5_s.dat',
              'tmp/flux.idx4.tbin4.10.0_s.dat']
         """
-        #prepare the iterables to loop over
-        loop_axes = {ax:range(len(self.axes[ax])) for ax in self.axes}
-        #do not loop over these - keep the whole slice
-        loop_axes['Enu'] = [slice(None)]
-        loop_axes['Flavor'] = [slice(None)]
-           
-        #get the cartesian product
+        # prepare the iterables to loop over
+        loop_axes = {ax: range(len(self.axes[ax])) for ax in self.axes}
+        # do not loop over these - keep the whole slice
+        loop_axes["Enu"] = [slice(None)]
+        loop_axes["Flavor"] = [slice(None)]
+
+        # get the cartesian product
         files = []
         for idx in itertools.product(*loop_axes.values()):
-            #dictionaries to formatting strings
-            index_dict = {'idx':'_'.join([f'{i:d}' for i in idx if i!=slice(None)])}
-            nums_dict = {f'n_{name}':i for name,i in zip(self.axes,idx)}
-            vals_dict = {f'{name}':str(self.axes[name][i]).replace(' ','_') for name,i in zip(self.axes,idx)}
-            for name in ['Enu','Flavor']:
+            # dictionaries to formatting strings
+            index_dict = {"idx": "_".join([f"{i:d}" for i in idx if i != slice(None)])}
+            nums_dict = {f"n_{name}": i for name, i in zip(self.axes, idx)}
+            vals_dict = {
+                f"{name}": str(self.axes[name][i]).replace(" ", "_")
+                for name, i in zip(self.axes, idx)
+            }
+            for name in ["Enu", "Flavor"]:
                 vals_dict.pop(name)
-     
+
             fmt_dict = {**index_dict, **nums_dict, **vals_dict}
 
             fname = str(filename).format(**fmt_dict)
             self[idx]._save_to_snowglobes(fname, header=str(header).format(**fmt_dict))
-            files+=[fname]
+            files += [fname]
         return files
-
