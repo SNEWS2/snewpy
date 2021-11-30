@@ -11,28 +11,17 @@ Updated summer 2020 by Jim Kneller & Arkin Worlikar. Subsequent updates
 provided by the SNEWS team.
 """
 
-from enum import IntEnum
-
-import astropy
-from astropy.io import ascii, fits
-from astropy.table import Table, join
-from astropy.units.quantity import Quantity
-
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-
-import numpy as np
-from scipy.interpolate import interp1d
-from scipy.special import loggamma, gamma, lpmv
-
-import os
-import re
-import sys
-
 import logging
-
+import os
+import sys
 import tarfile
+
 import h5py
+import numpy as np
+from astropy import units as u
+from astropy.io import ascii, fits
+from astropy.table import Table
+from scipy.special import gamma, lpmv
 
 try:
     import healpy as hp
@@ -40,10 +29,10 @@ except ImportError:
     pass
 
 from snewpy.neutrino import Flavor
-from snewpy.flavor_transformation import *
 
-from .base import SupernovaModel, _GarchingArchiveModel,PinchedModel
- 
+from .base import PinchedModel, SupernovaModel, _GarchingArchiveModel
+
+
 class Analytic3Species(PinchedModel):
     """Allow to generate an analytic model given total luminosity,
     average energy, and rms or pinch, for each species.

@@ -1,18 +1,15 @@
-from abc import abstractmethod, ABC
-
-from astropy.io import ascii, fits
-from astropy.table import Table, join
-from astropy.units.quantity import Quantity
+import os
+from abc import ABC, abstractmethod
+from warnings import warn
 
 import numpy as np
-from scipy.interpolate import interp1d
-from scipy.special import loggamma, gamma, lpmv
+from astropy import units as u
+from astropy.table import Table, join
+from astropy.units.quantity import Quantity
+from scipy.special import loggamma
 
-import os
-
-from warnings import warn
 from snewpy.neutrino import Flavor
-from snewpy.flavor_transformation import *
+
 
 class SupernovaModel(ABC):
     """Base class defining an interface to a supernova model."""
@@ -23,7 +20,6 @@ class SupernovaModel(ABC):
     def __repr__(self):
         """Default representation of the model.
         """
-        # self.__class__ will be something like 
         mod = f"{self.__class__.__name__} Model"
         try:
             mod +=f': {self.filename}'
@@ -86,7 +82,7 @@ class SupernovaModel(ABC):
 
         :meta private:
         """
-        warn("Please use `get_initial_spectra()` instead of `get_initialspectra()`!", DeprecationWarning)
+        warn("Please use `get_initial_spectra()` instead of `get_initialspectra()`!", FutureWarning)
         return self.get_initial_spectra(*args)
 
     def get_transformed_spectra(self, t, E, flavor_xform):
@@ -133,7 +129,7 @@ class SupernovaModel(ABC):
 
         :meta private:
         """
-        warn("Please use `get_transformed_spectra()` instead of `get_oscillatedspectra()`!", DeprecationWarning)
+        warn("Please use `get_transformed_spectra()` instead of `get_oscillatedspectra()`!", FutureWarning)
         return self.get_transformed_spectra(*args)
 
 def get_value(x):
