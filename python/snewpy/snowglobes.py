@@ -39,35 +39,11 @@ from contextlib import contextmanager
 from snewpy.flux import Flux
 from snewpy.snowglobes_interface import SNOwGLoBES
 
-
-def save_flux_table(flux: Flux, filename: str, header=''):
-    energy = flux.axes['Enu']
-    if isinstance(energy, u.Quantity):
-        energy = energy.to_value('GeV')
-    data = flux.array
-    if isinstance(data, u.Quantity):
-        data = data.to_value('1/(MeV*cm**2*s)')
-    table = {'E(GeV)': energy,
-             'NuE':    data[Flavor.NU_E],
-             'NuMu':   data[Flavor.NU_X],
-             'NuTau':  data[Flavor.NU_X],
-             'aNuE':   data[Flavor.NU_E_BAR],
-             'aNuMu':  data[Flavor.NU_X_BAR],
-             'aNuTau': data[Flavor.NU_X_BAR]
-             }
-    header += ' '.join(f'{key:>16}' for key in table)
-    # Generate energy + number flux table.
-    table = np.stack(list(table.values()))
-    np.savetxt(filename, table.T, header=header, fmt='%17.8E', delimiter='')
-
-
 logger = logging.getLogger(__name__)
-
 
 def _load_model(model_path, model_type):
     model_class = getattr(snewpy.models.ccsn, model_type)
     return model_class(model_path)
-
 
 def _load_transformation(transformation_type: str):
     # Choose flavor transformation. Use dict to associate the transformation name with its class.
@@ -136,7 +112,7 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
     energy = np.linspace(0, 100, 501) * u.MeV
     flux = snmodel.get_transformed_flux(times, energy, flavor_transformation, d*u.kpc)
     #multiply flux by the bin sizes
-    flux.array *= 0.2*dt[0]
+    flux.array *= 0.2*dt[0].to_value('s')
     # Save all to tar file
     if output_filename is None:
         output_filename = f'{model_path.stem}.{transformation_type}.{tmin:.3f} s,{tmax:.3f} s,{ntbins:d}-{d:.1f}'
@@ -146,14 +122,11 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
         #creates file in tar archive that gives information on parameters
         with open(tempdir/'parameterinfo', 'w') as f:
             f.write(transformation_type)
-        # Loop over sampled times.
-        for i, t in enumerate(times):
-            filename = f'{model_path.stem}.tbin{i+1:01d}.{transformation_type}'+\
-                       f'.{tmin:.3f},{tmax:.3f},{ntbins:01d}-{d:.1f}kpc.dat'
-            save_flux_table(flux[:, :, i], tempdir/filename, 
-                            header=f'TBinMid={t:g}sec TBinWidth={dt[0]:g}s EBinWidth=0.2MeV Fluence at Earth for this timebin in neutrinos per cm^2\n'
-                           )
-
+        filename = f'{model_path.stem}.tbin{{n_time:01d}}.{transformation_type}'+\
+                   f'.{tmin:.3f},{tmax:.3f},{ntbins:01d}-{d:.1f}kpc.dat'
+        header=f'TBinMid={{time}}sec TBinWidth={dt[0]:g}s '+\
+                ' EBinWidth=0.2MeV Fluence at Earth for this timebin in neutrinos per cm^2\n'
+        flux.to_snowglobes(tempdir/filename,header)
     return output_filename
 
 
@@ -223,11 +196,12 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
         for i,(ta,tb) in enumerate(zip(tstart,tend)):
             t = 0.5*(tb+ta)
             dt = tb-ta
-            filename = f'{model_path.stem}.tbin{i+1:01d}.{transformation_type}'+\
+            filename = f'{model_path.stem}.tbin{i:01d}.{transformation_type}'+\
                        f'.{tmin:.3f},{tmax:.3f},{nbin:01d}-{d:.1f}kpc.dat'
-            save_flux_table(fluence[i],tempdir/filename,
-                            header=f'TBinMid={t:g}sec TBinWidth={dt:g}s EBinWidth=0.2MeV Fluence at Earth for this timebin in neutrinos per cm^2\n'
-            )
+            header=f'TBinMid={t:g}sec TBinWidth={dt:g}s '+\
+                    'EBinWidth=0.2MeV Fluence at Earth for this timebin in neutrinos per cm^2\n'
+            fluence[i].to_snowglobes(tempdir/filename,header)
+ 
     return output_filename
 
 
