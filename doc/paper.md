@@ -117,13 +117,13 @@ affiliations:
     index: 20
   - name: Georgia Institute of Technology, Atlanta, GA, USA
     index: 21
-date: 13 September 2021
+date: 1 November 2021
 bibliography: paper.bib
 
 # Optional fields if submitting to a AAS journal too, see this blog post:
 # https://blog.joss.theoj.org/2018/12/a-new-collaboration-with-aas-publishing
-aas-doi: 10.3847/xxxxx # <- update this with the DOI from AAS once you know it.
-aas-journal: The Astrophysical Journal # <- The name of the AAS journal.
+aas-doi: 10.3847/1538-4357/ac350f # <- update this with the DOI from AAS once you know it.
+aas-journal: Astrophysical Journal # <- The name of the AAS journal.
 ---
 
 
@@ -165,9 +165,9 @@ transformation in the mantle of the star and during propagation to Earth.
 The third module, `snewpy.snowglobes`, interfaces with SNOwGLoBES itself:
 First, it can generate either a time series of neutrino spectra at Earth—the
 “neutrinocurve”—or the spectral fluence. The module is then able to
-run the generated data files through all neutrino detector models available in
-SNOwGLoBES to compute the expected event rates before collating the
-output from SNOwGLoBES into a signal data file per detector per interaction channel.
+run the generated data files through SNOwGLoBES, which computes the expected
+event rates in different neutrino detector models, before collating the output
+from SNOwGLoBES into a signal data file per detector per interaction channel.
 
 Instead of using it as a complete simulation pipeline, SNEWPY can also be
 integrated into other software thanks to its modular design.

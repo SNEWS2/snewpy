@@ -30,7 +30,6 @@ import re
 import sys
 
 import logging
-logging.basicConfig(level=logging.INFO)
 
 import tarfile
 import h5py
