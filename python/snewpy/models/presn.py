@@ -21,8 +21,8 @@ def _interp_E(e0, v0, axis=1):
 
 def _interp_TE(times, energies, array, ax_t=1, ax_e=2):
     def _f(t, E):
-        a_t = _interp_T(times, array, axis=1)(t)
-        a_te = _interp_E(energies, a_t, axis=2)(E)
+        a_t = _interp_T(times, array, axis=ax_t)(t)
+        a_te = _interp_E(energies, a_t, axis=ax_e)(E)
         return a_te
 
     return _f
