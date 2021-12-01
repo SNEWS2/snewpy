@@ -9,11 +9,25 @@ from astropy.units.quantity import Quantity
 from scipy.special import loggamma
 
 from snewpy.neutrino import Flavor
+from functools import wraps
+
+def _wrap_init(init, check):
+    @wraps(init)
+    def _wrapper(self, *arg, **kwargs):
+        init(self,*arg,**kwargs)
+        check(self)
+    return _wrapper
 
 
 class SupernovaModel(ABC):
     """Base class defining an interface to a supernova model."""
-    metadata = {}
+
+    def __init_subclass__(cls, **kwargs):
+        """Hook to modify the subclasses on creation"""
+        cls.metadata = {}
+        super().__init_subclass__(**kwargs)
+        cls.__init__ = _wrap_init(cls.__init__, cls.__post_init_check)
+
     def __init__(self):
         pass
 
@@ -29,7 +43,14 @@ class SupernovaModel(ABC):
         for name, v in self.metadata.items():
             s +=[f"{name:16} : {v}"]
         return '\n'.join(s)
-        
+
+    def __post_init_check(self):
+        """A function to check model integrity after initialization"""
+        if hasattr(self, 'time')==False:
+            clsname = self.__class__.__name__
+            raise TypeError(f'"{clsname}.time" attribute must be initialized in {clsname}.__init__!')
+
+
     def _repr_markdown_(self):
         """Markdown representation of the model, for Jupyter notebooks.
         """
@@ -49,13 +70,12 @@ class SupernovaModel(ABC):
                     s += [f"|{name} | {v} |"]
         return '\n'.join(s)
 
-    @abstractmethod
     def get_time(self):
         """Returns
         -------
             returns array of snapshot times from the simulation
         """
-        pass
+        return self.time
 
     @abstractmethod
     def get_initial_spectra(self, t, E, flavors=Flavor):
@@ -153,16 +173,6 @@ def get_value(x):
 
 class PinchedModel(SupernovaModel):
     """Subclass that contains spectra/luminosity pinches"""
-
-    def get_time(self):
-        """Get grid of model times.
-
-        Returns
-        -------
-        time : ndarray
-            Grid of times used in the model.
-        """
-        return self.time
 
     def get_initial_spectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity curves before oscillation.

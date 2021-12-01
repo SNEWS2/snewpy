@@ -673,9 +673,6 @@ class Fornax_2019(SupernovaModel):
         
         hx.writeto(filename, overwrite=overwrite)
 
-    def get_time(self):
-        return self.time
-
     def _fact(self, n):
         """Calculate n!.
 
@@ -902,9 +899,6 @@ class Fornax_2021(SupernovaModel):
             # Note factor of 0.25 in nu_x and nu_x_bar.
             factor = 1. if flavor.is_electron else 0.25
             self.luminosity[flavor] = np.sum(dLdE*dE, axis=1) * factor * 1e50 * u.erg/u.s
-
-    def get_time(self):
-        return self.time
 
     def get_initial_spectra(self, t, E, flavors=Flavor, interpolation='linear'):
         """Get neutrino spectra/luminosity curves after oscillation.
