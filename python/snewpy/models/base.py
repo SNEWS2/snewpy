@@ -11,10 +11,11 @@ from scipy.special import loggamma
 from snewpy.neutrino import Flavor
 from functools import wraps
 
+
 def _wrap_init(init, check):
     @wraps(init)
     def _wrapper(self, *arg, **kwargs):
-        init(self,*arg,**kwargs)
+        init(self, *arg, **kwargs)
         check(self)
     return _wrapper
 
@@ -24,31 +25,47 @@ class SupernovaModel(ABC):
 
     def __init_subclass__(cls, **kwargs):
         """Hook to modify the subclasses on creation"""
-        cls.metadata = {}
         super().__init_subclass__(**kwargs)
         cls.__init__ = _wrap_init(cls.__init__, cls.__post_init_check)
 
-    def __init__(self):
-        pass
+    def __init__(self, time, metadata):
+        """Initialize supernova model base class
+        (call this method in the subclass constructor as `super().__init__(time,metadata)`
+
+        Parameters
+        ----------
+        time:
+            Time points where the model flux is defined.
+            Must be array of :class:`Quantity`, with units convertable to "second".
+        metadata:
+            Dict of model parameters <name>:<value>,
+            to be used for printing table in :meth:`__repr__` and :meth:`_repr_markdown_`
+        """
+        self.time = time
+        self.metadata = metadata
 
     def __repr__(self):
         """Default representation of the model.
         """
         mod = f"{self.__class__.__name__} Model"
         try:
-            mod +=f': {self.filename}'
-        except:
+            mod += f': {self.filename}'
+        except AttributeError:
             pass
         s = [mod]
         for name, v in self.metadata.items():
-            s +=[f"{name:16} : {v}"]
+            s += [f"{name:16} : {v}"]
         return '\n'.join(s)
 
     def __post_init_check(self):
         """A function to check model integrity after initialization"""
-        if hasattr(self, 'time')==False:
+        clsname = self.__class__.__name__
+        try:
+            t = self.time
+            m = self.metadata
+        except AttributeError as e:
             clsname = self.__class__.__name__
-            raise TypeError(f'"{clsname}.time" attribute must be initialized in {clsname}.__init__!')
+            raise TypeError(f"Model not initialized. Please call 'SupernovaModel.__init__' within the '{clsname}.__init__'") from e
 
 
     def _repr_markdown_(self):
@@ -173,6 +190,25 @@ def get_value(x):
 
 class PinchedModel(SupernovaModel):
     """Subclass that contains spectra/luminosity pinches"""
+    def __init__(self, luminosity, meanE, pinch, time, metadata):
+        """
+        Parameters
+        ----------
+        luminosity : dict[Flavor, astropy.Quantity['erg/s'] ]
+            Luminosity vs. time array for each flavor
+        meanE : dict[Flavor, astropy.Quantity['MeV'] ]
+            Mean energy vs. time array for each flavor
+        pinch : dict[Flavor,astropy.Quantity['dimensionless']]
+            Spectral shape parameter vs. time array for each flavor
+        time : astropy.Quantity['s']
+            Time values
+        metadata: dict
+            Optional model parameters 
+        """
+        super().__init__(time=time, metadata=metadata)
+        self.luminosity = luminosity
+        self.meanE = meanE
+        self.pinch = pinch
 
     def get_initial_spectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity curves before oscillation.
@@ -234,16 +270,12 @@ class _GarchingArchiveModel(PinchedModel):
         eos : string
             Equation of state used in simulation.
         """
-        self.time = {}
-        self.luminosity = {}
-        self.meanE = {}
-        self.pinch = {}
 
         # Store model metadata.
         self.filename = os.path.basename(filename)
         self.EOS = eos
         self.progenitor_mass = float( (self.filename.split('s'))[1].split('c')[0] )  * u.Msun
-        self.metadata = {
+        metadata = {
             'Progenitor mass':self.progenitor_mass,
             'EOS':self.EOS,
             }
@@ -277,17 +309,21 @@ class _GarchingArchiveModel(PinchedModel):
                 mergtab[_aname].fill_value = 0.
         simtab = mergtab.filled()
 
-        self.time = simtab['TIME'].to('s')
-
+        time = simtab['TIME'].to('s')
+        luminosity = {}
+        meanE = {}
+        pinch = {}
         for flavor in Flavor:
             # Set the dictionary of luminosity, mean energy, and shape
             # parameter keyed by NU_E, NU_X, NU_E_BAR, NU_X_BAR.
             _lname  = 'L_{}'.format(flavor.name)
-            self.luminosity[flavor] = simtab[_lname].to('erg/s')
+            luminosity[flavor] = simtab[_lname].to('erg/s')
 
             _ename  = 'E_{}'.format(flavor.name)
-            self.meanE[flavor] = simtab[_ename].to('MeV')
+            meanE[flavor] = simtab[_ename].to('MeV')
 
             _aname  = 'ALPHA_{}'.format(flavor.name)
-            self.pinch[flavor] = simtab[_aname]
+            pinch[flavor] = simtab[_aname]
+
+        super().__init__(luminosity, meanE, pinch, time, metadata)
 
