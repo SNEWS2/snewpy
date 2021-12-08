@@ -210,6 +210,35 @@ class PinchedModel(SupernovaModel):
         self.meanE = meanE
         self.pinch = pinch
 
+    def init_from_simtab(self, simtab, metadata):
+        """ Initialize the PinchedModel using the data from the given table.
+        Parameters
+        ----------
+        simtab: astropy.Table 
+            Should contain columns TIME, {L,E,ALPHA}_NU_{E,E_BAR,X,X_BAR}
+            The values for X_BAR may be missing, then NU_X data will be used
+        metadata: dict
+            Model parameters dict
+        """
+        if not 'L_NU_X_BAR' in simtab:
+            # table only contains NU_E, NU_E_BAR, and NU_X, so double up
+            # the use of NU_X for NU_X_BAR.
+            for val in ['L','E','ALPHA']:
+                simtab[f'{val}_NU_X_BAR'] = simtab[f'{val}_NU_X']
+        # Get grid of model times.
+        time = simtab['TIME'] << u.s
+        # Set up dictionary of luminosity, mean energy and shape parameter
+        # alpha, keyed by neutrino flavor (NU_E, NU_X, NU_E_BAR, NU_X_BAR).
+        self.luminosity = {}
+        self.meanE = {}
+        self.pinch = {}
+        for f in Flavor:
+            self.luminosity[f] = simtab[f'L_{f.name}'] << u.erg/u.s
+            self.meanE[f] = simtab[f'E_{f.name}'] << u.MeV
+            self.pinch[f] = simtab[f'ALPHA_{f.name}']
+        super().__init__(time, metadata)
+        
+
     def get_initial_spectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity curves before oscillation.
 
