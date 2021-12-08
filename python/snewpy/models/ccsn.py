@@ -50,7 +50,7 @@ class Analytic3Species(PinchedModel):
 
         simtab = Table.read(filename,format='ascii')
         self.filename = filename
-        self.init_from_simtab(simtab, metadata={})
+        super().__init__(simtab, metadata={})
 
 
 class Nakazato_2013(PinchedModel):
@@ -88,7 +88,7 @@ class Nakazato_2013(PinchedModel):
         # Read FITS table using the astropy reader.
         simtab = Table.read(filename)
         self.filename = os.path.basename(filename)
-        self.init_from_simtab(simtab, metadata)
+        super().__init__(simtab, metadata)
 
 class Sukhbold_2015(PinchedModel):
     """Set up a model based on simulations from Sukhbold et al., ApJ 821:38,2016. Models were shared privately by email.
@@ -114,7 +114,7 @@ class Sukhbold_2015(PinchedModel):
         # Read FITS table using the astropy unified Table reader.
         simtab = Table.read(filename)
         self.filename = os.path.basename(filename)
-        self.init_from_simtab(simtab, metadata)
+        super().__init__(simtab, metadata)
 
 class Tamborra_2014(_GarchingArchiveModel):
     """Set up a model based on 3D simulations from [Tamborra et al., PRD 90:045032, 2014](https://arxiv.org/abs/1406.0006). Data files are from the Garching Supernova Archive.
@@ -181,7 +181,7 @@ class OConnor_2013(PinchedModel):
             'Progenitor mass':self.progenitor_mass,
             'EOS':self.EOS,
         }
-        self.init_from_simtab(simtab, metadata)
+        super().__init__(simtab, metadata)
 
 class OConnor_2015(PinchedModel):
     """Set up a model based on the black hole formation simulation in O'Connor (2015). 
@@ -222,7 +222,7 @@ class OConnor_2015(PinchedModel):
             'EOS':self.EOS,
         }
 
-        self.init_from_simtab(simtab, metadata)
+        super().__init__(simtab, metadata)
 
 class Zha_2021(PinchedModel):
     """Set up a model based on the hadron-quark phse transition models from Zha et al. 2021. 
@@ -270,7 +270,7 @@ class Zha_2021(PinchedModel):
             'Progenitor mass':self.progenitor_mass,
             'EOS':self.EOS,
         }
-        self.init_from_simtab(simtab, metadata)
+        super().__init__(simtab, metadata)
         
 class Warren_2020(PinchedModel):
     """Set up a model based on simulations from Warren et al., ApJ 898:139, 2020.
@@ -321,7 +321,7 @@ class Warren_2020(PinchedModel):
             'Turb. mixing param.':self.turbmixing_param,
             'EOS':self.EOS,
         }
-        self.init_from_simtab(simtab, metadata)
+        super().__init__(simtab, metadata)
         
 
 class Kuroda_2020(PinchedModel):
@@ -358,7 +358,7 @@ class Kuroda_2020(PinchedModel):
             # There is no pinch parameter so use alpha=2.0.
             simtab[f'ALPHA_{f.name}'] = np.full_like(simtab[f'E_{f.name}'].value, 2.)
 
-        self.init_from_simtab(simtab, metadata)
+        super().__init__(simtab, metadata)
 
 class Fornax_2019(SupernovaModel):
     """Model based 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019. Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/.

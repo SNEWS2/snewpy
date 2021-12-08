@@ -190,28 +190,9 @@ def get_value(x):
 
 class PinchedModel(SupernovaModel):
     """Subclass that contains spectra/luminosity pinches"""
-    def __init__(self, luminosity, meanE, pinch, time, metadata):
-        """
-        Parameters
-        ----------
-        luminosity : dict[Flavor, astropy.Quantity['erg/s'] ]
-            Luminosity vs. time array for each flavor
-        meanE : dict[Flavor, astropy.Quantity['MeV'] ]
-            Mean energy vs. time array for each flavor
-        pinch : dict[Flavor,astropy.Quantity['dimensionless']]
-            Spectral shape parameter vs. time array for each flavor
-        time : astropy.Quantity['s']
-            Time values
-        metadata: dict
-            Optional model parameters 
-        """
-        super().__init__(time=time, metadata=metadata)
-        self.luminosity = luminosity
-        self.meanE = meanE
-        self.pinch = pinch
-
-    def init_from_simtab(self, simtab, metadata):
+    def __init__(self, simtab, metadata):
         """ Initialize the PinchedModel using the data from the given table.
+
         Parameters
         ----------
         simtab: astropy.Table 
@@ -337,22 +318,5 @@ class _GarchingArchiveModel(PinchedModel):
                 mergtab[_ename].fill_value = 0.
                 mergtab[_aname].fill_value = 0.
         simtab = mergtab.filled()
-
-        time = simtab['TIME'].to('s')
-        luminosity = {}
-        meanE = {}
-        pinch = {}
-        for flavor in Flavor:
-            # Set the dictionary of luminosity, mean energy, and shape
-            # parameter keyed by NU_E, NU_X, NU_E_BAR, NU_X_BAR.
-            _lname  = 'L_{}'.format(flavor.name)
-            luminosity[flavor] = simtab[_lname].to('erg/s')
-
-            _ename  = 'E_{}'.format(flavor.name)
-            meanE[flavor] = simtab[_ename].to('MeV')
-
-            _aname  = 'ALPHA_{}'.format(flavor.name)
-            pinch[flavor] = simtab[_aname]
-
-        super().__init__(luminosity, meanE, pinch, time, metadata)
+        super().__init__(simtab, metadata)
 
