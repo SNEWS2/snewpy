@@ -11,28 +11,18 @@ Updated summer 2020 by Jim Kneller & Arkin Worlikar. Subsequent updates
 provided by the SNEWS team.
 """
 
-from enum import IntEnum
-
-import astropy
-from astropy.io import ascii, fits
-from astropy.table import Table, join
-from astropy.units.quantity import Quantity
-
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-
-import numpy as np
-from scipy.interpolate import interp1d
-from scipy.special import loggamma, gamma, lpmv
-
-import os
-import re
-import sys
-
 import logging
-
+import os
+import sys
 import tarfile
+
 import h5py
+import numpy as np
+from astropy import units as u
+from astropy.io import ascii, fits
+from astropy.table import Table
+from scipy.special import gamma, lpmv
+import re
 
 try:
     import healpy as hp
@@ -40,10 +30,9 @@ except ImportError:
     pass
 
 from snewpy.neutrino import Flavor
-from snewpy.flavor_transformation import *
+from .base import PinchedModel, SupernovaModel, _GarchingArchiveModel
 
-from .base import SupernovaModel, _GarchingArchiveModel,PinchedModel
- 
+
 class Analytic3Species(PinchedModel):
     """Allow to generate an analytic model given total luminosity,
     average energy, and rms or pinch, for each species.
@@ -60,21 +49,7 @@ class Analytic3Species(PinchedModel):
 
         simtab = Table.read(filename,format='ascii')
         self.filename = filename
-        self.luminosity = {}
-        self.meanE = {}
-        self.pinch = {}
-
-        # Get grid of model times.
-        self.time = simtab['TIME'] * u.s
-
-        for flavor in Flavor:
-            # Note: file only contains NU_E, NU_E_BAR, and NU_X, so double up
-            # the use of NU_X for NU_X_BAR.
-            _flav = Flavor.NU_X if flavor == Flavor.NU_X_BAR else flavor
-
-            self.luminosity[flavor] = simtab['L_{}'.format(_flav.name)] * u.erg/u.s
-            self.meanE[flavor] = simtab['E_{}'.format(_flav.name)] * u.MeV
-            self.pinch[flavor] = simtab['ALPHA_{}'.format(_flav.name)]
+        super().__init__(simtab, metadata={})
 
 
 class Nakazato_2013(PinchedModel):
@@ -103,7 +78,7 @@ class Nakazato_2013(PinchedModel):
             self.revival_time = 0 * u.ms
             self.EOS = filename.split('-')[-4].upper()
 
-        self.metadata = {
+        metadata = {
             'Progenitor mass':self.progenitor_mass,
             'EOS':self.EOS,
             'Metallicity':self.metallicity,
@@ -112,24 +87,7 @@ class Nakazato_2013(PinchedModel):
         # Read FITS table using the astropy reader.
         simtab = Table.read(filename)
         self.filename = os.path.basename(filename)
-
-        # Get grid of model times.
-        self.time = simtab['TIME'].to('s')
-
-        # Set up dictionary of luminosity, mean energy and shape parameter
-        # alpha, keyed by neutrino flavor (NU_E, NU_X, NU_E_BAR, NU_X_BAR).
-        self.luminosity = {}
-        self.meanE = {}
-        self.pinch = {}
-
-        for flavor in Flavor:
-            # Note: file only contains NU_E, NU_E_BAR, and NU_X, so double up
-            # the use of NU_X for NU_X_BAR.
-            _flav = Flavor.NU_X if flavor == Flavor.NU_X_BAR else flavor
-
-            self.luminosity[flavor] = simtab['L_{}'.format(_flav.name)].to('erg/s')
-            self.meanE[flavor] = simtab['E_{}'.format(_flav.name)].to('MeV')
-            self.pinch[flavor] = simtab['ALPHA_{}'.format(_flav.name)]
+        super().__init__(simtab, metadata)
 
 
 class Sukhbold_2015(PinchedModel):
@@ -148,7 +106,7 @@ class Sukhbold_2015(PinchedModel):
         self.progenitor_mass = float(filename.split('-')[-1].strip('z%.fits')) * u.Msun
         self.EOS = filename.split('-')[-2]
 
-        self.metadata = {
+        metadata = {
             'Progenitor mass':self.progenitor_mass,
             'EOS':self.EOS,
             }
@@ -156,21 +114,7 @@ class Sukhbold_2015(PinchedModel):
         # Read FITS table using the astropy unified Table reader.
         simtab = Table.read(filename)
         self.filename = os.path.basename(filename)
-
-        # Get grid of model times.
-        self.time = simtab['TIME'].to('s')
-
-        # Set up dictionary of luminosity, mean energy, and shape parameter,
-        # keyed by neutrino flavor (NU_E, NU_X, NU_E_BAR, NU_X_BAR).
-        self.luminosity = {}
-        self.meanE = {}
-        self.pinch = {}
-
-        for flavor in Flavor:
-            self.luminosity[flavor] = simtab['L_{}'.format(flavor.name)].to('erg/s')
-            self.meanE[flavor] = simtab['E_{}'.format(flavor.name)].to('MeV')
-            self.pinch[flavor] = simtab['ALPHA_{}'.format(flavor.name)]
-
+        super().__init__(simtab, metadata)
 
 class Tamborra_2014(_GarchingArchiveModel):
     """Set up a model based on 3D simulations from [Tamborra et al., PRD 90:045032, 2014](https://arxiv.org/abs/1406.0006). Data files are from the Garching Supernova Archive.
@@ -194,7 +138,6 @@ class Walk_2019(_GarchingArchiveModel):
     PRD 101:123013, 2019](https://arxiv.org/abs/1910.12971). Data files are
     from the Garching Supernova Archive.
     """
-
     pass
 
 
@@ -234,27 +177,12 @@ class OConnor_2013(PinchedModel):
         self.EOS = eos
         self.progenitor_mass = mass * u.Msun
 
-        self.metadata = {
+        metadata = {
             'Progenitor mass':self.progenitor_mass,
             'EOS':self.EOS,
         }
-        # Get grid of model times.
-        self.time = simtab['TIME'] * u.s
+        super().__init__(simtab, metadata)
 
-        # Set up dictionary of luminosity, mean energy and shape parameter
-        # alpha, keyed by neutrino flavor (NU_E, NU_X, NU_E_BAR, NU_X_BAR).
-        self.luminosity = {}
-        self.meanE = {}
-        self.pinch = {}
-
-        for flavor in Flavor:
-            # Note: file only contains NU_E, NU_E_BAR, and NU_X, so double up
-            # the use of NU_X for NU_X_BAR.
-            _flav = Flavor.NU_X if flavor == Flavor.NU_X_BAR else flavor
-
-            self.luminosity[flavor] = simtab['L_{}'.format(_flav.name)] * u.erg/u.s
-            self.meanE[flavor] = simtab['E_{}'.format(_flav.name)] * u.MeV
-            self.pinch[flavor] = simtab['ALPHA_{}'.format(_flav.name)]
 
 class OConnor_2015(PinchedModel):
     """Set up a model based on the black hole formation simulation in O'Connor (2015). 
@@ -290,27 +218,12 @@ class OConnor_2015(PinchedModel):
         self.EOS = eos
         self.progenitor_mass = 40 * u.Msun
 
-        self.metadata = {
+        metadata = {
             'Progenitor mass':self.progenitor_mass,
             'EOS':self.EOS,
         }
-        # Get grid of model times.
-        self.time = simtab['TIME'] * u.s
 
-        # Set up dictionary of luminosity, mean energy and shape parameter
-        # alpha, keyed by neutrino flavor (NU_E, NU_X, NU_E_BAR, NU_X_BAR).
-        self.luminosity = {}
-        self.meanE = {}
-        self.pinch = {}
-
-        for flavor in Flavor:
-            # Note: file only contains NU_E, NU_E_BAR, and NU_X, so double up
-            # the use of NU_X for NU_X_BAR.
-            _flav = Flavor.NU_X if flavor == Flavor.NU_X_BAR else flavor
-
-            self.luminosity[flavor] = simtab['L_{}'.format(_flav.name)] * u.erg/u.s
-            self.meanE[flavor] = simtab['E_{}'.format(_flav.name)] * u.MeV
-            self.pinch[flavor] = simtab['ALPHA_{}'.format(_flav.name)]
+        super().__init__(simtab, metadata)
 
 class Zha_2021(PinchedModel):
     """Set up a model based on the hadron-quark phse transition models from Zha et al. 2021. 
@@ -354,27 +267,12 @@ class Zha_2021(PinchedModel):
         self.EOS = eos
         self.progenitor_mass =  float(basename[1:])* u.Msun
 
-        self.metadata = {
+        metadata = {
             'Progenitor mass':self.progenitor_mass,
             'EOS':self.EOS,
         }
-        # Get grid of model times.
-        self.time = simtab['TIME'] * u.s
+        super().__init__(simtab, metadata)
 
-        # Set up dictionary of luminosity, mean energy and shape parameter
-        # alpha, keyed by neutrino flavor (NU_E, NU_X, NU_E_BAR, NU_X_BAR).
-        self.luminosity = {}
-        self.meanE = {}
-        self.pinch = {}
-
-        for flavor in Flavor:
-            # Note: file only contains NU_E, NU_E_BAR, and NU_X, so double up
-            # the use of NU_X for NU_X_BAR.
-            _flav = Flavor.NU_X if flavor == Flavor.NU_X_BAR else flavor
-
-            self.luminosity[flavor] = simtab['L_{}'.format(_flav.name)] * u.erg/u.s
-            self.meanE[flavor] = simtab['E_{}'.format(_flav.name)] * u.MeV
-            self.pinch[flavor] = simtab['ALPHA_{}'.format(_flav.name)]
 
 class Warren_2020(PinchedModel):
     """Set up a model based on simulations from Warren et al., ApJ 898:139, 2020.
@@ -420,28 +318,13 @@ class Warren_2020(PinchedModel):
         self.progenitor_mass = float(filename.split('_')[-1][1:-3]) * u.Msun
         self.turbmixing_param = float(filename.split('_')[-2].strip('a%'))
 
-        self.metadata = {
+        metadata = {
             'Progenitor mass':self.progenitor_mass,
             'Turb. mixing param.':self.turbmixing_param,
             'EOS':self.EOS,
         }
-        # Get grid of model times.
-        self.time = simtab['TIME'] * u.s
+        super().__init__(simtab, metadata)
 
-        # Set up dictionary of luminosity, mean energy and shape parameter
-        # alpha, keyed by neutrino flavor (NU_E, NU_X, NU_E_BAR, NU_X_BAR).
-        self.luminosity = {}
-        self.meanE = {}
-        self.pinch = {}
-
-        for flavor in Flavor:
-            # Note: file only contains NU_E, NU_E_BAR, and NU_X, so double up
-            # the use of NU_X for NU_X_BAR.
-            _flav = Flavor.NU_X if flavor == Flavor.NU_X_BAR else flavor
-
-            self.luminosity[flavor] = simtab['L_{}'.format(_flav.name)] * u.erg/u.s
-            self.meanE[flavor] = simtab['E_{}'.format(_flav.name)] * u.MeV
-            self.pinch[flavor] = simtab['ALPHA_{}'.format(_flav.name)]
 
 class Kuroda_2020(PinchedModel):
     """Set up a model based on simulations from Kuroda et al. (2020)."""
@@ -461,7 +344,7 @@ class Kuroda_2020(PinchedModel):
         self.EOS = eos
         self.progenitor_mass = mass
 
-        self.metadata = {
+        metadata = {
             'Progenitor mass':self.progenitor_mass,
             'EOS':self.EOS,
             }
@@ -469,28 +352,15 @@ class Kuroda_2020(PinchedModel):
         simtab = Table.read(filename, format='ascii')
 
         # Get grid of model times.
-        self.time = (simtab['Tpb[ms]'] * u.ms).to('s')
-
-        # Set up dictionary of luminosity, mean energy and shape parameter
-        # alpha, keyed by neutrino flavor (NU_E, NU_X, NU_E_BAR, NU_X_BAR).
-        self.luminosity = {}
-        self.meanE = {}
-        self.pinch = {}
-
-        for flavor in Flavor:
-            # Note: file only contains NU_E, NU_E_BAR, and NU_X, so double up
-            # the use of NU_X for NU_X_BAR.
-            _flav = Flavor.NU_X if flavor == Flavor.NU_X_BAR else flavor
-            if _flav.is_neutrino:
-                _fkey = _flav.name.lower()
-            else:
-                _fkey = _flav.name.strip('%_BAR').lower().replace('_', '_a')
-
-            self.luminosity[flavor] = simtab['<L{}>'.format(_fkey)] * 1e51 * u.erg/u.s
-            self.meanE[flavor] = simtab['<E{}>'.format(_fkey)] * u.MeV
-
+        simtab['TIME'] = simtab['Tpb[ms]'] << u.ms
+        for f in [Flavor.NU_E, Flavor.NU_E_BAR, Flavor.NU_X]:
+            fkey = re.sub('(E|X)_BAR',r'A\g<1>', f.name).lower()
+            simtab[f'L_{f.name}'] = simtab[f'<L{fkey}>'] * 1e51 << u.erg / u.s
+            simtab[f'E_{f.name}'] = simtab[f'<E{fkey}>'] << u.MeV
             # There is no pinch parameter so use alpha=2.0.
-            self.pinch[flavor] = np.full_like(self.meanE[flavor].value, 2.)
+            simtab[f'ALPHA_{f.name}'] = np.full_like(simtab[f'E_{f.name}'].value, 2.)
+
+        super().__init__(simtab, metadata)
 
 class Fornax_2019(SupernovaModel):
     """Model based 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019. Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/.
@@ -683,9 +553,6 @@ class Fornax_2019(SupernovaModel):
             hx.append(hdu_flux)
         
         hx.writeto(filename, overwrite=overwrite)
-
-    def get_time(self):
-        return self.time
 
     def _fact(self, n):
         """Calculate n!.
@@ -914,8 +781,6 @@ class Fornax_2021(SupernovaModel):
             factor = 1. if flavor.is_electron else 0.25
             self.luminosity[flavor] = np.sum(dLdE*dE, axis=1) * factor * 1e50 * u.erg/u.s
 
-    def get_time(self):
-        return self.time
 
     def get_initial_spectra(self, t, E, flavors=Flavor, interpolation='linear'):
         """Get neutrino spectra/luminosity curves after oscillation.
