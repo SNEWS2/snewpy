@@ -43,10 +43,11 @@ class SupernovaModel(ABC):
         """
         self.time = time
         self.metadata = metadata
-
+        
     def __repr__(self):
         """Default representation of the model.
         """
+
         mod = f"{self.__class__.__name__} Model"
         try:
             mod += f': {self.filename}'
@@ -66,7 +67,6 @@ class SupernovaModel(ABC):
         except AttributeError as e:
             clsname = self.__class__.__name__
             raise TypeError(f"Model not initialized. Please call 'SupernovaModel.__init__' within the '{clsname}.__init__'") from e
-
 
     def _repr_markdown_(self):
         """Markdown representation of the model, for Jupyter notebooks.
@@ -218,7 +218,7 @@ class PinchedModel(SupernovaModel):
             self.meanE[f] = simtab[f'E_{f.name}'] << u.MeV
             self.pinch[f] = simtab[f'ALPHA_{f.name}']
         super().__init__(time, metadata)
-        
+
 
     def get_initial_spectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity curves before oscillation.
@@ -319,4 +319,5 @@ class _GarchingArchiveModel(PinchedModel):
                 mergtab[_aname].fill_value = 0.
         simtab = mergtab.filled()
         super().__init__(simtab, metadata)
+
 

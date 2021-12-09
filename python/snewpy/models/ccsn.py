@@ -30,7 +30,6 @@ except ImportError:
     pass
 
 from snewpy.neutrino import Flavor
-
 from .base import PinchedModel, SupernovaModel, _GarchingArchiveModel
 
 
@@ -89,6 +88,7 @@ class Nakazato_2013(PinchedModel):
         simtab = Table.read(filename)
         self.filename = os.path.basename(filename)
         super().__init__(simtab, metadata)
+
 
 class Sukhbold_2015(PinchedModel):
     """Set up a model based on simulations from Sukhbold et al., ApJ 821:38,2016. Models were shared privately by email.
@@ -183,6 +183,7 @@ class OConnor_2013(PinchedModel):
         }
         super().__init__(simtab, metadata)
 
+
 class OConnor_2015(PinchedModel):
     """Set up a model based on the black hole formation simulation in O'Connor (2015). 
     """
@@ -271,7 +272,8 @@ class Zha_2021(PinchedModel):
             'EOS':self.EOS,
         }
         super().__init__(simtab, metadata)
-        
+
+
 class Warren_2020(PinchedModel):
     """Set up a model based on simulations from Warren et al., ApJ 898:139, 2020.
     Neutrino fluxes available at https://doi.org/10.5281/zenodo.3667908."""
@@ -322,7 +324,7 @@ class Warren_2020(PinchedModel):
             'EOS':self.EOS,
         }
         super().__init__(simtab, metadata)
-        
+
 
 class Kuroda_2020(PinchedModel):
     """Set up a model based on simulations from Kuroda et al. (2020)."""
@@ -778,6 +780,7 @@ class Fornax_2021(SupernovaModel):
             # Note factor of 0.25 in nu_x and nu_x_bar.
             factor = 1. if flavor.is_electron else 0.25
             self.luminosity[flavor] = np.sum(dLdE*dE, axis=1) * factor * 1e50 * u.erg/u.s
+
 
     def get_initial_spectra(self, t, E, flavors=Flavor, interpolation='linear'):
         """Get neutrino spectra/luminosity curves after oscillation.
