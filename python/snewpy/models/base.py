@@ -274,8 +274,8 @@ class PinchedModel(SupernovaModel):
         # Make sure input time uses the same units as the model time grid, or
         # the interpolation will not work correctly.
         t = t.to(self.time.unit)
-
-        E  = np.expand_dims(E, axis=1)
+        E = np.array(E,ndmin=1)
+        E = np.expand_dims(E, axis=1)
         for flavor in flavors:
             # Use np.interp rather than scipy.interpolate.interp1d because it
             # can handle dimensional units (astropy.Quantity).
