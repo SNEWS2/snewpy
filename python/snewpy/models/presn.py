@@ -39,7 +39,6 @@ class Odrzywolek_2010(SupernovaModel):
         )
         # interpolated in time
         self.df_t = _interp_T(df.index, df)
-        self.times = df.index.to_numpy()
         self.factor = {}
         for f in Flavor:
             if f.is_electron:
@@ -49,10 +48,9 @@ class Odrzywolek_2010(SupernovaModel):
                 self.factor[f] = 0.36
         self.filename = Path(fname).stem
         self.progenitor_mass = float(self.filename.split('_')[0][1:]) * u.Msun
-        self.metadata = {'Progenitor Mass': self.progenitor_mass}
-
-    def get_time(self):
-        return -self.times * u.s
+        time = -df.index.to_numpy() << u.s
+        metadata = {'Progenitor Mass': self.progenitor_mass}
+        super().__init__(time, metadata)
 
     def get_initial_spectra(self, t, E, flavors=Flavor):
         # negative t for time before SN
@@ -80,27 +78,24 @@ class Patton_2019(SupernovaModel):
         )
 
         df = df.set_index(["time", "Enu"])
-        self.times = df.index.levels[0].to_numpy()
-        self.energies = df.index.levels[1].to_numpy()
+        times = df.index.levels[0].to_numpy()
+        energies = df.index.levels[1].to_numpy()
         df = df.unstack("Enu")
         # make a 3d array
         self.array = np.stack([df[f] for f in Flavor], axis=0)
         self.interpolated = _interp_TE(
-            self.times, self.energies, self.array, ax_t=1, ax_e=2
+            times, energies, self.array, ax_t=1, ax_e=2
         )
         self.filename = Path(fname).stem
         self.progenitor_mass = float(self.filename.split('_')[-1].rstrip('SolarMass')) * u.Msun
-        self.metadata = {'Progenitor Mass': self.progenitor_mass}
+        metadata = {'Progenitor Mass': self.progenitor_mass}
+        super().__init__(times << u.hour, metadata)
 
     def get_initial_spectra(self, t, E, flavors=Flavor):
         t = np.array(-t.to_value("hour"), ndmin=1)
         E = np.array(E.to_value("MeV"), ndmin=1)
         flux = self.interpolated(t, E) / (u.MeV * u.s)
         return {f: flux[f].T for f in flavors}
-
-    def get_time(self):
-        return self.times * u.hour
-
 
 class Kato_2017(SupernovaModel):
     def __init__(self, path):
@@ -119,23 +114,18 @@ class Kato_2017(SupernovaModel):
                 energies, dNdE = np.loadtxt(f"{path}/{file_base}{s:05.0f}.dat").T
                 d2NdEdT += [dNdE]
             fluxes[flv] = np.stack(d2NdEdT)
-        self.energies = energies
-        self.times = times
         self.array = np.stack([fluxes[f] for f in Flavor], axis=0)
         self.interpolated = _interp_TE(
-            self.times, self.energies, self.array, ax_t=1, ax_e=2
+            times, energies, self.array, ax_t=1, ax_e=2
         )
         self.filename = Path(path).stem
         self.progenitor_mass = float(self.filename.strip('m')) * u.Msun
-        self.metadata = {'Progenitor Mass': self.progenitor_mass}
+        metadata = {'Progenitor Mass': self.progenitor_mass}
+        super().__init__(times << u.s, metadata)
 
     def get_initial_spectra(self, t, E, flavors=Flavor):
         t = np.array(-t.to_value("s"), ndmin=1)
         E = np.array(E.to_value("MeV"), ndmin=1)
         flux = self.interpolated(t, E) / (u.MeV * u.s)
         return {f: flux[f].T for f in flavors}
-
-    def get_time(self):
-        return self.times * u.hour
-
 
