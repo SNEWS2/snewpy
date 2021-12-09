@@ -19,6 +19,7 @@ Table of Contents
    gettingstarted
    snowglobes
    models
+   flux
    transformations
    neutrino
    contributing
