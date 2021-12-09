@@ -1,9 +1,13 @@
+from __future__ import annotations
+from typing import Union, Optional, List
+
 from .neutrino import Flavor
 from .flavor_transformation import FlavorTransformation
 from scipy.integrate import cumulative_trapezoid
 from scipy.interpolate import interp1d
 import numpy as np
 from astropy import units as u
+
 
 class Flux(object):
     """Neutrino flux container. This is a helper class to store and manipulate 
@@ -16,7 +20,7 @@ class Flux(object):
         data: np.ndarray 
             Flux values in N+1 dimensions array stored by (flavor,axis1,axis2...,axisN)
         axes: Dict[str,Iterable(float)]
-            List of axes names and their values. The order and sizes of the axes 
+            List of dimension names and their values. The order and sizes of the axes 
             should follow the dimensions of the input data
         Raises
         ------
@@ -26,15 +30,25 @@ class Flux(object):
 
         self.array = data
         self.axes= {a:u.Quantity(axes[a]) for a in axes}
-        self._axnum = {name:num for num,name in enumerate(self.axes)}
+        self._axnum  = {name:num for num,name in enumerate(self.axes)}
+        self._axname = list(self.axes)
         self._integral = {}
         self.shape = self.array.shape
         shape_axes  = tuple(len(ax) for ax in self.axes.values())
         if self.shape!=shape_axes:
             raise ValueError(f'Inconsistent shape: array {self.shape} vs axes{shape_axes}')
             
-    def __getitem__(self, args):
-        """ Slice the flux array and produce a new flux object"""
+    def __getitem__(self, args: Union[Union[int,slice], List[Union[int,slice]]]) -> Flux:
+        """ Slice the flux array and produce a new flux object 
+        Parameters
+        ----------
+        args: slice | List[slice]
+            Slices indices for each dimension to slice on
+        Returns
+        -------
+        Flux
+            New Flux object with the array and all the dimensions are slices of initial
+        """
         try: 
             iter(args)
         except:
@@ -48,6 +62,30 @@ class Flux(object):
 
     def get_axis_num(self, name):
         return self._axnum[name]
+
+    def get_axis_name(self, num):
+        return self._axname[num]
+
+    def get_axis(self, axis: Union[str, int]) -> tuple[str, int]:
+        """ Get the tuple of (axis name, axis number) for a given axis.
+        This is a utility function.
+        Parameters
+        ----------
+        axis: str | int
+            name or number of dimension
+
+        Returns
+        -------
+        tuple[str, int]
+            axis name, axis number
+        """
+        if isinstance(axis, int):
+            axname = self.get_axis_name(axis)
+            axnum = axis
+        else:
+            axnum = self.get_axis_num(axis)
+            axname = axis
+        return axname, axnum
         
     def _init_integral(self, axname):
         x = self.axes[axname]
@@ -55,35 +93,69 @@ class Flux(object):
         cumulative = cumulative_trapezoid(self.array, x=x, axis=axnum, initial=0)
         self._integral[axname] = interp1d(x=x, y=cumulative, fill_value=0, axis = axnum, bounds_error=False)
 
-    def squeeze(self, axname=None):
-        """remove a given dimension"""
-        if axname is None:
-            newarr  = self.array.squeeze()
-            newaxes = {name:ax for name,ax in self.axes.items() if len(ax)>1}
-        else:
-            axnum = self.get_axis_num(axname)
-            newarr = self.array.squeeze(axnum)
-            newaxes = {**self.axes}
-            newaxes.pop(axname)
-        return Flux(newarr, **newaxes)
+    def squeeze(self, axis: Optional[Union[str, int]] = None) -> Flux:
+        """remove a given dimension with length 1
 
-    def integral(self, axname, limits=None):
-        """ Integrate the flux along a specific axis `axname` within limits.
         Parameters
         ----------
-        axname: str
-            name of the axes to integrate on
-        limits: tuple[float, float] |  Iterable[tuple[float,float]]
-            Integration limits, a pair of values (xMin,xMax) or list of such pairs.
+        axis: str | int | None
+            name or number of dimension to be squeezed. 
+            If None - remove all dimensions with len=1
 
         Returns
         -------
         Flux
-            The flux integrated along the given axis with linear interpolation
+            A flux with reduced dimension(s)
+        """
+        if axis is None:
+            newarr  = self.array.squeeze()
+            newaxes = {name:ax for name,ax in self.axes.items() if len(ax)>1}
+        else:
+            axname, axnum = self.get_axis(axis)
+            newarr = self.array.squeeze(axnum)
+            newaxes = {**self.axes}
+            newaxes.pop(axname)
+        return Flux(newarr, **newaxes)
+    
+    def sum(self, axis: Union[str, int]) -> Flux:
+        """ sum flux along given axis, producing a reduced Flux object
+
+        Parameters
+        ----------
+        axis: str | int
+            name or number of the dimension to sum
+        Returns
+        -------
+        Flux
+            Reduced flux summed over given dimension 
+            (its shape will be without that dimension)
+        """
+        axname, axnum = self.get_axis(axis)
+        newaxes = {**self.axes}
+        newaxes.pop(axname)
+        newarr = self.array.sum(axnum)
+        return Flux(newarr, **newaxes)
+
+        
+    def integral(self, axis: Union[str, int], limits=None) -> Flux:
+        """ Integrate the flux along a specific axis `axname` within limits.
+
+        Parameters
+        ----------
+        axis: str | int
+            name or number of the dimension to integrate on
+        limits: tuple[float, float] |  Iterable[tuple[float, float]] | None
+            Integration limits, a pair of values (xMin,xMax) or list of such pairs.
+            Integrate aver the whole range if limits==None
+
+        Returns
+        -------
+        Flux
+            The flux integrated along the given dimension with linear interpolation
         """
 
+        axname, axnum = self.get_axis(axis)
         fint = self._integral.get(axname,self._init_integral(axname))
-        axnum=self.get_axis_num(axname)
         ax = self.axes[axname]
         xmin,xmax = ax.min(), ax.max()
         if limits is None:
