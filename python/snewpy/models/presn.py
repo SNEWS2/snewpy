@@ -28,6 +28,10 @@ def _interp_TE(times, energies, array, ax_t=1, ax_e=2):
     return _f
 
 class Odrzywolek_2010(SupernovaModel):
+    """Set up a presupernova model, based on 
+    [A. Odrzywolek and A. Heger, Acta Phys. Polon. B 41 (2010) 1611.]
+    """
+
     def __init__(self, fname):
         df = pd.read_csv(
             fname,
@@ -67,7 +71,11 @@ class Odrzywolek_2010(SupernovaModel):
         return result
 
 
-class Patton_2019(SupernovaModel):
+class Patton_2017(SupernovaModel):
+    """Set up a presupernova model based on 
+    [Kelly M. Patton et al 2017 ApJ 851 6, 
+     https://doi.org/10.5281/zenodo.2598709]
+    """
     def __init__(self, fname):
         df = pd.read_csv(
             fname,
@@ -98,6 +106,9 @@ class Patton_2019(SupernovaModel):
         return {f: flux[f].T for f in flavors}
 
 class Kato_2017(SupernovaModel):
+    """Set up a presupernova model based on 
+    [Chinami Kato et al 2017 ApJ 848 48]
+    """
     def __init__(self, path):
         fluxes = {}
         #reading the time steps values:
