@@ -1,39 +1,74 @@
-from abc import abstractmethod, ABC
-
-from astropy.io import ascii, fits
-from astropy.table import Table, join
-from astropy.units.quantity import Quantity
+import os
+from abc import ABC, abstractmethod
+from warnings import warn
 
 import numpy as np
-from scipy.interpolate import interp1d
-from scipy.special import loggamma, gamma, lpmv
+from astropy import units as u
+from astropy.table import Table, join
+from astropy.units.quantity import Quantity
+from scipy.special import loggamma
 
-import os
-
-from warnings import warn
 from snewpy.neutrino import Flavor
-from snewpy.flavor_transformation import *
+from functools import wraps
+
 from snewpy.flux import Flux
+
+def _wrap_init(init, check):
+    @wraps(init)
+    def _wrapper(self, *arg, **kwargs):
+        init(self, *arg, **kwargs)
+        check(self)
+    return _wrapper
+
 
 class SupernovaModel(ABC):
     """Base class defining an interface to a supernova model."""
-    def __init__(self):
-        self.metadata = {}
 
+    def __init_subclass__(cls, **kwargs):
+        """Hook to modify the subclasses on creation"""
+        super().__init_subclass__(**kwargs)
+        cls.__init__ = _wrap_init(cls.__init__, cls.__post_init_check)
+
+    def __init__(self, time, metadata):
+        """Initialize supernova model base class
+        (call this method in the subclass constructor as `super().__init__(time,metadata)`
+
+        Parameters
+        ----------
+        time:
+            Time points where the model flux is defined.
+            Must be array of :class:`Quantity`, with units convertable to "second".
+        metadata:
+            Dict of model parameters <name>:<value>,
+            to be used for printing table in :meth:`__repr__` and :meth:`_repr_markdown_`
+        """
+        self.time = time
+        self.metadata = metadata
+        
     def __repr__(self):
         """Default representation of the model.
         """
-        # self.__class__ will be something like 
+
         mod = f"{self.__class__.__name__} Model"
         try:
-            mod +=f': {self.filename}'
-        except:
+            mod += f': {self.filename}'
+        except AttributeError:
             pass
         s = [mod]
         for name, v in self.metadata.items():
-            s +=[f"{name:16} : {v}"]
+            s += [f"{name:16} : {v}"]
         return '\n'.join(s)
-        
+
+    def __post_init_check(self):
+        """A function to check model integrity after initialization"""
+        clsname = self.__class__.__name__
+        try:
+            t = self.time
+            m = self.metadata
+        except AttributeError as e:
+            clsname = self.__class__.__name__
+            raise TypeError(f"Model not initialized. Please call 'SupernovaModel.__init__' within the '{clsname}.__init__'") from e
+
     def _repr_markdown_(self):
         """Markdown representation of the model, for Jupyter notebooks.
         """
@@ -53,13 +88,12 @@ class SupernovaModel(ABC):
                     s += [f"|{name} | {v} |"]
         return '\n'.join(s)
 
-    @abstractmethod
     def get_time(self):
         """Returns
         -------
             returns array of snapshot times from the simulation
         """
-        pass
+        return self.time
 
     @abstractmethod
     def get_initial_spectra(self, t, E, flavors=Flavor):
@@ -182,16 +216,35 @@ def get_value(x):
 
 class PinchedModel(SupernovaModel):
     """Subclass that contains spectra/luminosity pinches"""
+    def __init__(self, simtab, metadata):
+        """ Initialize the PinchedModel using the data from the given table.
 
-    def get_time(self):
-        """Get grid of model times.
-
-        Returns
-        -------
-        time : ndarray
-            Grid of times used in the model.
+        Parameters
+        ----------
+        simtab: astropy.Table 
+            Should contain columns TIME, {L,E,ALPHA}_NU_{E,E_BAR,X,X_BAR}
+            The values for X_BAR may be missing, then NU_X data will be used
+        metadata: dict
+            Model parameters dict
         """
-        return self.time
+        if not 'L_NU_X_BAR' in simtab:
+            # table only contains NU_E, NU_E_BAR, and NU_X, so double up
+            # the use of NU_X for NU_X_BAR.
+            for val in ['L','E','ALPHA']:
+                simtab[f'{val}_NU_X_BAR'] = simtab[f'{val}_NU_X']
+        # Get grid of model times.
+        time = simtab['TIME'] << u.s
+        # Set up dictionary of luminosity, mean energy and shape parameter
+        # alpha, keyed by neutrino flavor (NU_E, NU_X, NU_E_BAR, NU_X_BAR).
+        self.luminosity = {}
+        self.meanE = {}
+        self.pinch = {}
+        for f in Flavor:
+            self.luminosity[f] = simtab[f'L_{f.name}'] << u.erg/u.s
+            self.meanE[f] = simtab[f'E_{f.name}'] << u.MeV
+            self.pinch[f] = simtab[f'ALPHA_{f.name}']
+        super().__init__(time, metadata)
+
 
     def get_initial_spectra(self, t, E, flavors=Flavor):
         """Get neutrino spectra/luminosity curves before oscillation.
@@ -258,16 +311,12 @@ class _GarchingArchiveModel(PinchedModel):
         eos : string
             Equation of state used in simulation.
         """
-        self.time = {}
-        self.luminosity = {}
-        self.meanE = {}
-        self.pinch = {}
 
         # Store model metadata.
         self.filename = os.path.basename(filename)
         self.EOS = eos
         self.progenitor_mass = float( (self.filename.split('s'))[1].split('c')[0] )  * u.Msun
-        self.metadata = {
+        metadata = {
             'Progenitor mass':self.progenitor_mass,
             'EOS':self.EOS,
             }
@@ -300,18 +349,6 @@ class _GarchingArchiveModel(PinchedModel):
                 mergtab[_ename].fill_value = 0.
                 mergtab[_aname].fill_value = 0.
         simtab = mergtab.filled()
+        super().__init__(simtab, metadata)
 
-        self.time = simtab['TIME'].to('s')
-
-        for flavor in Flavor:
-            # Set the dictionary of luminosity, mean energy, and shape
-            # parameter keyed by NU_E, NU_X, NU_E_BAR, NU_X_BAR.
-            _lname  = 'L_{}'.format(flavor.name)
-            self.luminosity[flavor] = simtab[_lname].to('erg/s')
-
-            _ename  = 'E_{}'.format(flavor.name)
-            self.meanE[flavor] = simtab[_ename].to('MeV')
-
-            _aname  = 'ALPHA_{}'.format(flavor.name)
-            self.pinch[flavor] = simtab[_aname]
 
