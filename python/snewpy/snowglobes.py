@@ -19,8 +19,6 @@ There are three basic steps to using SNOwGLoBES from SNEWPY:
     The output tables allow to build the detected neutrino energy spectrum and neutrino time distribution, for each reaction channel or the sum of them.
 """
 
-from __future__ import unicode_literals
-
 import io
 import logging
 import os
@@ -357,7 +355,7 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     np.save(cache_file, result)
     return result 
 
-re_chan_label = re.compile('nu(e|mu|tau)(bar|)_([A-Z][a-z]*)(\d*)_?(.*)')
+re_chan_label = re.compile(r'nu(e|mu|tau)(bar|)_([A-Z][a-z]*)(\d*)_?(.*)')
 def get_channel_label(c):
     mapp = {'nc':'NeutralCurrent',
             'ibd':'Inverse Beta Decay',
