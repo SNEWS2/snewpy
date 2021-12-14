@@ -19,8 +19,6 @@ There are three basic steps to using SNOwGLoBES from SNEWPY:
     The output tables allow to build the detected neutrino energy spectrum and neutrino time distribution, for each reaction channel or the sum of them.
 """
 
-from __future__ import unicode_literals
-
 import io
 import logging
 import os

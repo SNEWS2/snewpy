@@ -7,7 +7,6 @@ snewpy
 Front-end for supernova models which provide neutrino luminosity and spectra.
 """
 
-from __future__ import absolute_import
 from ._version import __version__
 import os
 
