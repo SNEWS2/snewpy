@@ -755,27 +755,31 @@ class Fornax_2021(SupernovaModel):
         self.metadata = {
             'Progenitor mass':self.progenitor_mass,
             }
-        # Conversion of flavor to key name in the model HDF5 file.
-        self._flavorkeys = { Flavor.NU_E : 'nu0',
-                             Flavor.NU_E_BAR : 'nu1',
-                             Flavor.NU_X : 'nu2',
-                             Flavor.NU_X_BAR : 'nu2' }
 
-        # Open HDF5 data file.
-        self._h5file = h5py.File(filename, 'r')
+        # Read time and flux information from HDF5 data file.
+        _h5file = h5py.File(filename, 'r')
 
-        # Get grid of model times.
-        self.time = self._h5file['nu0'].attrs['time'] * u.s
+        self.time = _h5file['nu0'].attrs['time'] * u.s
 
-        # Compute luminosity by integrating over model energy bins.
         self.luminosity = {}
+        self._E = {}
+        self._dLdE = {}
         for flavor in Flavor:
-            key = self._flavorkeys[flavor]
-            dE = np.asarray(self._h5file[key]['degroup'])
+            # Convert flavor to key name in the model HDF5 file
+            key = {Flavor.NU_E: 'nu0',
+                   Flavor.NU_E_BAR: 'nu1',
+                   Flavor.NU_X: 'nu2',
+                   Flavor.NU_X_BAR: 'nu2'}[flavor]
+
+            self._E[flavor] = np.asarray(_h5file[key]['egroup'])
+            self._dLdE[flavor] = {f"g{i}": np.asarray(_h5file[key][f'g{i}']) for i in range(12)}
+
+            # Compute luminosity by integrating over model energy bins.
+            dE = np.asarray(_h5file[key]['degroup'])
             n = len(dE[0])
             dLdE = np.zeros((len(self.time), n), dtype=float)
             for i in range(n):
-                dLdE[:,i] = self._h5file[key]["g{}".format(i)]
+                dLdE[:, i] = self._dLdE[flavor][f"g{i}"]
 
             # Note factor of 0.25 in nu_x and nu_x_bar.
             factor = 1. if flavor.is_electron else 0.25
@@ -813,10 +817,8 @@ class Fornax_2021(SupernovaModel):
         j = (np.abs(t - self.time)).argmin()
 
         for flavor in flavors:
-            key = self._flavorkeys[flavor]
-
             # Energy in units of MeV.
-            _E = self._h5file[key]['egroup'][j]
+            _E = self._E[flavor][j]
 
             # Model flavors (internally) are nu_e, nu_e_bar, and nu_x, which stands
             # for nu_mu(_bar) and nu_tau(_bar), making the flux 4x higher than nu_e and nu_e_bar.
@@ -832,7 +834,7 @@ class Fornax_2021(SupernovaModel):
 
                 # Spectrum in units of 1e50 erg/s/MeV.
                 # Pad with values where flux is fixed to zero.
-                _dLdE = np.asarray([0.] + [self._h5file[key]['g{}'.format(i)][j] for i in range(12)] + [0.])
+                _dLdE = np.asarray([0.] + [self._dLdE[flavor]['g{}'.format(i)][j] for i in range(12)] + [0.])
                 initialspectra[flavor] = np.interp(logE, _logEbins, _dLdE) * factor * 1e50 * u.erg/u.s/u.MeV
 
             elif interpolation.lower() == 'nearest':
@@ -845,7 +847,7 @@ class Fornax_2021(SupernovaModel):
                 idx = np.searchsorted(_Ebins, E) - 1
                 select = (idx > 0) & (idx < len(_E))
                 _dLdE = np.zeros(len(E))
-                _dLdE[np.where(select)] = np.asarray([self._h5file[key]['g{}'.format(i)][j] for i in idx[select]])
+                _dLdE[np.where(select)] = np.asarray([self._dLdE[flavor]['g{}'.format(i)][j] for i in idx[select]])
                 initialspectra[flavor] = _dLdE * factor * 1e50 * u.erg/u.s/u.MeV
 
             else:
