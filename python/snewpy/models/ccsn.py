@@ -832,10 +832,10 @@ class Fornax_2021(SupernovaModel):
                 _logEbins = np.insert(_logE, 0, np.log10(np.finfo(float).eps))
                 _logEbins = np.append(_logEbins, _logE[-1] + _dlogE[-1])
 
-                # Spectrum in units of 1e50 erg/s/MeV.
-                # Pad with values where flux is fixed to zero.
-                _dLdE = np.asarray([0.] + [self._dLdE[flavor]['g{}'.format(i)][j] for i in range(12)] + [0.])
-                initialspectra[flavor] = np.interp(logE, _logEbins, _dLdE) * factor * 1e50 * u.erg/u.s/u.MeV
+                # Luminosity spectrum _dLdE is in units of 1e50 erg/s/MeV.
+                # Pad with values where flux is fixed to zero, then divide by E to get number luminosity
+                _dNLdE = np.asarray([0.] + [self._dLdE[flavor]['g{}'.format(i)][j] for i in range(12)] + [0.])
+                initialspectra[flavor] = np.interp(logE, _logEbins, _dNLdE) / E.to('erg') * factor * 1e50 * u.erg/u.s/u.MeV
 
             elif interpolation.lower() == 'nearest':
                 # Find edges of energy bins and identify which energy bin (each entry of) E falls into
@@ -845,9 +845,10 @@ class Fornax_2021(SupernovaModel):
                 idx = np.searchsorted(_EbinEdges, E) - 1
                 select = (idx > 0) & (idx < len(_E))
 
-                _dLdE = np.zeros(len(E))
-                _dLdE[np.where(select)] = np.asarray([self._dLdE[flavor]['g{}'.format(i)][j] for i in idx[select]])
-                initialspectra[flavor] = _dLdE * factor * 1e50 * u.erg/u.s/u.MeV
+                # Divide luminosity spectrum by energy at bin center to get number luminosity spectrum
+                _dNLdE = np.zeros(len(E))
+                _dNLdE[np.where(select)] = np.asarray([self._dLdE[flavor]['g{}'.format(i)][j] / _E[i] for i in idx[select]])
+                initialspectra[flavor] = (_dNLdE << 1/u.MeV).to('1/erg') * factor * 1e50 * u.erg/u.s/u.MeV
 
             else:
                 raise ValueError('Unrecognized interpolation type "{}"'.format(interpolation))
