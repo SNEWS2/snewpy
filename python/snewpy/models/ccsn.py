@@ -817,8 +817,10 @@ class Fornax_2021(SupernovaModel):
         j = (np.abs(t - self.time)).argmin()
 
         for flavor in flavors:
-            # Energy in units of MeV.
+            # Energy bin centers (in MeV)
             _E = self._E[flavor][j]
+            _logE = np.log10(_E)
+            _dlogE = np.diff(_logE)
 
             # Model flavors (internally) are nu_e, nu_e_bar, and nu_x, which stands
             # for nu_mu(_bar) and nu_tau(_bar), making the flux 4x higher than nu_e and nu_e_bar.
@@ -827,8 +829,6 @@ class Fornax_2021(SupernovaModel):
             # Linear interpolation in flux.
             if interpolation.lower() == 'linear':
                 # Pad log(E) array with values where flux is fixed to zero.
-                _logE = np.log10(_E)
-                _dlogE = np.diff(_logE)
                 _logEbins = np.insert(_logE, 0, np.log10(np.finfo(float).eps))
                 _logEbins = np.append(_logEbins, _logE[-1] + _dlogE[-1])
 
@@ -838,14 +838,13 @@ class Fornax_2021(SupernovaModel):
                 initialspectra[flavor] = np.interp(logE, _logEbins, _dLdE) * factor * 1e50 * u.erg/u.s/u.MeV
 
             elif interpolation.lower() == 'nearest':
-                _logE = np.log10(_E)
-                _dlogE = np.diff(_logE)[0]
-                _logEbins = _logE - _dlogE
-                _logEbins = np.concatenate((_logEbins, [_logE[-1] + _dlogE]))
-                _Ebins = 10**_logEbins
-
-                idx = np.searchsorted(_Ebins, E) - 1
+                # Find edges of energy bins and identify which energy bin (each entry of) E falls into
+                _logEbinEdges = _logE - _dlogE[0] / 2
+                _logEbinEdges = np.concatenate((_logEbinEdges, [_logE[-1] + _dlogE[-1] / 2]))
+                _EbinEdges = 10**_logEbinEdges
+                idx = np.searchsorted(_EbinEdges, E) - 1
                 select = (idx > 0) & (idx < len(_E))
+
                 _dLdE = np.zeros(len(E))
                 _dLdE[np.where(select)] = np.asarray([self._dLdE[flavor]['g{}'.format(i)][j] for i in idx[select]])
                 initialspectra[flavor] = _dLdE * factor * 1e50 * u.erg/u.s/u.MeV
