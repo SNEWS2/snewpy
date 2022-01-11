@@ -41,7 +41,7 @@ class Flux(object):
             raise ValueError(f'Inconsistent shape: array {self.shape} vs axes{shape_axes}')
             
     def __getitem__(self, args: Union[Union[int,slice], List[Union[int,slice]]]) -> Flux:
-        """ Slice the flux array and produce a new flux object 
+        """Slice the flux array and produce a new Flux object.
         Parameters
         ----------
         args: slice | List[slice]
@@ -69,7 +69,7 @@ class Flux(object):
         return self._axname[num]
 
     def get_axis(self, axis: Union[str, int]) -> tuple[str, int]:
-        """ Get the tuple of (axis name, axis number) for a given axis.
+        """Get the tuple of (axis name, axis number) for a given axis.
         This is a utility function.
         Parameters
         ----------
@@ -98,18 +98,18 @@ class Flux(object):
         )
 
     def squeeze(self, axis: Optional[Union[str, int]] = None) -> Flux:
-        """remove a given dimension with length 1
+        """Remove a given dimension with length 1.
 
         Parameters
         ----------
         axis: str | int | None
             name or number of dimension to be squeezed. 
-            If None - remove all dimensions with len=1
+            If None - remove all dimensions with length 1
 
         Returns
         -------
         Flux
-            A flux with reduced dimension(s)
+            A Flux with reduced dimension(s)
         """
         if axis is None:
             newarr  = self.array.squeeze()
@@ -122,7 +122,7 @@ class Flux(object):
         return Flux(newarr, **newaxes)
     
     def sum(self, axis: Union[str, int]) -> Flux:
-        """ sum flux along given axis, producing a reduced Flux object
+        """Sum flux along given axis, producing a reduced Flux object.
 
         Parameters
         ----------
@@ -141,8 +141,8 @@ class Flux(object):
         return Flux(newarr, **newaxes)
 
         
-    def integral(self, axis: Union[str, int], limits=None) -> Flux:
-        """ Integrate the flux along a specific axis `axname` within limits.
+    def integrate(self, axis: Union[str, int], limits=None) -> Flux:
+        """Integrate the flux along a specific axis within limits.
 
         Parameters
         ----------
@@ -150,7 +150,7 @@ class Flux(object):
             name or number of the dimension to integrate on
         limits: tuple[float, float] |  Iterable[tuple[float, float]] | None
             Integration limits, a pair of values (xMin,xMax) or list of such pairs.
-            Integrate aver the whole range if limits==None
+            Integrate over the whole range if limits==None
 
         Returns
         -------
@@ -189,7 +189,7 @@ class Flux(object):
         return f"Flux: <{' x '.join(s)}>"
 
     def _save_to_snowglobes(self, filename: str, header: str = ""):
-        """save flux to GLoBES format text file.
+        """Save flux to GLoBES format text file.
         The flux dimensions must be <Flavor[4] x Enu[N]>
         Parameters
         ----------
@@ -219,7 +219,7 @@ class Flux(object):
         np.savetxt(filename, table.T, header=header, fmt="%17.8E", delimiter="")
 
     def to_snowglobes(self, filename: str, header=""):
-        """Save this flux to the SNOwGLoBES format.
+        """Save this Flux to the SNOwGLoBES format.
 
         Parameters
         ----------

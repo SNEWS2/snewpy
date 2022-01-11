@@ -34,9 +34,8 @@ from tqdm.auto import tqdm
 
 import snewpy.models
 from snewpy.flavor_transformation import *
-from snewpy.neutrino import Flavor, MassHierarchy
+from snewpy.neutrino import MassHierarchy
 from contextlib import contextmanager
-from snewpy.flux import Flux
 from snewpy.snowglobes_interface import SNOwGLoBES
 
 logger = logging.getLogger(__name__)
@@ -53,8 +52,8 @@ def _load_transformation(transformation_type: str):
 
 @contextmanager
 def _archive_dir(tar_filename):
-    """ Context manager to create a temporary dir, return it to the user.
-    An exit of the context: pack all files in the directory to the tar archive and delete the dir
+    """Context manager to create a temporary directory, return it to the user.
+    On exit of the context, pack all files in the directory into the tar archive and delete the directory.
     """
     with TemporaryDirectory() as tempdir:
         tempdir = Path(tempdir)
@@ -181,7 +180,7 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
 
     #multiply flux by the bin sizes
     flux.array*=0.2
-    fluence = flux.integral('time',list(zip(tstart,tend)))
+    fluence = flux.integrate('time',list(zip(tstart,tend)))
     if nbin==1: fluence=[fluence]
     # Generate output
     if output_filename is None:
