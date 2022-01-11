@@ -40,7 +40,7 @@ from snewpy.snowglobes_interface import SNOwGLoBES
 
 logger = logging.getLogger(__name__)
 
-def generate_time_series(model_path, model_type, transformation_type, d, output_filename=None, ntbins=30, deltat=None):
+def generate_time_series(model_path, model_type, transformation_type, d, output_filename=None, ntbins=30, deltat=None, snmodel_dict={}):
     """Generate time series files in SNOwGLoBES format.
 
     This version will subsample the times in a supernova model, produce energy
@@ -75,7 +75,7 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
     flavor_transformation = flavor_transformation_dict[transformation_type]
 
     model_dir, model_file = os.path.split(os.path.abspath(model_path))
-    snmodel = model_class(model_path)
+    snmodel = model_class(model_path, **snmodel_dict)
 
     # Subsample the model time. Default to 30 time slices.
     tmin = snmodel.get_time()[0]
@@ -144,7 +144,7 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
     return os.path.join(model_dir, tfname)
 
 
-def generate_fluence(model_path, model_type, transformation_type, d, output_filename=None, tstart=None, tend=None):
+def generate_fluence(model_path, model_type, transformation_type, d, output_filename=None, tstart=None, tend=None, snmodel_dict={}):
     """Generate fluence files in SNOwGLoBES format.
 
     This version will subsample the times in a supernova model, produce energy
@@ -179,7 +179,7 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
     flavor_transformation = flavor_transformation_dict[transformation_type]
 
     model_dir, model_file = os.path.split(os.path.abspath(model_path))
-    snmodel = model_class(model_path)
+    snmodel = model_class(model_path, **snmodel_dict)
 
     #set the timings up
     #default if inputs are None: full time window of the model
