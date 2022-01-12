@@ -62,6 +62,8 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
         Number of time slices. Will be ignored if ``deltat`` is also given.
     deltat : astropy.Quantity or None
         Length of time slices.
+    snmodel_dict : dictionary
+        Keyword arguments for the supernova model, if needed.
 
     Returns
     -------
@@ -166,6 +168,8 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
         Start of time interval to integrate over, or list of start times of the time series bins.
     tend : astropy.Quantity or None
         End of time interval to integrate over, or list of end times of the time series bins.
+    snmodel_dict : dictionary
+        Keyword arguments for the supernova model, if needed.
 
     Returns
     -------
@@ -374,13 +378,11 @@ def get_channel_label(c):
     else: 
         return re_chan_label.sub(gen_label, c) 
 
-def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False, verbose=False, remove_generated_files=True):
+def collate(tarball_path, detector_input="all", skip_plots=False, verbose=False, remove_generated_files=True):
     """Collates SNOwGLoBES output files and generates plots or returns a data table.
 
     Parameters
     ----------
-    SNOwGLoBESdir : str
-        Path to directory where SNOwGLoBES is installed.
     tarball_path : str
         Path of compressed .tar file produced e.g. by ``generate_time_series()`` or ``generate_fluence()``.
     detector_input : str
@@ -440,7 +442,6 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
     logging.info(f'Reading tables from {cache_file}')
     tables = np.load(cache_file, allow_pickle=True).tolist()
     #This output is similar to what produced by:
-    #tables = simulate(SNOwGLoBESdir, tarball_path,detector_input)
 
     #dict for old-style results, for backward compatibiity
     results = {}
@@ -450,6 +451,7 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
         for det in tables:
             results[det] = {}
             for flux,t in tables[det].items():
+                print(flux)
                 t = aggregate_channels(t,nc='nc_',e='_e')
                 for w in ['weighted','unweighted']:
                     for s in ['smeared','unsmeared']:
@@ -464,6 +466,8 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
                         data = table.to_numpy().T
                         index = table.index.to_numpy()
                         data = np.concatenate([[index],data])
+                        if "tbin5" in flux and s == 'unsmeared' and w == 'weighted':
+                            print(data[:, abs(data[0] - 0.09826) < 1e-5][1:].T)
                         results[filename.name] = {'header':header,'data':data}
                         #optionally plot the results
                         if skip_plots is False:
