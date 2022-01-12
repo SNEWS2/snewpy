@@ -393,6 +393,8 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
         Whether to generate verbose output, e.g. for debugging.
     remove_generated_files: bool
         Remove the output files from SNOwGLoBES, collated files, and .png's made for this snewpy run. 
+    SNOwGLoBESdir : str
+             Path to directory where SNOwGLoBES is installed.
 
     Returns
     -------
@@ -442,6 +444,7 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
     logging.info(f'Reading tables from {cache_file}')
     tables = np.load(cache_file, allow_pickle=True).tolist()
     #This output is similar to what produced by:
+    #tables = simulate(SNOwGLoBESdir, tarball_path,detector_input)
 
     #dict for old-style results, for backward compatibiity
     results = {}
