@@ -62,8 +62,8 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
         Number of time slices. Will be ignored if ``deltat`` is also given.
     deltat : astropy.Quantity or None
         Length of time slices.
-    snmodel_dict : dictionary
-        Keyword arguments for the supernova model, if needed.
+    snmodel_dict : dict
+        Additional arguments for setting up the supernova model. See documentation of relevant ``SupernovaModel`` subclass for available options. (Optional)
 
     Returns
     -------
@@ -168,8 +168,8 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
         Start of time interval to integrate over, or list of start times of the time series bins.
     tend : astropy.Quantity or None
         End of time interval to integrate over, or list of end times of the time series bins.
-    snmodel_dict : dictionary
-        Keyword arguments for the supernova model, if needed.
+    snmodel_dict : dict
+        Additional arguments for setting up the supernova model. See documentation of relevant ``SupernovaModel`` subclass for available options. (Optional)
 
     Returns
     -------
