@@ -378,7 +378,7 @@ def get_channel_label(c):
     else: 
         return re_chan_label.sub(gen_label, c) 
 
-def collate(tarball_path, detector_input="all", skip_plots=False, verbose=False, remove_generated_files=True):
+def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False, verbose=False, remove_generated_files=True):
     """Collates SNOwGLoBES output files and generates plots or returns a data table.
 
     Parameters
@@ -451,7 +451,6 @@ def collate(tarball_path, detector_input="all", skip_plots=False, verbose=False,
         for det in tables:
             results[det] = {}
             for flux,t in tables[det].items():
-                print(flux)
                 t = aggregate_channels(t,nc='nc_',e='_e')
                 for w in ['weighted','unweighted']:
                     for s in ['smeared','unsmeared']:
@@ -466,8 +465,6 @@ def collate(tarball_path, detector_input="all", skip_plots=False, verbose=False,
                         data = table.to_numpy().T
                         index = table.index.to_numpy()
                         data = np.concatenate([[index],data])
-                        if "tbin5" in flux and s == 'unsmeared' and w == 'weighted':
-                            print(data[:, abs(data[0] - 0.09826) < 1e-5][1:].T)
                         results[filename.name] = {'header':header,'data':data}
                         #optionally plot the results
                         if skip_plots is False:
