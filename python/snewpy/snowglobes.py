@@ -383,6 +383,8 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
 
     Parameters
     ----------
+    SNOwGLoBESdir : str
+             Path to directory where SNOwGLoBES is installed.
     tarball_path : str
         Path of compressed .tar file produced e.g. by ``generate_time_series()`` or ``generate_fluence()``.
     detector_input : str
@@ -393,8 +395,6 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
         Whether to generate verbose output, e.g. for debugging.
     remove_generated_files: bool
         Remove the output files from SNOwGLoBES, collated files, and .png's made for this snewpy run. 
-    SNOwGLoBESdir : str
-             Path to directory where SNOwGLoBES is installed.
 
     Returns
     -------
