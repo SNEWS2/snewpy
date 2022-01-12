@@ -2,9 +2,13 @@
 """ This module allows to gather the SNOwGLoBES outputs into a ROOT files with 2D histograms.
     These 2D histograms show the rate as a function of time and energy for any given interaction channel.
     There is one ROOT file per detector, per smearing option, and per weighting option.
+    Generate a tarball with the input files by running
+            snowglobes.generate_time_series(...)
+            snowglobes.simulate(...)
+            snowglobes.collate(...)
 
-    To run the code, use:
-        python Convert_to_ROOT.py --path <path to the tar folder with collated outputs>
+    Then, to run the code, use:
+        python Convert_to_ROOT.py <path to the tar file with collated outputs>
 """
 
 import tarfile
@@ -18,7 +22,7 @@ import ROOT
 
 # Get the path to input files (command line argument). Default is current folder
 parser = argparse.ArgumentParser()
-parser.add_argument('--path', help='Path to collated SNEWPY outputs', default = '.')
+parser.add_argument('path', help='Path to tarball containing collated SNEWPY outputs')
 args = parser.parse_args()
 
 tarball_path = args.path
