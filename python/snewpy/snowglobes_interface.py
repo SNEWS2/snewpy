@@ -276,7 +276,6 @@ class Runner:
             flavor_index = 0 if 'e' in channel.flavor else (1 if 'm' in channel.flavor else 2)
             flavor = flavor_index + (3 if channel.parity == '-' else 0)
             flux = fluxes[:, (0,1+flavor)]
-            xen = 10**xsec[:, 0]
             energies = np.linspace(7.49e-4, 9.975e-2, 200) # Use the same energy grid as SNOwGLoBES
             binsize = energies[1] - energies[0]
             # Cross-section in 10^-38 cm^2
