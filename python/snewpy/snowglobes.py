@@ -36,7 +36,7 @@ from tqdm.auto import tqdm
 import snewpy.models
 from snewpy.flavor_transformation import *
 from snewpy.neutrino import Flavor, MassHierarchy
-from snewpy.snowglobes_interface import SNOwGLoBES
+from snewpy.snowglobes_interface import SNOwGLoBES, SimpleRate
 
 logger = logging.getLogger(__name__)
 
@@ -334,7 +334,7 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False, d
         Whether to account for detector smearing and efficiency.
     """
     
-    sng = SNOwGLoBES(SNOwGLoBESdir, detector_effects=detector_effects)
+    sng = SNOwGLoBES(SNOwGLoBESdir) if detector_effects else SimpleRate(SNOwGLoBESdir)
     if detector_input == 'all':
         detector_input = list(sng.detectors)
         detector_input.remove('d2O')
@@ -351,7 +351,7 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False, d
         if len(detector_input)>0:
             detector_input = tqdm(detector_input, desc='Detectors', leave=False)
         for det in detector_input:
-            res=sng.run(flux_files, det, detector_effects=detector_effects)
+            res=sng.run(flux_files, det)
             result[det]=dict(zip((f.stem for f in flux_files),res))
 
     # save result to file for re-use in collate()
