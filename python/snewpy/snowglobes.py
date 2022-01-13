@@ -31,6 +31,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from astropy import units as u
 from tqdm.auto import tqdm
+from warnings import warn
 
 import snewpy.models
 from snewpy.flavor_transformation import *
@@ -40,9 +41,9 @@ from snewpy.snowglobes_interface import SNOwGLoBES
 
 logger = logging.getLogger(__name__)
 
-def _load_model(model_path, model_type):
+def _load_model(model_type, model_path, **kwargs):
     model_class = getattr(snewpy.models.ccsn, model_type)
-    return model_class(model_path)
+    return model_class(model_path, **kwargs)
 
 def _load_transformation(transformation_type: str):
     # Choose flavor transformation. Use dict to associate the transformation name with its class.
@@ -65,7 +66,8 @@ def _archive_dir(tar_filename):
                 tar.add(f, arcname=f.name)
 
 
-def generate_time_series(model_path, model_type, transformation_type, d, output_filename=None, ntbins=30, deltat=None):
+def generate_time_series(model_path, model_type, transformation_type, d, output_filename=None, ntbins=30, deltat=None, snmodel_dict={}):
+
     """Generate time series files in SNOwGLoBES format.
 
     This version will subsample the times in a supernova model, produce energy
@@ -87,6 +89,8 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
         Number of time slices. Will be ignored if ``deltat`` is also given.
     deltat : astropy.Quantity or None
         Length of time slices.
+    snmodel_dict : dict
+        Additional arguments for setting up the supernova model. See documentation of relevant ``SupernovaModel`` subclass for available options. (Optional)
 
     Returns
     -------
@@ -94,8 +98,9 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
         Path of compressed .tar file with neutrino flux data.
     """
 
+
     model_path = Path(model_path)
-    snmodel = _load_model(model_path, model_type)
+    snmodel = _load_model(model_type, model_path, **snmodel_dict)
     flavor_transformation = _load_transformation(transformation_type)
 
     # Subsample the model time. Default to 30 time slices.
@@ -129,7 +134,7 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
     return output_filename
 
 
-def generate_fluence(model_path, model_type, transformation_type, d, output_filename=None, tstart=None, tend=None):
+def generate_fluence(model_path, model_type, transformation_type, d, output_filename=None, tstart=None, tend=None, snmodel_dict={}):
     """Generate fluence files in SNOwGLoBES format.
 
     This version will subsample the times in a supernova model, produce energy
@@ -151,6 +156,8 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
         Start of time interval to integrate over, or list of start times of the time series bins.
     tend : astropy.Quantity or None
         End of time interval to integrate over, or list of end times of the time series bins.
+    snmodel_dict : dict
+        Additional arguments for setting up the supernova model. See documentation of relevant ``SupernovaModel`` subclass for available options. (Optional)
 
     Returns
     -------
@@ -159,7 +166,7 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
     """
 
     model_path = Path(model_path)
-    snmodel = _load_model(model_path,model_type)
+    snmodel = _load_model(model_type, model_path, **snmodel_dict)
     flavor_transformation = _load_transformation(transformation_type)
 
     #set the timings up
@@ -216,9 +223,11 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     detector_input : str
         Name of detector. If ``"all"``, will use all detectors supported by SNOwGLoBES.
     verbose : bool
-        Whether to generate verbose output, e.g. for debugging.
+        [DEPRECATED, DO NOT USE.]
     """
-    
+    if verbose:
+        warn(f"The 'verbose' parameter to 'snewpy.snowglobes.simulate()' is deprecated and should not be used.", FutureWarning)
+
     sng = SNOwGLoBES(SNOwGLoBESdir)
     if detector_input == 'all':
         detector_input = list(sng.detectors)
@@ -270,23 +279,29 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
     Parameters
     ----------
     SNOwGLoBESdir : str
-        Path to directory where SNOwGLoBES is installed.
+        [DEPRECATED, DO NOT USE.]
     tarball_path : str
         Path of compressed .tar file produced e.g. by ``generate_time_series()`` or ``generate_fluence()``.
     detector_input : str
-        Name of detector. If ``"all"``, will use all detectors supported by SNOwGLoBES.
+        [DEPRECATED, DO NOT USE. SNEWPY will use all detectors included in the tarball.]
     skip_plots: bool
         If False, it gives as output the plot of the energy distribution for each time bin and for each interaction channel.
     verbose : bool
-        Whether to generate verbose output, e.g. for debugging.
+        [DEPRECATED, DO NOT USE.]
     remove_generated_files: bool
-        Remove the output files from SNOwGLoBES, collated files, and .png's made for this snewpy run. 
+        [DEPRECATED, DO NOT USE.]
 
     Returns
     -------
     dict
         Dictionary of data tables: One table per time bin; each table contains in the first column the energy bins, in the remaining columns the number of events for each interaction channel in the detector.
     """
+    if verbose:
+        warn(f"The 'verbose' parameter to 'snewpy.snowglobes.collate()' is deprecated and should not be used.", FutureWarning)
+    if detector_input != "all":
+        warn(f"The 'detector_input' parameter to 'snewpy.snowglobes.simulate()' is deprecated and should not be used.", FutureWarning)
+    if not remove_generated_files:
+        warn(f"The 'remove_generated_files' parameter to 'snewpy.snowglobes.simulate()' is deprecated and should not be used.", FutureWarning)
 
     def aggregate_channels(table, **patterns):
         #rearrange the table to have only channel column
@@ -370,5 +385,3 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
                 tar.add(file,arcname=output_name+'/'+file.name)
         logging.info(f'Created archive: {output_path}')
     return results 
-
-       
