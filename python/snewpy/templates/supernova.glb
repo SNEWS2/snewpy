@@ -16,13 +16,13 @@ $baseline =             1.5       /* km */
 /* ####### Energy window ####### */
 
 $bins =                 {{nbins}}
-$emin =                 {{0.0005}}     /* GeV */
-$emax =                 {{0.0005*nbins}}     /* GeV */
+$emin =                 {{emin}}     /* GeV */
+$emax =                 {{emax}}     /* GeV */
 
 
-$sampling_points = 	{{nbins}}
-$sampling_min = 	{{0.0005}}     /* GeV */
-$sampling_max = 	{{0.0005*nbins}}     /* GeV */
+$sampling_points = 	{{nsamples}}
+$sampling_min = 	{{smin}}     /* GeV */
+$sampling_max = 	{{smax}}     /* GeV */
 /* ########  Flux data ######## */
 
 nuflux(#supernova_flux)<
