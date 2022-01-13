@@ -27,11 +27,11 @@ import tarfile
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from astropy import units as u
 from tqdm.auto import tqdm
+from warnings import warn
 
 import snewpy.models
 from snewpy.flavor_transformation import *
@@ -330,9 +330,11 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     detector_input : str
         Name of detector. If ``"all"``, will use all detectors supported by SNOwGLoBES.
     verbose : bool
-        Whether to generate verbose output, e.g. for debugging.
+        [DEPRECATED, DO NOT USE.]
     """
-    
+    if verbose:
+        warn(f"The 'verbose' parameter to 'snewpy.snowglobes.simulate()' is deprecated and should not be used.", FutureWarning)
+
     sng = SNOwGLoBES(SNOwGLoBESdir)
     if detector_input == 'all':
         detector_input = list(sng.detectors)
@@ -384,23 +386,29 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
     Parameters
     ----------
     SNOwGLoBESdir : str
-        Path to directory where SNOwGLoBES is installed.
+        [DEPRECATED, DO NOT USE.]
     tarball_path : str
         Path of compressed .tar file produced e.g. by ``generate_time_series()`` or ``generate_fluence()``.
     detector_input : str
-        Name of detector. If ``"all"``, will use all detectors supported by SNOwGLoBES.
+        [DEPRECATED, DO NOT USE. SNEWPY will use all detectors included in the tarball.]
     skip_plots: bool
         If False, it gives as output the plot of the energy distribution for each time bin and for each interaction channel.
     verbose : bool
-        Whether to generate verbose output, e.g. for debugging.
+        [DEPRECATED, DO NOT USE.]
     remove_generated_files: bool
-        Remove the output files from SNOwGLoBES, collated files, and .png's made for this snewpy run. 
+        [DEPRECATED, DO NOT USE.]
 
     Returns
     -------
     dict
         Dictionary of data tables: One table per time bin; each table contains in the first column the energy bins, in the remaining columns the number of events for each interaction channel in the detector.
     """
+    if verbose:
+        warn(f"The 'verbose' parameter to 'snewpy.snowglobes.collate()' is deprecated and should not be used.", FutureWarning)
+    if detector_input != "all":
+        warn(f"The 'detector_input' parameter to 'snewpy.snowglobes.simulate()' is deprecated and should not be used.", FutureWarning)
+    if not remove_generated_files:
+        warn(f"The 'remove_generated_files' parameter to 'snewpy.snowglobes.simulate()' is deprecated and should not be used.", FutureWarning)
 
     def aggregate_channels(table, **patterns):
         #rearrange the table to have only channel column
@@ -484,5 +492,3 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
                 tar.add(file,arcname=output_name+'/'+file.name)
         logging.info(f'Created archive: {output_path}')
     return results 
-
-       
