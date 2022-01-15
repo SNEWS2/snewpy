@@ -219,7 +219,6 @@ class Runner:
         self.channels=self.sng.channels[self.material]
         self.binning=self.sng.binning[self.material]
         self.efficiency=self.sng.efficiencies[self.detector]
-        self.smearing=self.sng.smearings[self.detector]
         self.det_config=self.sng.detectors[self.detector]
         self.base_dir=self.sng.base_dir
         self.out_dir=self.base_dir/'out'
@@ -284,5 +283,108 @@ class Runner:
             return tables
         else:
             raise RuntimeError('SNOwGLoBES run failed:\n'+stderr)
+
+class SimpleRate():
+    def __init__(self, base_dir:Path=''):
+        """ Simple rate calculation interface 
+        Computes expected rate for a perfect detector (100% efficiencies, no smearing)
+        without using GLOBES. The formula for the rate is
+                Rate = [cross-section in 10^-38 cm^2] x 10^-38 x [fluence in cm^-2] x [target mass in kton] 
+                    x [Dalton per kton] x [energy bin size in GeV]
+        with [target mass in kton] x [Dalton per kton] = number of reference targets in experiment.
+
+        Parameters
+        ----------
+        base_dir: Path or None
+            Path to the .
+            If empty, try to get it from $SNOWGLOBES environment var
+
+        On construction the code will read: 
+
+        * detectors from `<base_dir>/detector_configurations.dat`,
+        * channels  from `<base_dir>/channels/channel_*.dat`
+
+        After that use :meth:`SimpleRate.run` method to run the simulation for specific detector and flux file.
+        """
+        if not base_dir:
+            base_dir = os.environ['SNOWGLOBES']
+        self.base_dir = Path(base_dir)
+        self._load_detectors(self.base_dir/'detector_configurations.dat')
+        self._load_channels(self.base_dir/'channels')
+
+    def _compute_rates(self, detector, material, flux_file:Path):
+        flux_file = flux_file.resolve()
+        fluxes = np.loadtxt(flux_file)
+        TargetMass = self.detectors[detector].tgt_mass
+        data = {}
+        energies = np.linspace(7.49e-4, 9.975e-2, 200) # Use the same energy grid as SNOwGLoBES
+        for chan_num,channel in enumerate(self.channels[material].itertuples()):
+            xsec_path = f"xscns/xs_{channel.name}.dat"
+            xsec = np.loadtxt(self.base_dir/xsec_path)
+            flavor_index = 0 if 'e' in channel.flavor else (1 if 'm' in channel.flavor else 2)
+            flavor = flavor_index + (3 if channel.parity == '-' else 0)
+            flux = fluxes[:, (0,1+flavor)]
+            binsize = energies[1] - energies[0]
+            # Cross-section in 10^-38 cm^2
+            xsecs = np.interp(np.log(energies)/np.log(10), xsec[:, 0], xsec[:, 1+flavor], left=0, right=0) * energies
+            # Fluence (flux integrated over time bin) in cm^-2 
+            # (must be divided by 0.2 MeV to compensate the multiplication in generate_time_series)
+            fluxs = np.interp(energies, flux[:, 0], flux[:, 1], left=0, right=0)/2e-4
+            # Rate computation
+            rates = xsecs * 1e-38 * fluxs * float(TargetMass) * 1./1.661e-33 * binsize
+            # Weighting
+            weighted_rates = rates * channel.weight
+            # Write to dictionary
+            data[(channel.name,'unsmeared','unweighted')] = rates
+            data[(channel.name,'unsmeared','weighted')] = weighted_rates
+        #collect everything to pandas DataFrame
+        df = pd.DataFrame(data, index = energies)
+        df.index.rename('E', inplace=True)
+        df.columns.rename(['channel','is_smeared','is_weighted'], inplace=True)
+        return df.reorder_levels([2,1,0], axis='columns')
+       
+    def run(self, flux_files, detector:str, material:str=None):
+        """ Compute expected rates for given configuration,
+        collect the resulting data and return it in `pandas.DataFrame`
+
+        Parameters
+        -----------
+        flux_files: list(str) or str
+            An iterable of flux table filenames to process, or a single filename
+        detector: str
+            Detector name, SNOwGLoBES style
+        material: str or None
+            Material name, SNOwGLoBES style. If None, we'll try to guess it
+
+        Returns
+        --------
+        list(pd.DataFrame or Exception)
+            List with the data table for each flux_file, keeping the order.
+            Each table containing Energy (GeV) as index values, 
+            and number of events for each energy bin, for all interaction channels.
+            Columns are hierarchical: (is_weighted, channel),
+            so one can easily access the desired final table. 
+            If run failed with exception, this exception will be returned (not raised).
+
+        Raises
+        ------
+        ValueError
+            if material or detector value is invalid
+
+        """
+        if not  detector in self.detectors:
+            raise ValueError(f'Detector "{detector}" is not in {list(self.detectors)}')
+        if material is None:
+            material = guess_material(detector)
+        if not material in self.materials:
+            raise ValueError(f'Material "{material}" is not in {self.materials}')
+        if isinstance(flux_files,str):
+            flux_files = [flux_files]
         
- 
+        with tqdm(total=len(flux_files), leave=False, desc='Flux files') as progressbar:
+            results = []
+            for flux_file in flux_files:
+                result = self._compute_rates(detector,material,Path(flux_file))
+                progressbar.update()
+                results.append(result)
+            return results
