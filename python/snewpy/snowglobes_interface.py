@@ -218,6 +218,7 @@ class Runner:
     def __post_init__(self):
         self.channels=self.sng.channels[self.material]
         self.binning=self.sng.binning[self.material]
+        self.efficiency=self.sng.efficiencies[self.detector]
         self.det_config=self.sng.detectors[self.detector]
         self.base_dir=self.sng.base_dir
         self.out_dir=self.base_dir/'out'
@@ -283,9 +284,14 @@ class Runner:
         else:
             raise RuntimeError('SNOwGLoBES run failed:\n'+stderr)
 
-class SimpleRate(SNOwGLoBES):
+class SimpleRate():
     def __init__(self, base_dir:Path=''):
-        """ SNOwGLoBES interface 
+        """ Simple rate calculation interface 
+        Computes expected rate for a perfect detector (100% efficiencies, no smearing)
+        without using GLOBES. The formula for the rate is
+                Rate = [cross-section in 10^-38 cm^2] x 10^-38 x [fluence in cm^-2] x [target mass in kton] 
+                    x [Dalton per kton] x [energy bin size in GeV]
+        with [target mass in kton] x [Dalton per kton] = number of reference targets in experiment.
 
         Parameters
         ----------
@@ -307,12 +313,6 @@ class SimpleRate(SNOwGLoBES):
         self._load_channels(self.base_dir/'channels')
 
     def _compute_rates(self, detector, material, flux_file:Path):
-        """ Compute expected rate for a perfect detector (100% efficiencies, no smearing)
-            without using GLOBES. The formula for the rate is
-                 Rate = [cross-section in 10^-38 cm^2] x 10^-38 x [fluence in cm^-2] x [target mass in kton] 
-                        x [Dalton per kton] x [energy bin size in GeV]
-            with [target mass in kton] x [Dalton per kton] = number of reference targets in experiment.
-        """
         flux_file = flux_file.resolve()
         fluxes = np.loadtxt(flux_file)
         TargetMass = self.detectors[detector].tgt_mass
