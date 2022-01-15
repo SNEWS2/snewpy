@@ -27,16 +27,16 @@ import tarfile
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from astropy import units as u
 from tqdm.auto import tqdm
+from warnings import warn
 
 import snewpy.models
 from snewpy.flavor_transformation import *
 from snewpy.neutrino import Flavor, MassHierarchy
-from snewpy.snowglobes_interface import SNOwGLoBES
+from snewpy.snowglobes_interface import SNOwGLoBES, SimpleRate
 
 logger = logging.getLogger(__name__)
 
@@ -317,8 +317,7 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
 
     return os.path.join(model_dir, tfname)
 
-
-def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
+def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False, detector_effects=True):
     """Takes as input the neutrino flux files and configures and runs the supernova script inside SNOwGLoBES, which outputs calculated event rates expected for a given (set of) detector(s). These event rates are given as a function of the neutrino energy and time, for each interaction channel.
 
     Parameters
@@ -330,10 +329,15 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False):
     detector_input : str
         Name of detector. If ``"all"``, will use all detectors supported by SNOwGLoBES.
     verbose : bool
-        Whether to generate verbose output, e.g. for debugging.
+        [DEPRECATED, DO NOT USE.]
+    detector_effects : bool
+         Whether to account for detector smearing and efficiency.
     """
+    if verbose:
+        warn(f"The 'verbose' parameter to 'snewpy.snowglobes.simulate()' is deprecated and should not be used.", FutureWarning)
     
-    sng = SNOwGLoBES(SNOwGLoBESdir)
+    sng = SNOwGLoBES(SNOwGLoBESdir) if detector_effects else SimpleRate(SNOwGLoBESdir)
+
     if detector_input == 'all':
         detector_input = list(sng.detectors)
         detector_input.remove('d2O')
@@ -378,29 +382,37 @@ def get_channel_label(c):
     else: 
         return re_chan_label.sub(gen_label, c) 
 
-def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False, verbose=False, remove_generated_files=True):
+def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False, verbose=False, remove_generated_files=True, smearing = True):
     """Collates SNOwGLoBES output files and generates plots or returns a data table.
 
     Parameters
     ----------
     SNOwGLoBESdir : str
-        Path to directory where SNOwGLoBES is installed.
+        [DEPRECATED, DO NOT USE.]
     tarball_path : str
         Path of compressed .tar file produced e.g. by ``generate_time_series()`` or ``generate_fluence()``.
     detector_input : str
-        Name of detector. If ``"all"``, will use all detectors supported by SNOwGLoBES.
+        [DEPRECATED, DO NOT USE. SNEWPY will use all detectors included in the tarball.]
     skip_plots: bool
         If False, it gives as output the plot of the energy distribution for each time bin and for each interaction channel.
     verbose : bool
-        Whether to generate verbose output, e.g. for debugging.
+        [DEPRECATED, DO NOT USE.]
     remove_generated_files: bool
-        Remove the output files from SNOwGLoBES, collated files, and .png's made for this snewpy run. 
+        [DEPRECATED, DO NOT USE.]
+    smearing: bool
+        Also consider results with smearing effects.
 
     Returns
     -------
     dict
         Dictionary of data tables: One table per time bin; each table contains in the first column the energy bins, in the remaining columns the number of events for each interaction channel in the detector.
     """
+    if verbose:
+        warn(f"The 'verbose' parameter to 'snewpy.snowglobes.collate()' is deprecated and should not be used.", FutureWarning)
+    if detector_input != "all":
+        warn(f"The 'detector_input' parameter to 'snewpy.snowglobes.simulate()' is deprecated and should not be used.", FutureWarning)
+    if not remove_generated_files:
+        warn(f"The 'remove_generated_files' parameter to 'snewpy.snowglobes.simulate()' is deprecated and should not be used.", FutureWarning)
 
     def aggregate_channels(table, **patterns):
         #rearrange the table to have only channel column
@@ -448,6 +460,7 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
 
     #dict for old-style results, for backward compatibiity
     results = {}
+    smearing_options = ['smeared','unsmeared'] if smearing else ['unsmeared']
     #save collated files:
     with TemporaryDirectory(prefix='snowglobes') as tempdir:
         tempdir = Path(tempdir)
@@ -456,7 +469,7 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
             for flux,t in tables[det].items():
                 t = aggregate_channels(t,nc='nc_',e='_e')
                 for w in ['weighted','unweighted']:
-                    for s in ['smeared','unsmeared']:
+                    for s in smearing_options:
                         table = t[w][s]
                         filename_base = f'{flux}_{det}_events_{s}_{w}'
                         filename = tempdir/f'Collated_{filename_base}.dat'
@@ -484,5 +497,3 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
                 tar.add(file,arcname=output_name+'/'+file.name)
         logging.info(f'Created archive: {output_path}')
     return results 
-
-       
