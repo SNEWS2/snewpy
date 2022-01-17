@@ -219,6 +219,7 @@ class Runner:
         self.channels=self.sng.channels[self.material]
         self.binning=self.sng.binning[self.material]
         self.efficiency=self.sng.efficiencies[self.detector]
+        self.smearing=self.sng.smearings[self.detector]
         self.det_config=self.sng.detectors[self.detector]
         self.base_dir=self.sng.base_dir
         self.out_dir=self.base_dir/'out'
