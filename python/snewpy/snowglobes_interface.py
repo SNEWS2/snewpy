@@ -297,7 +297,7 @@ class SimpleRate(SNOwGLoBES):
         Parameters
         ----------
         base_dir: Path or None
-            Path to the .
+            Path to the directory where the cross-section, detector, and channel files are located
             If empty, try to get it from $SNOWGLOBES environment var
 
         On construction the code will read: 
