@@ -285,7 +285,7 @@ class Runner:
         else:
             raise RuntimeError('SNOwGLoBES run failed:\n'+stderr)
 
-class SimpleRate():
+class SimpleRate(SNOwGLoBES):
     def __init__(self, base_dir:Path=''):
         """ Simple rate calculation interface 
         Computes expected rate for a perfect detector (100% efficiencies, no smearing)
