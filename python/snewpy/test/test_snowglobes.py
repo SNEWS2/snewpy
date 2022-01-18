@@ -57,7 +57,7 @@ def test_snowglobes_crosscheck(sng, detector, expected_total):
     assert total == pytest.approx(expected_total, 0.1)
 
 @pytest.mark.parametrize('detector, expected_total_unsmeared',crosscheck_table_unsmeared)
-def test_simplerate_crosscheck(splr, detector, expected_total):
+def test_simplerate_crosscheck(splr, detector, expected_total_unsmeared):
     flux = './models/Bollig_2016/fluence_Bollig_2016_s11.2c_AdiabaticMSW_NMO.dat'
     data = splr.run(flux,detector)
     total = data[0].weighted.unsmeared.sum().sum()
