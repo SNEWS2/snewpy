@@ -61,7 +61,7 @@ def test_simplerate_crosscheck(splr, detector, expected_total_unsmeared):
     flux = './models/Bollig_2016/fluence_Bollig_2016_s11.2c_AdiabaticMSW_NMO.dat'
     data = splr.run(flux,detector)
     total = data[0].weighted.unsmeared.sum().sum()
-    assert total == pytest.approx(expected_total, 0.01)
+    assert total == pytest.approx(expected_total_unsmeared, 0.01)
 
 def process(tarball_name):
     simulate(None,tarball_name,'icecube')
