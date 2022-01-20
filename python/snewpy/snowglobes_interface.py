@@ -285,7 +285,7 @@ class Runner:
         else:
             raise RuntimeError('SNOwGLoBES run failed:\n'+stderr)
 
-class SimpleRate():
+class SimpleRate(SNOwGLoBES):
     def __init__(self, base_dir:Path=''):
         """ Simple rate calculation interface 
         Computes expected rate for a perfect detector (100% efficiencies, no smearing)
@@ -297,7 +297,7 @@ class SimpleRate():
         Parameters
         ----------
         base_dir: Path or None
-            Path to the .
+            Path to the directory where the cross-section, detector, and channel files are located
             If empty, try to get it from $SNOWGLOBES environment var
 
         On construction the code will read: 
