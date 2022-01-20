@@ -36,7 +36,7 @@ class TestSimpleRate(unittest.TestCase):
         tables = snowglobes.collate(SNOwGLoBES_path, tarredfile, detector_input=detector, skip_plots=True, smearing=False)
 
         # Use results to print the number of events in different interaction channels
-        key = f"Collated_{outfile}_{detector}_events_smeared_weighted.dat"
+        key = f"Collated_{outfile}_{detector}_events_unsmeared_weighted.dat"
         total_events = 0
         for i, channel in enumerate(tables[key]['header'].split()):
             if i == 0:
