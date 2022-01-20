@@ -56,6 +56,7 @@ jobs:
         run: |
           export SNOWGLOBES=${GITHUB_WORKSPACE}/opt/snowglobes
           python -m unittest python/snewpy/test/snowglobes_integrationtest.py
+          python -m unittest python/snewpy/test/simplerate_integrationtest.py
           pytest -m 'snowglobes' --benchmark-json output.json
       - name: Publish benchmark results
         if: ${{ github.event_name == 'pull_request' }}
