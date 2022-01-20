@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from snewpy.snowglobes import simulate,collate, generate_time_series, generate_fluence, SNOwGLoBES
+from snewpy.snowglobes import simulate,collate, generate_time_series, generate_fluence, SNOwGLoBES, SimpleRate
 from pathlib import Path
 import tarfile
 import asyncio
