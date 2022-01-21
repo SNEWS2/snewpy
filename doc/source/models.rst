@@ -3,24 +3,18 @@ Supernova Models: ``snewpy.models``
 
 Base Class for Supernova Models
 -------------------------------
-.. autoclass:: snewpy.models.SupernovaModel
+.. autoclass:: snewpy.models.base.SupernovaModel
    :members:
 
 Derived Models
 --------------
 
-These models are derived from the SupernovaModel base class. Functions that
-override those defined in the base class are only documented below if their
-list of parameters differs.
-
-You can :ref:`download neutrino fluxes for each of these models <sec-download_models>` using ``snewpy.get_models("<model_name>")``.
-
-.. automodule:: snewpy.models
+.. automodule:: snewpy.models.ccsn
    :members:
-   :exclude-members: SupernovaModel, SNOwGLoBES
+   :exclude-members: SNOwGLoBES
 
 Other Models
 ------------
 
-.. autoclass:: SNOwGLoBES
+.. autoclass:: snewpy.models.ccsn.SNOwGLoBES
    :members:

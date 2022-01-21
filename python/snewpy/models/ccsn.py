@@ -1,14 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-A submodule with classes used for supernova model files stored on disk. It
-assumes models are available in a format usable by the AstroPy unified table
-reader; see https://docs.astropy.org/en/stable/index.html for details.
+The submodule ``snewpy.models.ccsn`` contains models derived from the
+:class:`SupernovaModel` base class.
 
-Based on the ASTERIA (https://github.com/IceCubeOpenSource/ASTERIA) models
-developed by Navya Uberoi and Spencer Griswold.
-
-Updated summer 2020 by Jim Kneller & Arkin Worlikar. Subsequent updates
-provided by the SNEWS team.
+You can :ref:`download neutrino fluxes for each of these models <sec-download_models>`
+using ``snewpy.get_models("<model_name>")``.
 """
 
 import logging
