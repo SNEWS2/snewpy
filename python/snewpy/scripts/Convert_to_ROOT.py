@@ -48,11 +48,10 @@ with TemporaryDirectory(prefix='snowglobes') as tempdir:
             tmax = float(tmax)
             ntbins = int(ntbins.split('-')[0])
             print(f"Time binning is: tmin={tmin}, tmax={tmax}, ntbins={ntbins}")
-            # Get column names
-            with open(flux_file) as fin:
-                columns = fin.readline()
-                column_names = columns.split()[1:]
             first = False
+        # Get column names
+        with open(flux_file) as fin:
+            column_names = fin.readline().split()[1:]
         # Find general name for flux file as well as value of time bin
         flux_start, flux_end = flux_root.split('tbin')
         flux_split = flux_end.split('.')

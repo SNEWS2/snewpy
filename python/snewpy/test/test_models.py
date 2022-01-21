@@ -276,7 +276,7 @@ class TestModels(unittest.TestCase):
             f = model.get_initial_spectra(0*u.s, 10*u.MeV)
             self.assertEqual(type(f), dict)
             self.assertEqual(len(f), len(Flavor))
-            self.assertEqual(f[Flavor.NU_E].unit, u.erg/(u.MeV * u.s))
+            self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
 
     def test_Zha_2021(self):
         """
