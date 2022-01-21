@@ -12,9 +12,9 @@ import os
 
 src_path = os.path.realpath(__path__[0])
 base_path = os.sep.join(src_path.split(os.sep)[:-2])
+data_folder = os.path.join(os.environ['HOME'], '.astropy/cache/snewpy/models')
 
-
-def get_models(models=None, download_dir="SNEWPY_models"):
+def get_models(models=None, download_dir=data_folder):
     """Download model files from the snewpy repository.
 
     Parameters
