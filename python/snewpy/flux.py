@@ -62,12 +62,6 @@ class Flux(object):
             newaxes[ax] = self.axes[ax].__getitem__(arg)
         return Flux(array, **newaxes).squeeze()
 
-    def get_axis_num(self, name):
-        return self._axnum[name]
-
-    def get_axis_name(self, num):
-        return self._axname[num]
-
     def get_axis(self, axis: Union[str, int]) -> tuple[str, int]:
         """Get the tuple of (axis name, axis number) for a given axis.
         This is a utility function.
@@ -82,16 +76,16 @@ class Flux(object):
             axis name, axis number
         """
         if isinstance(axis, int):
-            axname = self.get_axis_name(axis)
+            axname = self._axname[axis]
             axnum = axis
         else:
-            axnum = self.get_axis_num(axis)
+            axnum = self._axnum[axis]
             axname = axis
         return axname, axnum
         
     def _init_integral(self, axname):
         x = self.axes[axname]
-        axnum = self.get_axis_num(axname)
+        axnum = self.get_axis(axname)
         cumulative = cumulative_trapezoid(self.array, x=x, axis=axnum, initial=0)
         self._integral[axname] = interp1d(
             x=x, y=cumulative, fill_value=0, axis=axnum, bounds_error=False
