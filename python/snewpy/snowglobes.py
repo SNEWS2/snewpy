@@ -333,7 +333,7 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False, *
     detector_effects : bool
          Whether to account for detector smearing and efficiency.
     """
-    if verbose:
+    if verbose:  # Deprecated since SNEWPY v1.2
         warn(f"The 'verbose' parameter to 'snewpy.snowglobes.simulate()' is deprecated and should not be used.", FutureWarning)
     
     sng = SNOwGLoBES(SNOwGLoBESdir) if detector_effects else SimpleRate(SNOwGLoBESdir)
@@ -382,7 +382,7 @@ def get_channel_label(c):
     else: 
         return re_chan_label.sub(gen_label, c) 
 
-def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False, verbose=False, remove_generated_files=True, *, smearing=True):
+def collate(SNOwGLoBESdir, tarball_path, detector_input="", skip_plots=False, verbose=False, remove_generated_files=True, *, smearing=True):
     """Collates SNOwGLoBES output files and generates plots or returns a data table.
 
     Parameters
@@ -407,12 +407,12 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False,
     dict
         Dictionary of data tables: One table per time bin; each table contains in the first column the energy bins, in the remaining columns the number of events for each interaction channel in the detector.
     """
-    if verbose:
+    if verbose:  # Deprecated since SNEWPY v1.2
         warn(f"The 'verbose' parameter to 'snewpy.snowglobes.collate()' is deprecated and should not be used.", FutureWarning)
-    if detector_input != "all":
-        warn(f"The 'detector_input' parameter to 'snewpy.snowglobes.simulate()' is deprecated and should not be used.", FutureWarning)
-    if not remove_generated_files:
-        warn(f"The 'remove_generated_files' parameter to 'snewpy.snowglobes.simulate()' is deprecated and should not be used.", FutureWarning)
+    if detector_input:  # Deprecated since SNEWPY v1.2
+        warn(f"The 'detector_input' parameter to 'snewpy.snowglobes.collate()' is deprecated and should not be used.", FutureWarning)
+    if not remove_generated_files:  # Deprecated since SNEWPY v1.2
+        warn(f"The 'remove_generated_files' parameter to 'snewpy.snowglobes.collate()' is deprecated and should not be used.", FutureWarning)
 
     def aggregate_channels(table, **patterns):
         #rearrange the table to have only channel column
