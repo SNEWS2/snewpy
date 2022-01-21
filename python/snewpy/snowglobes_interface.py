@@ -108,7 +108,6 @@ class SNOwGLoBES:
 
         self.channels = {}
         self.binning = {}
-        all_channels = []
         for f in chan_dir.glob('channels_*.dat'):
             material = f.stem[len('channels_'):]
             df = pd.read_table(f,delim_whitespace=True, index_col=1, comment='%', names=['name','n','parity','flavor','weight'])
@@ -116,7 +115,7 @@ class SNOwGLoBES:
             self.binning[material] = _read_binning(f)
         self.materials = list(self.channels.keys())
         self.chan_dir = chan_dir
-        logger.info(f'read channels for  materials: {self.materials}')
+        logger.info(f'read channels for materials: {self.materials}')
         logger.debug(f'channels: {self.channels}')
         
     def _load_efficiencies(self, path):
@@ -176,7 +175,7 @@ class SNOwGLoBES:
         RuntimeError
             if SNOwGLoBES run has failed
         """
-        if not  detector in self.detectors:
+        if not detector in self.detectors:
             raise ValueError(f'Detector "{detector}" is not in {list(self.detectors)}')
         if material is None:
             material = guess_material(detector)
@@ -256,8 +255,8 @@ class Runner:
         """write configuration file and run snowglobes"""
         cfg = self._generate_globes_config()
         chan_file = self.sng.chan_dir/f'channels_{self.material}.dat'
-        #this section is exclusive to one process at a time, 
-        # because snowglobes must  read the "$SNOGLOBES/supernova.glb" file
+        # This section is exclusive to one process at a time, 
+        # because snowglobes must read the "$SNOGLOBES/supernova.glb" file
         with self.sng.lock:
             #write configuration file:
             with open(self.base_dir/'supernova.glb','w') as f:
@@ -289,7 +288,7 @@ class SimpleRate(SNOwGLoBES):
         On construction the code will read: 
 
         * detectors from `<base_dir>/detector_configurations.dat`,
-        * channels  from `<base_dir>/channels/channel_*.dat`
+        * channels from `<base_dir>/channels/channel_*.dat`
 
         After that use :meth:`SimpleRate.run` method to run the simulation for specific detector and flux file.
 
@@ -311,7 +310,7 @@ class SimpleRate(SNOwGLoBES):
         TargetMass = self.detectors[detector].tgt_mass
         data = {}
         energies = np.linspace(7.49e-4, 9.975e-2, 200) # Use the same energy grid as SNOwGLoBES
-        for chan_num,channel in enumerate(self.channels[material].itertuples()):
+        for channel in self.channels[material].itertuples():
             xsec_path = f"xscns/xs_{channel.name}.dat"
             xsec = np.loadtxt(self.base_dir/xsec_path)
             flavor_index = 0 if 'e' in channel.flavor else (1 if 'm' in channel.flavor else 2)
@@ -365,7 +364,7 @@ class SimpleRate(SNOwGLoBES):
             if material or detector value is invalid
 
         """
-        if not  detector in self.detectors:
+        if not detector in self.detectors:
             raise ValueError(f'Detector "{detector}" is not in {list(self.detectors)}')
         if material is None:
             material = guess_material(detector)
