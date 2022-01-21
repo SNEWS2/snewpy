@@ -317,7 +317,7 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
 
     return os.path.join(model_dir, tfname)
 
-def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False, detector_effects=True):
+def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False, *, detector_effects=True):
     """Takes as input the neutrino flux files and configures and runs the supernova script inside SNOwGLoBES, which outputs calculated event rates expected for a given (set of) detector(s). These event rates are given as a function of the neutrino energy and time, for each interaction channel.
 
     Parameters
@@ -382,7 +382,7 @@ def get_channel_label(c):
     else: 
         return re_chan_label.sub(gen_label, c) 
 
-def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False, verbose=False, remove_generated_files=True, smearing = True):
+def collate(SNOwGLoBESdir, tarball_path, detector_input="all", skip_plots=False, verbose=False, remove_generated_files=True, *, smearing=True):
     """Collates SNOwGLoBES output files and generates plots or returns a data table.
 
     Parameters
