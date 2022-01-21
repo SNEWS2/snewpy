@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from snewpy.snowglobes import simulate,collate, generate_time_series, generate_fluence, SNOwGLoBES
+from snewpy.snowglobes import simulate,collate, generate_time_series, generate_fluence, SNOwGLoBES, SimpleRate
 from pathlib import Path
 import tarfile
 import asyncio
@@ -30,10 +30,24 @@ crosscheck_table=[  ('icecube',          320e3),
                     ('halo1',                  4),
                     ('halo2',                 53)]
 
+#numbers from the SNEWPY SNOwGLoBES interface - for approximate checks 
+#of simple rate computation (no smearing)
+crosscheck_table_unsmeared=[  ('icecube',          7.2352e6),
+                    ('wc100kt30prct',4486.9/0.32),
+                    ('ar40kt',              2858.7),
+                    ('novaND',                41.7231),
+                    ('novaFD',              1947.0768),
+                    ('halo1',                  11.5709),
+                    ('halo2',                 146.4671)]
+
 
 @pytest.fixture(autouse=True)
 def sng():
     return SNOwGLoBES()
+
+@pytest.fixture(autouse=True)
+def splr():
+    return SimpleRate()
 
 @pytest.mark.parametrize('detector, expected_total',crosscheck_table)
 def test_snowglobes_crosscheck(sng, detector, expected_total):
@@ -41,6 +55,13 @@ def test_snowglobes_crosscheck(sng, detector, expected_total):
     data = sng.run(flux,detector)
     total = data[0].weighted.smeared.sum().sum()
     assert total == pytest.approx(expected_total, 0.1)
+
+@pytest.mark.parametrize('detector, expected_total_unsmeared',crosscheck_table_unsmeared)
+def test_simplerate_crosscheck(splr, detector, expected_total_unsmeared):
+    flux = './models/Bollig_2016/fluence_Bollig_2016_s11.2c_AdiabaticMSW_NMO.dat'
+    data = splr.run(flux,detector)
+    total = data[0].weighted.unsmeared.sum().sum()
+    assert total == pytest.approx(expected_total_unsmeared, 0.01)
 
 def process(tarball_name):
     simulate(None,tarball_name,'icecube')
