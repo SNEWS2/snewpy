@@ -18,4 +18,4 @@ Usage
 Low-level interface
 -------------------
 .. automodule:: snewpy.snowglobes_interface
- 
+   :members: SNOwGLoBES, SimpleRate

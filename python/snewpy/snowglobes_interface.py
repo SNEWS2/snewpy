@@ -1,38 +1,10 @@
 """
 The module ``snewpy.snowglobes_interface`` contains a low-level Python interface for SNOwGLoBES v1.2.
 
-The class: class: `SNOwGLoBES` manages the input and output files of the SNOwGLoBES application,
-and allows running the simulation for one or several setups::
-
-    from snewpy.snowglobes_interface import SNOwGLoBES
-    sng = SNOwGLoBES()
-
-The method :meth:`SNOwGLoBES.run` performs the simulation for one or more flux files,
-and returns the resulting tables as a list containing a `pandas.DataFrame`_ for each input file::
-
-    flux_files = ['fluxes/fluence_timeBin1.dat', 'fluxes/fluence_timeBin2.dat']
-    result = sng.run(flux_files, detector='icecube')
-
-    # get results, summed over all energies and all channels:
-    Ntotal_0 = results[0].smeared.weighted.sum().sum()
-    Ntotal_1 = results[1].smeared.weighted.sum().sum()
-
-    # get only sum of ibd channel
-    Nibd_1 = results[1].smeared.weighted.ibd.sum()
-
-Reading the detector and configurations, used by SNOwGLoBES::
-
-    sng.detectors  # a table of detectors known to SNOwGLoBES
-    sng.channels  # a dictionary: list of channels for each detector
-    sng.efficiencies  # channel detection efficiencies for each detector
-
-.. _pandas.DataFrame: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
-
-Reference:
-
-.. autoclass:: SNOwGLoBES
-   :members:
-
+.. note::
+    Users should only use the high-level interface described above.
+    This low-level interface is not guaranteed to be stable and may change at
+    any time without warning, e.g. to support new SNOwGLoBES versions.
 """
 from pathlib import Path
 import jinja2
@@ -67,23 +39,44 @@ def guess_material(detector):
     return mat
 
 class SNOwGLoBES:
-    def __init__(self, base_dir:Path=''):
-        """ SNOwGLoBES interface 
+    """SNOwGLoBES interface.
 
+    This class manages the input and output files of the SNOwGLoBES application,
+    and allows running the simulation for one or several setups::
+
+        from snewpy.snowglobes_interface import SNOwGLoBES
+        sng = SNOwGLoBES()
+
+    On construction, this class will read
+
+    * a table of detectors known to SNOwGLoBES from `<base_dir>/detector_configurations.dat`,
+    * a dictionary with a list channels for each detector material from `<base_dir>/channels/channel_*.dat`
+    * a dictionary of efficiencies for each detector and channel from `<base_dir>/effic/effic_*.dat`
+
+    into the attributes ``sng.detectors``, ``sng.channels``, ``sng.efficiencies``, respectively.
+
+    The method :meth:`SNOwGLoBES.run` then performs the simulation for one or more flux files,
+    and returns the resulting tables as a list containing a `pandas.DataFrame`_ for each input file::
+
+        flux_files = ['fluxes/fluence_timeBin1.dat', 'fluxes/fluence_timeBin2.dat']
+        result = sng.run(flux_files, detector='icecube')
+
+        # get results, summed over all energies and all channels:
+        Ntotal_0 = results[0].smeared.weighted.sum().sum()
+        Ntotal_1 = results[1].smeared.weighted.sum().sum()
+
+        # get only sum of ibd channel in the second time bin
+        Nibd_1 = results[1].smeared.weighted.ibd.sum()
+
+    .. _pandas.DataFrame: https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html
+    """
+    def __init__(self, base_dir:Path=''):
+        """
         Parameters
         ----------
         base_dir: Path or None
             Path to the SNOwGLoBES installation.
-            If empty, try to get it from $SNOWGLOBES environment var
-
-
-        On construction SNOwGLoBES will read: 
-
-        * detectors from `<base_dir>/detector_configurations.dat`,
-        * channels  from `<base_dir>/channels/channel_*.dat`
-        * efficiencies from `<base_dir>/effic/effic_*.dat`
-
-        After that use :meth:`SNOwGLoBES.run` method to run the simulation for specific detector and flux file.
+            If empty, try to get it from ``$SNOWGLOBES`` environment variable.
         """
         if not base_dir:
             base_dir = os.environ['SNOWGLOBES']
@@ -182,7 +175,6 @@ class SNOwGLoBES:
             if material or detector value is invalid
         RuntimeError
             if SNOwGLoBES run has failed
-
         """
         if not  detector in self.detectors:
             raise ValueError(f'Detector "{detector}" is not in {list(self.detectors)}')
@@ -287,18 +279,12 @@ class Runner:
 
 class SimpleRate(SNOwGLoBES):
     def __init__(self, base_dir:Path=''):
-        """ Simple rate calculation interface 
+        """Simple rate calculation interface.
         Computes expected rate for a perfect detector (100% efficiencies, no smearing)
         without using GLOBES. The formula for the rate is
                 Rate = [cross-section in 10^-38 cm^2] x 10^-38 x [fluence in cm^-2] x [target mass in kton] 
                     x [Dalton per kton] x [energy bin size in GeV]
         with [target mass in kton] x [Dalton per kton] = number of reference targets in experiment.
-
-        Parameters
-        ----------
-        base_dir: Path or None
-            Path to the directory where the cross-section, detector, and channel files are located
-            If empty, try to get it from $SNOWGLOBES environment var
 
         On construction the code will read: 
 
@@ -306,6 +292,12 @@ class SimpleRate(SNOwGLoBES):
         * channels  from `<base_dir>/channels/channel_*.dat`
 
         After that use :meth:`SimpleRate.run` method to run the simulation for specific detector and flux file.
+
+        Parameters
+        ----------
+        base_dir: Path or None
+            Path to the directory where the cross-section, detector, and channel files are located
+            If empty, try to get it from ``$SNOWGLOBES`` environment var
         """
         if not base_dir:
             base_dir = os.environ['SNOWGLOBES']
