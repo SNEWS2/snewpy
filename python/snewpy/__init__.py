@@ -63,7 +63,7 @@ def get_models(models=None, download_dir=data_folder):
     # Download model files
     if not os.path.isdir(download_dir):
         print(f"Creating directory '{download_dir}' ...")
-        os.mkdir(download_dir)
+        os.makedirs(download_dir)
 
     def retrieve(url, local_file):
         try:
