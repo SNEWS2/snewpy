@@ -37,9 +37,22 @@ Once you're happy with your changes, please
 If you plan larger changes, it’s probably a good idea to open an issue first
 to coordinate our work.
 
-SNEWPY uses the `unittest <https://docs.python.org/3/library/unittest.html>`_
-module for automated testing. Tests will run when you submit a pull request
-or you can run them manually using ``python -m unittest python/snewpy/test/test_*.py``.
+Testing
+~~~~~~~
+
+SNEWPY uses the `pytest <https://docs.pytest.org>`_ package
+for automated testing. Tests will run when you submit a pull request
+or you can run them manually using::
+
+    pytest
+
+command in the SNEWPY root directory.
+SNOwGLoBES interface tests requires ``$SNOWGLOBES`` environment variable to be set to the path of you SNOwGLoBES installation.
+If you want to skip this part, use::
+    
+    pytest -k 'not snowglobes'
+
+to run all tests except those for the SNOwGLoBES interface.
 
 Contribute Supernova Models
 ---------------------------
