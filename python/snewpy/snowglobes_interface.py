@@ -281,8 +281,10 @@ class SimpleRate(SNOwGLoBES):
         """Simple rate calculation interface.
         Computes expected rate for a perfect detector (100% efficiencies, no smearing)
         without using GLOBES. The formula for the rate is
+
                 Rate = [cross-section in 10^-38 cm^2] x 10^-38 x [fluence in cm^-2] x [target mass in kton] 
                     x [Dalton per kton] x [energy bin size in GeV]
+
         with [target mass in kton] x [Dalton per kton] = number of reference targets in experiment.
 
         On construction the code will read: 
