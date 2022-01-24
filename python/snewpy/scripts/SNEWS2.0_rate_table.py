@@ -38,7 +38,7 @@ if (have_data_saved is False):
             tarredfile = snowglobes.generate_fluence(model_dir + file_name, modeltype, transformation, d, outfile)
             for det in dets:
                 snowglobes.simulate(SNOwGLoBES_path, tarredfile, detector_input=det)
-                tables = snowglobes.collate(SNOwGLoBES_path, tarredfile, detector_input=det, skip_plots=True)
+                tables = snowglobes.collate(SNOwGLoBES_path, tarredfile, skip_plots=True)
 
                 #for our table, interesting number is the smeared total number of events
                 key = "Collated_"+outfile+"_"+det+"_events_smeared_weighted.dat"
