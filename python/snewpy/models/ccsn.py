@@ -5,6 +5,8 @@ The submodule ``snewpy.models.ccsn`` contains models derived from the
 
 You can :ref:`download neutrino fluxes for each of these models <sec-download_models>`
 using ``snewpy.get_models("<model_name>")``.
+
+.. _Garching Supernova Archive: https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/
 """
 
 import logging
@@ -110,26 +112,27 @@ class Sukhbold_2015(PinchedModel):
         super().__init__(simtab, metadata)
 
 class Tamborra_2014(_GarchingArchiveModel):
-    """Model based on 3D simulations from [Tamborra et al., PRD 90:045032, 2014](https://arxiv.org/abs/1406.0006). Data files are from the Garching Supernova Archive.
+    """Model based on 3D simulations from `Tamborra et al., PRD 90:045032, 2014 <https://arxiv.org/abs/1406.0006>`_.
+    Data files are from the `Garching Supernova Archive`_.
     """
     pass
 
 class Bollig_2016(_GarchingArchiveModel):
-    """Model based on simulations from Bollig et al. (2016). Models were taken, with permission, from the Garching Supernova Archive.
+    """Model based on simulations from Bollig et al. (2016). Models were taken, with permission, from the `Garching Supernova Archive`_.
     """
     pass
 
 class Walk_2018(_GarchingArchiveModel):
-    """Model based on SASI-dominated simulations from [Walk et al.,
-    PRD 98:123001, 2018](https://arxiv.org/abs/1807.02366). Data files are from
-    the Garching Supernova Archive.
+    """Model based on SASI-dominated simulations from `Walk et al.,
+    PRD 98:123001, 2018 <https://arxiv.org/abs/1807.02366>`_. Data files are from
+    the `Garching Supernova Archive`_.
     """
     pass
 
 class Walk_2019(_GarchingArchiveModel):
-    """Model based on SASI-dominated simulations from [Walk et al.,
-    PRD 101:123013, 2019](https://arxiv.org/abs/1910.12971). Data files are
-    from the Garching Supernova Archive.
+    """Model based on SASI-dominated simulations from `Walk et al.,
+    PRD 101:123013, 2019 <https://arxiv.org/abs/1910.12971>`_. Data files are
+    from the `Garching Supernova Archive`_.
     """
     pass
 
