@@ -1,6 +1,7 @@
 # SNEWPY: Supernova Neutrino Early Warning Models for Python
 
 [![DOI](https://zenodo.org/badge/221705586.svg)](https://zenodo.org/badge/latestdoi/221705586)
+![Release](https://img.shields.io/github/v/release/SNEWS2/snewpy?include_prereleases)
 ![tests](https://github.com/SNEWS2/snewpy/actions/workflows/tests.yml/badge.svg)
 [![Documentation Status](https://readthedocs.org/projects/snewpy/badge/?version=latest)](https://snewpy.readthedocs.io/en/latest/?badge=latest)
 
