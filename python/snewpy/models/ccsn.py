@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-The submodule ``snewpy.models.ccsn`` contains models derived from the
-:class:`SupernovaModel` base class.
+The submodule ``snewpy.models.ccsn`` contains models of core-collapse supernovae
+derived from the :class:`SupernovaModel` base class.
 
 You can :ref:`download neutrino fluxes for each of these models <sec-download_models>`
 using ``snewpy.get_models("<model_name>")``.
@@ -118,7 +118,7 @@ class Tamborra_2014(_GarchingArchiveModel):
     pass
 
 class Bollig_2016(_GarchingArchiveModel):
-    """Model based on simulations from Bollig et al. (2016). Models were taken, with permission, from the `Garching Supernova Archive`_.
+    """Model based on simulations from `Bollig et al. (2016) <https://arxiv.org/abs/1508.00785>`_. Models were taken, with permission, from the Garching Supernova Archive.
     """
     pass
 
@@ -138,7 +138,7 @@ class Walk_2019(_GarchingArchiveModel):
 
 
 class OConnor_2013(PinchedModel):
-    """Model based on the black hole formation simulation in O'Connor & Ott (2013). 
+    """Model based on the black hole formation simulation in `O'Connor & Ott (2013) <https://arxiv.org/abs/1207.1100>`_.
     """
     def __init__(self, base, mass=15, eos='LS220'):
         """
@@ -180,7 +180,7 @@ class OConnor_2013(PinchedModel):
 
 
 class OConnor_2015(PinchedModel):
-    """Model based on the black hole formation simulation in O'Connor (2015). 
+    """Model based on the black hole formation simulation in `O'Connor (2015) <https://arxiv.org/abs/1411.7058>`_.
     """
     def __init__(self, filename, eos='LS220'):
         """
@@ -220,7 +220,7 @@ class OConnor_2015(PinchedModel):
         super().__init__(simtab, metadata)
 
 class Zha_2021(PinchedModel):
-    """Model based on the hadron-quark phse transition models from Zha et al. 2021. 
+    """Model based on the hadron-quark phse transition models from `Zha et al. 2021 <https://arxiv.org/abs/2103.02268>`_.
     """
     def __init__(self, filename, eos='STOS_B145'):
         """
@@ -319,7 +319,7 @@ class Warren_2020(PinchedModel):
 
 
 class Kuroda_2020(PinchedModel):
-    """Model based on simulations from Kuroda et al. (2020)."""
+    """Model based on simulations from `Kuroda et al. (2020) <https://arxiv.org/abs/2009.07733>`_."""
 
     def __init__(self, filename, eos='LS220', mass=20*u.Msun):
         """
