@@ -29,10 +29,10 @@ try:
 except ImportError:
     pass
 
+from snewpy import model_path
 from snewpy.neutrino import Flavor
-from snewpy import data_folder
 from .base import PinchedModel, SupernovaModel, _GarchingArchiveModel
-from snewpy._model_registry import ModelRegistry as registry
+from ._registry import check_param_values
 
 
 class Analytic3Species(PinchedModel):
@@ -58,6 +58,12 @@ class Nakazato_2013(PinchedModel):
     """Set up a model based on simulations from Nakazato et al., ApJ S 205:2
     (2013), ApJ 804:75 (2015), PASJ 73:639 (2021). See also http://asphwww.ph.noda.tus.ac.jp/snn/.
     """
+    param = {
+        'progenitor_mass': [13, 20, 30, 50] * u.Msun,
+        'revival_time': [0, 100, 200, 300] * u.ms,
+        'metallicity': [0.02, 0.004],
+        'eos': ['LS220', 'shen', 'togashi']
+    }
 
     def __init__(self, filename=None, *, progenitor_mass=None, revival_time=None, metallicity=None, eos=None):
         """Initialize model.
@@ -103,36 +109,34 @@ class Nakazato_2013(PinchedModel):
         # Attempt to load model from parameters
         if not filename and all((p is not None for p in (progenitor_mass, revival_time, metallicity, eos))):
             # Check arguments specify valid model parameter values
-            registry.check_param_values(self.__class__.__name__,
-                                        progenitor_mass=progenitor_mass,
-                                        revival_time=revival_time,
-                                        metallicity=metallicity,
-                                        eos=eos)
+            check_param_values(self,
+                               progenitor_mass=progenitor_mass,
+                               revival_time=revival_time,
+                               metallicity=metallicity,
+                               eos=eos)
 
             progenitor_mass = progenitor_mass.to(u.Msun).value
             revival_time = revival_time.to(u.ms).value
-            if revival_time != 0 and eos != 'togashi':
+            # Check combinations of parameters
+
+            # Select non-BH formation
+            if revival_time != 0 and not (progenitor_mass == 30 and metallicity == 0.004) and eos not in ['togashi', 'LS220']:
                 fname = f"nakazato-{eos}-z{metallicity}-t_rev{int(revival_time)}ms-s{progenitor_mass:3.1f}.fits"
-            # Perform model-specific checks
-            # elif revival_time != 0 and eos == 'togashi':
-            #     raise ValueError('Invalid parameter combination, models with Togashi EOS must have revival_time 0 ms')
-            #
-            # elif revival_time != 0 and metallicity == 0.004 and progenitor_mass == 30:
-            #     raise ValueError('Invalid parameter combination, models with metallicity z=0.004 and '
-            #                      'progenitor mass 30 Msun must have revival_time 0 ms')
-            #
-            # elif revival_time == 0 and metallicity == 0.004 and progenitor_mass != 30:
-            #     raise ValueError('Invalid parameter combination, models with metallicity z=0.004 and revival time 0 ms '
-            #                      'must have progenitor mass 30 Msun')
-            #
-            # elif revival_time == 0 and metallicity == 0.02:
-            #     raise ValueError('Invalid parameter combination, models with metallicity z=0.02 '
-            #                      'must not have revival time 0 ms')
             else:
-                fname = f"nakazato-{eos}-BH-z{metallicity}-s{progenitor_mass:3.1f}.fits"
+                # Check for invalid BH model paramter combinations
+                exc_string = "Invalid parameter combination for BH scenario. Expected progenitor_mass=30 Msun, " \
+                             "metallicity=0.004, revival_time=0 ms. "
+                if revival_time != 0:
+                    raise ValueError(exc_string + f"Given revival_time={revival_time} ms")
+
+                elif not (progenitor_mass == 30 and metallicity == 0.004):
+                    raise ValueError(exc_string + f"Given progenitor_mass={progenitor_mass} Msun, "
+                                                  f"metallicity={metallicity}")
+                else:
+                    fname = f"nakazato-{eos}-BH-z{metallicity}-s{progenitor_mass:3.1f}.fits"
 
             # Construct metadata
-            filename = os.path.join(data_folder, self.__class__.__name__, fname)
+            filename = os.path.join(model_path, self.__class__.__name__, fname)
             if not os.path.exists(filename):
                 raise FileNotFoundError(f"No such file or directory: '{filename}', requested parameters may be "
                                         "incompatible")
@@ -157,11 +161,11 @@ class Nakazato_2013(PinchedModel):
                 self.EOS = filename.split('-')[-4].upper()
 
             metadata = {
-                'Progenitor mass':self.progenitor_mass,
-                'EOS':self.EOS,
-                'Metallicity':self.metallicity,
-                'Revival time':self.revival_time
-                }
+                'Progenitor mass': self.progenitor_mass,
+                'EOS': self.EOS,
+                'Metallicity': self.metallicity,
+                'Revival time': self.revival_time
+            }
         else:
             raise TypeError('__init__() missing required arguments. Use argument `filename` or arguments '
                             '`progenitor_mass`, `revival_time`, `metallicity`, `eos`')
