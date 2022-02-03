@@ -11,16 +11,16 @@ from astropy.units import UnitTypeError, get_physical_type
 
 
 def check_param_values(model, **user_param):
-    """Performs generic check for a model that has an existing entry in the registry that the use provided args
-    and kwargs have valid values and units (if applicable) for the specified model.
+    """Performs generic check for that the requested model parameters have valid values and units for the requested
+    SNEWPY model. Model arguments MUST be provided as keyword arguments that match the model_class `param` class member.
 
     Parameters
     ----------
     model : snewpy.model.SupernovaModel
-        Name of model entry in registry, it should match exactly with a SNEWPY model class name
+        Model class used to perform parameter check
     user_param : varies
-        Model parameters provided with keywords, type varies based on model entry
-        It is strongly recommended that the user provides keyword arguments to this function other than ``model``
+        User-requested model parameters to be tested for validity. MUST be provided as keyword arguments that match the
+        model `param` class member
 
     Raises
     ------
@@ -31,7 +31,8 @@ def check_param_values(model, **user_param):
 
     See Also
     --------
-    snewpy.models
+    snewpy.models.ccsn
+    snewpy.models.presn
 
     """
     model_param = model.param

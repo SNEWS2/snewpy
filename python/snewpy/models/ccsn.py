@@ -32,7 +32,7 @@ except ImportError:
 from snewpy import model_path
 from snewpy.neutrino import Flavor
 from .base import PinchedModel, SupernovaModel, _GarchingArchiveModel
-from ._registry import check_param_values
+from .registry import check_param_values
 
 
 class Analytic3Species(PinchedModel):
