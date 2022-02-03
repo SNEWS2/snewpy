@@ -8,6 +8,46 @@ SNEWPY is installed under /home/user/.astropy/cache via snewpy.__init__.py.
 
 from astropy.units.quantity import Quantity
 from astropy.units import UnitTypeError, get_physical_type
+from . import ccsn, presn
+
+
+def get_model(model_name, **user_param):
+    """Attempts to retrieve instantiated SNEWPY model using model class name and model parameters
+
+    Parameters
+    ----------
+    model_name : str
+        Name of SNEWPY model to import, must exactly match the name of the corresponding model class
+    user_param : varies
+        User-requested model parameters used to initialize the model, if one is found.
+        Error checking is performed during model initialization
+
+    Raises
+    ------
+    ValueError
+        If the requested model_name does not match any SNEWPY models
+
+    See Also
+    --------
+    snewpy.models.ccsn
+    snewpy.models.presn
+
+    Example
+    -------
+    >>> from snewpy.models.registry import get_model; import astropy.units as u
+    >>> get_model('Nakazato_2013', progenitor_mass=13*u.Msun, metallicity=0.004, revival_time=0*u.s, eos='shen')
+    Nakazato_2013 Model: nakazato-shen-BH-z0.004-s30.0.fits
+    Progenitor mass  : 30.0 solMass
+    EOS              : Shen
+    Metallicity      : 0.004
+    Revival time     : 0.0 ms
+    """
+    if model_name in dir(ccsn):
+        return getattr(ccsn, model_name)(**user_param)
+    elif model_name in dir(presn):
+        return getattr(presn, model_name)(**user_param)
+    else:
+        raise ValueError(f"Unable to find model with name '{model_name}'")
 
 
 def check_param_values(model, **user_param):
