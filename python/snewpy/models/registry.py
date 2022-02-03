@@ -8,16 +8,23 @@ SNEWPY is installed under /home/user/.astropy/cache via snewpy.__init__.py.
 
 from astropy.units.quantity import Quantity
 from astropy.units import UnitTypeError, get_physical_type
+from snewpy import model_path, get_models
+import logging
 from . import ccsn, presn
 
 
-def get_model(model_name, **user_param):
-    """Attempts to retrieve instantiated SNEWPY model using model class name and model parameters
+def init_model(model_name, download=True, download_dir=model_path, **user_param):
+    """Attempts to retrieve instantiated SNEWPY model using model class name and model parameters.
+    If a model name is valid, but is not found and `download`=True, this function will attempt to download the model
 
     Parameters
     ----------
     model_name : str
         Name of SNEWPY model to import, must exactly match the name of the corresponding model class
+    download : bool
+        Switch for attempting to download model data if the first load attempt failed due to a missing file.
+    download_dir : str
+        Local directory to download model files to.
     user_param : varies
         User-requested model parameters used to initialize the model, if one is found.
         Error checking is performed during model initialization
@@ -34,8 +41,8 @@ def get_model(model_name, **user_param):
 
     Example
     -------
-    >>> from snewpy.models.registry import get_model; import astropy.units as u
-    >>> get_model('Nakazato_2013', progenitor_mass=13*u.Msun, metallicity=0.004, revival_time=0*u.s, eos='shen')
+    >>> from snewpy.models.registry import init_model; import astropy.units as u
+    >>> init_model('Nakazato_2013', progenitor_mass=13*u.Msun, metallicity=0.004, revival_time=0*u.s, eos='shen')
     Nakazato_2013 Model: nakazato-shen-BH-z0.004-s30.0.fits
     Progenitor mass  : 30.0 solMass
     EOS              : Shen
@@ -43,16 +50,27 @@ def get_model(model_name, **user_param):
     Revival time     : 0.0 ms
     """
     if model_name in dir(ccsn):
-        return getattr(ccsn, model_name)(**user_param)
+        module = ccsn
     elif model_name in dir(presn):
-        return getattr(presn, model_name)(**user_param)
+        module = presn
     else:
-        raise ValueError(f"Unable to find model with name '{model_name}'")
+        raise ValueError(f"Unable to find model with name '{model_name}' in snewpy.models.ccsn or snewpy.models.presn")
+
+    try:
+        return getattr(module, model_name)(**user_param)
+    except FileNotFoundError as e:
+        logger = logging.getLogger()
+        logger.warning(f"Unable to find model {model_name} in {download_dir}")
+        if not download:
+            raise e
+        logger.warning(f"Attempting to download model...")
+        get_models(model_name, download_dir)
+        return getattr(module, model_name)(**user_param)
 
 
 def check_param_values(model, **user_param):
-    """Performs generic check for that the requested model parameters have valid values and units for the requested
-    SNEWPY model. Model arguments MUST be provided as keyword arguments that match the model_class `param` class member.
+    """Performs generic check that the requested model parameters have valid values and units for the requested
+    SNEWPY model.
 
     Parameters
     ----------
