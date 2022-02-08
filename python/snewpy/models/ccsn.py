@@ -27,8 +27,10 @@ try:
 except ImportError:
     pass
 
+from snewpy import model_path
 from snewpy.neutrino import Flavor
 from .base import PinchedModel, SupernovaModel, _GarchingArchiveModel
+from .registry import check_param_values
 
 
 class Analytic3Species(PinchedModel):
@@ -53,33 +55,114 @@ class Nakazato_2013(PinchedModel):
     """Model based on simulations from Nakazato et al., ApJ S 205:2
     (2013), ApJ 804:75 (2015), PASJ 73:639 (2021). See also http://asphwww.ph.noda.tus.ac.jp/snn/.
     """
+    param = {
+        'progenitor_mass': [13, 20, 30, 50] * u.Msun,
+        'revival_time': [0, 100, 200, 300] * u.ms,
+        'metallicity': [0.02, 0.004],
+        'eos': ['LS220', 'shen', 'togashi']
+    }
 
-    def __init__(self, filename):
+    def __init__(self, filename=None, *, progenitor_mass=None, revival_time=None, metallicity=None, eos=None):
+
         """
         Parameters
         ----------
         filename : str
             Absolute or relative path to FITS file with model data.
-        """
-        # Store model metadata.
-        if 't_rev' in filename:
-            self.progenitor_mass = float(filename.split('-')[-1].strip('s%.fits')) * u.Msun
-            self.revival_time = float(filename.split('-')[-2].strip('t_rev%ms')) * u.ms
-            self.metallicity = float(filename.split('-')[-3].strip('z%'))
-            self.EOS = filename.split('-')[-4].upper()
-        # No revival time because the explosion "failed" (BH formation).
-        else:
-            self.progenitor_mass = float(filename.split('-')[-1].strip('s%.fits')) * u.Msun
-            self.metallicity = float(filename.split('-')[-2].strip('z%'))
-            self.revival_time = 0 * u.ms
-            self.EOS = filename.split('-')[-4].upper()
 
-        metadata = {
-            'Progenitor mass':self.progenitor_mass,
-            'EOS':self.EOS,
-            'Metallicity':self.metallicity,
-            'Revival time':self.revival_time
+        Other Parameters
+        ----------------
+        progenitor_mass: astropy.units.Quantity
+            Mass of model progenitor in units Msun
+        revival_time: astropy.units.Quantity
+            Time of shock revival in model in units ms
+            Selecting 0 ms will load a black hole formation model
+        metallicity: float
+            Progenitor metallicity
+        eos: str
+            Equation of state
+        Raises
+        ------
+        FileNotFoundError
+            If a file for the chosen model parameters cannot be found
+        See also
+        --------
+        snewpy._model_registry : Describes allowed values for parameters `progenitor_mass`, `revival_time`,
+                                 `metallicity`, and `eos`
+        Examples
+        --------
+        >>> from snewpy.models.ccsn import Nakazato_2013; import astropy.units as u
+        >>> Nakazato_2013(progenitor_mass=13*u.Msun, metallicity=0.004, revival_time=0*u.s, eos='togashi')
+        Nakazato_2013 Model: nakazato-togashi-BH-z0.004-s30.0.fits
+        Progenitor mass  : 30.0 solMass
+        EOS              : Togashi
+        Metallicity      : 0.004
+        Revival time     : 0.0 ms
+        """
+        # Attempt to load model from parameters
+        if not filename and all((p is not None for p in (progenitor_mass, revival_time, metallicity, eos))):
+            # Check arguments specify valid model parameter values
+            check_param_values(self,
+                               progenitor_mass=progenitor_mass,
+                               revival_time=revival_time,
+                               metallicity=metallicity,
+                               eos=eos)
+
+            progenitor_mass = progenitor_mass.to(u.Msun).value
+            revival_time = revival_time.to(u.ms).value
+            # Check combinations of parameters
+
+            # Select non-BH formation
+            if revival_time != 0 and not (progenitor_mass == 30 and metallicity == 0.004) and eos not in ['togashi', 'LS220']:
+                fname = f"nakazato-{eos}-z{metallicity}-t_rev{int(revival_time)}ms-s{progenitor_mass:3.1f}.fits"
+            else:
+                # Check for invalid BH model paramter combinations
+                exc_string = "Invalid parameter combination for BH scenario. Expected progenitor_mass=30 Msun, " \
+                             "metallicity=0.004, revival_time=0 ms. "
+                if revival_time != 0:
+                    raise ValueError(exc_string + f"Given revival_time={revival_time} ms")
+
+                elif not (progenitor_mass == 30 and metallicity == 0.004):
+                    raise ValueError(exc_string + f"Given progenitor_mass={progenitor_mass} Msun, "
+                                                  f"metallicity={metallicity}")
+                else:
+                    fname = f"nakazato-{eos}-BH-z{metallicity}-s{progenitor_mass:3.1f}.fits"
+
+            # Construct metadata
+            filename = os.path.join(model_path, self.__class__.__name__, fname)
+            if not os.path.exists(filename):
+                raise FileNotFoundError(f"No such file or directory: '{filename}', requested parameters may be "
+                                        "incompatible")
+            metadata = {
+                'Progenitor mass': progenitor_mass * u.Msun,
+                'EOS': eos.capitalize(),
+                'Metallicity': metallicity,
+                'Revival time': revival_time * u.ms
             }
+        elif filename:
+            # Store model metadata.
+            if 't_rev' in filename:
+                self.progenitor_mass = float(filename.split('-')[-1].strip('s%.fits')) * u.Msun
+                self.revival_time = float(filename.split('-')[-2].strip('t_rev%ms')) * u.ms
+                self.metallicity = float(filename.split('-')[-3].strip('z%'))
+                self.EOS = filename.split('-')[-4].upper()
+            # No revival time because the explosion "failed" (BH formation).
+            else:
+                self.progenitor_mass = float(filename.split('-')[-1].strip('s%.fits')) * u.Msun
+                self.metallicity = float(filename.split('-')[-2].strip('z%'))
+                self.revival_time = 0 * u.ms
+                self.EOS = filename.split('-')[-4].upper()
+
+            metadata = {
+                'Progenitor mass': self.progenitor_mass,
+                'EOS': self.EOS,
+                'Metallicity': self.metallicity,
+                'Revival time': self.revival_time
+            }
+        else:
+            raise TypeError('__init__() missing required arguments. Use argument `filename` or arguments '
+                            '`progenitor_mass`, `revival_time`, `metallicity`, `eos`')
+
         # Read FITS table using the astropy reader.
         simtab = Table.read(filename)
         self.filename = os.path.basename(filename)
@@ -154,14 +237,14 @@ class OConnor_2013(PinchedModel):
 
         # Open luminosity file.
         tf = tarfile.open(base+'{}_timeseries.tar.gz'.format(eos))
-        
+
         # Extract luminosity data.
         dataname = 's{:d}_{}_timeseries.dat'.format(mass, eos)
         datafile = tf.extractfile(dataname)
         simtab = ascii.read(datafile, names=['TIME', 'L_NU_E', 'L_NU_E_BAR', 'L_NU_X',
                                                'E_NU_E', 'E_NU_E_BAR', 'E_NU_X',
                                                'RMS_NU_E', 'RMS_NU_E_BAR', 'RMS_NU_X'])
-        
+
         simtab['ALPHA_NU_E'] = (2.0*simtab['E_NU_E']**2 - simtab['RMS_NU_E']**2)/(simtab['RMS_NU_E']**2 - simtab['E_NU_E']**2)
         simtab['ALPHA_NU_E_BAR'] = (2.0*simtab['E_NU_E_BAR']**2 - simtab['RMS_NU_E_BAR']**2)/(simtab['RMS_NU_E_BAR']**2 - simtab['E_NU_E_BAR']**2)
         simtab['ALPHA_NU_X'] = (2.0*simtab['E_NU_X']**2 - simtab['RMS_NU_X']**2)/(simtab['RMS_NU_X']**2 - simtab['E_NU_X']**2)
@@ -253,9 +336,8 @@ class Zha_2021(PinchedModel):
         simtab['L_NU_E_BAR'][simtab['L_NU_E_BAR'] < 0] = 1
         simtab['L_NU_X'][simtab['L_NU_X'] < 0] = 1
 
-        
         basename =os.path.basename(filename)[:-4]
-        
+
         self.filename = 'Zha2021_'+basename
         self.EOS = eos
         self.progenitor_mass =  float(basename[1:])* u.Msun
@@ -542,7 +624,7 @@ class Fornax_2019(SupernovaModel):
             hdu_flux.header['EXTNAME'] = '{}_FLUX'.format(name)
             hdu_flux.header['BUNIT'] = str(self.fluxunit)
             hx.append(hdu_flux)
-        
+
         hx.writeto(filename, overwrite=overwrite)
 
     def _fact(self, n):
@@ -617,7 +699,7 @@ class Fornax_2019(SupernovaModel):
         # Convert input time to a time index.
         t = t.to(self.time.unit)
         j = (np.abs(t - self.time)).argmin()
-        
+
         for flavor in Flavor:
             # Cached data: read out the relevant time and angular rows.
             if self.is_cached:
@@ -641,7 +723,7 @@ class Fornax_2019(SupernovaModel):
                 # Energy binning of the model for this flavor, in units of MeV.
                 E[flavor]  = self._h5file[key]['egroup'][j] * u.MeV
                 dE[flavor] = self._h5file[key]['degroup'][j] * u.MeV
-                
+
                 # Storage of differential flux per energy, angle, and time.
                 dLdE = np.zeros(len(E[flavor]), dtype=float)
 
@@ -692,7 +774,7 @@ class Fornax_2019(SupernovaModel):
         # Avoid "division by zero" in retrieval of the spectrum.
         E[E == 0] = np.finfo(float).eps * E.unit
         logE = np.log10(E.to_value('MeV'))
-        
+
         for flavor in flavors:
 
             # Linear interpolation in flux.
