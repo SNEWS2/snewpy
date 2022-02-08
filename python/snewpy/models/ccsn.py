@@ -63,8 +63,7 @@ class Nakazato_2013(PinchedModel):
     }
 
     def __init__(self, filename):
-        """Model initialization.
-
+        """
         Parameters
         ----------
         filename : str
