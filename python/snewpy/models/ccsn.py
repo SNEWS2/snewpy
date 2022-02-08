@@ -62,7 +62,7 @@ class Nakazato_2013(PinchedModel):
         'eos': ['LS220', 'shen', 'togashi']
     }
 
-    def __init__(self, filename):
+    def __init__(self, filename=None, *, progenitor_mass=None, revival_time=None, metallicity=None, eos=None):
         """
         Parameters
         ----------
