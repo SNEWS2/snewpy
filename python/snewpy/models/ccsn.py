@@ -55,14 +55,7 @@ class Nakazato_2013(PinchedModel):
     """Model based on simulations from Nakazato et al., ApJ S 205:2
     (2013), ApJ 804:75 (2015), PASJ 73:639 (2021). See also http://asphwww.ph.noda.tus.ac.jp/snn/.
     """
-    param = {
-        'progenitor_mass': [13, 20, 30, 50] * u.Msun,
-        'revival_time': [0, 100, 200, 300] * u.ms,
-        'metallicity': [0.02, 0.004],
-        'eos': ['LS220', 'shen', 'togashi']
-    }
-
-    def __init__(self, filename=None, *, progenitor_mass=None, revival_time=None, metallicity=None, eos=None):
+    def __init__(self, filename):
         """
         Parameters
         ----------
