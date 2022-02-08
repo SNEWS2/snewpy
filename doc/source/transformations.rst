@@ -1,9 +1,9 @@
 Flavor Transformations: ``snewpy.flavor_transformation``
 ========================================================
 
-.. warning::
-
-   Once it’s published, point readers to the SNEWPY paper for exact transition probabilities, etc.
+This module implements flavor transformations that describe how neutrinos of
+different flavors change into each other between production inside the
+supernova and detection on Earth.
 
 
 Base Class for Flavor Transformations

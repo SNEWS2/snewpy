@@ -9,6 +9,8 @@ SNEWPY is a Python package for working with supernova neutrinos. It offers …
 * … and a Python interface to SNOwGLoBES which lets you estimate and plot event
   rates in many different neutrino detectors.
 
+This documentation describes SNEWPY’s API. For descriptions of the underlying
+physics, please see the paper `arXiv:2109.08188 <https://arxiv.org/abs/2109.08188>`_.
 
 Table of Contents
 -----------------
@@ -22,6 +24,7 @@ Table of Contents
    transformations
    neutrino
    contributing
+   citing
 
 
 Indices and Search

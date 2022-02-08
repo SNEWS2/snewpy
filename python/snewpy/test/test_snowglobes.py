@@ -65,7 +65,7 @@ def test_simplerate_crosscheck(splr, detector, expected_total_unsmeared):
 
 def process(tarball_name):
     simulate(None,tarball_name,'icecube')
-    collate(None, tarball_name,'icecube')
+    collate(None, tarball_name)
 
 @pytest.mark.timing
 def test_simulation_chain_benchmark(benchmark):

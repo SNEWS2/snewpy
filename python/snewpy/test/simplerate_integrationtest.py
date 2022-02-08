@@ -33,7 +33,7 @@ class TestSimpleRate(unittest.TestCase):
         snowglobes.simulate(SNOwGLoBES_path, tarredfile, detector_input=detector, detector_effects=False)
 
         print("Collating results ...")
-        tables = snowglobes.collate(SNOwGLoBES_path, tarredfile, detector_input=detector, skip_plots=True, smearing=False)
+        tables = snowglobes.collate(SNOwGLoBES_path, tarredfile, skip_plots=True, smearing=False)
 
         # Use results to print the number of events in different interaction channels
         key = f"Collated_{outfile}_{detector}_events_unsmeared_weighted.dat"
