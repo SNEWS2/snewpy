@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-A submodule with classes used for supernova model files stored on disk. It
-assumes models are available in a format usable by the AstroPy unified table
-reader; see https://docs.astropy.org/en/stable/index.html for details.
+The submodule ``snewpy.models.ccsn`` contains models of core-collapse supernovae
+derived from the :class:`SupernovaModel` base class.
 
-Based on the ASTERIA (https://github.com/IceCubeOpenSource/ASTERIA) models
-developed by Navya Uberoi and Spencer Griswold.
+You can :ref:`download neutrino fluxes for each of these models <sec-download_models>`
+using ``snewpy.get_models("<model_name>")``.
 
-Updated summer 2020 by Jim Kneller & Arkin Worlikar. Subsequent updates
-provided by the SNEWS team.
+.. _Garching Supernova Archive: https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/
 """
 
 import logging
@@ -29,20 +27,17 @@ try:
 except ImportError:
     pass
 
-from snewpy import model_path
 from snewpy.neutrino import Flavor
 from .base import PinchedModel, SupernovaModel, _GarchingArchiveModel
-from .registry import check_param_values
 
 
 class Analytic3Species(PinchedModel):
-    """Allow to generate an analytic model given total luminosity,
+    """An analytical model calculating spectra given total luminosity,
     average energy, and rms or pinch, for each species.
     """
 
     def __init__(self, filename):
-        """Initialize model.
-
+        """
         Parameters
         ----------
         filename : str
@@ -55,120 +50,36 @@ class Analytic3Species(PinchedModel):
 
 
 class Nakazato_2013(PinchedModel):
-    """Set up a model based on simulations from Nakazato et al., ApJ S 205:2
+    """Model based on simulations from Nakazato et al., ApJ S 205:2
     (2013), ApJ 804:75 (2015), PASJ 73:639 (2021). See also http://asphwww.ph.noda.tus.ac.jp/snn/.
     """
-    param = {
-        'progenitor_mass': [13, 20, 30, 50] * u.Msun,
-        'revival_time': [0, 100, 200, 300] * u.ms,
-        'metallicity': [0.02, 0.004],
-        'eos': ['LS220', 'shen', 'togashi']
-    }
 
-    def __init__(self, filename=None, *, progenitor_mass=None, revival_time=None, metallicity=None, eos=None):
-        """Initialize model.
-
+    def __init__(self, filename):
+        """
         Parameters
         ----------
         filename : str
             Absolute or relative path to FITS file with model data.
-
-        Other Parameters
-        ----------------
-        progenitor_mass: astropy.units.Quantity
-            Mass of model progenitor in units Msun
-        revival_time: astropy.units.Quantity
-            Time of shock revival in model in units ms
-            Selecting 0 ms will load a black hole formation model
-        metallicity: float
-            Progenitor metallicity
-        eos: str
-            Equation of state
-
-        Raises
-        ------
-        FileNotFoundError
-            If a file for the chosen model parameters cannot be found
-
-        See also
-        --------
-        snewpy._model_registry : Describes allowed values for parameters `progenitor_mass`, `revival_time`,
-                                 `metallicity`, and `eos`
-
-        Examples
-        --------
-        >>> from snewpy.models.ccsn import Nakazato_2013; import astropy.units as u
-        >>> Nakazato_2013(progenitor_mass=13*u.Msun, metallicity=0.004, revival_time=0*u.s, eos='togashi')
-        Nakazato_2013 Model: nakazato-togashi-BH-z0.004-s30.0.fits
-        Progenitor mass  : 30.0 solMass
-        EOS              : Togashi
-        Metallicity      : 0.004
-        Revival time     : 0.0 ms
         """
-
-        # Attempt to load model from parameters
-        if not filename and all((p is not None for p in (progenitor_mass, revival_time, metallicity, eos))):
-            # Check arguments specify valid model parameter values
-            check_param_values(self,
-                               progenitor_mass=progenitor_mass,
-                               revival_time=revival_time,
-                               metallicity=metallicity,
-                               eos=eos)
-
-            progenitor_mass = progenitor_mass.to(u.Msun).value
-            revival_time = revival_time.to(u.ms).value
-            # Check combinations of parameters
-
-            # Select non-BH formation
-            if revival_time != 0 and not (progenitor_mass == 30 and metallicity == 0.004) and eos not in ['togashi', 'LS220']:
-                fname = f"nakazato-{eos}-z{metallicity}-t_rev{int(revival_time)}ms-s{progenitor_mass:3.1f}.fits"
-            else:
-                # Check for invalid BH model paramter combinations
-                exc_string = "Invalid parameter combination for BH scenario. Expected progenitor_mass=30 Msun, " \
-                             "metallicity=0.004, revival_time=0 ms. "
-                if revival_time != 0:
-                    raise ValueError(exc_string + f"Given revival_time={revival_time} ms")
-
-                elif not (progenitor_mass == 30 and metallicity == 0.004):
-                    raise ValueError(exc_string + f"Given progenitor_mass={progenitor_mass} Msun, "
-                                                  f"metallicity={metallicity}")
-                else:
-                    fname = f"nakazato-{eos}-BH-z{metallicity}-s{progenitor_mass:3.1f}.fits"
-
-            # Construct metadata
-            filename = os.path.join(model_path, self.__class__.__name__, fname)
-            if not os.path.exists(filename):
-                raise FileNotFoundError(f"No such file or directory: '{filename}', requested parameters may be "
-                                        "incompatible")
-            metadata = {
-                'Progenitor mass': progenitor_mass * u.Msun,
-                'EOS': eos.capitalize(),
-                'Metallicity': metallicity,
-                'Revival time': revival_time * u.ms
-            }
-        elif filename:
-            # Store model metadata.
-            if 't_rev' in filename:
-                self.progenitor_mass = float(filename.split('-')[-1].strip('s%.fits')) * u.Msun
-                self.revival_time = float(filename.split('-')[-2].strip('t_rev%ms')) * u.ms
-                self.metallicity = float(filename.split('-')[-3].strip('z%'))
-                self.EOS = filename.split('-')[-4].upper()
-            # No revival time because the explosion "failed" (BH formation).
-            else:
-                self.progenitor_mass = float(filename.split('-')[-1].strip('s%.fits')) * u.Msun
-                self.metallicity = float(filename.split('-')[-2].strip('z%'))
-                self.revival_time = 0 * u.ms
-                self.EOS = filename.split('-')[-4].upper()
-
-            metadata = {
-                'Progenitor mass': self.progenitor_mass,
-                'EOS': self.EOS,
-                'Metallicity': self.metallicity,
-                'Revival time': self.revival_time
-            }
+        # Store model metadata.
+        if 't_rev' in filename:
+            self.progenitor_mass = float(filename.split('-')[-1].strip('s%.fits')) * u.Msun
+            self.revival_time = float(filename.split('-')[-2].strip('t_rev%ms')) * u.ms
+            self.metallicity = float(filename.split('-')[-3].strip('z%'))
+            self.EOS = filename.split('-')[-4].upper()
+        # No revival time because the explosion "failed" (BH formation).
         else:
-            raise TypeError('__init__() missing required arguments. Use argument `filename` or arguments '
-                            '`progenitor_mass`, `revival_time`, `metallicity`, `eos`')
+            self.progenitor_mass = float(filename.split('-')[-1].strip('s%.fits')) * u.Msun
+            self.metallicity = float(filename.split('-')[-2].strip('z%'))
+            self.revival_time = 0 * u.ms
+            self.EOS = filename.split('-')[-4].upper()
+
+        metadata = {
+            'Progenitor mass':self.progenitor_mass,
+            'EOS':self.EOS,
+            'Metallicity':self.metallicity,
+            'Revival time':self.revival_time
+            }
         # Read FITS table using the astropy reader.
         simtab = Table.read(filename)
         self.filename = os.path.basename(filename)
@@ -176,12 +87,11 @@ class Nakazato_2013(PinchedModel):
 
 
 class Sukhbold_2015(PinchedModel):
-    """Set up a model based on simulations from Sukhbold et al., ApJ 821:38,2016. Models were shared privately by email.
+    """Model based on simulations from Sukhbold et al., ApJ 821:38,2016. Models were shared privately by email.
     """
 
     def __init__(self, filename):
-        """Initialize model.
-
+        """
         Parameters
         ----------
         filename : str
@@ -202,36 +112,36 @@ class Sukhbold_2015(PinchedModel):
         super().__init__(simtab, metadata)
 
 class Tamborra_2014(_GarchingArchiveModel):
-    """Set up a model based on 3D simulations from [Tamborra et al., PRD 90:045032, 2014](https://arxiv.org/abs/1406.0006). Data files are from the Garching Supernova Archive.
+    """Model based on 3D simulations from `Tamborra et al., PRD 90:045032, 2014 <https://arxiv.org/abs/1406.0006>`_.
+    Data files are from the `Garching Supernova Archive`_.
     """
     pass
 
 class Bollig_2016(_GarchingArchiveModel):
-    """Set up a model based on simulations from Bollig et al. (2016). Models were taken, with permission, from the Garching Supernova Archive.
+    """Model based on simulations from `Bollig et al. (2016) <https://arxiv.org/abs/1508.00785>`_. Models were taken, with permission, from the Garching Supernova Archive.
     """
     pass
 
 class Walk_2018(_GarchingArchiveModel):
-    """Set up a model based on SASI-dominated simulations from [Walk et al.,
-    PRD 98:123001, 2018](https://arxiv.org/abs/1807.02366). Data files are from
-    the Garching Supernova Archive.
+    """Model based on SASI-dominated simulations from `Walk et al.,
+    PRD 98:123001, 2018 <https://arxiv.org/abs/1807.02366>`_. Data files are from
+    the `Garching Supernova Archive`_.
     """
     pass
 
 class Walk_2019(_GarchingArchiveModel):
-    """Set up a model based on SASI-dominated simulations from [Walk et al.,
-    PRD 101:123013, 2019](https://arxiv.org/abs/1910.12971). Data files are
-    from the Garching Supernova Archive.
+    """Model based on SASI-dominated simulations from `Walk et al.,
+    PRD 101:123013, 2019 <https://arxiv.org/abs/1910.12971>`_. Data files are
+    from the `Garching Supernova Archive`_.
     """
     pass
 
 
 class OConnor_2013(PinchedModel):
-    """Set up a model based on the black hole formation simulation in O'Connor & Ott (2013). 
+    """Model based on the black hole formation simulation in `O'Connor & Ott (2013) <https://arxiv.org/abs/1207.1100>`_.
     """
     def __init__(self, base, mass=15, eos='LS220'):
-        """Initialize model.
-
+        """
         Parameters
         ----------
         base : str
@@ -244,14 +154,14 @@ class OConnor_2013(PinchedModel):
 
         # Open luminosity file.
         tf = tarfile.open(base+'{}_timeseries.tar.gz'.format(eos))
-
+        
         # Extract luminosity data.
         dataname = 's{:d}_{}_timeseries.dat'.format(mass, eos)
         datafile = tf.extractfile(dataname)
         simtab = ascii.read(datafile, names=['TIME', 'L_NU_E', 'L_NU_E_BAR', 'L_NU_X',
                                                'E_NU_E', 'E_NU_E_BAR', 'E_NU_X',
                                                'RMS_NU_E', 'RMS_NU_E_BAR', 'RMS_NU_X'])
-
+        
         simtab['ALPHA_NU_E'] = (2.0*simtab['E_NU_E']**2 - simtab['RMS_NU_E']**2)/(simtab['RMS_NU_E']**2 - simtab['E_NU_E']**2)
         simtab['ALPHA_NU_E_BAR'] = (2.0*simtab['E_NU_E_BAR']**2 - simtab['RMS_NU_E_BAR']**2)/(simtab['RMS_NU_E_BAR']**2 - simtab['E_NU_E_BAR']**2)
         simtab['ALPHA_NU_X'] = (2.0*simtab['E_NU_X']**2 - simtab['RMS_NU_X']**2)/(simtab['RMS_NU_X']**2 - simtab['E_NU_X']**2)
@@ -270,11 +180,10 @@ class OConnor_2013(PinchedModel):
 
 
 class OConnor_2015(PinchedModel):
-    """Set up a model based on the black hole formation simulation in O'Connor (2015). 
+    """Model based on the black hole formation simulation in `O'Connor (2015) <https://arxiv.org/abs/1411.7058>`_.
     """
     def __init__(self, filename, eos='LS220'):
-        """Initialize model.
-
+        """
         Parameters
         ----------
         filename : str
@@ -282,7 +191,7 @@ class OConnor_2015(PinchedModel):
         eos : string
             Equation of state used in simulation
         """
-        simtab = Table.read(filename,
+        simtab = Table.read(filename, 
                      names= ['TIME','L_NU_E','L_NU_E_BAR','L_NU_X',
                                     'E_NU_E','E_NU_E_BAR','E_NU_X',
                                     'RMS_NU_E','RMS_NU_E_BAR','RMS_NU_X'],
@@ -291,7 +200,7 @@ class OConnor_2015(PinchedModel):
         header = ascii.read(simtab.meta['comments'], delimiter='=',format='no_header', names=['key', 'val'])
         tbounce = float(header['val'][0])
         simtab['TIME'] -= tbounce
-
+        
         simtab['ALPHA_NU_E'] = (2.0*simtab['E_NU_E']**2 - simtab['RMS_NU_E']**2)/(simtab['RMS_NU_E']**2 - simtab['E_NU_E']**2)
         simtab['ALPHA_NU_E_BAR'] = (2.0*simtab['E_NU_E_BAR']**2 - simtab['RMS_NU_E_BAR']**2)/(simtab['RMS_NU_E_BAR']**2 - simtab['E_NU_E_BAR']**2)
         simtab['ALPHA_NU_X'] = (2.0*simtab['E_NU_X']**2 - simtab['RMS_NU_X']**2)/(simtab['RMS_NU_X']**2 - simtab['E_NU_X']**2)
@@ -311,11 +220,10 @@ class OConnor_2015(PinchedModel):
         super().__init__(simtab, metadata)
 
 class Zha_2021(PinchedModel):
-    """Set up a model based on the hadron-quark phse transition models from Zha et al. 2021. 
+    """Model based on the hadron-quark phse transition models from `Zha et al. 2021 <https://arxiv.org/abs/2103.02268>`_.
     """
     def __init__(self, filename, eos='STOS_B145'):
-        """Initialize model.
-
+        """
         Parameters
         ----------
         filename : str
@@ -323,7 +231,7 @@ class Zha_2021(PinchedModel):
         eos : string
             Equation of state used in simulation
         """
-        simtab = Table.read(filename,
+        simtab = Table.read(filename, 
                      names= ['TIME','L_NU_E','L_NU_E_BAR','L_NU_X',
                                     'E_NU_E','E_NU_E_BAR','E_NU_X',
                                     'RMS_NU_E','RMS_NU_E_BAR','RMS_NU_X'],
@@ -332,7 +240,7 @@ class Zha_2021(PinchedModel):
         header = ascii.read(simtab.meta['comments'], delimiter='=',format='no_header', names=['key', 'val'])
         tbounce = float(header['val'][0])
         simtab['TIME'] -= tbounce
-
+        
         simtab['ALPHA_NU_E'] = (2.0*simtab['E_NU_E']**2 - simtab['RMS_NU_E']**2)/(simtab['RMS_NU_E']**2 - simtab['E_NU_E']**2)
         simtab['ALPHA_NU_E_BAR'] = (2.0*simtab['E_NU_E_BAR']**2 - simtab['RMS_NU_E_BAR']**2)/(simtab['RMS_NU_E_BAR']**2 - simtab['E_NU_E_BAR']**2)
         simtab['ALPHA_NU_X'] = (2.0*simtab['E_NU_X']**2 - simtab['RMS_NU_X']**2)/(simtab['RMS_NU_X']**2 - simtab['E_NU_X']**2)
@@ -345,9 +253,9 @@ class Zha_2021(PinchedModel):
         simtab['L_NU_E_BAR'][simtab['L_NU_E_BAR'] < 0] = 1
         simtab['L_NU_X'][simtab['L_NU_X'] < 0] = 1
 
-
+        
         basename =os.path.basename(filename)[:-4]
-
+        
         self.filename = 'Zha2021_'+basename
         self.EOS = eos
         self.progenitor_mass =  float(basename[1:])* u.Msun
@@ -360,12 +268,11 @@ class Zha_2021(PinchedModel):
 
 
 class Warren_2020(PinchedModel):
-    """Set up a model based on simulations from Warren et al., ApJ 898:139, 2020.
+    """Model based on simulations from Warren et al., ApJ 898:139, 2020.
     Neutrino fluxes available at https://doi.org/10.5281/zenodo.3667908."""
 
     def __init__(self, filename, eos='LS220'):
-        """Initialize model.
-
+        """
         Parameters
         ----------
         filename : str
@@ -412,11 +319,10 @@ class Warren_2020(PinchedModel):
 
 
 class Kuroda_2020(PinchedModel):
-    """Set up a model based on simulations from Kuroda et al. (2020)."""
+    """Model based on simulations from `Kuroda et al. (2020) <https://arxiv.org/abs/2009.07733>`_."""
 
     def __init__(self, filename, eos='LS220', mass=20*u.Msun):
-        """Initialize model.
-
+        """
         Parameters
         ----------
         filename : str
@@ -448,12 +354,12 @@ class Kuroda_2020(PinchedModel):
         super().__init__(simtab, metadata)
 
 class Fornax_2019(SupernovaModel):
-    """Model based 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019. Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/.
+    """Model based on 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019. 
+       Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/
     """
 
     def __init__(self, filename, cache_flux=False):
-        """Initialize model.
-
+        """
         Parameters
         ----------
         filename : str
@@ -636,7 +542,7 @@ class Fornax_2019(SupernovaModel):
             hdu_flux.header['EXTNAME'] = '{}_FLUX'.format(name)
             hdu_flux.header['BUNIT'] = str(self.fluxunit)
             hx.append(hdu_flux)
-
+        
         hx.writeto(filename, overwrite=overwrite)
 
     def _fact(self, n):
@@ -711,7 +617,7 @@ class Fornax_2019(SupernovaModel):
         # Convert input time to a time index.
         t = t.to(self.time.unit)
         j = (np.abs(t - self.time)).argmin()
-
+        
         for flavor in Flavor:
             # Cached data: read out the relevant time and angular rows.
             if self.is_cached:
@@ -735,7 +641,7 @@ class Fornax_2019(SupernovaModel):
                 # Energy binning of the model for this flavor, in units of MeV.
                 E[flavor]  = self._h5file[key]['egroup'][j] * u.MeV
                 dE[flavor] = self._h5file[key]['degroup'][j] * u.MeV
-
+                
                 # Storage of differential flux per energy, angle, and time.
                 dLdE = np.zeros(len(E[flavor]), dtype=float)
 
@@ -782,11 +688,11 @@ class Fornax_2019(SupernovaModel):
 
         # Extract the binned spectra for the input t, theta, phi:
         _E, _dE, _spec = self._get_binnedspectra(t, theta, phi)
-
+        
         # Avoid "division by zero" in retrieval of the spectrum.
         E[E == 0] = np.finfo(float).eps * E.unit
         logE = np.log10(E.to_value('MeV'))
-
+        
         for flavor in flavors:
 
             # Linear interpolation in flux.
@@ -828,8 +734,7 @@ class Fornax_2021(SupernovaModel):
     """
 
     def __init__(self, filename):
-        """Initialize model.
-
+        """
         Parameters
         ----------
         filename : str
@@ -944,8 +849,7 @@ class SNOwGLoBES:
     """A model that does not inherit from SupernovaModel (yet) and imports a group of SNOwGLoBES files."""
 
     def __init__(self, tarfilename):
-        """Initialize model from a tar archive.
-
+        """
         Parameters
         ----------
         tarfilename: str
