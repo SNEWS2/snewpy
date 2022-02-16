@@ -225,7 +225,7 @@ class TestModels(unittest.TestCase):
 
                 self.assertEqual(model.progenitor_mass, float(mass)*u.Msun)
                 self.assertEqual(model.turbmixing_param, mixing)
-                self.assertEqual(model.EOS, 'LS220')
+                self.assertEqual(model.EOS, 'SFHo')
 
                 # Check that times are in proper units.
                 t = model.get_time()
