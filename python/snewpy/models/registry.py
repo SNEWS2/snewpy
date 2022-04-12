@@ -11,6 +11,7 @@ from astropy.units import UnitTypeError, get_physical_type
 from snewpy import model_path, get_models
 import logging
 from . import ccsn, presn
+import itertools as it
 
 
 def init_model(model_name, download=True, download_dir=model_path, **user_param):
@@ -95,9 +96,7 @@ def check_param_values(model, **user_param):
     """
     model_param = model.param
     # Check that the appropriate number of params are provided
-    if len(user_param) != len(model_param):
-        raise ValueError(f"Invalid model parameters, expected {len(model_param)} "
-                         f"but {len(user_param)} were given")
+    check_param_names(model, **user_param)
 
     # Check that user-requested params have valid units and values
     for (key, allowed_params), user_param in zip(model_param.items(), user_param.values()):
@@ -126,3 +125,59 @@ def check_param_values(model, **user_param):
         else:
             raise ValueError(f"Invalid value '{user_param}' provided for parameter {key}, "
                              f"allowed value(s): {allowed_params}")
+
+
+def check_param_combo(model, **user_param):
+    """Performs generic check that the model-specific combination of requested parameters is valid according
+      to model.isvalid_param_combo. Valid parameter combinations may be found in model.param_combinations.
+
+    Parameters
+    ----------
+    model : snewpy.model.SupernovaModel
+        Model class used to perform parameter combination check
+    user_param : varies
+        User-requested model parameters to be tested for validity.
+        NOTEL These must be provided as kwargs that match the keys of model.param
+
+    Raises
+    ------
+    ValueError
+        If invalid combination of model parameters are provided.
+
+    See Also
+    --------
+    snewpy.models.ccsn
+    snewpy.models.presn
+    """
+    check_param_names(model, **user_param)
+    if not model.isvalid_param_combo(**user_param):
+        raise ValueError(f"Invalid parameter combination. See {model.__name__}.param_combinations for a list of "
+                         "allowed parameter combinations.")
+
+
+def check_param_names(model, **user_param):
+    if not all(key in user_param for key in model.param.keys()):
+        raise ValueError(f"Missing parameter! Expected {model.param.keys()} but was given {user_param.keys()}")
+
+
+def check_valid_params(model, **user_param):
+    """Test for valid model parameter combination validity
+        See model.__init__ for description of "Other Parameters"
+    """
+    # Check parameters for valid values and units
+    check_param_values(model, **user_param)
+    # Check parameter combination for validity (model-specific)
+    check_param_combo(model, **user_param)
+
+
+def get_param_combinations(model, **user_param):
+    check_param_names(model, **user_param)
+    param = {}
+    for key, allowed_val, user_val in zip(model.param.keys(), model.param.values(), user_param.values()):
+        if user_val is not None and user_val in allowed_val:
+            param.update({key: [user_val]})
+        elif user_val is not None and user_val not in allowed_val:
+            raise ValueError(f"Invalid value for parameter {key}. Given {user_val}, but expected one from {val}")
+        else:
+            param.update({key: allowed_val})
+    return tuple(dict(zip(param, c)) for c in it.product(*param.values()) if model.isvalid_param_combo(*c))

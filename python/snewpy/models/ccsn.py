@@ -30,7 +30,7 @@ except ImportError:
 from snewpy import model_path
 from snewpy.neutrino import Flavor
 from .base import PinchedModel, SupernovaModel, _GarchingArchiveModel
-from .registry import check_param_values
+from .registry import check_valid_params, get_param_combinations
 
 
 class Analytic3Species(PinchedModel):
@@ -56,12 +56,10 @@ class Nakazato_2013(PinchedModel):
     (2013), ApJ 804:75 (2015), PASJ 73:639 (2021). See also http://asphwww.ph.noda.tus.ac.jp/snn/.
     """
 
-    param = {
-        'progenitor_mass': [13, 20, 30, 50] * u.Msun,
-        'revival_time': [0, 100, 200, 300] * u.ms,
-        'metallicity': [0.02, 0.004],
-        'eos': ['LS220', 'shen', 'togashi']
-    }
+    param = {'progenitor_mass': [13, 20, 30, 50] * u.Msun,
+             'revival_time': [0, 100, 200, 300] * u.ms,
+             'metallicity': [0.02, 0.004],
+             'eos': ['LS220', 'shen', 'togashi']}
 
     def __init__(self, filename=None, *, progenitor_mass=None, revival_time=None, metallicity=None, eos=None):
         """Model initialization.
@@ -82,10 +80,14 @@ class Nakazato_2013(PinchedModel):
             Progenitor metallicity
         eos: str
             Equation of state
+
         Raises
         ------
         FileNotFoundError
             If a file for the chosen model parameters cannot be found
+        ValueError
+            If a combination of parameters is invalid when loading form parameters
+
         See also
         --------
         snewpy._model_registry : Describes allowed values for parameters `progenitor_mass`, `revival_time`,
@@ -102,32 +104,27 @@ class Nakazato_2013(PinchedModel):
         """
         # Attempt to load model from parameters
         if not filename and all((p is not None for p in (progenitor_mass, revival_time, metallicity, eos))):
-            # Check arguments specify valid model parameter values
-            check_param_values(self,
-                               progenitor_mass=progenitor_mass,
-                               revival_time=revival_time,
-                               metallicity=metallicity,
-                               eos=eos)
 
+            user_params = dict(zip(self.param.keys(), (progenitor_mass, revival_time, metallicity, eos)))
+            try:
+                check_valid_params(**user_params)
+            except ValueError as e:
+                raise e
+
+            # Populate model parameter members
+            self.progenitor_mass = progenitor_mass.to(u.Msun)
+            self.revival_time = revival_time.to(u.ms)
+            self.metallicity = metallicity
+            self.EOS = eos
+
+            # Strip units for filename construction
             progenitor_mass = progenitor_mass.to(u.Msun).value
             revival_time = revival_time.to(u.ms).value
-            # Check combinations of parameters
 
-            # Select non-BH formation
-            if revival_time != 0 and not (progenitor_mass == 30 and metallicity == 0.004) and eos not in ['togashi', 'LS220']:
+            if revival_time != 0:
                 fname = f"nakazato-{eos}-z{metallicity}-t_rev{int(revival_time)}ms-s{progenitor_mass:3.1f}.fits"
             else:
-                # Check for invalid BH model paramter combinations
-                exc_string = "Invalid parameter combination for BH scenario. Expected progenitor_mass=30 Msun, " \
-                             "metallicity=0.004, revival_time=0 ms. "
-                if revival_time != 0:
-                    raise ValueError(exc_string + f"Given revival_time={revival_time} ms")
-
-                elif not (progenitor_mass == 30 and metallicity == 0.004):
-                    raise ValueError(exc_string + f"Given progenitor_mass={progenitor_mass} Msun, "
-                                                  f"metallicity={metallicity}")
-                else:
-                    fname = f"nakazato-{eos}-BH-z{metallicity}-s{progenitor_mass:3.1f}.fits"
+                fname = f"nakazato-{eos}-BH-z{metallicity}-s{progenitor_mass:3.1f}.fits"
 
             # Construct metadata
             filename = os.path.join(model_path, self.__class__.__name__, fname)
