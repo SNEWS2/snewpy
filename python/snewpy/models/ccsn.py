@@ -166,6 +166,22 @@ class Nakazato_2013(PinchedModel):
         self.filename = os.path.basename(filename)
         super().__init__(simtab, metadata)
 
+    @classmethod
+    def get_param_combinations(cls, *, progenitor_mass=None, revival_time=None, metallicity=None, eos=None):
+        user_param = dict(zip(cls.param.keys(), (progenitor_mass, revival_time, metallicity, eos)))
+        return get_param_combinations(cls, **user_param)
+
+    @staticmethod
+    def isvalid_param_combo(progenitor_mass, revival_time, metallicity, eos):
+        """Returns True if the parameter combination is valid (Corresponds to an existing Nakazato_2013 model)
+        See __init__ for a full parameter descriptions.
+        """
+        if revival_time.to(u.s).value == 0:
+            return progenitor_mass.to(u.Msun).value == 30 and metallicity == 0.004
+        else:
+            return eos in ['shen'] and not (progenitor_mass.to(u.Msun).value == 30 and metallicity == 0.004)
+
+
 
 class Sukhbold_2015(PinchedModel):
     """Model based on simulations from Sukhbold et al., ApJ 821:38,2016. Models were shared privately by email.
