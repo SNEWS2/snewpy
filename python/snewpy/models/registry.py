@@ -70,16 +70,15 @@ def init_model(model_name, download=True, download_dir=model_path, **user_param)
 
 
 def check_param_values(model, **user_param):
-    """Performs generic check that the requested model parameters have valid values and units for the requested
-    SNEWPY model.
+    """Checks that the model-specific values and units of requested parameters are valid according to model.param.
 
     Parameters
     ----------
     model : snewpy.model.SupernovaModel
         Model class used to perform parameter check
     user_param : varies
-        User-requested model parameters to be tested for validity. MUST be provided as keyword arguments that match the
-        model `param` class member
+        User-requested model parameters to be tested for validity.
+        NOTE: This must be provided as kwargs that match the keys of model.param
 
     Raises
     ------
@@ -128,8 +127,8 @@ def check_param_values(model, **user_param):
 
 
 def check_param_combo(model, **user_param):
-    """Performs generic check that the model-specific combination of requested parameters is valid according
-      to model.isvalid_param_combo. Valid parameter combinations may be found in model.param_combinations.
+    """Checks that the model-specific combination of requested parameters is valid according to
+    model.isvalid_param_combo. Valid parameter combinations may be found via model.get_param_combinations().
 
     Parameters
     ----------
@@ -137,7 +136,7 @@ def check_param_combo(model, **user_param):
         Model class used to perform parameter combination check
     user_param : varies
         User-requested model parameters to be tested for validity.
-        NOTEL These must be provided as kwargs that match the keys of model.param
+        NOTE: This must be provided as kwargs that match the keys of model.param
 
     Raises
     ------
@@ -156,13 +155,32 @@ def check_param_combo(model, **user_param):
 
 
 def check_param_names(model, **user_param):
+    """Checks that all requested model parameter names match the required model parameter names according to model.param
+    See the __init__ of a specific model for descriptions of the available parameters.
+
+    Parameters
+    ----------
+    model : snewpy.model.SupernovaModel
+        Model class used to build combinations
+    user_param : varies
+        User-requested model parameters used to perform checks
+        NOTE: This must be provided as kwargs that match the keys of model.param
+    """
     if not all(key in user_param for key in model.param.keys()):
         raise ValueError(f"Missing parameter! Expected {model.param.keys()} but was given {user_param.keys()}")
 
 
 def check_valid_params(model, **user_param):
-    """Test for valid model parameter combination validity
-        See model.__init__ for description of "Other Parameters"
+    """Checks for valid model parameter combination validity
+    See the __init__ of a specific model for descriptions of the available parameters.
+
+    Parameters
+    ----------
+    model : snewpy.model.SupernovaModel
+        Model class used to build combinations
+    user_param : varies
+        User-requested model parameters used to perform checks
+        NOTE: This must be provided as kwargs that match the keys of model.param
     """
     # Check parameters for valid values and units
     check_param_values(model, **user_param)
@@ -171,13 +189,37 @@ def check_valid_params(model, **user_param):
 
 
 def get_param_combinations(model, **user_param):
+    """Returns all valid combinations of parameters for a given model. If specific parameters are provided as a
+    keyword argument, this will return only those combinations that match the requested parameters.
+    See the __init__ of a specific model for descriptions of the available parameters.
+
+    Parameters
+    ----------
+    model : snewpy.model.SupernovaModel
+        Model class used to build combinations
+    user_param : varies
+        User-requested model parameters matched against valid combinations.
+        NOTE: This must be provided as a kwargs that match the keys of model.param
+
+    Returns
+    -------
+    valid_combinations: tuple[dict]
+        A tuple of all valid combinations matching the requested parameters (if any). Combinations are stored as
+        dictionaries that are ready-to-use for model instantiation. If no valid combinations match the given parameters,
+        a zero-length tuple will be returned.
+
+    Raises
+    ------
+    ValueError
+        If an invalid value for a model parameter is provided.
+    """
     check_param_names(model, **user_param)
     param = {}
-    for key, allowed_val, user_val in zip(model.param.keys(), model.param.values(), user_param.values()):
-        if user_val is not None and user_val in allowed_val:
+    for key, val, user_val in zip(model.param.keys(), model.param.values(), user_param.values()):
+        if user_val is not None and user_val in val:
             param.update({key: [user_val]})
-        elif user_val is not None and user_val not in allowed_val:
+        elif user_val is not None and user_val not in val:
             raise ValueError(f"Invalid value for parameter {key}. Given {user_val}, but expected one from {val}")
         else:
-            param.update({key: allowed_val})
+            param.update({key: val})
     return tuple(dict(zip(param, c)) for c in it.product(*param.values()) if model.isvalid_param_combo(*c))
