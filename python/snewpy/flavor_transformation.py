@@ -435,7 +435,7 @@ class CompleteExchange(FlavorTransformation):
 class AdiabaticMSW(FlavorTransformation):
     """Adiabatic MSW effect."""
 
-    def __init__(self, mix_angles=None, mh=MassHierarchy.NORMAL):
+    def __init__(self, mix_angles=None, mh=MassHierarchy.NORMAL, mass_square_differences=None):
         """Initialize transformation matrix.
 
         Parameters
@@ -455,6 +455,12 @@ class AdiabaticMSW(FlavorTransformation):
         else:
             pars = MixingParameters(mh)
             theta12, theta13, theta23 = pars.get_mixing_angles()
+            
+        if mass_square_differences is not None:
+            deltam21_2, deltam31_2, deltam32_2 = mass_square_differences
+        else:
+            pars = MixingParameters(mh)
+            deltam21_2, deltam31_2, deltam32_2 = pars.get_mass_square_differences()            
 
         self.De1 = float((np.cos(theta12) * np.cos(theta13))**2)
         self.De2 = float((np.sin(theta12) * np.cos(theta13))**2)
@@ -606,7 +612,7 @@ class AdiabaticMSW(FlavorTransformation):
 class NonAdiabaticMSWH(FlavorTransformation):
     """Nonadiabatic MSW effect."""
 
-    def __init__(self, mix_angles=None, mh=MassHierarchy.NORMAL):
+    def __init__(self, mix_angles=None, mh=MassHierarchy.NORMAL, mass_square_differences=None):
         """Initialize transformation matrix.
 
         Parameters
@@ -626,6 +632,12 @@ class NonAdiabaticMSWH(FlavorTransformation):
         else:
             pars = MixingParameters(mh)
             theta12, theta13, theta23 = pars.get_mixing_angles()
+            
+        if mass_square_differences is not None:
+            deltam21_2, deltam31_2, deltam32_2 = mass_square_differences
+        else:
+            pars = MixingParameters(mh)
+            deltam21_2, deltam31_2, deltam32_2 = pars.get_mass_square_differences()            
 
         self.De1 = float((np.cos(theta12) * np.cos(theta13))**2)
         self.De2 = float((np.sin(theta12) * np.cos(theta13))**2)
@@ -771,7 +783,7 @@ class NonAdiabaticMSWH(FlavorTransformation):
 class TwoFlavorDecoherence(FlavorTransformation):
     """Star-earth transit survival probability: two flavor case."""
 
-    def __init__(self, mix_angles=None, mh=MassHierarchy.NORMAL):
+    def __init__(self, mix_angles=None, mh=MassHierarchy.NORMAL, mass_square_differences=None):
         """Initialize transformation matrix.
 
         Parameters
@@ -791,6 +803,12 @@ class TwoFlavorDecoherence(FlavorTransformation):
         else:
             pars = MixingParameters(mh)
             theta12, theta13, theta23 = pars.get_mixing_angles()
+            
+        if mass_square_differences is not None:
+            deltam21_2, deltam31_2, deltam32_2 = mass_square_differences
+        else:
+            pars = MixingParameters(mh)
+            deltam21_2, deltam31_2, deltam32_2 = pars.get_mass_square_differences()            
 
         self.De1 = float((np.cos(theta12) * np.cos(theta13))**2)
         self.De2 = float((np.sin(theta12) * np.cos(theta13))**2)
@@ -1077,7 +1095,7 @@ class NeutrinoDecay(FlavorTransformation):
     neutrino. For a description and typical parameters, see A. de Gouvêa et al.,
     PRD 101:043013, 2020, arXiv:1910.01127.
     """
-    def __init__(self, mix_angles=None, mass=1*u.eV/c.c**2, tau=1*u.day, dist=10*u.kpc, mh=MassHierarchy.NORMAL):
+    def __init__(self, mix_angles=None, mass=1*u.eV/c.c**2, tau=1*u.day, dist=10*u.kpc, mh=MassHierarchy.NORMAL, mass_square_differences=None):
         """Initialize transformation matrix.
 
         Parameters
@@ -1103,6 +1121,12 @@ class NeutrinoDecay(FlavorTransformation):
         else:
             pars = MixingParameters(mh)
             theta12, theta13, theta23 = pars.get_mixing_angles()
+            
+        if mass_square_differences is not None:
+            deltam21_2, deltam31_2, deltam32_2 = mass_square_differences
+        else:
+            pars = MixingParameters(mh)
+            deltam21_2, deltam31_2, deltam32_2 = pars.get_mass_square_differences()
 
         self.De1 = float((np.cos(theta12) * np.cos(theta13))**2)
         self.De2 = float((np.sin(theta12) * np.cos(theta13))**2)
