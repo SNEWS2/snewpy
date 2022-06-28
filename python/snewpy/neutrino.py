@@ -73,6 +73,7 @@ class MixingParameters:
             self.deltaCP = 197 * u.deg
             self.dm21_2  = 7.42e-5 * u.eV**2
             self.dm32_2  = 2.517e-3 * u.eV**2
+            self.dm31_2 = self.dm32_2 + self.dm21_2            
         else:
             # Note: in IH, the mass splittings are: m3..............m1..m2.
             self.theta12 = 33.45 * u.deg
@@ -81,6 +82,7 @@ class MixingParameters:
             self.deltaCP = 282 * u.deg
             self.dm21_2  = 7.42e-5 * u.eV**2
             self.dm31_2  = -2.498e-3 * u.eV**2
+            self.dm32_2 = self.dm31_2 - self.dm21_2            
 
     def get_mixing_angles(self):
         """Mixing angles of the PMNS matrix.
@@ -92,3 +94,12 @@ class MixingParameters:
         """
         return (self.theta12, self.theta13, self.theta23)
 
+    def get_mass_square_differences(self):
+        """Mass squared differences .
+        
+        Returns
+        -------
+        tuple
+            dm21_2, dm31_2, dm32_2.
+        """        
+        return (self.dm21_2, self.dm31_2, self.dm32_2)
