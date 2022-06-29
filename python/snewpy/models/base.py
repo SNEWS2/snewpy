@@ -202,7 +202,7 @@ class PinchedModel(SupernovaModel):
         metadata: dict
             Model parameters dict
         """
-        if not 'L_NU_X_BAR' in simtab:
+        if not 'L_NU_X_BAR' in simtab.colnames:
             # table only contains NU_E, NU_E_BAR, and NU_X, so double up
             # the use of NU_X for NU_X_BAR.
             for val in ['L','E','ALPHA']:
