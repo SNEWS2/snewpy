@@ -1,0 +1,5 @@
+presn:
+    Patton: !zenodo
+      zenodo_id: 2626645
+      files_regex: '.*\.dat'
+      local_path: "/tmp/SNEWPY_models"

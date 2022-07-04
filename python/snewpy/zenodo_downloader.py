@@ -83,7 +83,7 @@ def from_zenodo(zenodo_id:str, local_path:str='/tmp/', files_regex: str = '.*'):
     record = requests.get(zenodo_url).json()
     files_re = re.compile(files_regex)
     files = {}
-    local_path = Path(local_path)/zenodo_id
+    local_path = Path(local_path)/str(zenodo_id)
     local_path.mkdir(exist_ok=True, parents=True)
     for f in record['files']:
         if files_re.match(f["key"]):
@@ -92,4 +92,14 @@ def from_zenodo(zenodo_id:str, local_path:str='/tmp/', files_regex: str = '.*'):
                                          md5 = f['checksum'].lstrip('md5:')
                                         )
     return files
+import yaml
 
+def load_registry(fname):
+    loader = yaml.SafeLoader
+
+    def _construct_from_zenodo(loader, node):
+        return from_zenodo(**loader.construct_mapping(node))
+
+    loader.add_constructor('!zenodo', _construct_from_zenodo)
+    with open(fname) as f:
+        return yaml.load(f, loader)
