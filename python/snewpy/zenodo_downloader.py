@@ -40,7 +40,7 @@ class MissingFileError(FileNotFoundError):
 @dataclass
 class FileHandle:
     path: Path
-    remote: str
+    remote: str = None
     md5: str|None = None
     
     def check(self) -> None:
@@ -77,21 +77,34 @@ class FileHandle:
         """ Load and open the local file, return the file object"""
         return open(self.load(), flags)
 
-def from_zenodo(zenodo_id:str, local_path:str='/tmp/', files_regex: str = '.*'):
+def from_zenodo(zenodo_id:str, path:str='/tmp/', regex: str = '.*'):
     """Load files from Zenodo record"""
+    path = Path(path)/str(zenodo_id)
+    path.mkdir(exist_ok=True, parents=True)
+    files_re = re.compile(regex)
+    files = {}
+
     zenodo_url = f'https://zenodo.org/api/records/{zenodo_id}'
     record = requests.get(zenodo_url).json()
-    files_re = re.compile(files_regex)
-    files = {}
-    local_path = Path(local_path)/str(zenodo_id)
-    local_path.mkdir(exist_ok=True, parents=True)
     for f in record['files']:
         if files_re.match(f["key"]):
-            files[f['key']] = FileHandle(path = local_path/f['key'],
+            files[f['key']] = FileHandle(path = path/f['key'],
                                          remote= f['links']['self'],
                                          md5 = f['checksum'].lstrip('md5:')
                                         )
     return files
+
+def from_local(path:str, regex: str = '.*'):
+    """Load files from local places"""
+    path = Path(path)
+    files_re = re.compile(regex)
+    files = {}
+
+    for f in path.iterdir():
+        if files_re.match(f.name):
+            files[f.name] = FileHandle(path = f)
+    return files
+
 import yaml
 
 def load_registry(fname):
@@ -100,6 +113,11 @@ def load_registry(fname):
     def _construct_from_zenodo(loader, node):
         return from_zenodo(**loader.construct_mapping(node))
 
+    def _construct_from_local(loader, node):
+        return from_local(**loader.construct_mapping(node))
+
     loader.add_constructor('!zenodo', _construct_from_zenodo)
+    loader.add_constructor('!local', _construct_from_local)
+
     with open(fname) as f:
         return yaml.load(f, loader)
