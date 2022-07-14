@@ -28,6 +28,11 @@ def get_models(models=None, download_dir="SNEWPY_models"):
     from urllib.request import urlretrieve
     from ._model_urls import model_urls
 
+    for model in list(model_urls):
+        if model_urls[model] == []:
+            del model_urls[model]
+            continue
+
     if models == "all":
         models = model_urls.keys()
     elif isinstance(models, str):

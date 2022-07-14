@@ -42,12 +42,12 @@ print("Done fluences...")
 
 print("Running snowglobes...")
 #now run SNOwGLoBES, this will loop over all the fluence files in `tarredfile`
-snowglobes.simulate(SNOwGLoBES_path, tarredfile, detector_input=detector,verbose=False)
+snowglobes.simulate(SNOwGLoBES_path, tarredfile, detector_input=detector)
 print("Done snowglobes...")
 
 #now collate results of output of SNOwGLoBES
 print("Collating...")
-tables = snowglobes.collate(SNOwGLoBES_path, tarredfile, detector_input=detector,skip_plots=True,verbose=False)
+tables = snowglobes.collate(SNOwGLoBES_path, tarredfile, skip_plots=True)
 
 #read results from SNOwGLoBES and put lightcurve in output file for snewpdag
 fout = open(output_path+"snewpy_output_"+detector+"_"+modeltype+"_"+filename+"_1msbin.txt", "a")

@@ -30,14 +30,14 @@ class SupernovaModel(ABC):
 
     def __init__(self, time, metadata):
         """Initialize supernova model base class
-        (call this method in the subclass constructor as `super().__init__(time,metadata)`
+        (call this method in the subclass constructor as ``super().__init__(time,metadata)``).
 
         Parameters
         ----------
-        time:
+        time : ndarray of astropy.Quantity
             Time points where the model flux is defined.
             Must be array of :class:`Quantity`, with units convertable to "second".
-        metadata:
+        metadata : dict
             Dict of model parameters <name>:<value>,
             to be used for printing table in :meth:`__repr__` and :meth:`_repr_markdown_`
         """
@@ -90,7 +90,8 @@ class SupernovaModel(ABC):
     def get_time(self):
         """Returns
         -------
-            returns array of snapshot times from the simulation
+        ndarray of astropy.Quantity
+            Snapshot times from the simulation
         """
         return self.time
 
@@ -201,7 +202,7 @@ class PinchedModel(SupernovaModel):
         metadata: dict
             Model parameters dict
         """
-        if not 'L_NU_X_BAR' in simtab:
+        if not 'L_NU_X_BAR' in simtab.colnames:
             # table only contains NU_E, NU_E_BAR, and NU_X, so double up
             # the use of NU_X for NU_X_BAR.
             for val in ['L','E','ALPHA']:
@@ -269,9 +270,9 @@ class PinchedModel(SupernovaModel):
 
 
 class _GarchingArchiveModel(PinchedModel):
-    """Subclass that reads models in the format used in the [Garching Supernova Archive](https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/)."""
+    """Subclass that reads models in the format used in the `Garching Supernova Archive <https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/>`_."""
     def __init__(self, filename, eos='LS220'):
-        """Initialize model.
+        """Initialize model
 
         Parameters
         ----------

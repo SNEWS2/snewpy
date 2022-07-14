@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-A submodule with classes used for supernova model files stored on disk. It
-assumes models are available in a format usable by the AstroPy unified table
-reader; see https://docs.astropy.org/en/stable/index.html for details.
+The submodule ``snewpy.models.ccsn`` contains models of core-collapse supernovae
+derived from the :class:`SupernovaModel` base class.
 
-Based on the ASTERIA (https://github.com/IceCubeOpenSource/ASTERIA) models
-developed by Navya Uberoi and Spencer Griswold.
+You can :ref:`download neutrino fluxes for each of these models <sec-download_models>`
+using ``snewpy.get_models("<model_name>")``.
 
-Updated summer 2020 by Jim Kneller & Arkin Worlikar. Subsequent updates
-provided by the SNEWS team.
+.. _Garching Supernova Archive: https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/
 """
 
 import logging
@@ -34,13 +32,12 @@ from .base import PinchedModel, SupernovaModel, _GarchingArchiveModel
 
 
 class Analytic3Species(PinchedModel):
-    """Allow to generate an analytic model given total luminosity,
+    """An analytical model calculating spectra given total luminosity,
     average energy, and rms or pinch, for each species.
     """
 
     def __init__(self, filename):
-        """Initialize model.
-
+        """
         Parameters
         ----------
         filename : str
@@ -53,13 +50,12 @@ class Analytic3Species(PinchedModel):
 
 
 class Nakazato_2013(PinchedModel):
-    """Set up a model based on simulations from Nakazato et al., ApJ S 205:2
+    """Model based on simulations from Nakazato et al., ApJ S 205:2
     (2013), ApJ 804:75 (2015), PASJ 73:639 (2021). See also http://asphwww.ph.noda.tus.ac.jp/snn/.
     """
 
     def __init__(self, filename):
-        """Initialize model.
-
+        """
         Parameters
         ----------
         filename : str
@@ -91,12 +87,11 @@ class Nakazato_2013(PinchedModel):
 
 
 class Sukhbold_2015(PinchedModel):
-    """Set up a model based on simulations from Sukhbold et al., ApJ 821:38,2016. Models were shared privately by email.
+    """Model based on simulations from Sukhbold et al., ApJ 821:38,2016. Models were shared privately by email.
     """
 
     def __init__(self, filename):
-        """Initialize model.
-
+        """
         Parameters
         ----------
         filename : str
@@ -117,36 +112,36 @@ class Sukhbold_2015(PinchedModel):
         super().__init__(simtab, metadata)
 
 class Tamborra_2014(_GarchingArchiveModel):
-    """Set up a model based on 3D simulations from [Tamborra et al., PRD 90:045032, 2014](https://arxiv.org/abs/1406.0006). Data files are from the Garching Supernova Archive.
+    """Model based on 3D simulations from `Tamborra et al., PRD 90:045032, 2014 <https://arxiv.org/abs/1406.0006>`_.
+    Data files are from the `Garching Supernova Archive`_.
     """
     pass
 
 class Bollig_2016(_GarchingArchiveModel):
-    """Set up a model based on simulations from Bollig et al. (2016). Models were taken, with permission, from the Garching Supernova Archive.
+    """Model based on simulations from `Bollig et al. (2016) <https://arxiv.org/abs/1508.00785>`_. Models were taken, with permission, from the Garching Supernova Archive.
     """
     pass
 
 class Walk_2018(_GarchingArchiveModel):
-    """Set up a model based on SASI-dominated simulations from [Walk et al.,
-    PRD 98:123001, 2018](https://arxiv.org/abs/1807.02366). Data files are from
-    the Garching Supernova Archive.
+    """Model based on SASI-dominated simulations from `Walk et al.,
+    PRD 98:123001, 2018 <https://arxiv.org/abs/1807.02366>`_. Data files are from
+    the `Garching Supernova Archive`_.
     """
     pass
 
 class Walk_2019(_GarchingArchiveModel):
-    """Set up a model based on SASI-dominated simulations from [Walk et al.,
-    PRD 101:123013, 2019](https://arxiv.org/abs/1910.12971). Data files are
-    from the Garching Supernova Archive.
+    """Model based on SASI-dominated simulations from `Walk et al.,
+    PRD 101:123013, 2019 <https://arxiv.org/abs/1910.12971>`_. Data files are
+    from the `Garching Supernova Archive`_.
     """
     pass
 
 
 class OConnor_2013(PinchedModel):
-    """Set up a model based on the black hole formation simulation in O'Connor & Ott (2013). 
+    """Model based on the black hole formation simulation in `O'Connor & Ott (2013) <https://arxiv.org/abs/1207.1100>`_.
     """
     def __init__(self, base, mass=15, eos='LS220'):
-        """Initialize model.
-
+        """
         Parameters
         ----------
         base : str
@@ -185,11 +180,10 @@ class OConnor_2013(PinchedModel):
 
 
 class OConnor_2015(PinchedModel):
-    """Set up a model based on the black hole formation simulation in O'Connor (2015). 
+    """Model based on the black hole formation simulation in `O'Connor (2015) <https://arxiv.org/abs/1411.7058>`_.
     """
     def __init__(self, filename, eos='LS220'):
-        """Initialize model.
-
+        """
         Parameters
         ----------
         filename : str
@@ -226,11 +220,10 @@ class OConnor_2015(PinchedModel):
         super().__init__(simtab, metadata)
 
 class Zha_2021(PinchedModel):
-    """Set up a model based on the hadron-quark phse transition models from Zha et al. 2021. 
+    """Model based on the hadron-quark phse transition models from `Zha et al. 2021 <https://arxiv.org/abs/2103.02268>`_.
     """
     def __init__(self, filename, eos='STOS_B145'):
-        """Initialize model.
-
+        """
         Parameters
         ----------
         filename : str
@@ -275,12 +268,11 @@ class Zha_2021(PinchedModel):
 
 
 class Warren_2020(PinchedModel):
-    """Set up a model based on simulations from Warren et al., ApJ 898:139, 2020.
+    """Model based on simulations from Warren et al., ApJ 898:139, 2020.
     Neutrino fluxes available at https://doi.org/10.5281/zenodo.3667908."""
 
-    def __init__(self, filename, eos='LS220'):
-        """Initialize model.
-
+    def __init__(self, filename, eos='SFHo'):
+        """
         Parameters
         ----------
         filename : str
@@ -327,11 +319,10 @@ class Warren_2020(PinchedModel):
 
 
 class Kuroda_2020(PinchedModel):
-    """Set up a model based on simulations from Kuroda et al. (2020)."""
+    """Model based on simulations from `Kuroda et al. (2020) <https://arxiv.org/abs/2009.07733>`_."""
 
     def __init__(self, filename, eos='LS220', mass=20*u.Msun):
-        """Initialize model.
-
+        """
         Parameters
         ----------
         filename : str
@@ -363,12 +354,12 @@ class Kuroda_2020(PinchedModel):
         super().__init__(simtab, metadata)
 
 class Fornax_2019(SupernovaModel):
-    """Model based 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019. Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/.
+    """Model based on 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019. 
+       Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/
     """
 
     def __init__(self, filename, cache_flux=False):
-        """Initialize model.
-
+        """
         Parameters
         ----------
         filename : str
@@ -743,8 +734,7 @@ class Fornax_2021(SupernovaModel):
     """
 
     def __init__(self, filename):
-        """Initialize model.
-
+        """
         Parameters
         ----------
         filename : str
@@ -859,8 +849,7 @@ class SNOwGLoBES:
     """A model that does not inherit from SupernovaModel (yet) and imports a group of SNOwGLoBES files."""
 
     def __init__(self, tarfilename):
-        """Initialize model from a tar archive.
-
+        """
         Parameters
         ----------
         tarfilename: str
