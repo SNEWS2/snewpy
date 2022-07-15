@@ -336,7 +336,7 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False, *
     if verbose:  # Deprecated since SNEWPY v1.2
         warn(f"The 'verbose' parameter to 'snewpy.snowglobes.simulate()' is deprecated and should not be used.", FutureWarning)
     
-    sng = SNOwGLoBES(SNOwGLoBESdir) if detector_effects else SimpleRate(SNOwGLoBESdir)
+    sng = SimpleRate(base_dir=SNOwGLoBESdir,detector_effects=detector_effects)
 
     if detector_input == 'all':
         detector_input = list(sng.detectors)

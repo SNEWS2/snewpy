@@ -277,13 +277,12 @@ class Runner:
             raise RuntimeError('SNOwGLoBES run failed:\n'+stderr)
 
 class SimpleRate(SNOwGLoBES):
-    def __init__(self, base_dir:Path=''):
+    def __init__(self, detector_effects=False, base_dir:Path=''):
         """Simple rate calculation interface.
-        Computes expected rate for a perfect detector (100% efficiencies, no smearing)
-        without using GLOBES. The formula for the rate is
+        Computes expected rate for a detector without using GLOBES. The formula for the rate is
 
-                Rate = [cross-section in 10^-38 cm^2] x 10^-38 x [fluence in cm^-2] x [target mass in kton] 
-                    x [Dalton per kton] x [energy bin size in GeV]
+                Rate = Sum_i ([cross-section in 10^-38 cm^2] x 10^-38 x [fluence in cm^-2])_i x [smearing matrix]_{ij}
+                       x [target mass in kton] x [Dalton per kton] x [energy bin size in GeV] x [efficiency]
 
         with [target mass in kton] x [Dalton per kton] = number of reference targets in experiment.
 
@@ -292,11 +291,19 @@ class SimpleRate(SNOwGLoBES):
         * detectors from `<base_dir>/detector_configurations.dat`,
         * channels from `<base_dir>/channels/channel_*.dat`
 
+        if the detector_effects option is on, also read efficiencies and smearing:
+
+        * efficiencies from `<base_dir>/effic/effic_*.dat`,
+        * smearing matrices from `<base_dir>/smear/smear_*.dat`
+
         After that use :meth:`SimpleRate.run` method to run the simulation for specific detector and flux file.
 
         Parameters
         ----------
-        base_dir: Path or None
+        detector_effects: bool
+            If true, account for efficiency and smearing. If false, consider a perfect detector.
+
+        base_dir:         Path or None
             Path to the directory where the cross-section, detector, and channel files are located
             If empty, try to get it from ``$SNOWGLOBES`` environment var
         """
@@ -305,6 +312,47 @@ class SimpleRate(SNOwGLoBES):
         self.base_dir = Path(base_dir)
         self._load_detectors(self.base_dir/'detector_configurations.dat')
         self._load_channels(self.base_dir/'channels')
+        self.efficiencies = None
+        self.smearings = None
+        if detector_effects:
+            self._load_efficiency_vectors(self.base_dir/'effic')
+            self._load_smearing_matrices(self.base_dir/'smear')
+        
+    def _load_efficiency_vectors(self, path):
+        result = {}
+        for detector in self.detectors:
+            res_det = {}
+            for file in path.glob(f'effic_*_{detector}.dat'):
+                channel =  file.stem[len('effic_'):-len(detector)-1]
+                logger.debug(f'Reading file ({detector},{channel}): {file}')
+                with open(file) as f:
+                    line = f.readlines()[0].split("{")[-1].split("}")[0].split(",")
+                    effs = np.array(list(map(float,line)))
+                    res_det[channel]= effs
+            result[detector]=res_det
+        self.efficiencies = result 
+        logger.info(f'read efficiencies for materials: {list(self.efficiencies.keys())}')
+        logger.debug(f'efficiencies: {self.efficiencies}')
+
+    def _load_smearing_matrices(self, path):
+        result = {}
+        for detector in self.detectors:
+            res_det = {}
+            for file in path.glob(f'smear*_{detector}.dat'):
+                channel =  file.stem[len('smear_'):-len(detector)-1]
+                with open(file) as f:
+                    lines = f.readlines()[1:-1]
+                    while not "{" in lines[0]: lines = lines[1:]
+                    while not "{" in lines[-1]: lines = lines[:-1]
+                    matrix = np.zeros((len(lines),len(lines)))
+                    for i,l in enumerate(lines):
+                        elements = np.array(list(map(float, l.split("{")[-1].split("}")[0].split(','))))
+                        matrix[i, int(elements[0]+0.1):int(elements[1]+0.1)+1] = elements[2:]
+                    res_det[channel]= matrix
+            result[detector]=res_det
+        self.smearings = result 
+        logger.info(f'read efficiencies for materials: {list(self.efficiencies.keys())}')
+        logger.debug(f'efficiencies: {self.efficiencies}')
 
     def _compute_rates(self, detector, material, flux_file:Path):
         flux_file = flux_file.resolve()
@@ -331,6 +379,13 @@ class SimpleRate(SNOwGLoBES):
             # Write to dictionary
             data[(channel.name,'unsmeared','unweighted')] = rates
             data[(channel.name,'unsmeared','weighted')] = weighted_rates
+            # Add detector effects
+            if self.smearings and self.efficiencies:
+                rates = np.dot(self.smearings[detector][channel.name],rates) * self.efficiencies[detector][channel.name]
+                weighted_rates = rates * channel.weight
+                # Write to dictionary
+                data[(channel.name,'smeared','unweighted')] = rates
+                data[(channel.name,'smeared','weighted')] = weighted_rates
         #collect everything to pandas DataFrame
         df = pd.DataFrame(data, index = energies)
         df.index.rename('E', inplace=True)
