@@ -331,7 +331,7 @@ class SimpleRate(SNOwGLoBES):
                     res_det[channel]= effs
             result[detector]=res_det
         self.efficiencies = result 
-        logger.info(f'read efficiencies for materials: {list(self.efficiencies.keys())}')
+        logger.info(f'read efficiencies for detectors: {list(self.efficiencies.keys())}')
         logger.debug(f'efficiencies: {self.efficiencies}')
 
     def _load_smearing_matrices(self, path):
@@ -351,8 +351,8 @@ class SimpleRate(SNOwGLoBES):
                     res_det[channel]= matrix
             result[detector]=res_det
         self.smearings = result 
-        logger.info(f'read efficiencies for materials: {list(self.efficiencies.keys())}')
-        logger.debug(f'efficiencies: {self.efficiencies}')
+        logger.info(f'read smearing matrices for detectors: {list(self.smearings.keys())}')
+        logger.debug(f'smearing matrices: {self.smearings}')
 
     def _compute_rates(self, detector, material, flux_file:Path):
         flux_file = flux_file.resolve()
