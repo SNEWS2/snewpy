@@ -277,7 +277,7 @@ class Runner:
             raise RuntimeError('SNOwGLoBES run failed:\n'+stderr)
 
 class SimpleRate(SNOwGLoBES):
-    def __init__(self, detector_effects=False, base_dir:Path=''):
+    def __init__(self, detector_effects=True, base_dir:Path=''):
         """Simple rate calculation interface.
         Computes expected rate for a detector without using GLOBES. The formula for the rate is
 
@@ -381,7 +381,16 @@ class SimpleRate(SNOwGLoBES):
             data[(channel.name,'unsmeared','weighted')] = weighted_rates
             # Add detector effects
             if self.smearings and self.efficiencies:
-                rates = np.dot(self.smearings[detector][channel.name],rates) * self.efficiencies[detector][channel.name]
+                smear,effic = None,None
+                if channel.name in self.smearings[detector].keys():
+                    smear = self.smearings[detector][channel.name]
+                else:
+                    smear = np.eye(len(rates))
+                if channel.name in self.efficiencies[detector].keys():
+                    effic = self.efficiencies[detector][channel.name]
+                else:
+                    effic = np.ones(len(rates))
+                rates = np.dot(smear,rates) * effic
                 weighted_rates = rates * channel.weight
                 # Write to dictionary
                 data[(channel.name,'smeared','unweighted')] = rates
