@@ -5,9 +5,8 @@ import unittest
 
 from snewpy.neutrino import Flavor
 from snewpy.flavor_transformation import NoTransformation
-from snewpy.models.ccsn import Fornax_2019, Fornax_2021
 
-from snewpy.models.loaders import Nakazato_2013, Tamborra_2014, OConnor_2015, Sukhbold_2015, Bollig_2016, Walk_2018, Walk_2019, Warren_2020, Kuroda_2020, Zha_2021
+from snewpy.models.loaders import Fornax_2019, Fornax_2021, Nakazato_2013, Tamborra_2014, OConnor_2015, Sukhbold_2015, Bollig_2016, Walk_2018, Walk_2019, Warren_2020, Kuroda_2020, Zha_2021
 
 from astropy import units as u
 
