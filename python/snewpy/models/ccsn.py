@@ -148,50 +148,30 @@ class Nakazato_2013(_RegistryModel):
             return eos in ['shen'] and not (progenitor_mass.to(u.Msun).value == 30 and metallicity == 0.004)
 
 
-class Sukhbold_2015(PinchedModel):
+class Sukhbold_2015(_RegistryModel):
     """Model based on simulations from Sukhbold et al., ApJ 821:38,2016. Models were shared privately by email.
     """
+    pass
 
-    def __init__(self, filename):
-        """
-        Parameters
-        ----------
-        filename : str
-            Absolute or relative path to FITS file with model data.
-        """
-        # Store model metadata.
-        self.progenitor_mass = float(filename.split('-')[-1].strip('z%.fits')) * u.Msun
-        self.EOS = filename.split('-')[-2]
-
-        metadata = {
-            'Progenitor mass':self.progenitor_mass,
-            'EOS':self.EOS,
-            }
-
-        # Read FITS table using the astropy unified Table reader.
-        simtab = Table.read(filename)
-        self.filename = os.path.basename(filename)
-        super().__init__(simtab, metadata)
-
-class Tamborra_2014(_GarchingArchiveModel):
+class Tamborra_2014(_RegistryModel):
     """Model based on 3D simulations from `Tamborra et al., PRD 90:045032, 2014 <https://arxiv.org/abs/1406.0006>`_.
     Data files are from the `Garching Supernova Archive`_.
     """
     pass
 
-class Bollig_2016(_GarchingArchiveModel):
+class Bollig_2016(_RegistryModel):
     """Model based on simulations from `Bollig et al. (2016) <https://arxiv.org/abs/1508.00785>`_. Models were taken, with permission, from the Garching Supernova Archive.
     """
     pass
 
-class Walk_2018(_GarchingArchiveModel):
+class Walk_2018(_RegistryModel):
     """Model based on SASI-dominated simulations from `Walk et al.,
     PRD 98:123001, 2018 <https://arxiv.org/abs/1807.02366>`_. Data files are from
     the `Garching Supernova Archive`_.
     """
     pass
 
-class Walk_2019(_GarchingArchiveModel):
+class Walk_2019(_RegistryModel):
     """Model based on SASI-dominated simulations from `Walk et al.,
     PRD 101:123013, 2019 <https://arxiv.org/abs/1910.12971>`_. Data files are
     from the `Garching Supernova Archive`_.
@@ -199,7 +179,7 @@ class Walk_2019(_GarchingArchiveModel):
     pass
 
 
-class OConnor_2013(PinchedModel):
+class OConnor_2013(PinchedModel): # TODO: Requires changes to the model file to have one file per model instead of a single gzip archive!
     """Model based on the black hole formation simulation in `O'Connor & Ott (2013) <https://arxiv.org/abs/1207.1100>`_.
     """
     def __init__(self, base, mass=15, eos='LS220'):
@@ -241,10 +221,10 @@ class OConnor_2013(PinchedModel):
         super().__init__(simtab, metadata)
 
 
-class OConnor_2015(PinchedModel):
+class OConnor_2015(_RegistryModel):
     """Model based on the black hole formation simulation in `O'Connor (2015) <https://arxiv.org/abs/1411.7058>`_.
     """
-    def __init__(self, filename, eos='LS220'):
+    def __new__(cls, progenitor_mass=None, eos='LS220'):
         """
         Parameters
         ----------
@@ -253,38 +233,21 @@ class OConnor_2015(PinchedModel):
         eos : string
             Equation of state used in simulation
         """
-        simtab = Table.read(filename, 
-                     names= ['TIME','L_NU_E','L_NU_E_BAR','L_NU_X',
-                                    'E_NU_E','E_NU_E_BAR','E_NU_X',
-                                    'RMS_NU_E','RMS_NU_E_BAR','RMS_NU_X'],
-                     format='ascii')
-
-        header = ascii.read(simtab.meta['comments'], delimiter='=',format='no_header', names=['key', 'val'])
-        tbounce = float(header['val'][0])
-        simtab['TIME'] -= tbounce
-        
-        simtab['ALPHA_NU_E'] = (2.0*simtab['E_NU_E']**2 - simtab['RMS_NU_E']**2)/(simtab['RMS_NU_E']**2 - simtab['E_NU_E']**2)
-        simtab['ALPHA_NU_E_BAR'] = (2.0*simtab['E_NU_E_BAR']**2 - simtab['RMS_NU_E_BAR']**2)/(simtab['RMS_NU_E_BAR']**2 - simtab['E_NU_E_BAR']**2)
-        simtab['ALPHA_NU_X'] = (2.0*simtab['E_NU_X']**2 - simtab['RMS_NU_X']**2)/(simtab['RMS_NU_X']**2 - simtab['E_NU_X']**2)
-
-        # SYB: double-check on this factor of 4. Should be factor of 2?
-        simtab['L_NU_X'] /= 4.0
-
-        self.filename = 'OConnor2015_s40WH07_LS220'
-        self.EOS = eos
-        self.progenitor_mass = 40 * u.Msun
 
         metadata = {
-            'Progenitor mass':self.progenitor_mass,
-            'EOS':self.EOS,
+            'Progenitor mass': progenitor_mass,
+            'EOS': eos,
         }
 
-        super().__init__(simtab, metadata)
+        filename = os.path.join(model_path, cls.__name__, 'M1_neutrinos.dat')
 
-class Zha_2021(PinchedModel):
+        return loaders.OConnor_2015(filename, metadata)
+
+
+class Zha_2021(_RegistryModel):
     """Model based on the hadron-quark phse transition models from `Zha et al. 2021 <https://arxiv.org/abs/2103.02268>`_.
     """
-    def __init__(self, filename, eos='STOS_B145'):
+    def __new__(cls, progenitor_mass=None, eos='LS220'):
         """
         Parameters
         ----------
@@ -293,46 +256,22 @@ class Zha_2021(PinchedModel):
         eos : string
             Equation of state used in simulation
         """
-        simtab = Table.read(filename, 
-                     names= ['TIME','L_NU_E','L_NU_E_BAR','L_NU_X',
-                                    'E_NU_E','E_NU_E_BAR','E_NU_X',
-                                    'RMS_NU_E','RMS_NU_E_BAR','RMS_NU_X'],
-                     format='ascii')
-
-        header = ascii.read(simtab.meta['comments'], delimiter='=',format='no_header', names=['key', 'val'])
-        tbounce = float(header['val'][0])
-        simtab['TIME'] -= tbounce
-        
-        simtab['ALPHA_NU_E'] = (2.0*simtab['E_NU_E']**2 - simtab['RMS_NU_E']**2)/(simtab['RMS_NU_E']**2 - simtab['E_NU_E']**2)
-        simtab['ALPHA_NU_E_BAR'] = (2.0*simtab['E_NU_E_BAR']**2 - simtab['RMS_NU_E_BAR']**2)/(simtab['RMS_NU_E_BAR']**2 - simtab['E_NU_E_BAR']**2)
-        simtab['ALPHA_NU_X'] = (2.0*simtab['E_NU_X']**2 - simtab['RMS_NU_X']**2)/(simtab['RMS_NU_X']**2 - simtab['E_NU_X']**2)
-
-        # SYB: double-check on this factor of 4. Should be factor of 2?
-        simtab['L_NU_X'] /= 4.0
-
-        #prevent neagative lums
-        simtab['L_NU_E'][simtab['L_NU_E'] < 0] = 1
-        simtab['L_NU_E_BAR'][simtab['L_NU_E_BAR'] < 0] = 1
-        simtab['L_NU_X'][simtab['L_NU_X'] < 0] = 1
-
-        basename =os.path.basename(filename)[:-4]
-
-        self.filename = 'Zha2021_'+basename
-        self.EOS = eos
-        self.progenitor_mass =  float(basename[1:])* u.Msun
 
         metadata = {
-            'Progenitor mass':self.progenitor_mass,
-            'EOS':self.EOS,
+            'Progenitor mass': progenitor_mass,
+            'EOS': eos,
         }
-        super().__init__(simtab, metadata)
+        
+        filename = os.path.join(model_path, cls.__name__, f's{progenitor_mass}.dat')
+
+        return loaders.Zha_2021(filename, metadata)
 
 
-class Warren_2020(PinchedModel):
+class Warren_2020(_RegistryModel):
     """Model based on simulations from Warren et al., ApJ 898:139, 2020.
     Neutrino fluxes available at https://doi.org/10.5281/zenodo.3667908."""
 
-    def __init__(self, filename, eos='SFHo'):
+    def __new__(cls, progenitor_mass=None, turbmixing_param=None, eos='SFHo'):
         """
         Parameters
         ----------
@@ -341,48 +280,22 @@ class Warren_2020(PinchedModel):
         eos : string
             Equation of state used in simulation
         """
-        # Read data from HDF5 files, then store.
-        f = h5py.File(filename, 'r')
-        simtab = Table()
-
-        for i in range(len(f['nue_data']['lum'])):
-            if f['sim_data']['shock_radius'][i][1] > 0.00001:
-                bounce = f['sim_data']['shock_radius'][i][0]
-                break
-
-        simtab['TIME'] = f['nue_data']['lum'][:, 0] - bounce
-        simtab['L_NU_E'] = f['nue_data']['lum'][:, 1] * 1e51
-        simtab['L_NU_E_BAR'] = f['nuae_data']['lum'][:, 1] * 1e51
-        simtab['L_NU_X'] = f['nux_data']['lum'][:, 1] * 1e51
-        simtab['E_NU_E'] = f['nue_data']['avg_energy'][:, 1]
-        simtab['E_NU_E_BAR'] = f['nuae_data']['avg_energy'][:, 1]
-        simtab['E_NU_X'] = f['nux_data']['avg_energy'][:, 1]
-        simtab['RMS_NU_E'] = f['nue_data']['rms_energy'][:, 1]
-        simtab['RMS_NU_E_BAR'] = f['nuae_data']['rms_energy'][:, 1]
-        simtab['RMS_NU_X'] = f['nux_data']['rms_energy'][:, 1]
-
-        simtab['ALPHA_NU_E'] = (2.0 * simtab['E_NU_E'] ** 2 - simtab['RMS_NU_E'] ** 2) / (simtab['RMS_NU_E'] ** 2 - simtab['E_NU_E'] ** 2)
-        simtab['ALPHA_NU_E_BAR'] = (2.0 * simtab['E_NU_E_BAR'] ** 2 - simtab['RMS_NU_E_BAR'] ** 2) / (simtab['RMS_NU_E_BAR'] ** 2 - simtab['E_NU_E_BAR'] ** 2)
-        simtab['ALPHA_NU_X'] = (2.0 * simtab['E_NU_X'] ** 2 - simtab['RMS_NU_X'] ** 2) / (simtab['RMS_NU_X'] ** 2 - simtab['E_NU_X'] ** 2)
-
         # Set model metadata.
-        self.filename = os.path.basename(filename)
-        self.EOS = eos
-        self.progenitor_mass = float(filename.split('_')[-1][1:-3]) * u.Msun
-        self.turbmixing_param = float(filename.split('_')[-2].strip('a%'))
-
         metadata = {
-            'Progenitor mass':self.progenitor_mass,
-            'Turb. mixing param.':self.turbmixing_param,
-            'EOS':self.EOS,
+            'Progenitor mass': progenitor_mass,
+            'Turb. mixing param.': turbmixing_param,
+            'EOS': eos,
         }
-        super().__init__(simtab, metadata)
+
+        filename = os.path.join(model_path, cls.__name__, f'stir_a{turbmixing_param}/stir_multimessenger_a{turbmixing_param}_m{progenitor_mass}.h5')
+
+        return loaders.Warren_2020(filename, metadata)
 
 
-class Kuroda_2020(PinchedModel):
+class Kuroda_2020(_RegistryModel):
     """Model based on simulations from `Kuroda et al. (2020) <https://arxiv.org/abs/2009.07733>`_."""
 
-    def __init__(self, filename, eos='LS220', mass=20*u.Msun):
+    def __new__(cls, eos='LS220', progenitor_mass=20*u.Msun):
         """
         Parameters
         ----------
@@ -391,28 +304,15 @@ class Kuroda_2020(PinchedModel):
         eos : string
             Equation of state used in simulation
         """
-        # Load up model metadata.
-        self.filename = filename
-        self.EOS = eos
-        self.progenitor_mass = mass
-
         metadata = {
-            'Progenitor mass':self.progenitor_mass,
-            'EOS':self.EOS,
+            'Progenitor mass': progenitor_mass,
+            'EOS': eos,
             }
-        # Read ASCII data.
-        simtab = Table.read(filename, format='ascii')
 
-        # Get grid of model times.
-        simtab['TIME'] = simtab['Tpb[ms]'] << u.ms
-        for f in [Flavor.NU_E, Flavor.NU_E_BAR, Flavor.NU_X]:
-            fkey = re.sub('(E|X)_BAR',r'A\g<1>', f.name).lower()
-            simtab[f'L_{f.name}'] = simtab[f'<L{fkey}>'] * 1e51 << u.erg / u.s
-            simtab[f'E_{f.name}'] = simtab[f'<E{fkey}>'] << u.MeV
-            # There is no pinch parameter so use alpha=2.0.
-            simtab[f'ALPHA_{f.name}'] = np.full_like(simtab[f'E_{f.name}'].value, 2.)
+        filename = os.path.join(model_path, cls.__name__, f'LnuR00B00.dat')  # TODO: replace hardcoded filename with one based on input parameters
 
-        super().__init__(simtab, metadata)
+        return loaders.Kuroda_2020(filename, metadata)
+
 
 class Fornax_2019(SupernovaModel):
     """Model based on 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019. 
