@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+"""Utility module that reads a local YAML file listing the data files
+available for the models supported by SNEWPY. These data files can either
+be local (in the SNEWPY source tree) or uploaded to a model repository on
+Zenodo. The YAML file supports regular expressions to allow matching of all
+possible model files. The model data files are stored in a dictionary
+returned by the function ``snewpy.zenodo_downloader.load_registry``.
+"""
+
 from dataclasses import dataclass
 from pathlib import Path
 import requests
@@ -11,7 +20,7 @@ import logging
 logger = logging.getLogger('FileHandle')
 
 def _md5(fname:str) -> str:
-    """calculate the md5sum hash of a file"""
+    """calculate the md5sum hash of a file."""
     hash_md5 = hashlib.md5()
     with open(fname, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
@@ -19,7 +28,7 @@ def _md5(fname:str) -> str:
     return hash_md5.hexdigest()
 
 def _download(src:str, dest:str, chunk_size=8192):
-    """Download a file from 'src' to 'dest' and show the progress bar"""
+    """Download a file from 'src' to 'dest' and show the progress bar."""
     #make sure parent dir exists
     Path(dest).parent.mkdir(exist_ok=True, parents=True)
     with requests.get(src, stream=True) as r:
@@ -40,6 +49,9 @@ class MissingFileError(FileNotFoundError):
 
 @dataclass
 class FileHandle:
+    """Object storing local path, remote URL (optional), and MD5 sum
+(optional) for a SNEWPY model file.
+    """
     path: Path
     remote: str = None
     md5: Optional[str] = None
@@ -62,8 +74,8 @@ class FileHandle:
                 raise ChecksumError(self.path, self.md5, md5)
     
     def load(self) -> Path:
-        """Make sure that local file exists and has a correct checksum
-        Download the file if needed
+        """Make sure that local file exists and has a correct checksum.
+        Download the file if needed.
         """
         try:
             self.check()
@@ -79,7 +91,18 @@ class FileHandle:
         return open(self.load(), flags)
 
 def from_zenodo(zenodo_id:str, path:str='/tmp/', regex: str = '.*'):
-    """Load files from Zenodo record"""
+    """Load files from Zenodo record.
+
+    Parameters
+    ----------
+    zenodo_id : Zenodo record for model files.
+    path : Path to files for a given model.
+    regex : Pattern to match all possible file names.
+
+    Returns
+    -------
+    files : dictionary of FileHandles for a given model.
+    """
     path = Path(path)/str(zenodo_id)
     path.mkdir(exist_ok=True, parents=True)
     files_re = re.compile(regex)
@@ -96,7 +119,17 @@ def from_zenodo(zenodo_id:str, path:str='/tmp/', regex: str = '.*'):
     return files
 
 def from_local(path:str, regex: str = '.*'):
-    """Load files from local places"""
+    """Load model files from local places.
+
+    Parameters
+    ----------
+    path : Relative path to files for a given model.
+    regex : Pattern to match all possible file names.
+
+    Returns
+    -------
+    files : dictionary of FileHandles for a given model.
+    """
     path = Path(path)
     files_re = re.compile(regex)
     files = {}
@@ -108,7 +141,18 @@ def from_local(path:str, regex: str = '.*'):
 
 import yaml
 
-def load_registry(fname):
+def load_registry(fname:str):
+    """Generate a dictionary of module files and options that enumerate
+all possible options in model instantiation.
+    
+    Parameters
+    ----------
+    fname : Full or relative path to YAML file with model info.
+
+    Returns
+    -------
+    model_dict : dictionary of valid model parameters from YAML. 
+    """
     loader = yaml.SafeLoader
 
     def _construct_from_zenodo(loader, node):
