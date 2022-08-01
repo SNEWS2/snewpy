@@ -49,6 +49,10 @@ ccsn:
       regex: 's[0-9.]+c_3DBH_dir1_LS220_nu(e|x)(bar)?'
       path: "models/Walk_2019"
 
+    Warren_2020: !local
+      regex: 'stir.*\.h5'
+      path: "models/Warren_2020"
+
     Zha_2021: !local
       regex: 's[0-9]+.*\.dat'
       path: "models/Zha_2021"
