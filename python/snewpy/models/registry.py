@@ -69,8 +69,9 @@ def init_model(model_name, download=True, download_dir=model_path, **user_param)
         return getattr(module, model_name)(**user_param)
 
 
-def check_param_values(model, **user_param):
-    """Checks that the model-specific values and units of requested parameters are valid according to model.param.
+# TODO: Combine checks into one(?) function to simplify
+def check_valid_params(model, **user_param):
+    """Checks that the model-specific values, units, names and conbinations of requested parameters are valid.
 
     Parameters
     ----------
@@ -93,11 +94,14 @@ def check_param_values(model, **user_param):
     snewpy.models.presn
 
     """
-    model_param = model.param
-    # Check that the appropriate number of params are provided
-    check_param_names(model, **user_param)
 
-    # Check that user-requested params have valid units and values
+    model_param = model.param
+
+    # Check that the appropriate number of params are provided
+    if not all(key in user_param for key in model_param.keys()):
+        raise ValueError(f"Missing parameter! Expected {model_param.keys()} but was given {user_param.keys()}")
+
+    # Check parameter units and values
     for (key, allowed_params), user_param in zip(model_param.items(), user_param.values()):
         # If both have units, check that the user param value is valid. If valid, continue. Else, error
         if type(user_param) == Quantity and type(allowed_params) == Quantity:
@@ -125,67 +129,74 @@ def check_param_values(model, **user_param):
             raise ValueError(f"Invalid value '{user_param}' provided for parameter {key}, "
                              f"allowed value(s): {allowed_params}")
 
-
-def check_param_combo(model, **user_param):
-    """Checks that the model-specific combination of requested parameters is valid according to
-    model.isvalid_param_combo. Valid parameter combinations may be found via model.get_param_combinations().
-
-    Parameters
-    ----------
-    model : snewpy.model.SupernovaModel
-        Model class used to perform parameter combination check
-    user_param : varies
-        User-requested model parameters to be tested for validity.
-        NOTE: This must be provided as kwargs that match the keys of model.param
-
-    Raises
-    ------
-    ValueError
-        If invalid combination of model parameters are provided.
-
-    See Also
-    --------
-    snewpy.models.ccsn
-    snewpy.models.presn
-    """
-    check_param_names(model, **user_param)
+    # Check Combinations (Logic lives inside model subclasses
     if not model.isvalid_param_combo(**user_param):
-        raise ValueError(f"Invalid parameter combination. See {model.__name__}.param_combinations for a list of "
-                         "allowed parameter combinations.")
+        raise ValueError(
+            f"Invalid parameter combination. See {model.__class__.__name__}.get_param_combinations for a "
+            "list of allowed parameter combinations.")
 
 
-def check_param_names(model, **user_param):
-    """Checks that all requested model parameter names match the required model parameter names according to model.param
-    See the __init__ of a specific model for descriptions of the available parameters.
+# def check_param_combo(model, **user_param):
+#     """Checks that the model-specific combination of requested parameters is valid according to
+#     model.isvalid_param_combo. Valid parameter combinations may be found via model.get_param_combinations().
+#
+#     Parameters
+#     ----------
+#     model : snewpy.model.SupernovaModel
+#         Model class used to perform parameter combination check
+#     user_param : varies
+#         User-requested model parameters to be tested for validity.
+#         NOTE: This must be provided as kwargs that match the keys of model.param
+#
+#     Raises
+#     ------
+#     ValueError
+#         If invalid combination of model parameters are provided.
+#
+#     See Also
+#     --------
+#     snewpy.models.ccsn
+#     snewpy.models.presn
+#     """
+#     # should be done seperately or in check_values
+#     check_param_names(model, **user_param)
+#     if not model.isvalid_param_combo(**user_param):
+#         raise ValueError(f"Invalid parameter combination. See {model.__class__.__name__}.get_param_combinations for a "
+#                          "list of allowed parameter combinations.")
 
-    Parameters
-    ----------
-    model : snewpy.model.SupernovaModel
-        Model class used to build combinations
-    user_param : varies
-        User-requested model parameters used to perform checks
-        NOTE: This must be provided as kwargs that match the keys of model.param
-    """
-    if not all(key in user_param for key in model.param.keys()):
-        raise ValueError(f"Missing parameter! Expected {model.param.keys()} but was given {user_param.keys()}")
+
+# def check_param_names(model, **user_param):
+#     """Checks that all requested model parameter names match the required model parameter names according to model.param
+#     See the __init__ of a specific model for descriptions of the available parameters.
+#
+#     Parameters
+#     ----------
+#     model : snewpy.model.SupernovaModel
+#         Model class used to build combinations
+#     user_param : varies
+#         User-requested model parameters used to perform checks
+#         NOTE: This must be provided as kwargs that match the keys of model.param
+#     """
+#     if not all(key in user_param for key in model.param.keys()):
+#         raise ValueError(f"Missing parameter! Expected {model.param.keys()} but was given {user_param.keys()}")
 
 
-def check_valid_params(model, **user_param):
-    """Checks for valid model parameter combination validity
-    See the __init__ of a specific model for descriptions of the available parameters.
-
-    Parameters
-    ----------
-    model : snewpy.model.SupernovaModel
-        Model class used to build combinations
-    user_param : varies
-        User-requested model parameters used to perform checks
-        NOTE: This must be provided as kwargs that match the keys of model.param
-    """
-    # Check parameters for valid values and units
-    check_param_values(model, **user_param)
-    # Check parameter combination for validity (model-specific)
-    check_param_combo(model, **user_param)
+# def check_valid_params(model, **user_param):
+#     """Checks for valid model parameter combination validity
+#     See the __init__ of a specific model for descriptions of the available parameters.
+#
+#     Parameters
+#     ----------
+#     model : snewpy.model.SupernovaModel
+#         Model class used to build combinations
+#     user_param : varies
+#         User-requested model parameters used to perform checks
+#         NOTE: This must be provided as kwargs that match the keys of model.param
+#     """
+#     # Check parameters for valid values and units
+#     check_param_values(model, **user_param)
+#     # Check parameter combination for validity (model-specific)
+#     check_param_combo(model, **user_param)
 
 
 def get_param_combinations(model, **user_param):
@@ -213,7 +224,7 @@ def get_param_combinations(model, **user_param):
     ValueError
         If an invalid value for a model parameter is provided.
     """
-    check_param_names(model, **user_param)
+    # check_param_names(model, **user_param)
     param = {}
     for key, val, user_val in zip(model.param.keys(), model.param.values(), user_param.values()):
         if user_val is not None and user_val in val:

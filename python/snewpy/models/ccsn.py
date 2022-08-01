@@ -55,7 +55,7 @@ class Nakazato_2013(PinchedModel):
     """Model based on simulations from Nakazato et al., ApJ S 205:2
     (2013), ApJ 804:75 (2015), PASJ 73:639 (2021). See also http://asphwww.ph.noda.tus.ac.jp/snn/.
     """
-
+    # Todo: Add to docs, parameters names and allowed values (for readthedocs) See if add-to-docs it can be done auto
     param = {'progenitor_mass': [13, 20, 30, 50] * u.Msun,
              'revival_time': [0, 100, 200, 300] * u.ms,
              'metallicity': [0.02, 0.004],
@@ -102,20 +102,13 @@ class Nakazato_2013(PinchedModel):
         Metallicity      : 0.004
         Revival time     : 0.0 ms
         """
+        # TODO: Check GitHub PR for error in this example
         # Attempt to load model from parameters
         if not filename and all((p is not None for p in (progenitor_mass, revival_time, metallicity, eos))):
 
+            # Build user params, check validity, construct filename, then load from filename
             user_params = dict(zip(self.param.keys(), (progenitor_mass, revival_time, metallicity, eos)))
-            try:
-                check_valid_params(**user_params)
-            except ValueError as e:
-                raise e
-
-            # Populate model parameter members
-            self.progenitor_mass = progenitor_mass.to(u.Msun)
-            self.revival_time = revival_time.to(u.ms)
-            self.metallicity = metallicity
-            self.EOS = eos
+            check_valid_params(self, **user_params)
 
             # Strip units for filename construction
             progenitor_mass = progenitor_mass.to(u.Msun).value
@@ -126,40 +119,27 @@ class Nakazato_2013(PinchedModel):
             else:
                 fname = f"nakazato-{eos}-BH-z{metallicity}-s{progenitor_mass:3.1f}.fits"
 
-            # Construct metadata
             filename = os.path.join(model_path, self.__class__.__name__, fname)
-            if not os.path.exists(filename):
-                raise FileNotFoundError(f"No such file or directory: '{filename}', requested parameters may be "
-                                        "incompatible")
-            metadata = {
-                'Progenitor mass': progenitor_mass * u.Msun,
-                'EOS': eos.capitalize(),
-                'Metallicity': metallicity,
-                'Revival time': revival_time * u.ms
-            }
-        elif filename:
-            # Store model metadata.
-            if 't_rev' in filename:
-                self.progenitor_mass = float(filename.split('-')[-1].strip('s%.fits')) * u.Msun
-                self.revival_time = float(filename.split('-')[-2].strip('t_rev%ms')) * u.ms
-                self.metallicity = float(filename.split('-')[-3].strip('z%'))
-                self.EOS = filename.split('-')[-4].upper()
-            # No revival time because the explosion "failed" (BH formation).
-            else:
-                self.progenitor_mass = float(filename.split('-')[-1].strip('s%.fits')) * u.Msun
-                self.metallicity = float(filename.split('-')[-2].strip('z%'))
-                self.revival_time = 0 * u.ms
-                self.EOS = filename.split('-')[-4].upper()
 
-            metadata = {
-                'Progenitor mass': self.progenitor_mass,
-                'EOS': self.EOS,
-                'Metallicity': self.metallicity,
-                'Revival time': self.revival_time
-            }
+        # Store model metadata.
+        if 't_rev' in filename:
+            self.progenitor_mass = float(filename.split('-')[-1].strip('s%.fits')) * u.Msun
+            self.revival_time = float(filename.split('-')[-2].strip('t_rev%ms')) * u.ms
+            self.metallicity = float(filename.split('-')[-3].strip('z%'))
+            self.EOS = filename.split('-')[-4].upper()
+        # No revival time because the explosion "failed" (BH formation).
         else:
-            raise TypeError('__init__() missing required arguments. Use argument `filename` or arguments '
-                            '`progenitor_mass`, `revival_time`, `metallicity`, `eos`')
+            self.progenitor_mass = float(filename.split('-')[-1].strip('s%.fits')) * u.Msun
+            self.metallicity = float(filename.split('-')[-2].strip('z%'))
+            self.revival_time = 0 * u.ms
+            self.EOS = filename.split('-')[-4].upper()
+
+        metadata = {
+            'Progenitor mass': self.progenitor_mass,
+            'EOS': self.EOS,
+            'Metallicity': self.metallicity,
+            'Revival time': self.revival_time
+        }
 
         # Read FITS table using the astropy reader.
         simtab = Table.read(filename)
@@ -180,7 +160,6 @@ class Nakazato_2013(PinchedModel):
             return progenitor_mass.to(u.Msun).value == 30 and metallicity == 0.004
         else:
             return eos in ['shen'] and not (progenitor_mass.to(u.Msun).value == 30 and metallicity == 0.004)
-
 
 
 class Sukhbold_2015(PinchedModel):
