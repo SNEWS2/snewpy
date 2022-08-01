@@ -20,3 +20,7 @@ ccsn:
     Kuroda_2020: !local
       regex: 'Lnu.*\.dat'
       path: "models/Kuroda_2020"
+
+    Nakazato_2013: !local
+      regex: 'nakazato.*\.fits'
+      path: "models/Nakazato_2013"
