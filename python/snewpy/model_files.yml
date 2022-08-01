@@ -36,3 +36,7 @@ ccsn:
     Sukhbold_2015: !local
       regex: 'sukhbold-.*\.fits'
       path: "models/Sukhbold_2015"
+
+    Tamborra_2014: !local
+      regex: 's[0-9.]+c_3D_dir1_LS220_nu(e|x)(bar)?'
+      path: "models/Tamborra_2014"
