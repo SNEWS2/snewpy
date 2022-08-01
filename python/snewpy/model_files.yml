@@ -44,3 +44,7 @@ ccsn:
     Walk_2018: !local
       regex: 's[0-9.]+c_3D_nonrot_dir1_LS220_nu(e|x)(bar)?'
       path: "models/Walk_2018"
+
+    Walk_2019: !local
+      regex: 's[0-9.]+c_3DBH_dir1_LS220_nu(e|x)(bar)?'
+      path: "models/Walk_2019"
