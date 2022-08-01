@@ -12,3 +12,7 @@ ccsn:
     Fornax_2019: !local
       regex: 'lum_spec_.*\.h5'
       path: "models/Fornax_2019"
+
+    Fornax_2021: !local
+      regex: 'lum_spec_.*\.h5'
+      path: "models/Fornax_2021"
