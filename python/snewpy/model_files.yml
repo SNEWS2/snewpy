@@ -24,3 +24,11 @@ ccsn:
     Nakazato_2013: !local
       regex: 'nakazato.*\.fits'
       path: "models/Nakazato_2013"
+
+    OConnor_2013: !local
+      regex: '.*_timeseries\.tar\.gz'
+      path: "models/OConnor_2013"
+
+    OConnor_2015: !local
+      regex: 'M1_neutrinos\.dat'
+      path: "models/OConnor_2015"
