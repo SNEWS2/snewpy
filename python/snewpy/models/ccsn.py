@@ -367,7 +367,7 @@ class Warren_2020(PinchedModel):
     """Model based on simulations from Warren et al., ApJ 898:139, 2020.
     Neutrino fluxes available at https://doi.org/10.5281/zenodo.3667908."""
 
-    def __init__(self, filename, eos='LS220'):
+    def __init__(self, filename, eos='SFHo'):
         """
         Parameters
         ----------
