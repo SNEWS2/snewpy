@@ -5,6 +5,7 @@ import re
 from contextlib import contextmanager, AbstractContextManager
 from tqdm.auto import tqdm
 import hashlib
+from typing import Optional
 
 import logging
 logger = logging.getLogger('FileHandle')
@@ -41,7 +42,7 @@ class MissingFileError(FileNotFoundError):
 class FileHandle:
     path: Path
     remote: str = None
-    md5: str|None = None
+    md5: Optional[str] = None
     
     def check(self) -> None:
         """Check if the given file exists locally and has a correct md5 sum.
