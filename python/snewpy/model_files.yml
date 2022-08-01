@@ -16,3 +16,7 @@ ccsn:
     Fornax_2021: !local
       regex: 'lum_spec_.*\.h5'
       path: "models/Fornax_2021"
+
+    Kuroda_2020: !local
+      regex: 'Lnu.*\.dat'
+      path: "models/Kuroda_2020"
