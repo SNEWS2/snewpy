@@ -135,8 +135,16 @@ def from_local(path:str, regex: str = '.*'):
     files = {}
 
     for f in path.iterdir():
-        if files_re.match(f.name):
-            files[f.name] = FileHandle(path = f)
+        # model files can include subfolders...
+        if f.is_dir():
+            for _f in f.iterdir():
+                if files_re.match(_f.name):
+                    files[_f.name] = FileHandle(path = _f)
+        # ...or not:
+        else:
+            if files_re.match(f.name):
+                files[f.name] = FileHandle(path = f)
+
     return files
 
 import yaml
