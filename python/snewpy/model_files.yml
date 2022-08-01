@@ -48,3 +48,7 @@ ccsn:
     Walk_2019: !local
       regex: 's[0-9.]+c_3DBH_dir1_LS220_nu(e|x)(bar)?'
       path: "models/Walk_2019"
+
+    Zha_2021: !local
+      regex: 's[0-9]+.*\.dat'
+      path: "models/Zha_2021"
