@@ -40,3 +40,7 @@ ccsn:
     Tamborra_2014: !local
       regex: 's[0-9.]+c_3D_dir1_LS220_nu(e|x)(bar)?'
       path: "models/Tamborra_2014"
+
+    Walk_2018: !local
+      regex: 's[0-9.]+c_3D_nonrot_dir1_LS220_nu(e|x)(bar)?'
+      path: "models/Walk_2018"
