@@ -4,15 +4,10 @@
 import unittest
 
 from snewpy.neutrino import Flavor
-from snewpy.flavor_transformation import NoTransformation
-from snewpy.models.ccsn import Nakazato_2013, Tamborra_2014, OConnor_2015, \
-                          Sukhbold_2015, Bollig_2016, Walk_2018, \
-                          Walk_2019, Fornax_2019, Warren_2020, \
-                          Kuroda_2020, Fornax_2021, Zha_2021
+from snewpy.models.loaders import Fornax_2019, Fornax_2021, Nakazato_2013, Tamborra_2014, OConnor_2015, Sukhbold_2015, Bollig_2016, Walk_2018, Walk_2019, Warren_2020, Kuroda_2020, Zha_2021
 
 from astropy import units as u
 
-import numpy as np
 
 class TestModels(unittest.TestCase):
 
@@ -25,11 +20,6 @@ class TestModels(unittest.TestCase):
                 for mass in [13., 20., 50.]:
                     mfile = 'models/Nakazato_2013/nakazato-shen-z{}-t_rev{}ms-s{:.1f}.fits'.format(z, trev, mass)
                     model = Nakazato_2013(mfile)
-
-                    self.assertEqual(model.EOS, 'SHEN')
-                    self.assertEqual(model.progenitor_mass, mass*u.Msun)
-                    self.assertEqual(model.revival_time, trev*u.ms)
-                    self.assertEqual(model.metallicity, z)
 
                     # Check that times are in proper units.
                     t = model.get_time()
@@ -50,9 +40,6 @@ class TestModels(unittest.TestCase):
             mfile = 'models/Tamborra_2014/s{:.1f}c_3D_dir1'.format(mass)
             model = Tamborra_2014(mfile, eos='LS220')
 
-            self.assertEqual(model.EOS, 'LS220')
-            self.assertEqual(model.progenitor_mass, mass*u.Msun)
-
             # Check that times are in proper units.
             t = model.get_time()
             self.assertTrue(t.unit, u.s)
@@ -68,10 +55,7 @@ class TestModels(unittest.TestCase):
         Instantiate a set of "O'Connor 2015" models
         """
         mfile = 'models/OConnor_2015/M1_neutrinos.dat'
-        model = OConnor_2015(mfile, eos='LS220')
-
-        self.assertEqual(model.EOS, 'LS220')
-        self.assertEqual(model.progenitor_mass, 40*u.Msun)
+        model = OConnor_2015(mfile)
 
         # Check that times are in proper units.
         t = model.get_time()
@@ -90,11 +74,7 @@ class TestModels(unittest.TestCase):
         for mass in ['z9.6', 's27.0']:
             for eos in ['LS220', 'SFHo']:
                 mfile = 'models/Sukhbold_2015/sukhbold-{}-{}.fits'.format(eos, mass)
-                massval = float(mass[1:]) * u.Msun
                 model = Sukhbold_2015(mfile)
-
-                self.assertEqual(model.EOS, eos)
-                self.assertEqual(model.progenitor_mass, massval)
 
                 # Check that times are in proper units.
                 t = model.get_time()
@@ -114,9 +94,6 @@ class TestModels(unittest.TestCase):
             mfile = 'models/Bollig_2016/s{:.1f}c'.format(mass)
             model = Bollig_2016(mfile, eos='LS220')
 
-            self.assertEqual(model.EOS, 'LS220')
-            self.assertEqual(model.progenitor_mass, mass*u.Msun)
-
             # Check that times are in proper units.
             t = model.get_time()
             self.assertTrue(t.unit, u.s)
@@ -134,9 +111,6 @@ class TestModels(unittest.TestCase):
         mass = 15.
         mfile = 'models/Walk_2018/s{:.1f}c_3D_nonrot_dir1'.format(mass)
         model = Walk_2018(mfile, eos='LS220')
-
-        self.assertEqual(model.EOS, 'LS220')
-        self.assertEqual(model.progenitor_mass, mass*u.Msun)
 
         # Check that times are in proper units.
         t = model.get_time()
@@ -223,10 +197,6 @@ class TestModels(unittest.TestCase):
     
                 model = Warren_2020(mfile)
 
-                self.assertEqual(model.progenitor_mass, float(mass)*u.Msun)
-                self.assertEqual(model.turbmixing_param, mixing)
-                self.assertEqual(model.EOS, 'SFHo')
-
                 # Check that times are in proper units.
                 t = model.get_time()
                 self.assertTrue(t.unit, u.s)
@@ -244,9 +214,6 @@ class TestModels(unittest.TestCase):
         for field in ['R00B00', 'R10B12', 'R10B13']:
             mfile = 'models/Kuroda_2020/Lnu{}.dat'.format(field)
             model = Kuroda_2020(mfile)
-
-            self.assertEqual(model.EOS, 'LS220')
-            self.assertEqual(model.progenitor_mass, 20*u.Msun)
 
             # Check that times are in proper units.
             t = model.get_time()
@@ -285,9 +252,6 @@ class TestModels(unittest.TestCase):
         for mass in ['16', '17', '18', '19', '19.89', '20', '21', '22.39', '23', '24', '25', '26', '30', '33']:
             mfile = 'models/Zha_2021/s{}.dat'.format(mass)
             model = Zha_2021(mfile)
-
-            self.assertEqual(model.progenitor_mass, float(mass)*u.Msun)
-            self.assertEqual(model.EOS, 'STOS_B145')
 
             # Check that times are in proper units.
             t = model.get_time()

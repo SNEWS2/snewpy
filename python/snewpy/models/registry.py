@@ -71,7 +71,7 @@ def init_model(model_name, download=True, download_dir=model_path, **user_param)
 
 # TODO: Combine checks into one(?) function to simplify
 def check_valid_params(model, **user_params):
-    """Checks that the model-specific values, units, names and combinations of requested parameters are valid.
+    """Checks that the model-specific values, units, names and conbinations of requested parameters are valid.
 
     Parameters
     ----------
