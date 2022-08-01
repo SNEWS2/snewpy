@@ -33,6 +33,9 @@ from snewpy.models import loaders
 from .base import PinchedModel, SupernovaModel, _GarchingArchiveModel
 from .registry import check_valid_params, get_param_combinations
 
+class _RegistryModel():
+    """TODO: empty base class for now?"""
+    pass
 
 class Analytic3Species(PinchedModel):
     """An analytical model calculating spectra given total luminosity,
@@ -52,7 +55,7 @@ class Analytic3Species(PinchedModel):
         super().__init__(simtab, metadata={})
 
 
-class Nakazato_2013(PinchedModel):
+class Nakazato_2013(_RegistryModel):
     """Model based on simulations from Nakazato et al., ApJ S 205:2
     (2013), ApJ 804:75 (2015), PASJ 73:639 (2021). See also http://asphwww.ph.noda.tus.ac.jp/snn/.
     """
@@ -96,6 +99,14 @@ class Nakazato_2013(PinchedModel):
         Metallicity      : 0.004
         Revival time     : 0.0 ms
         """
+        # Store model metadata.
+        metadata = {
+            'Progenitor mass': progenitor_mass,
+            'EOS': eos,
+            'Metallicity': metallicity,
+            'Revival time': revival_time
+        }
+
         # TODO: Check GitHub PR for error in this example
         # Attempt to load model from parameters
 
@@ -118,7 +129,7 @@ class Nakazato_2013(PinchedModel):
             # download file from GitHub/Zenodo
             raise NotImplementedError()
 
-        return loaders.Nakazato_2013(filename)
+        return loaders.Nakazato_2013(filename, metadata)
 
 
     @classmethod

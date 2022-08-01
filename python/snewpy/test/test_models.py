@@ -28,11 +28,6 @@ class TestModels(unittest.TestCase):
                     mfile = 'models/Nakazato_2013/nakazato-shen-z{}-t_rev{}ms-s{:.1f}.fits'.format(z, trev, mass)
                     model = Nakazato_2013(mfile)
 
-                    self.assertEqual(model.EOS, 'SHEN')
-                    self.assertEqual(model.progenitor_mass, mass*u.Msun)
-                    self.assertEqual(model.revival_time, trev*u.ms)
-                    self.assertEqual(model.metallicity, z)
-
                     # Check that times are in proper units.
                     t = model.get_time()
                     self.assertTrue(t.unit, u.s)
