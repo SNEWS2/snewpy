@@ -32,3 +32,7 @@ ccsn:
     OConnor_2015: !local
       regex: 'M1_neutrinos\.dat'
       path: "models/OConnor_2015"
+
+    Sukhbold_2015: !local
+      regex: 'sukhbold-.*\.fits'
+      path: "models/Sukhbold_2015"
