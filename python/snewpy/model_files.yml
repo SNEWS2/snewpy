@@ -1,0 +1,10 @@
+presn:
+    Patton_2017: !zenodo
+      zenodo_id: 2626645
+      regex: '.*\.dat'
+      path: "/tmp/SNEWPY_models"
+
+ccsn: 
+    Bollig_2016: !local
+      regex: 's[0-9.]+c_LS220_nu(e|x)(bar)?'
+      path: "models/Bollig_2016"
