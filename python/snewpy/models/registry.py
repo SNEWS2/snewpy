@@ -70,7 +70,7 @@ def init_model(model_name, download=True, download_dir=model_path, **user_param)
 
 
 # TODO: Combine checks into one(?) function to simplify
-def check_valid_params(model, **user_param):
+def check_valid_params(model, **user_params):
     """Checks that the model-specific values, units, names and conbinations of requested parameters are valid.
 
     Parameters
@@ -98,11 +98,11 @@ def check_valid_params(model, **user_param):
     model_param = model.param
 
     # Check that the appropriate number of params are provided
-    if not all(key in user_param for key in model_param.keys()):
+    if not all(key in user_params for key in model_param.keys()):
         raise ValueError(f"Missing parameter! Expected {model_param.keys()} but was given {user_param.keys()}")
 
     # Check parameter units and values
-    for (key, allowed_params), user_param in zip(model_param.items(), user_param.values()):
+    for (key, allowed_params), user_param in zip(model_param.items(), user_params.values()):
         # If both have units, check that the user param value is valid. If valid, continue. Else, error
         if type(user_param) == Quantity and type(allowed_params) == Quantity:
             if get_physical_type(user_param.unit) != get_physical_type(allowed_params.unit):
@@ -130,9 +130,9 @@ def check_valid_params(model, **user_param):
                              f"allowed value(s): {allowed_params}")
 
     # Check Combinations (Logic lives inside model subclasses
-    if not model.isvalid_param_combo(**user_param):
+    if not model.isvalid_param_combo(**user_params):
         raise ValueError(
-            f"Invalid parameter combination. See {model.__class__.__name__}.get_param_combinations for a "
+            f"Invalid parameter combination. See {model.__name__}.get_param_combinations for a "
             "list of allowed parameter combinations.")
 
 

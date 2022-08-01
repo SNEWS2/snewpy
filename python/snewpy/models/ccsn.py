@@ -29,6 +29,7 @@ except ImportError:
 
 from snewpy import model_path
 from snewpy.neutrino import Flavor
+from snewpy.models import loaders
 from .base import PinchedModel, SupernovaModel, _GarchingArchiveModel
 from .registry import check_valid_params, get_param_combinations
 
@@ -61,16 +62,11 @@ class Nakazato_2013(PinchedModel):
              'metallicity': [0.02, 0.004],
              'eos': ['LS220', 'shen', 'togashi']}
 
-    def __init__(self, filename=None, *, progenitor_mass=None, revival_time=None, metallicity=None, eos=None):
+    def __new__(cls, *, progenitor_mass=None, revival_time=None, metallicity=None, eos=None):
         """Model initialization.
 
         Parameters
         ----------
-        filename : str
-            Absolute or relative path to FITS file with model data.
-
-        Other Parameters
-        ----------------
         progenitor_mass: astropy.units.Quantity
             Mass of model progenitor in units Msun
         revival_time: astropy.units.Quantity
@@ -83,8 +79,6 @@ class Nakazato_2013(PinchedModel):
 
         Raises
         ------
-        FileNotFoundError
-            If a file for the chosen model parameters cannot be found
         ValueError
             If a combination of parameters is invalid when loading form parameters
 
@@ -104,47 +98,28 @@ class Nakazato_2013(PinchedModel):
         """
         # TODO: Check GitHub PR for error in this example
         # Attempt to load model from parameters
-        if not filename and all((p is not None for p in (progenitor_mass, revival_time, metallicity, eos))):
 
-            # Build user params, check validity, construct filename, then load from filename
-            user_params = dict(zip(self.param.keys(), (progenitor_mass, revival_time, metallicity, eos)))
-            check_valid_params(self, **user_params)
+        # Build user params, check validity, construct filename, then load from filename
+        user_params = dict(zip(cls.param.keys(), (progenitor_mass, revival_time, metallicity, eos)))
+        check_valid_params(cls, **user_params)
 
-            # Strip units for filename construction
-            progenitor_mass = progenitor_mass.to(u.Msun).value
-            revival_time = revival_time.to(u.ms).value
+        # Strip units for filename construction
+        progenitor_mass = progenitor_mass.to(u.Msun).value
+        revival_time = revival_time.to(u.ms).value
 
-            if revival_time != 0:
-                fname = f"nakazato-{eos}-z{metallicity}-t_rev{int(revival_time)}ms-s{progenitor_mass:3.1f}.fits"
-            else:
-                fname = f"nakazato-{eos}-BH-z{metallicity}-s{progenitor_mass:3.1f}.fits"
-
-            filename = os.path.join(model_path, self.__class__.__name__, fname)
-
-        # Store model metadata.
-        if 't_rev' in filename:
-            self.progenitor_mass = float(filename.split('-')[-1].strip('s%.fits')) * u.Msun
-            self.revival_time = float(filename.split('-')[-2].strip('t_rev%ms')) * u.ms
-            self.metallicity = float(filename.split('-')[-3].strip('z%'))
-            self.EOS = filename.split('-')[-4].upper()
-        # No revival time because the explosion "failed" (BH formation).
+        if revival_time != 0:
+            fname = f"nakazato-{eos}-z{metallicity}-t_rev{int(revival_time)}ms-s{progenitor_mass:3.1f}.fits"
         else:
-            self.progenitor_mass = float(filename.split('-')[-1].strip('s%.fits')) * u.Msun
-            self.metallicity = float(filename.split('-')[-2].strip('z%'))
-            self.revival_time = 0 * u.ms
-            self.EOS = filename.split('-')[-4].upper()
+            fname = f"nakazato-{eos}-BH-z{metallicity}-s{progenitor_mass:3.1f}.fits"
 
-        metadata = {
-            'Progenitor mass': self.progenitor_mass,
-            'EOS': self.EOS,
-            'Metallicity': self.metallicity,
-            'Revival time': self.revival_time
-        }
+        filename = os.path.join(model_path, cls.__name__, fname)
 
-        # Read FITS table using the astropy reader.
-        simtab = Table.read(filename)
-        self.filename = os.path.basename(filename)
-        super().__init__(simtab, metadata)
+        if not os.path.isfile(filename):
+            # download file from GitHub/Zenodo
+            raise NotImplementedError()
+
+        return loaders.Nakazato_2013(filename)
+
 
     @classmethod
     def get_param_combinations(cls, *, progenitor_mass=None, revival_time=None, metallicity=None, eos=None):
