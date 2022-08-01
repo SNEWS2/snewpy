@@ -11,26 +11,16 @@ using ``snewpy.get_models("<model_name>")``.
 
 import logging
 import os
-import sys
 import tarfile
 
-import h5py
 import numpy as np
 from astropy import units as u
-from astropy.io import ascii, fits
+from astropy.io import ascii
 from astropy.table import Table
-from scipy.special import gamma, lpmv
-import re
-
-try:
-    import healpy as hp
-except ImportError:
-    pass
 
 from snewpy import model_path
-from snewpy.neutrino import Flavor
 from snewpy.models import loaders
-from .base import PinchedModel, SupernovaModel, _GarchingArchiveModel
+from .base import PinchedModel
 from .registry import check_valid_params, get_param_combinations
 
 class _RegistryModel():
