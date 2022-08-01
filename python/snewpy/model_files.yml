@@ -8,3 +8,7 @@ ccsn:
     Bollig_2016: !local
       regex: 's[0-9.]+c_LS220_nu(e|x)(bar)?'
       path: "models/Bollig_2016"
+
+    Fornax_2019: !local
+      regex: 'lum_spec_.*\.h5'
+      path: "models/Fornax_2019"
