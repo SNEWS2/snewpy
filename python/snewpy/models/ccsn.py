@@ -85,6 +85,14 @@ class Nakazato_2013(_RegistryModel):
         Metallicity      : 0.004
         Revival time     : 0.0 ms
         """
+        # user_params = locals().pop('cls')
+        # TODO: Check GitHub PR for error in this example
+        # Attempt to load model from parameters
+
+        # Build user params, check validity, construct filename, then load from filename
+        user_params = dict(zip(cls.param.keys(), (progenitor_mass, revival_time, metallicity, eos)))
+        check_valid_params(cls, **user_params)
+
         # Store model metadata.
         metadata = {
             'Progenitor mass': progenitor_mass,
@@ -92,13 +100,6 @@ class Nakazato_2013(_RegistryModel):
             'Metallicity': metallicity,
             'Revival time': revival_time
         }
-
-        # TODO: Check GitHub PR for error in this example
-        # Attempt to load model from parameters
-
-        # Build user params, check validity, construct filename, then load from filename
-        user_params = dict(zip(cls.param.keys(), (progenitor_mass, revival_time, metallicity, eos)))
-        check_valid_params(cls, **user_params)
 
         # Strip units for filename construction
         progenitor_mass = progenitor_mass.to(u.Msun).value
@@ -117,9 +118,8 @@ class Nakazato_2013(_RegistryModel):
 
         return loaders.Nakazato_2013(filename, metadata)
 
-
     # Populate Docstring with param values
-    __init__.__doc__ = __init__.__doc__.format(**param)
+    __new__.__doc__ = __new__.__doc__.format(**param)
 
     @classmethod
     def get_param_combinations(cls, *, progenitor_mass=None, revival_time=None, metallicity=None, eos=None):
@@ -143,16 +143,11 @@ class Sukhbold_2015(_RegistryModel):
     param = {'progenitor_mass': [27., 9.6] * u.Msun,
              'eos': ['LS220', 'SFHo']}
 
-    def __new__(cls, filename=None, *, progenitor_mass=None, eos=None):
+    def __new__(cls, *, progenitor_mass=None, eos=None):
         """Model Initialization
 
         Parameters
         ----------
-        filename : str
-            Absolute or relative path to FITS file with model data.
-
-        Other Parameters
-        ----------------
         progenitor_mass: astropy.units.Quantity
             Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
         eos: str
@@ -165,23 +160,34 @@ class Sukhbold_2015(_RegistryModel):
         ValueError
             If a combination of parameters is invalid when loading from parameters
         """
-        if not filename and all((p is not None for p in (progenitor_mass, eos))):
-            user_params = dict(zip(cls.param.keys(), (progenitor_mass, eos)))
-            check_valid_params(cls, **user_params)
+        user_params = dict(zip(cls.param.keys(), (progenitor_mass, eos)))
+        check_valid_params(cls, **user_params)
 
-            if progenitor_mass.value == 9.6:
-                filename = f'sukhbold-{eos}-z{progenitor_mass.value:3.1f}.fits'
-            elif progenitor_mass.value == 27.0:
-                filename = f'sukhbold-{eos}-s{progenitor_mass.value:3.1f}.fits'
+        if progenitor_mass.value == 9.6:
+            fname = f'sukhbold-{eos}-z{progenitor_mass.value:3.1f}.fits'
+        else:
+            fname = f'sukhbold-{eos}-s{progenitor_mass.value:3.1f}.fits'
 
-            filename = os.path.join(model_path, cls.__class__.__name__, filename)
+        filename = os.path.join(model_path, cls.__name__, fname)
 
         # Store model metadata.
         cls.progenitor_mass = float(filename.split('-')[-1].strip('z%.fits')) * u.Msun
         cls.EOS = filename.split('-')[-2]
 
+        if not os.path.isfile(filename):
+            # download file from GitHub/Zenodo
+            raise NotImplementedError()
+
+        metadata = {
+            'Progenitor mass': progenitor_mass,
+            'EOS': eos
+        }
+
+        return loaders.Sukhbold_2015(filename, metadata)
+
     # Populate Docstring with param values
-    __init__.__doc__ = __init__.__doc__.format(**param)
+    __new__.__doc__ = __new__.__doc__.format(**param)
+
 
     @classmethod
     def get_param_combinations(cls, *, progenitor_mass=None, eos=None):
@@ -197,18 +203,21 @@ class Tamborra_2014(_RegistryModel):
     param = {'progenitor_mass': [20., 27.] * u.Msun,
              'eos': 'LS220'}
 
-    def __init__(self, filename=None, *, progenitor_mass=None, eos=None):
+    def __new__(cls,  *, progenitor_mass=None, eos=None):
+        check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos)
+        filename = os.path.join(model_path, cls.__name__,
+                                f's{progenitor_mass.value:3.1f}c_3D_dir1')
 
-        if not filename and progenitor_mass is not None:
-            check_valid_params(self, progenitor_mass=progenitor_mass, eos=eos)
-            filename = os.path.join(model_path, self.__class__.__name__,
-                                    f's{progenitor_mass.value:3.1f}c_3D_dir1')
+        metadata = {
+            'Progenitor mass': progenitor_mass,
+            'EOS': eos
+        }
 
         # Metadata is handled by __init__ in _GarchingArchiveModel
-        super().__init__(filename)
+        return loaders._GarchingArchiveModel(filename=filename, metadata=metadata)
 
     # Populate Docstring with param values
-    __init__.__doc__ = _GarchingArchiveModel.__init__.__doc__.format(**param)
+    __new__.__doc__ = loaders._GarchingArchiveModel.__init__.__doc__.format(**param)
 
 
 class Bollig_2016(_RegistryModel):
@@ -218,18 +227,19 @@ class Bollig_2016(_RegistryModel):
     param = {'progenitor_mass': [11.2, 27.] * u.Msun,
              'eos': 'LS220'}
 
-    def __init__(self, filename=None, *, progenitor_mass=None, eos=None):
+    def __new__(cls, *, progenitor_mass=None, eos=None):
+        check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos)
+        filename = os.path.join(model_path, cls.__name__, f's{progenitor_mass.value:3.1f}c')
 
-        if not filename and progenitor_mass is not None:
-            check_valid_params(self, progenitor_mass=progenitor_mass, eos=eos)
-            filename = os.path.join(model_path, self.__class__.__name__,
-                                    f's{progenitor_mass.value:3.1f}c')
+        metadata = {
+            'Progenitor mass': progenitor_mass,
+            'EOS': eos
+        }
 
-        # Metadata is handled by __init__ in _GarchingArchiveModel
-        super().__init__(filename)
+        return loaders._GarchingArchiveModel(filename=filename, metadata=metadata)
 
     # Populate Docstring with param values
-    __init__.__doc__ = _GarchingArchiveModel.__init__.__doc__.format(**param)
+    __new__.__doc__ = loaders._GarchingArchiveModel.__init__.__doc__.format(**param)
 
 
 class Walk_2018(_RegistryModel):
@@ -241,18 +251,19 @@ class Walk_2018(_RegistryModel):
     param = {'progenitor_mass': [15.] * u.Msun,
              'eos': 'LS220'}
 
-    def __init__(self, filename=None, *, progenitor_mass=None, eos=None):
+    def __new__(cls, *, progenitor_mass=None, eos=None):
+        check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos)
+        filename = os.path.join(model_path, cls.__name__, f's{progenitor_mass.value:3.1f}c_3D_nonrot_dir1')
 
-        if not filename and progenitor_mass is not None:
-            check_valid_params(self, progenitor_mass=progenitor_mass, eos=eos)
-            filename = os.path.join(model_path, self.__class__.__name__,
-                                    f's{progenitor_mass.value:3.1f}c_3D_nonrot_dir1')
+        metadata = {
+            'Progenitor mass': progenitor_mass,
+            'EOS': eos
+        }
 
-        # Metadata is handled by __init__ in _GarchingArchiveModel
-        super().__init__(filename)
+        return loaders._GarchingArchiveModel(filename=filename, metadata=metadata)
 
     # Populate Docstring with param values
-    __init__.__doc__ = _GarchingArchiveModel.__init__.__doc__.format(**param)
+    __new__.__doc__ = loaders._GarchingArchiveModel.__init__.__doc__.format(**param)
 
 
 class Walk_2019(_RegistryModel):
@@ -264,17 +275,19 @@ class Walk_2019(_RegistryModel):
     param = {'progenitor_mass': [40] * u.Msun,
              'eos': 'LS220'}
 
-    def __init__(self, filename=None, *, progenitor_mass=None, eos=None):
+    def __new__(cls, *, progenitor_mass=None, eos=None):
+        check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos)
+        filename = os.path.join(model_path, cls.__name__, f's{progenitor_mass.value:3.1f}c_3DBH_dir1')
 
-        if not filename and progenitor_mass is not None:
-            check_valid_params(self, progenitor_mass=progenitor_mass, eos=eos)
-            filename = os.path.join(model_path, self.__class__.__name__,
-                                    f's{progenitor_mass.value:3.1f}c_3DBH_dir1')
-        # Metadata is handled by __init__ in _GarchingArchiveModel
-        super().__init__(filename)
+        metadata = {
+            'Progenitor mass': progenitor_mass,
+            'EOS': eos
+        }
+
+        return loaders._GarchingArchiveModel(filename=filename, metadata=metadata)
 
     # Populate Docstring with param values
-    __init__.__doc__ = _GarchingArchiveModel.__init__.__doc__.format(**param)
+    __new__.__doc__ = loaders._GarchingArchiveModel.__init__.__doc__.format(**param)
 
 
 class OConnor_2013(PinchedModel): # TODO: Requires changes to the model file to have one file per model instead of a single gzip archive!
@@ -286,7 +299,7 @@ class OConnor_2013(PinchedModel): # TODO: Requires changes to the model file to 
                                  [70, 80, 100, 120]) * u.Msun,
              'eos': ['HShen', 'LS220']}
 
-    _param_label = {'progenitor_mass': '[12..33, 35..5..60, 70, 80, 100, 120] solMass',
+    _param_abbrv = {'progenitor_mass': '[12..33, 35..5..60, 70, 80, 100, 120] solMass',
                     'eos': ['HShen', 'LS220']}
 
     # TODO: This in its changed state will likely break user code -- check this before PR!
@@ -296,11 +309,6 @@ class OConnor_2013(PinchedModel): # TODO: Requires changes to the model file to 
 
         Parameters
         ----------
-        filename : str
-            Absolute or relative path to FITS file with model data.
-
-        Other Parameters
-        ----------------
         progenitor_mass: astropy.units.Quantity
             Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
         eos: str
@@ -348,71 +356,21 @@ class OConnor_2013(PinchedModel): # TODO: Requires changes to the model file to 
         super().__init__(simtab, metadata)
 
     # Populate Docstring with param values
-    __init__.__doc__ = __init__.__doc__.format(**_param_label)
+    __init__.__doc__ = __init__.__doc__.format(**_param_abbrv)
 
 
 class OConnor_2015(_RegistryModel):
     """Model based on the black hole formation simulation in `O'Connor (2015) <https://arxiv.org/abs/1411.7058>`_.
     """
 
-    param = {'eos': 'LS220'}
+    param = {'progenitor_mass': [40] * u.Msun,
+             'eos': 'LS220'}
 
-    def __new__(cls, filename, *, progenitor_mass=None, eos=None):
+    def __new__(cls, *, progenitor_mass=None, eos=None):
         """Model Initialization.
 
         Parameters
         ----------
-        filename : str
-            Absolute or relative path to FITS file with model data.
-
-        Other Parameters
-        ----------------
-        eos: str
-            Equation of state. Valid values are {eos}.
-
-        Raises
-        ------
-        FileNotFoundError
-            If a file for the chosen model parameters cannot be found
-        ValueError
-            If a combination of parameters is invalid when loading from parameters
-        """
-        if not filename and all((p is not None for p in (progenitor_mass, eos))):
-            user_params = dict(zip(cls.param.keys(), (progenitor_mass, eos)))
-            check_valid_params(cls, **user_params)
-            # Filename is currently the same regardless of parameters
-            filename = os.path.join(model_path, cls.__class__.__name__, 'M1_neutrinos.dat')
-
-        metadata = {
-            'Progenitor mass': progenitor_mass,
-            'EOS': eos,
-        }
-
-        filename = os.path.join(model_path, cls.__name__, 'M1_neutrinos.dat')
-
-        return loaders.OConnor_2015(filename, metadata)
-
-
-class Zha_2021(_RegistryModel):
-    """Model based on the hadron-quark phse transition models from `Zha et al. 2021 <https://arxiv.org/abs/2103.02268>`_.
-    """
-
-    param = {'progenitor_mass': (list(range(16, 27)) + [19.89, 22.39, 30, 31]) * u.Msun,
-             'eos': 'STOS_B145'}
-
-    _param_label = {'progenitor_mass': '[16..26, 19.89, 22.39, 30, 31] solMass',
-                    'eos': 'STOS_B145'}
-
-    def __new__(cls, filename, *, progenitor_mass=None, eos=None):
-        """Model Initialization.
-
-        Parameters
-        ----------
-        filename : str
-            Absolute or relative path to FITS file with model data.
-
-        Other Parameters
-        ----------------
         progenitor_mass: astropy.units.Quantity
             Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
         eos: str
@@ -425,48 +383,89 @@ class Zha_2021(_RegistryModel):
         ValueError
             If a combination of parameters is invalid when loading from parameters
         """
-        if not filename and all((p is not None for p in (progenitor_mass, eos))):
-            user_params = dict(zip(cls.param.keys(), (progenitor_mass, eos)))
-            check_valid_params(cls, **user_params)
+        user_params = dict(zip(cls.param.keys(), (progenitor_mass, eos)))
+        check_valid_params(cls, **user_params)
+        # Filename is currently the same regardless of parameters
+        filename = os.path.join(model_path, cls.__name__, 'M1_neutrinos.dat')
+
+        metadata = {
+            'Progenitor mass': progenitor_mass,
+            'EOS': eos,
+        }
+
+        return loaders.OConnor_2015(filename, metadata)
+
+    # Populate Docstring with param values
+    __new__.__doc__ = __new__.__doc__.format(**param)
+
+
+class Zha_2021(_RegistryModel):
+    """Model based on the hadron-quark phse transition models from `Zha et al. 2021 <https://arxiv.org/abs/2103.02268>`_.
+    """
+
+    param = {'progenitor_mass': (list(range(16, 27)) + [19.89, 22.39, 30, 33]) * u.Msun,
+             'eos': 'STOS_B145'}
+
+    _param_abbrv = {'progenitor_mass': '[16..26, 19.89, 22.39, 30, 33] solMass',
+                    'eos': 'STOS_B145'}
+
+    def __new__(cls, *, progenitor_mass=None, eos=None):
+        """Model Initialization.
+
+        Parameters
+        ----------
+        progenitor_mass: astropy.units.Quantity
+            Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
+        eos: str
+            Equation of state. Valid values are {eos}.
+
+        Raises
+        ------
+        FileNotFoundError
+            If a file for the chosen model parameters cannot be found
+        ValueError
+            If a combination of parameters is invalid when loading from parameters
+        """
+        user_params = dict(zip(cls.param.keys(), (progenitor_mass, eos)))
+        check_valid_params(cls, **user_params)
 
         metadata = {
             'Progenitor mass': progenitor_mass,
             'EOS': eos,
         }
         
-        filename = os.path.join(model_path, cls.__name__, f's{progenitor_mass}.dat')
+        filename = os.path.join(model_path, cls.__name__, f's{progenitor_mass.value:g}.dat')
 
         return loaders.Zha_2021(filename, metadata)
-    __init__.__doc__ = __init__.__doc__.format(**_param_label)
+
+    # Populate Docstring with abbreviated param values
+    __new__.__doc__ = __new__.__doc__.format(**_param_abbrv)
 
 
 class Warren_2020(_RegistryModel):
     """Model based on simulations from Warren et al., ApJ 898:139, 2020.
     Neutrino fluxes available at https://doi.org/10.5281/zenodo.3667908."""
 
-    param = {'progenitor_mass': np.concatenate((np.arange(9.25, 13, 0.25),
-                                                np.arange(13, 30.1, 0.1),
-                                                np.arange(31, 35),
-                                                np.arange(35, 60, 5),
-                                                np.arange(60, 100, 10),
-                                                np.arange(100, 121, 20))) * u.Msun,
+    # np.arange with decimal increments can produce floating point errors
+    # Though it it more intutive to use np.arange, these fp-errors quickly become hindersome
+    param = {'progenitor_mass': np.concatenate((np.linspace(9.25, 12.75, 15),
+                                                np.linspace(13, 30., 171),
+                                                np.linspace(31., 33., 3),
+                                                np.linspace(35, 55, 5),
+                                                np.linspace(60, 80, 3),
+                                                np.linspace(100, 120, 2))) * u.Msun,
              'turbmixing_param': [1.23, 1.25, 1.27],
              'eos': 'SFHo'}
 
-    _param_label = {'progenitor_mass': '[9.25..0.25..13, 13..0.1..30, 31..35, 35..5..60, 70..10..90, 100, 120] solMass',
+    _param_abbrv = {'progenitor_mass': '[9.25..0.25..13, 13..0.1..30, 31..35, 35..5..60, 70..10..90, 100, 120] solMass',
                     'turbmixing_param': [1.23, 1.25, 1.27],
                     'eos': 'SFHo'}
-    # TODO: Decide if turbmixing_param should be named that or 'alpha_lambda'
+    # Should turbmixing_param be named 'alpha_lambda'?
 
     def __new__(cls, progenitor_mass=None, turbmixing_param=None, eos='SFHo'):
         """
         Parameters
         ----------
-        filename : str
-            Absolute or relative path to FITS file with model data.
-
-        Other Parameters
-        ----------------
         progenitor_mass: astropy.units.Quantity
             Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
         turbmixing_param: float
@@ -480,22 +479,20 @@ class Warren_2020(_RegistryModel):
             If a file for the chosen model parameters cannot be found
         ValueError
             If a combination of parameters is invalid when loading from parameters
-
         """
-        
-        if not filename and all((p is not None for p in (progenitor_mass, turbmixing_param, eos))):
-            user_params = dict(zip(self.param.keys(), (progenitor_mass, turbmixing_param, eos)))
-            check_valid_params(self, **user_params)
 
-            filename = f'stir_a{turbmixing_param:3.2f}/stir_multimessenger_a{turbmixing_param:3.2f}_'
-            if progenitor_mass.value.is_integer():
-                if progenitor_mass.value in (31, 32, 33, 34, 35, 40, 45, 50, 55, 60, 70, 80, 100, 120):
-                    filename += f'm{progenitor_mass.value:d}.h5'
-                else:
-                    filename += f'm{progenitor_mass.value:.1f}.h5'
+        user_params = dict(zip(cls.param.keys(), (progenitor_mass, turbmixing_param, eos)))
+        check_valid_params(cls, **user_params)
+
+        fname = f'stir_a{turbmixing_param:3.2f}/stir_multimessenger_a{turbmixing_param:3.2f}_'
+        if progenitor_mass.value.is_integer():
+            if progenitor_mass.value in (31, 32, 33, 35, 40, 45, 50, 55, 60, 70, 80, 100, 120):
+                fname += f'm{int(progenitor_mass.value):d}.h5'
             else:
-                filename += f'm{progenitor_mass.value:g}.h5'
-            filename = os.path.join(model_path, cls.__class__.__name__, filename)
+                fname += f'm{progenitor_mass.value:.1f}.h5'
+        else:
+            fname += f'm{progenitor_mass.value:g}.h5'
+        filename = os.path.join(model_path, cls.__name__, fname)
 
         # Set model metadata.
         metadata = {
@@ -504,10 +501,11 @@ class Warren_2020(_RegistryModel):
             'EOS': eos,
         }
 
-        filename = os.path.join(model_path, cls.__name__, f'stir_a{turbmixing_param}/stir_multimessenger_a{turbmixing_param}_m{progenitor_mass}.h5')
-
         return loaders.Warren_2020(filename, metadata)
-    __init__.__doc__ = __init__.__doc__.format(**_param_label)
+
+    # Populate Docstring with abbreviated param values
+    __new__.__doc__ = __new__.__doc__.format(**_param_abbrv)
+
 
 class Kuroda_2020(_RegistryModel):
     """Model based on simulations from `Kuroda et al. (2020) <https://arxiv.org/abs/2009.07733>`_."""
@@ -517,16 +515,10 @@ class Kuroda_2020(_RegistryModel):
              'rotational_velocity': [0, 1] * u.rad / u.s,
              'magnetic_field_exponent': [0, 12, 13]}
    
-    def __new__(cls, progenitor_mass=None, eos=None, rotational_velocity=None,
-                 magnetic_field_exponent=None):
+    def __new__(cls, progenitor_mass=None, eos=None, rotational_velocity=None, magnetic_field_exponent=None):
         """
         Parameters
         ----------
-        filename : str
-            Absolute or relative path to FITS file with model data.
-
-        Other Parameters
-        ----------------
         progenitor_mass: astropy.units.Quantity
             Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
         eos: str
@@ -543,22 +535,21 @@ class Kuroda_2020(_RegistryModel):
         ValueError
             If a combination of parameters is invalid when loading from parameters
         """
-        user_params = dict(zip(cls.param.keys(), (progenitor_mass, eos, rotational_velocity,
-                                                   magnetic_field_exponent)))
-        check_valid_params(self, **user_params)
-        filename = os.path.join(model_path, self.__class__.__name__,
+        check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos, rotational_velocity=rotational_velocity,
+                           magnetic_field_exponent=magnetic_field_exponent)
+        filename = os.path.join(model_path, cls.__name__,
                                 f'LnuR{int(rotational_velocity.value):1d}0B{int(magnetic_field_exponent):02d}.dat')
 
         metadata = {
             'Progenitor mass': progenitor_mass,
             'EOS': eos,
+            'Rotational Velocity': rotational_velocity,
+            'B_0 Exponent': magnetic_field_exponent
             }
-        # TODO: Add params to Metadata
-
-        filename = os.path.join(model_path, cls.__name__, f'LnuR00B00.dat')  # TODO: replace hardcoded filename with one based on input parameters
 
         return loaders.Kuroda_2020(filename, metadata)
-    __init__.__doc__ = __init__.__doc__.format(**param)
+
+    __new__.__doc__ = __new__.__doc__.format(**param)
  
     @staticmethod
     def isvalid_param_combo(rotational_velocity, magnetic_field_exponent, *args, **kwargs):
@@ -580,25 +571,27 @@ class Fornax_2019(_RegistryModel):
 
         Parameters
         ----------
-        filename : str
-            Absolute or relative path to FITS file with model data.
+        progenitor_mass: astropy.units.Quantity
+            Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
         cache_flux : bool
             If true, pre-compute the flux on a fixed angular grid and store the values in a FITS file.
         """
         metadata = {
             'Progenitor mass': progenitor_mass,
             }
-        
-        if not filename and progenitor_mass is not None:
-            check_valid_params(self, progenitor_mass=progenitor_mass)
-            if progenitor_mass.value == 16:
-                filename = f'lum_spec_{int(progenitor_mass.value):d}M_r250.h5'
-            else:
-                filename = f'lum_spec_{int(progenitor_mass.value):d}M.h5'
-        filename = os.path.join(model_path, self.__class__.__name__, filename)
+
+        check_valid_params(cls, progenitor_mass=progenitor_mass)
+        if progenitor_mass.value == 16:
+            fname = f'lum_spec_{int(progenitor_mass.value):d}M_r250.h5'
+        else:
+            fname = f'lum_spec_{int(progenitor_mass.value):d}M.h5'
+        filename = os.path.join(model_path, cls.__name__, fname)
         
         return loaders.Fornax_2019(filename, metadata, cache_flux=cache_flux)
-    __init__.__doc__ = __init__.__doc__.format(**param)
+
+    # Populate Docstring with abbreviated param values
+    __new__.__doc__ = __new__.__doc__.format(**param)
+
 
 class Fornax_2021(_RegistryModel):
     """Model based on 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019. 
@@ -607,19 +600,28 @@ class Fornax_2021(_RegistryModel):
     param = {'progenitor_mass': (list(range(12, 24)) + [25, 26, 26.99]) * u.Msun}
 
     def __new__(cls, progenitor_mass=None):
+        """Model Initialization.
 
-        check_valid_params(self, progenitor_mass=progenitor_mass)
+        Parameters
+        ----------
+        progenitor_mass: astropy.units.Quantity
+            Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
+        """
+        check_valid_params(cls, progenitor_mass=progenitor_mass)
         if progenitor_mass.value.is_integer():
-            filename = f'lum_spec_{int(progenitor_mass.value):2d}M_r10000_dat.h5'
+            fname = f'lum_spec_{int(progenitor_mass.value):2d}M_r10000_dat.h5'
         else:
-            filename = f'lum_spec_{progenitor_mass.value:.2f}M_r10000_dat.h5'
+            fname = f'lum_spec_{progenitor_mass.value:.2f}M_r10000_dat.h5'
+        filename = os.path.join(model_path, cls.__name__, fname)
+
         metadata = {
             'Progenitor mass': progenitor_mass,
             }
 
-        filename = os.path.join(model_path, cls.__name__, f'lum_spec_{progenitor_mass}M_r10000_dat.h5')
-
         return loaders.Fornax_2021(filename, metadata)
+
+    # Populate Docstring with abbreviated param values
+    __new__.__doc__ = __new__.__doc__.format(**param)
 
 class SNOwGLoBES:
     """A model that does not inherit from SupernovaModel (yet) and imports a group of SNOwGLoBES files."""

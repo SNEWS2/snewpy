@@ -271,7 +271,7 @@ class PinchedModel(SupernovaModel):
 
 class _GarchingArchiveModel(PinchedModel):
     """Subclass that reads models in the format used in the `Garching Supernova Archive <https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/>`_."""
-    def __init__(self, filename, eos='LS220'):
+    def __init__(self, filename, eos='LS220', metadata={}):
         """Model Initialization.
 
         Parameters
@@ -292,13 +292,17 @@ class _GarchingArchiveModel(PinchedModel):
         """
 
         # Store model metadata.
-        self.filename = os.path.basename(filename)
-        self.EOS = eos
-        self.progenitor_mass = float( (self.filename.split('s'))[1].split('c')[0] )  * u.Msun
-        metadata = {
-            'Progenitor mass': self.progenitor_mass,
-            'EOS': self.EOS,
-            }
+        if not metadata:
+            self.filename = os.path.basename(filename)
+            self.EOS = eos
+            self.progenitor_mass = float( (self.filename.split('s'))[1].split('c')[0] )  * u.Msun
+            metadata = {
+                'Progenitor mass': self.progenitor_mass,
+                'EOS': self.EOS,
+                }
+        else:
+            self.EOS = metadata['EOS']
+            self.progenitor_mass = metadata['Progenitor mass']
         # Read through the several ASCII files for the chosen simulation and
         # merge the data into one giant table.
         mergtab = None
