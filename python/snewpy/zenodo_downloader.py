@@ -138,8 +138,65 @@ def from_zenodo(zenodo_id:str, model:str, filename:str, path:str=model_path):
         raise MissingFileError(filename)
 
 
-def from_github(model:str, filename:str, path:str=model_path):
+def from_github(release_version:str, model:str, filename:str, path:str=model_path):
     """Access files on GitHub.
+
+    Parameters
+    ----------
+    release_version: SNEWPY release with corresponding model data.
+    model : Name of the model class for this model file.
+    filename : Expected filename storing simulation data.
+    path : Local installation path (defaults to astropy cache).
+
+    Returns
+    -------
+    file : FileHandle object.
+    """
+    github_url = f'https://github.com/SNEWS2/snewpy/raw/v{release_version}/models/{model}/{filename}'
+    localpath = Path(path)/str(model)
+    localpath.mkdir(exist_ok=True, parents=True)
+
+    return FileHandle(path = localpath/filename,
+                      remote = github_url)
+
+
+# def from_local(path:str, regex: str = '.*'):
+#     """Load model files from local places.
+# 
+#     Parameters
+#     ----------
+#     path : Relative path to files for a given model.
+#     regex : Pattern to match all possible file names.
+# 
+#     Returns
+#     -------
+#     files : dictionary of FileHandles for a given model.
+#     """
+#     path = Path(path)
+#     files_re = re.compile(regex)
+#     files = {}
+# 
+#     for f in path.iterdir():
+#         # model files can include subfolders...
+#         if f.is_dir():
+#             for _f in f.iterdir():
+#                 if files_re.match(_f.name):
+#                     files[_f.name] = FileHandle(path = _f)
+#         # ...or not:
+#         else:
+#             if files_re.match(f.name):
+#                 files[f.name] = FileHandle(path = f)
+# 
+#     return files
+
+
+import yaml
+from importlib.resources import files
+
+
+def get_model_data(model:str, filename:str, path:str=model_path):
+    """Access model data. Configuration for each model is in a YAML file
+    distributed with SNEWPY.
 
     Parameters
     ----------
@@ -151,67 +208,27 @@ def from_github(model:str, filename:str, path:str=model_path):
     -------
     file : FileHandle object.
     """
-    github_url = f'https://github.com/SNEWS2/snewpy/raw/v1.2/models/{model}/{filename}'
-    localpath = Path(path)/str(model)
-    localpath.mkdir(exist_ok=True, parents=True)
+    params = { 'model':model, 'filename':filename, 'path':path }
 
-    return FileHandle(path = localpath/filename,
-                      remote = github_url)
+    # Parse YAML file with model repository configurations.
+    configfile = files('snewpy').joinpath('model_files.yml')
+    with open(configfile, 'r') as f:
+        config = yaml.safe_load(f)
+        models = config['models']
+        # Search for model in YAML configuration.
+        if model in models.keys():
+            # Get data from GitHub or Zenodo.
+            modconf = models[model]
+            repo = modconf['repository']
 
-
-def from_local(path:str, regex: str = '.*'):
-    """Load model files from local places.
-
-    Parameters
-    ----------
-    path : Relative path to files for a given model.
-    regex : Pattern to match all possible file names.
-
-    Returns
-    -------
-    files : dictionary of FileHandles for a given model.
-    """
-    path = Path(path)
-    files_re = re.compile(regex)
-    files = {}
-
-    for f in path.iterdir():
-        # model files can include subfolders...
-        if f.is_dir():
-            for _f in f.iterdir():
-                if files_re.match(_f.name):
-                    files[_f.name] = FileHandle(path = _f)
-        # ...or not:
+            if repo == 'github':
+                params['release_version'] = modconf['release_version']
+                return from_github(**params)
+            elif repo == 'zenodo':
+                params['zenodo_id'] = modconf['zenodo_id']
+                return from_zenodo(**params)
+            else:
+                raise ValueError(f'Repository {repo} not recognized')
         else:
-            if files_re.match(f.name):
-                files[f.name] = FileHandle(path = f)
+            raise KeyError(f'No configuration for {model}')
 
-    return files
-
-import yaml
-
-def load_registry(fname:str):
-    """Generate a dictionary of module files and options that enumerate
-all possible options in model instantiation.
-    
-    Parameters
-    ----------
-    fname : Full or relative path to YAML file with model info.
-
-    Returns
-    -------
-    model_dict : dictionary of valid model parameters from YAML. 
-    """
-    loader = yaml.SafeLoader
-
-    def _construct_from_zenodo(loader, node):
-        return from_zenodo(**loader.construct_mapping(node))
-
-    def _construct_from_local(loader, node):
-        return from_local(**loader.construct_mapping(node))
-
-    loader.add_constructor('!zenodo', _construct_from_zenodo)
-    loader.add_constructor('!local', _construct_from_local)
-
-    with open(fname) as f:
-        return yaml.load(f, loader)
