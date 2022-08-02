@@ -161,7 +161,8 @@ def from_github(release_version:str, model:str, filename:str, path:str=model_pat
 
 
 import yaml
-from importlib.resources import files
+import importlib.resources
+import os
 
 
 def get_model_data(model:str, filename:str, path:str=model_path):
@@ -181,7 +182,8 @@ def get_model_data(model:str, filename:str, path:str=model_path):
     params = { 'model':model, 'filename':filename, 'path':path }
 
     # Parse YAML file with model repository configurations.
-    configfile = files('snewpy').joinpath('models/model_files.yml')
+    with importlib.resources.path('snewpy', 'models') as mpath:
+        configfile = os.path.join(mpath, 'model_files.yml')
 
     with open(configfile, 'r') as f:
         config = yaml.safe_load(f)
