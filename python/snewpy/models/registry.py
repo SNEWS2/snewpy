@@ -77,7 +77,7 @@ def check_valid_params(model, **user_params):
     ----------
     model : snewpy.model.SupernovaModel
         Model class used to perform parameter check
-    user_param : varies
+    user_params : varies
         User-requested model parameters to be tested for validity.
         NOTE: This must be provided as kwargs that match the keys of model.param
 
@@ -95,14 +95,13 @@ def check_valid_params(model, **user_params):
 
     """
 
-    model_param = model.param
-
     # Check that the appropriate number of params are provided
-    if not all(key in user_params for key in model_param.keys()):
-        raise ValueError(f"Missing parameter! Expected {model_param.keys()} but was given {user_param.keys()}")
+    if not all(key in user_params for key in model.param.keys()):
+        raise ValueError(f"Missing parameter! Expected {model.param.keys()} but was given {user_params.keys()}")
 
     # Check parameter units and values
-    for (key, allowed_params), user_param in zip(model_param.items(), user_params.values()):
+    for (key, allowed_params), user_param in zip(model.param.items(), user_params.values()):
+
         # If both have units, check that the user param value is valid. If valid, continue. Else, error
         if type(user_param) == Quantity and type(allowed_params) == Quantity:
             if get_physical_type(user_param.unit) != get_physical_type(allowed_params.unit):
@@ -129,11 +128,12 @@ def check_valid_params(model, **user_params):
             raise ValueError(f"Invalid value '{user_param}' provided for parameter {key}, "
                              f"allowed value(s): {allowed_params}")
 
-    # Check Combinations (Logic lives inside model subclasses
-    if not model.isvalid_param_combo(**user_params):
-        raise ValueError(
-            f"Invalid parameter combination. See {model.__name__}.get_param_combinations for a "
-            "list of allowed parameter combinations.")
+    # Check Combinations (Logic lives inside model subclasses under model.isvalid_param_combo)
+    if hasattr(model, "isvalid_param_combo"):
+        if not model.isvalid_param_combo(**user_params):
+            raise ValueError(
+                f"Invalid parameter combination. See {model.__class__.__name__}.get_param_combinations for a "
+                "list of allowed parameter combinations.")
 
 
 # def check_param_combo(model, **user_param):

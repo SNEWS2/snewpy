@@ -271,25 +271,38 @@ class PinchedModel(SupernovaModel):
 
 class _GarchingArchiveModel(PinchedModel):
     """Subclass that reads models in the format used in the `Garching Supernova Archive <https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/>`_."""
-    def __init__(self, filename, eos='LS220'):
-        """Initialize model
+    def __init__(self, filename, eos='LS220', metadata={}):
+        """Model Initialization.
 
         Parameters
         ----------
         filename : str
-            Absolute or relative path to file prefix, we add nue/nuebar/nux.
-        eos : string
-            Equation of state used in simulation.
+            Absolute or relative path to file with model data, we add nue/nuebar/nux.
+
+        Other Parameters
+        ----------------
+        progenitor_mass: astropy.units.Quantity
+            Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
+        Raises
+        ------
+        FileNotFoundError
+            If a file for the chosen model parameters cannot be found
+        ValueError
+            If a combination of parameters is invalid when loading from parameters
         """
 
         # Store model metadata.
-        self.filename = os.path.basename(filename)
-        self.EOS = eos
-        self.progenitor_mass = float( (self.filename.split('s'))[1].split('c')[0] )  * u.Msun
-        metadata = {
-            'Progenitor mass':self.progenitor_mass,
-            'EOS':self.EOS,
-            }
+        if not metadata:
+            self.filename = os.path.basename(filename)
+            self.EOS = eos
+            self.progenitor_mass = float( (self.filename.split('s'))[1].split('c')[0] )  * u.Msun
+            metadata = {
+                'Progenitor mass': self.progenitor_mass,
+                'EOS': self.EOS,
+                }
+        else:
+            self.EOS = metadata['EOS']
+            self.progenitor_mass = metadata['Progenitor mass']
         # Read through the several ASCII files for the chosen simulation and
         # merge the data into one giant table.
         mergtab = None
