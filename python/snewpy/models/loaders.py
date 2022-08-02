@@ -292,13 +292,6 @@ class Fornax_2019(SupernovaModel):
         self.filename = filename
         self.metadata = metadata
 
-        mass_str = filename.split('_')[-1]
-        if 'M' in mass_str:
-            self.progenitor_mass = float(mass_str[:-4]) * u.Msun
-        else:
-            mass_str = filename.split('_')[-2]
-            self.progenitor_mass = float(mass_str[:-1]) * u.Msun
-
         self.fluxunit = 1e50 * u.erg/(u.s*u.MeV)
         self.time = None
 
@@ -397,8 +390,11 @@ class Fornax_2019(SupernovaModel):
                                 Flavor.NU_X: 'nu2',
                                 Flavor.NU_X_BAR: 'nu2'}
 
-            # Open HDF5 data file.
-            self._h5file = h5py.File(filename, 'r')
+            # Open the requested filename using the model downloader.
+            datafile = model_downloader.get_model_data(self.__class__.__name__, filename)
+            with datafile.open():
+                # Open HDF5 data file.
+                self._h5file = h5py.File(datafile.path, 'r')
 
             # Get grid of model times in seconds.
             self.time = self._h5file['nu0']['g0'].attrs['time'] * u.s
@@ -662,8 +658,11 @@ class Fornax_2021(SupernovaModel):
         self.progenitor_mass = float(filename.split('/')[-1].split('_')[2][:-1]) * u.Msun
         self.metadata = metadata
 
-        # Read time and flux information from HDF5 data file.
-        _h5file = h5py.File(filename, 'r')
+        # Open the requested filename using the model downloader.
+        datafile = model_downloader.get_model_data(self.__class__.__name__, filename)
+        with datafile.open():
+            # Open HDF5 data file.
+            _h5file = h5py.File(datafile.path, 'r')
 
         self.time = _h5file['nu0'].attrs['time'] * u.s
 

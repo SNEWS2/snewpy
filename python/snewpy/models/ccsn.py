@@ -534,10 +534,9 @@ class Fornax_2019(_RegistryModel):
 
         check_valid_params(cls, progenitor_mass=progenitor_mass)
         if progenitor_mass.value == 16:
-            fname = f'lum_spec_{int(progenitor_mass.value):d}M_r250.h5'
+            filename = f'lum_spec_{int(progenitor_mass.value):d}M_r250.h5'
         else:
-            fname = f'lum_spec_{int(progenitor_mass.value):d}M.h5'
-        filename = os.path.join(model_path, cls.__name__, fname)
+            filename = f'lum_spec_{int(progenitor_mass.value):d}M.h5'
 
         return loaders.Fornax_2019(filename, metadata, cache_flux=cache_flux)
 

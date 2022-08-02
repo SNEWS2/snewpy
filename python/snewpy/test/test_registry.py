@@ -215,7 +215,7 @@ class TestModels(unittest.TestCase):
         for mass in [9, 10, 12, 13, 14, 15, 19, 25, 60]:
             model = Fornax_2019(progenitor_mass=mass*u.Msun)
 
-            self.assertEqual(model.progenitor_mass.value, mass)
+            self.assertEqual(model.metadata['Progenitor mass'].value, mass)
 
             # Check that times are in proper units.
             t = model.get_time()
@@ -287,7 +287,7 @@ class TestModels(unittest.TestCase):
         for mass in list(range(12, 24)) + [25, 26, 26.99]:
             model = Fornax_2021(progenitor_mass=mass*u.Msun)
 
-            self.assertEqual(model.progenitor_mass, float(mass)*u.Msun)
+            self.assertEqual(model.metadata['Progenitor mass'], float(mass)*u.Msun)
 
             # Check that times are in proper units.
             t = model.get_time()
