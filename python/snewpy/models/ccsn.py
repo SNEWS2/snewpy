@@ -58,8 +58,8 @@ class Nakazato_2013(_RegistryModel):
     _isvalid_combo = lambda p: (p['revival_time'] == 0 * u.ms and p['progenitor_mass'] == 30 * u.Msun and
                                 p['metallicity'] == 0.004) or \
                                (p['revival_time'] != 0 * u.ms and p['eos'] == 'shen' and
-                                not (p['progenitor_mass'] == 30 * u.Msun and p['metallicity'] != 0.004))
-    combinations = get_param_combinations(param, _isvalid_combo)
+                                not (p['progenitor_mass'] == 30 * u.Msun and p['metallicity'] == 0.004))
+    param_combinations = get_param_combinations(param, _isvalid_combo)
 
     def __new__(cls, *, progenitor_mass=None, revival_time=None, metallicity=None, eos=None):
         """Model initialization.
@@ -127,27 +127,14 @@ class Nakazato_2013(_RegistryModel):
     # Populate Docstring with param values
     __new__.__doc__ = __new__.__doc__.format(**param)
 
-    @classmethod
-    def get_param_combinations(cls, *, progenitor_mass=None, revival_time=None, metallicity=None, eos=None):
-        user_param = dict(zip(cls.param.keys(), (progenitor_mass, revival_time, metallicity, eos)))
-        return get_param_combinations(cls, **user_param)
-
-    @staticmethod
-    def isvalid_param_combo(progenitor_mass, revival_time, metallicity, eos):
-        """Returns True if the parameter combination is valid (Corresponds to an existing Nakazato_2013 model)
-        See __init__ for a full parameter descriptions.
-        """
-        if revival_time.to(u.s).value == 0:
-            return progenitor_mass.to(u.Msun).value == 30 and metallicity == 0.004
-        else:
-            return eos in ['shen'] and not (progenitor_mass.to(u.Msun).value == 30 and metallicity == 0.004)
-
 
 class Sukhbold_2015(_RegistryModel):
     """Model based on simulations from Sukhbold et al., ApJ 821:38,2016. Models were shared privately by email.
     """
     param = {'progenitor_mass': [27., 9.6] * u.Msun,
              'eos': ['LS220', 'SFHo']}
+
+    param_combinations = get_param_combinations(param)
 
     def __new__(cls, *, progenitor_mass=None, eos=None):
         """Model Initialization
@@ -195,12 +182,6 @@ class Sukhbold_2015(_RegistryModel):
     __new__.__doc__ = __new__.__doc__.format(**param)
 
 
-    @classmethod
-    def get_param_combinations(cls, *, progenitor_mass=None, eos=None):
-        user_param = dict(zip(cls.param.keys(), (progenitor_mass, eos)))
-        return get_param_combinations(cls, **user_param)
-
-
 class Tamborra_2014(_RegistryModel):
     """Model based on 3D simulations from `Tamborra et al., PRD 90:045032, 2014 <https://arxiv.org/abs/1406.0006>`_.
     Data files are from the `Garching Supernova Archive`_.
@@ -208,6 +189,7 @@ class Tamborra_2014(_RegistryModel):
 
     param = {'progenitor_mass': [20., 27.] * u.Msun,
              'eos': 'LS220'}
+    param_combinations = get_param_combinations(param)
 
     def __new__(cls,  *, progenitor_mass=None, eos=None):
         check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos)
@@ -232,6 +214,7 @@ class Bollig_2016(_RegistryModel):
 
     param = {'progenitor_mass': [11.2, 27.] * u.Msun,
              'eos': 'LS220'}
+    param_combinations = get_param_combinations(param)
 
     def __new__(cls, *, progenitor_mass=None, eos=None):
         check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos)
@@ -254,8 +237,9 @@ class Walk_2018(_RegistryModel):
     the `Garching Supernova Archive`_.
     """
 
-    param = {'progenitor_mass': [15.] * u.Msun,
+    param = {'progenitor_mass': 15. * u.Msun,
              'eos': 'LS220'}
+    param_combinations = get_param_combinations(param)
 
     def __new__(cls, *, progenitor_mass=None, eos=None):
         check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos)
@@ -278,8 +262,9 @@ class Walk_2019(_RegistryModel):
     from the `Garching Supernova Archive`_.
     """
 
-    param = {'progenitor_mass': [40] * u.Msun,
+    param = {'progenitor_mass': 40 * u.Msun,
              'eos': 'LS220'}
+    param_combinations = get_param_combinations(param)
 
     def __new__(cls, *, progenitor_mass=None, eos=None):
         check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos)
@@ -304,13 +289,14 @@ class OConnor_2013(PinchedModel): # TODO: Requires changes to the model file to 
                                  list(range(35, 61, 5)) +
                                  [70, 80, 100, 120]) * u.Msun,
              'eos': ['HShen', 'LS220']}
+    param_combinations = get_param_combinations(param)
 
     _param_abbrv = {'progenitor_mass': '[12..33, 35..5..60, 70, 80, 100, 120] solMass',
                     'eos': ['HShen', 'LS220']}
 
     # TODO: This in its changed state will likely break user code -- check this before PR!
     # def __init__(self, base, mass=15, eos='LS220'):  # Previous signature
-    def __init__(self, filename, *, progenitor_mass=None, eos=None):
+    def __init__(self, *, progenitor_mass=None, eos=None):
         """Model Initialization.
 
         Parameters
@@ -328,19 +314,15 @@ class OConnor_2013(PinchedModel): # TODO: Requires changes to the model file to 
             If a combination of parameters is invalid when loading from parameters
 
         """
-        if not filename and all((p is not None for p in (progenitor_mass, eos))):
-            user_params = dict(zip(self.param.keys(), (progenitor_mass, eos)))
-            check_valid_params(self, **user_params)
-            filename = os.path.join(model_path, self.__class__.__name__, f'{eos}_timeseries.tar.gz')
+        user_params = dict(zip(self.param.keys(), (progenitor_mass, eos)))
+        check_valid_params(self, **user_params)
+        filename = os.path.join(model_path, self.__class__.__name__, f'{eos}_timeseries.tar.gz')
 
-        # This should happen regardless of import method
-        if type(progenitor_mass) == u.Quantity:
-            progenitor_mass = progenitor_mass.value
         # Open luminosity file.
         tf = tarfile.open(filename)
 
         # Extract luminosity data.
-        dataname = 's{:d}_{}_timeseries.dat'.format(progenitor_mass.value, eos)
+        dataname = 's{:d}_{}_timeseries.dat'.format(int(progenitor_mass.value), eos)
         datafile = tf.extractfile(dataname)
         simtab = ascii.read(datafile, names=['TIME', 'L_NU_E', 'L_NU_E_BAR', 'L_NU_X',
                                              'E_NU_E', 'E_NU_E_BAR', 'E_NU_X',
@@ -369,8 +351,9 @@ class OConnor_2015(_RegistryModel):
     """Model based on the black hole formation simulation in `O'Connor (2015) <https://arxiv.org/abs/1411.7058>`_.
     """
 
-    param = {'progenitor_mass': [40] * u.Msun,
+    param = {'progenitor_mass': 40 * u.Msun,
              'eos': 'LS220'}
+    param_combinations = get_param_combinations(param)
 
     def __new__(cls, *, progenitor_mass=None, eos=None):
         """Model Initialization.
@@ -411,6 +394,7 @@ class Zha_2021(_RegistryModel):
 
     param = {'progenitor_mass': (list(range(16, 27)) + [19.89, 22.39, 30, 33]) * u.Msun,
              'eos': 'STOS_B145'}
+    param_combinations = get_param_combinations(param)
 
     _param_abbrv = {'progenitor_mass': '[16..26, 19.89, 22.39, 30, 33] solMass',
                     'eos': 'STOS_B145'}
@@ -439,7 +423,7 @@ class Zha_2021(_RegistryModel):
             'Progenitor mass': progenitor_mass,
             'EOS': eos,
         }
-        
+
         filename = os.path.join(model_path, cls.__name__, f's{progenitor_mass.value:g}.dat')
 
         return loaders.Zha_2021(filename, metadata)
@@ -462,6 +446,7 @@ class Warren_2020(_RegistryModel):
                                                 np.linspace(100, 120, 2))) * u.Msun,
              'turbmixing_param': [1.23, 1.25, 1.27],
              'eos': 'SFHo'}
+    param_combinations = get_param_combinations(param)
 
     _param_abbrv = {'progenitor_mass': '[9.25..0.25..13, 13..0.1..30, 31..35, 35..5..60, 70..10..90, 100, 120] solMass',
                     'turbmixing_param': [1.23, 1.25, 1.27],
@@ -515,12 +500,15 @@ class Warren_2020(_RegistryModel):
 
 class Kuroda_2020(_RegistryModel):
     """Model based on simulations from `Kuroda et al. (2020) <https://arxiv.org/abs/2009.07733>`_."""
-   
-    param = {'progenitor_mass': [20] * u.Msun,
+
+    param = {'progenitor_mass': 20 * u.Msun,
              'eos': 'LS220',
              'rotational_velocity': [0, 1] * u.rad / u.s,
              'magnetic_field_exponent': [0, 12, 13]}
-   
+    _isvalid_combo = lambda p: (p['rotational_velocity'].value == 1 and p['magnetic_field_exponent'] in (12, 13)) or \
+                               (p['rotational_velocity'].value == 0 and p['magnetic_field_exponent'] == 0)
+    param_combinations = get_param_combinations(param, _isvalid_combo)
+
     def __new__(cls, progenitor_mass=None, eos=None, rotational_velocity=None, magnetic_field_exponent=None):
         """
         Parameters
@@ -556,14 +544,6 @@ class Kuroda_2020(_RegistryModel):
         return loaders.Kuroda_2020(filename, metadata)
 
     __new__.__doc__ = __new__.__doc__.format(**param)
- 
-    @staticmethod
-    def isvalid_param_combo(rotational_velocity, magnetic_field_exponent, *args, **kwargs):
-        """Returns True if the parameter combination is valid, See __init__ for a full parameter
-         descriptions.
-        """
-        return (rotational_velocity.value == 1 and magnetic_field_exponent in (12, 13) or
-                (rotational_velocity.value == 0 and magnetic_field_exponent == 0))
 
 
 class Fornax_2019(_RegistryModel):
@@ -571,6 +551,7 @@ class Fornax_2019(_RegistryModel):
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/
     """
     param = {'progenitor_mass': [9, 10, 12, 13, 14, 15, 16, 19, 25, 60] * u.Msun}
+    param_combinations = get_param_combinations(param)
 
     def __new__(cls, progenitor_mass=None, cache_flux=False):
         """Model Initialization.
@@ -592,7 +573,7 @@ class Fornax_2019(_RegistryModel):
         else:
             fname = f'lum_spec_{int(progenitor_mass.value):d}M.h5'
         filename = os.path.join(model_path, cls.__name__, fname)
-        
+
         return loaders.Fornax_2019(filename, metadata, cache_flux=cache_flux)
 
     # Populate Docstring with abbreviated param values
@@ -604,6 +585,7 @@ class Fornax_2021(_RegistryModel):
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/
         """
     param = {'progenitor_mass': (list(range(12, 24)) + [25, 26, 26.99]) * u.Msun}
+    param_combinations = get_param_combinations(param)
 
     _param_abbrv =  {'progenitor_mass': '[12..26, 26.99] solMass'}
 
