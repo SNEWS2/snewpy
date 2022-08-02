@@ -153,19 +153,9 @@ class Sukhbold_2015(_RegistryModel):
         check_valid_params(cls, **user_params)
 
         if progenitor_mass.value == 9.6:
-            fname = f'sukhbold-{eos}-z{progenitor_mass.value:3.1f}.fits'
+            filename = f'sukhbold-{eos}-z{progenitor_mass.value:3.1f}.fits'
         else:
-            fname = f'sukhbold-{eos}-s{progenitor_mass.value:3.1f}.fits'
-
-        filename = os.path.join(model_path, cls.__name__, fname)
-
-        # Store model metadata.
-        cls.progenitor_mass = float(filename.split('-')[-1].strip('z%.fits')) * u.Msun
-        cls.EOS = filename.split('-')[-2]
-
-        if not os.path.isfile(filename):
-            # download file from GitHub/Zenodo
-            raise NotImplementedError()
+            filename = f'sukhbold-{eos}-s{progenitor_mass.value:3.1f}.fits'
 
         metadata = {
             'Progenitor mass': progenitor_mass,
