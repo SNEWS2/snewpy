@@ -189,8 +189,7 @@ class Tamborra_2014(_RegistryModel):
 
     def __new__(cls,  *, progenitor_mass=None, eos=None):
         check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos)
-        filename = os.path.join(model_path, cls.__name__,
-                                f's{progenitor_mass.value:3.1f}c_3D_dir1')
+        filename = os.path.join(f's{progenitor_mass.value:3.1f}c_3D_dir1')
 
         metadata = {
             'Progenitor mass': progenitor_mass,
@@ -198,7 +197,7 @@ class Tamborra_2014(_RegistryModel):
         }
 
         # Metadata is handled by __init__ in _GarchingArchiveModel
-        return loaders._GarchingArchiveModel(filename=filename, metadata=metadata)
+        return loaders.Tamborra_2014(filename=filename, metadata=metadata)
 
     # Populate Docstring with param values
     __new__.__doc__ = loaders._GarchingArchiveModel.__init__.__doc__.format(**param)
@@ -221,10 +220,10 @@ class Bollig_2016(_RegistryModel):
             'EOS': eos
         }
 
-        return loaders._GarchingArchiveModel(filename=filename, metadata=metadata)
+        return loaders.Bollig_2016(filename=filename, metadata=metadata)
 
     # Populate Docstring with param values
-    __new__.__doc__ = loaders._GarchingArchiveModel.__init__.__doc__.format(**param)
+    # __new__.__doc__ = loaders.Bollig_2016.__init__.__doc__.format(**param)
 
 
 class Walk_2018(_RegistryModel):
@@ -246,10 +245,10 @@ class Walk_2018(_RegistryModel):
             'EOS': eos
         }
 
-        return loaders._GarchingArchiveModel(filename=filename, metadata=metadata)
+        return loaders.Walk_2018(filename=filename, metadata=metadata)
 
     # Populate Docstring with param values
-    __new__.__doc__ = loaders._GarchingArchiveModel.__init__.__doc__.format(**param)
+    # __new__.__doc__ = loaders.Walk_2018.__init__.__doc__.format(**param)
 
 
 class Walk_2019(_RegistryModel):
@@ -271,10 +270,10 @@ class Walk_2019(_RegistryModel):
             'EOS': eos
         }
 
-        return loaders._GarchingArchiveModel(filename=filename, metadata=metadata)
+        return loaders.Walk_2019(filename=filename, metadata=metadata)
 
     # Populate Docstring with param values
-    __new__.__doc__ = loaders._GarchingArchiveModel.__init__.__doc__.format(**param)
+    # __new__.__doc__ = loaders.Walk_2019.__init__.__doc__.format(**param)
 
 
 class OConnor_2013(PinchedModel): # TODO: Requires changes to the model file to have one file per model instead of a single gzip archive!

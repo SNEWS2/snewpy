@@ -7,6 +7,7 @@ from astropy import units as u
 from astropy.table import Table, join
 from astropy.units.quantity import Quantity
 from scipy.special import loggamma
+from snewpy import model_downloader
 
 from snewpy.neutrino import Flavor
 from functools import wraps
@@ -310,14 +311,18 @@ class _GarchingArchiveModel(PinchedModel):
             _flav = Flavor.NU_X if flavor == Flavor.NU_X_BAR else flavor
             _sfx = _flav.name.replace('_', '').lower()
             _filename = '{}_{}_{}'.format(filename, eos, _sfx)
-            _lname  = 'L_{}'.format(flavor.name)
-            _ename  = 'E_{}'.format(flavor.name)
+            _lname = 'L_{}'.format(flavor.name)
+            _ename = 'E_{}'.format(flavor.name)
             _e2name = 'E2_{}'.format(flavor.name)
-            _aname  = 'ALPHA_{}'.format(flavor.name)
+            _aname = 'ALPHA_{}'.format(flavor.name)
 
-            simtab = Table.read(_filename,
-                                names=['TIME', _lname, _ename, _e2name],
-                                format='ascii')
+            # Open the requested filename using the model downloader.
+            datafile = model_downloader.get_model_data(self.__class__.__name__, _filename)
+
+            with datafile.open():
+                simtab = Table.read(datafile.path,
+                                    names=['TIME', _lname, _ename, _e2name],
+                                    format='ascii')
             simtab['TIME'].unit = 's'
             simtab[_lname].unit = '1e51 erg/s'
             simtab[_aname] = (2*simtab[_ename]**2 - simtab[_e2name]) / (simtab[_e2name] - simtab[_ename]**2)

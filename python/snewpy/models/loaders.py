@@ -8,6 +8,7 @@ import logging
 import os
 import re
 import sys
+import tarfile
 
 from astropy import units as u
 from astropy.table import Table
@@ -41,10 +42,10 @@ class Nakazato_2013(PinchedModel):
         """
         # Open the requested filename using the model downloader.
         datafile = model_downloader.get_model_data(self.__class__.__name__, filename)
-        datafile.open()
+        with datafile.open():
+            # Read FITS table using the astropy reader.
+            simtab = Table.read(datafile.path)
 
-        # Read FITS table using the astropy reader.
-        simtab = Table.read(datafile.path)
         self.filename = os.path.basename(filename)
         super().__init__(simtab, metadata)
 
@@ -57,26 +58,77 @@ class Sukhbold_2015(PinchedModel):
         filename : str
             Absolute or relative path to FITS file with model data.
         """
-        # Read FITS table using the astropy unified Table reader.
-        simtab = Table.read(filename)
+        # Open the requested filename using the model downloader.
+        datafile = model_downloader.get_model_data(self.__class__.__name__, filename)
+        with datafile.open():
+            # Read FITS table using the astropy reader.
+            simtab = Table.read(datafile.path)
+
         self.filename = os.path.basename(filename)
         super().__init__(simtab, metadata)
 
 
 class Tamborra_2014(_GarchingArchiveModel):
-    pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
 
 class Bollig_2016(_GarchingArchiveModel):
-    pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
 
 class Walk_2018(_GarchingArchiveModel):
-    pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
 
 class Walk_2019(_GarchingArchiveModel):
-    pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
+class OConnor_2013(PinchedModel):
+    """Model based on the black hole formation simulation in `O'Connor & Ott (2013) <https://arxiv.org/abs/1207.1100>`_.
+    """
+
+    def __init__(self, filename, progenitor_mass, eos, metadata={}):
+        """Model Initialization.
+
+        Parameters
+        ----------
+        progenitor_mass: astropy.units.Quantity
+            Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
+        eos: str
+            Equation of state. Valid values are {eos}.
+        """
+        # Open luminosity file.
+        tf = tarfile.open(filename)
+
+        # Extract luminosity data.
+        dataname = 's{:d}_{}_timeseries.dat'.format(int(progenitor_mass.value), eos)
+        _filename = tf.extractfile(dataname)
+
+        # Open the requested filename using the model downloader.
+        datafile = model_downloader.get_model_data(self.__class__.__name__, _filename)
+        with datafile.open():
+            # Read FITS table using the astropy reader.
+            simtab = ascii.read(datafile, names=['TIME', 'L_NU_E', 'L_NU_E_BAR', 'L_NU_X',
+                                                 'E_NU_E', 'E_NU_E_BAR', 'E_NU_X',
+                                                 'RMS_NU_E', 'RMS_NU_E_BAR', 'RMS_NU_X'])
+
+        simtab['ALPHA_NU_E'] = (2.0 * simtab['E_NU_E'] ** 2 - simtab['RMS_NU_E'] ** 2) / (
+                simtab['RMS_NU_E'] ** 2 - simtab['E_NU_E'] ** 2)
+        simtab['ALPHA_NU_E_BAR'] = (2.0 * simtab['E_NU_E_BAR'] ** 2 - simtab['RMS_NU_E_BAR'] ** 2) / (
+                simtab['RMS_NU_E_BAR'] ** 2 - simtab['E_NU_E_BAR'] ** 2)
+        simtab['ALPHA_NU_X'] = (2.0 * simtab['E_NU_X'] ** 2 - simtab['RMS_NU_X'] ** 2) / (
+                simtab['RMS_NU_X'] ** 2 - simtab['E_NU_X'] ** 2)
+
+        # note, here L_NU_X is already divided by 4
+
+
+
+        super().__init__(simtab, metadata)
 
 
 class OConnor_2015(PinchedModel):
