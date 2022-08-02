@@ -175,7 +175,7 @@ class Zha_2021(PinchedModel):
         # Open the requested filename using the model downloader.
         datafile = model_downloader.get_model_data(self.__class__.__name__, filename)
         with datafile.open():
-            simtab = Table.read(filename,
+            simtab = Table.read(datafile.path,
                                 names=['TIME', 'L_NU_E', 'L_NU_E_BAR', 'L_NU_X',
                                        'E_NU_E', 'E_NU_E_BAR', 'E_NU_X',
                                        'RMS_NU_E', 'RMS_NU_E_BAR', 'RMS_NU_X'],
@@ -195,7 +195,7 @@ class Zha_2021(PinchedModel):
         # SYB: double-check on this factor of 4. Should be factor of 2?
         simtab['L_NU_X'] /= 4.0
 
-        #prevent neagative lums
+        # prevent negative lums
         simtab['L_NU_E'][simtab['L_NU_E'] < 0] = 1
         simtab['L_NU_E_BAR'][simtab['L_NU_E_BAR'] < 0] = 1
         simtab['L_NU_X'][simtab['L_NU_X'] < 0] = 1
