@@ -147,7 +147,7 @@ def get_zenodo(zenodo_id:str, model:str, filename:str, path:str=model_path):
     if file is not None:
         return FileHandle(path = path/file['key'],
                                  remote= file['links']['self'],
-                                 md5 = file['checksum'].lstrip('md5:'))
+                                 md5 = file['checksum'].split(':')[1])
     else:
         raise MissingFileError(filename)
 
