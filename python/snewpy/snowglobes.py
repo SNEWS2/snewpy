@@ -36,7 +36,7 @@ from warnings import warn
 import snewpy.models
 from snewpy.flavor_transformation import *
 from snewpy.neutrino import Flavor, MassHierarchy
-from snewpy.snowglobes_interface import SNOwGLoBES, SimpleRate
+from snewpy.snowglobes_interface import SimpleRate
 
 logger = logging.getLogger(__name__)
 
