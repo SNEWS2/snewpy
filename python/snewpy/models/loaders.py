@@ -23,6 +23,7 @@ except ImportError:
 
 from snewpy.models.base import PinchedModel, _GarchingArchiveModel, SupernovaModel
 from snewpy.neutrino import Flavor
+from snewpy import model_downloader
 
 class Nakazato_2013(PinchedModel):
     def __init__(self, filename, metadata={}):
@@ -38,8 +39,12 @@ class Nakazato_2013(PinchedModel):
         FileNotFoundError
             If a file for the chosen model parameters cannot be found
         """
+        # Open the requested filename using the model downloader.
+        datafile = model_downloader.get_model_data(self.__class__.__name__, filename)
+        datafile.open()
+
         # Read FITS table using the astropy reader.
-        simtab = Table.read(filename)
+        simtab = Table.read(datafile.path)
         self.filename = os.path.basename(filename)
         super().__init__(simtab, metadata)
 
