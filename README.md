@@ -33,37 +33,13 @@ Unit tests will run automatically for every pull request or you can run them loc
 
 ### Dependencies 
 
-Some functionality of SNEWPY requires that [SNOwGLoBES](https://github.com/SNOwGLoBES/snowglobes) and its dependency, [GLoBES](https://www.mpi-hd.mpg.de/personalhomes/globes/) are installed.
-
-<details>
-<summary>Expand this to view sample instructions for installing SNOwGLoBES and GLoBES</summary>
-
-This is a walkthrough to install GLoBES and SNOwGLoBES locally in the users home directory
-(i.e. `~/opt/`). It uses `bash` syntax.
-
+Some functionality of SNEWPY requires that [SNOwGLoBES](https://github.com/SNOwGLoBES/snowglobes) is downloaded.
+In your project directory, run the following commands to get SNOwGLoBES and set it up for use with SNEWPY:
 ```bash
-	cd ~
-	mkdir opt
-	cd opt
-	wget https://www.mpi-hd.mpg.de/personalhomes/globes/download/globes-3.2.17.tar.gz
-	tar -zxf globes-3.2.17.tar.gz
-	cd globes-3.2.17/
-	./configure --prefix=~/opt/globes-3.2.17-install --disable-binary
-	make
-	make install
-	cd ~/opt/globes-3.2.17-install
-	export GLB_DIR=${PWD}
-	cd ..
-
 	git clone https://github.com/SNOwGLoBES/snowglobes.git
 	cd snowglobes
 	export SNOWGLOBES=${PWD}
-	cd src
-	make
-	make install
 ```
-</details> 
-
 
 ## Usage and Documentation
 Example scripts which show how SNEWPY can be used are available in the
