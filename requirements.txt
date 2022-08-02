@@ -6,3 +6,4 @@ Jinja2==3.0.2
 tqdm
 matplotlib
 h5py
+requests
