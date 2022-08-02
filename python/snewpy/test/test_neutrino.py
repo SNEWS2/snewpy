@@ -40,7 +40,7 @@ class TestNeutrino(unittest.TestCase):
         Mixing parameter values; NMO
         """
         # By default, return mixing parameters for NMO.
-        mixpars = MixingParameters()
+        mixpars = MixingParameters(version="NuFIT5.0")
         self.assertEqual(mixpars.theta12, 33.44 * u.deg)
         self.assertEqual(mixpars.theta13,  8.57 * u.deg)
         self.assertEqual(mixpars.theta23, 49.20 * u.deg)
@@ -53,7 +53,7 @@ class TestNeutrino(unittest.TestCase):
         """
         Mixing parameter values; IMO
         """
-        mixpars = MixingParameters(MassHierarchy.INVERTED)
+        mixpars = MixingParameters(MassHierarchy.INVERTED, version="NuFIT5.0")
         self.assertEqual(mixpars.theta12, 33.45 * u.deg)
         self.assertEqual(mixpars.theta13,  8.60 * u.deg)
         self.assertEqual(mixpars.theta23, 49.30 * u.deg)
