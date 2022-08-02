@@ -116,13 +116,9 @@ class Nakazato_2013(_RegistryModel):
         else:
             fname = f"nakazato-{eos}-BH-z{metallicity}-s{progenitor_mass:3.1f}.fits"
 
-        filename = os.path.join(model_path, cls.__name__, fname)
-
-        if not os.path.isfile(filename):
-            # download file from GitHub/Zenodo
-            raise NotImplementedError()
-
-        return loaders.Nakazato_2013(filename, metadata)
+        # Pass the desired filename to the loaders. The simulation data will be
+        # downloaded and cached automatically if necessary.
+        return loaders.Nakazato_2013(fname, metadata)
 
     # Populate Docstring with param values
     __new__.__doc__ = __new__.__doc__.format(**param)
