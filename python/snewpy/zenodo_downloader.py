@@ -21,6 +21,7 @@ from snewpy import model_path
 import logging
 logger = logging.getLogger('FileHandle')
 
+
 def _md5(fname:str) -> str:
     """calculate the md5sum hash of a file."""
     hash_md5 = hashlib.md5()
@@ -28,6 +29,7 @@ def _md5(fname:str) -> str:
         for chunk in iter(lambda: f.read(4096), b""):
             hash_md5.update(chunk)
     return hash_md5.hexdigest()
+
 
 def _download(src:str, dest:str, chunk_size=8192):
     """Download a file from 'src' to 'dest' and show the progress bar."""
@@ -41,19 +43,28 @@ def _download(src:str, dest:str, chunk_size=8192):
                 for chunk in r.iter_content(chunk_size=chunk_size):
                     size = f.write(chunk)
                     bar.update(size)
-            
+
+
 class ChecksumError(FileNotFoundError):
+    """Raise an exception due to a mismatch in the MD5 checksum.
+    """
     def __init__(self, path, md5_exp, md5_actual):
         super().__init__(f'Checksum error for file {path}: {md5_actual}!={md5_exp}')
     pass
 
+
 class MissingFileError(FileNotFoundError):
+    """Raise an exception due to a missing file.
+    """
     pass
+
 
 @dataclass
 class FileHandle:
     """Object storing local path, remote URL (optional), and MD5 sum
-(optional) for a SNEWPY model file.
+(optional) for a SNEWPY model file. If the requested file is already present
+locally, open it. Otherwise, download it from the remote URL to the desired
+local path.
     """
     path: Path
     remote: str = None
@@ -93,36 +104,8 @@ class FileHandle:
         """ Load and open the local file, return the file object"""
         return open(self.load(), flags)
 
-def from_zenodo(zenodo_id:str, path:str='/tmp/', regex: str = '.*'):
-    """Load files from Zenodo record.
 
-    Parameters
-    ----------
-    zenodo_id : Zenodo record for model files.
-    path : Path to files for a given model.
-    regex : Pattern to match all possible file names.
-
-    Returns
-    -------
-    files : dictionary of FileHandles for a given model.
-    """
-    path = Path(path)/str(zenodo_id)
-    path.mkdir(exist_ok=True, parents=True)
-    files_re = re.compile(regex)
-    files = {}
-
-    zenodo_url = f'https://zenodo.org/api/records/{zenodo_id}'
-    record = requests.get(zenodo_url).json()
-    for f in record['files']:
-        if files_re.match(f["key"]):
-            files[f['key']] = FileHandle(path = path/f['key'],
-                                         remote= f['links']['self'],
-                                         md5 = f['checksum'].lstrip('md5:')
-                                        )
-    return files
-
-
-def get_zenodo(zenodo_id:str, model:str, filename:str, path:str=model_path):
+def from_zenodo(zenodo_id:str, model:str, filename:str, path:str=model_path):
     """Access files on Zenodo.
 
     Parameters
@@ -143,7 +126,11 @@ def get_zenodo(zenodo_id:str, model:str, filename:str, path:str=model_path):
     zenodo_url = f'https://zenodo.org/api/records/{zenodo_id}'
     record = requests.get(zenodo_url).json()
 
+    # Search for model file string in Zenodo request for this record.
     file = next((_file for _file in record['files'] if _file['key'] == filename), None)
+
+    # If matched, return a FileHandle which takes care of downloading and
+    # checksum (or loads a local data file). Otherwise raise an exception.
     if file is not None:
         return FileHandle(path = path/file['key'],
                                  remote= file['links']['self'],
