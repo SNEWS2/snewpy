@@ -172,11 +172,14 @@ class Zha_2021(PinchedModel):
         filename : str
             Absolute or relative path to file prefix, we add nue/nuebar/nux
         """
-        simtab = Table.read(filename,
-                            names=['TIME', 'L_NU_E', 'L_NU_E_BAR', 'L_NU_X',
-                                   'E_NU_E', 'E_NU_E_BAR', 'E_NU_X',
-                                   'RMS_NU_E', 'RMS_NU_E_BAR', 'RMS_NU_X'],
-                            format='ascii')
+        # Open the requested filename using the model downloader.
+        datafile = model_downloader.get_model_data(self.__class__.__name__, filename)
+        with datafile.open():
+            simtab = Table.read(filename,
+                                names=['TIME', 'L_NU_E', 'L_NU_E_BAR', 'L_NU_X',
+                                       'E_NU_E', 'E_NU_E_BAR', 'E_NU_X',
+                                       'RMS_NU_E', 'RMS_NU_E_BAR', 'RMS_NU_X'],
+                                format='ascii')
 
         header = ascii.read(simtab.meta['comments'], delimiter='=', format='no_header', names=['key', 'val'])
         tbounce = float(header['val'][0])
@@ -254,8 +257,12 @@ class Kuroda_2020(PinchedModel):
         filename : str
             Absolute or relative path to file prefix, we add nue/nuebar/nux
         """
-        # Read ASCII data.
-        simtab = Table.read(filename, format='ascii')
+
+        # Open the requested filename using the model downloader.
+        datafile = model_downloader.get_model_data(self.__class__.__name__, filename)
+        with datafile.open():
+            # Read ASCII data.
+            simtab = Table.read(datafile.path, format='ascii')
 
         # Get grid of model times.
         simtab['TIME'] = simtab['Tpb[ms]'] << u.ms

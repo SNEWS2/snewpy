@@ -391,7 +391,7 @@ class Zha_2021(_RegistryModel):
             'EOS': eos,
         }
 
-        filename = os.path.join(model_path, cls.__name__, f's{progenitor_mass.value:g}.dat')
+        filename = f's{progenitor_mass.value:g}.dat'
 
         return loaders.Zha_2021(filename, metadata)
 
@@ -497,8 +497,7 @@ class Kuroda_2020(_RegistryModel):
         """
         check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos, rotational_velocity=rotational_velocity,
                            magnetic_field_exponent=magnetic_field_exponent)
-        filename = os.path.join(model_path, cls.__name__,
-                                f'LnuR{int(rotational_velocity.value):1d}0B{int(magnetic_field_exponent):02d}.dat')
+        filename = f'LnuR{int(rotational_velocity.value):1d}0B{int(magnetic_field_exponent):02d}.dat'
 
         metadata = {
             'Progenitor mass': progenitor_mass,
