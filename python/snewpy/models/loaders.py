@@ -137,7 +137,7 @@ class OConnor_2015(PinchedModel):
 
         datafile = model_downloader.get_model_data(self.__class__.__name__, filename)
         with datafile.open():
-            simtab = Table.read(filename,
+            simtab = Table.read(datafile.path,
                                 names=['TIME', 'L_NU_E', 'L_NU_E_BAR', 'L_NU_X',
                                        'E_NU_E', 'E_NU_E_BAR', 'E_NU_X',
                                        'RMS_NU_E', 'RMS_NU_E_BAR', 'RMS_NU_X'],
