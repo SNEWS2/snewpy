@@ -93,14 +93,11 @@ class OConnor_2013(PinchedModel):
     """
 
     def __init__(self, filename, metadata={}):
-        """Model Initialization.
-
+        """
         Parameters
         ----------
-        progenitor_mass: astropy.units.Quantity
-            Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
-        eos: str
-            Equation of state. Valid values are {eos}.
+        filename : str
+            Absolute or relative path to FITS file with model data.
         """
         datafile = model_downloader.get_model_data(self.__class__.__name__, filename)
         with datafile.open():
@@ -135,15 +132,16 @@ class OConnor_2015(PinchedModel):
         Parameters
         ----------
         filename : str
-            Absolute or relative path to file prefix, we add nue/nuebar/nux
-        eos : string
-            Equation of state used in simulation
+            Absolute or relative path to FITS file with model data.
         """
-        simtab = Table.read(filename,
-                            names=['TIME', 'L_NU_E', 'L_NU_E_BAR', 'L_NU_X',
-                                   'E_NU_E', 'E_NU_E_BAR', 'E_NU_X',
-                                   'RMS_NU_E', 'RMS_NU_E_BAR', 'RMS_NU_X'],
-                            format='ascii')
+
+        datafile = model_downloader.get_model_data(self.__class__.__name__, filename)
+        with datafile.open():
+            simtab = Table.read(filename,
+                                names=['TIME', 'L_NU_E', 'L_NU_E_BAR', 'L_NU_X',
+                                       'E_NU_E', 'E_NU_E_BAR', 'E_NU_X',
+                                       'RMS_NU_E', 'RMS_NU_E_BAR', 'RMS_NU_X'],
+                                format='ascii')
 
         header = ascii.read(simtab.meta['comments'], delimiter='=', format='no_header', names=['key', 'val'])
         tbounce = float(header['val'][0])
