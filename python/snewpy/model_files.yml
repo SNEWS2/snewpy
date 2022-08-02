@@ -49,9 +49,10 @@ ccsn:
       regex: 's[0-9.]+c_3DBH_dir1_LS220_nu(e|x)(bar)?'
       path: "models/Walk_2019"
 
-    Warren_2020: !local
+    Warren_2020: !zenodo
+      zenodo_id: 3952926
       regex: 'stir.*\.h5'
-      path: "models/Warren_2020"
+      path: "/tmp/SNEWPY_models"
 
     Zha_2021: !local
       regex: 's[0-9]+.*\.dat'
