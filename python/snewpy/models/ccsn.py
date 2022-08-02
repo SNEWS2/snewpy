@@ -228,7 +228,7 @@ class Walk_2018(_RegistryModel):
 
     def __new__(cls, *, progenitor_mass=None, eos=None):
         check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos)
-        filename = os.path.join(model_path, cls.__name__, f's{progenitor_mass.value:3.1f}c_3D_nonrot_dir1')
+        filename = f's{progenitor_mass.value:3.1f}c_3D_nonrot_dir1'
 
         metadata = {
             'Progenitor mass': progenitor_mass,
@@ -253,7 +253,7 @@ class Walk_2019(_RegistryModel):
 
     def __new__(cls, *, progenitor_mass=None, eos=None):
         check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos)
-        filename = os.path.join(model_path, cls.__name__, f's{progenitor_mass.value:3.1f}c_3DBH_dir1')
+        filename = f's{progenitor_mass.value:3.1f}c_3DBH_dir1'
 
         metadata = {
             'Progenitor mass': progenitor_mass,
