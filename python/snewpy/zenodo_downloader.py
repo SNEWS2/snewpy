@@ -16,8 +16,11 @@ from tqdm.auto import tqdm
 import hashlib
 from typing import Optional
 
+from snewpy import model_path
+
 import logging
 logger = logging.getLogger('FileHandle')
+
 
 def _md5(fname:str) -> str:
     """calculate the md5sum hash of a file."""
@@ -26,6 +29,7 @@ def _md5(fname:str) -> str:
         for chunk in iter(lambda: f.read(4096), b""):
             hash_md5.update(chunk)
     return hash_md5.hexdigest()
+
 
 def _download(src:str, dest:str, chunk_size=8192):
     """Download a file from 'src' to 'dest' and show the progress bar."""
@@ -39,18 +43,28 @@ def _download(src:str, dest:str, chunk_size=8192):
                 for chunk in r.iter_content(chunk_size=chunk_size):
                     size = f.write(chunk)
                     bar.update(size)
-            
+
+
 class ChecksumError(FileNotFoundError):
+    """Raise an exception due to a mismatch in the MD5 checksum.
+    """
     def __init__(self, path, md5_exp, md5_actual):
         super().__init__(f'Checksum error for file {path}: {md5_actual}!={md5_exp}')
     pass
+
+
 class MissingFileError(FileNotFoundError):
+    """Raise an exception due to a missing file.
+    """
     pass
+
 
 @dataclass
 class FileHandle:
     """Object storing local path, remote URL (optional), and MD5 sum
-(optional) for a SNEWPY model file.
+(optional) for a SNEWPY model file. If the requested file is already present
+locally, open it. Otherwise, download it from the remote URL to the desired
+local path.
     """
     path: Path
     remote: str = None
@@ -90,33 +104,60 @@ class FileHandle:
         """ Load and open the local file, return the file object"""
         return open(self.load(), flags)
 
-def from_zenodo(zenodo_id:str, path:str='/tmp/', regex: str = '.*'):
-    """Load files from Zenodo record.
+
+def from_zenodo(zenodo_id:str, model:str, filename:str, path:str=model_path):
+    """Access files on Zenodo.
 
     Parameters
     ----------
     zenodo_id : Zenodo record for model files.
-    path : Path to files for a given model.
-    regex : Pattern to match all possible file names.
+    model : Name of the model class for this model file.
+    filename : Expected filename storing simulation data.
+    path : Local installation path (defaults to astropy cache).
 
     Returns
     -------
-    files : dictionary of FileHandles for a given model.
+    file : FileHandle object.
     """
-    path = Path(path)/str(zenodo_id)
-    path.mkdir(exist_ok=True, parents=True)
-    files_re = re.compile(regex)
-    files = {}
-
     zenodo_url = f'https://zenodo.org/api/records/{zenodo_id}'
+    path = Path(path)/str(model)
+    path.mkdir(exist_ok=True, parents=True)
+
     record = requests.get(zenodo_url).json()
-    for f in record['files']:
-        if files_re.match(f["key"]):
-            files[f['key']] = FileHandle(path = path/f['key'],
-                                         remote= f['links']['self'],
-                                         md5 = f['checksum'].lstrip('md5:')
-                                        )
-    return files
+
+    # Search for model file string in Zenodo request for this record.
+    file = next((_file for _file in record['files'] if _file['key'] == filename), None)
+
+    # If matched, return a FileHandle which takes care of downloading and
+    # checksum (or loads a local data file). Otherwise raise an exception.
+    if file is not None:
+        return FileHandle(path = path/file['key'],
+                                 remote= file['links']['self'],
+                                 md5 = file['checksum'].split(':')[1])
+    else:
+        raise MissingFileError(filename)
+
+
+def from_github(model:str, filename:str, path:str=model_path):
+    """Access files on GitHub.
+
+    Parameters
+    ----------
+    model : Name of the model class for this model file.
+    filename : Expected filename storing simulation data.
+    path : Local installation path (defaults to astropy cache).
+
+    Returns
+    -------
+    file : FileHandle object.
+    """
+    github_url = f'https://github.com/SNEWS2/snewpy/raw/v1.2/models/{model}/{filename}'
+    localpath = Path(path)/str(model)
+    localpath.mkdir(exist_ok=True, parents=True)
+
+    return FileHandle(path = localpath/filename,
+                      remote = github_url)
+
 
 def from_local(path:str, regex: str = '.*'):
     """Load model files from local places.
