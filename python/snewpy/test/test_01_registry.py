@@ -27,7 +27,7 @@ class TestModels(unittest.TestCase):
                   Walk_2018,
                   Walk_2019,
                   Fornax_2019,
-                  Warren_2020,
+#                  Warren_2020,
                   Kuroda_2020,
                   Fornax_2021,
                   Zha_2021]
@@ -227,34 +227,34 @@ class TestModels(unittest.TestCase):
             self.assertEqual(len(f), len(Flavor))
             self.assertEqual(f[Flavor.NU_E].unit, u.erg/(u.MeV * u.s))
 
-    def test_Warren_2020(self):
-        """
-        Instantiate a set of 'Warren 2020' models
-        """
-        masses = np.concatenate((np.linspace(9.25, 12.75, 15),
-                                 np.linspace(13, 30., 171),
-                                 np.linspace(31., 33., 3),
-                                 np.linspace(35, 55, 5),
-                                 np.linspace(60, 80, 3),
-                                 np.linspace(100, 120, 2)))
-
-        for mixing in [1.23, 1.25, 1.27]:
-            for mass in masses:
-                model = Warren_2020(progenitor_mass=mass*u.Msun, turbmixing_param=mixing, eos='SFHo')
-
-                self.assertEqual(model.metadata['Progenitor mass'], float(mass)*u.Msun)
-                self.assertEqual(model.metadata['Turb. mixing param.'], mixing)
-                self.assertEqual(model.metadata['EOS'], 'SFHo')
-
-                # Check that times are in proper units.
-                t = model.get_time()
-                self.assertTrue(t.unit, u.s)
-
-                # Check that we can compute flux dictionaries.
-                f = model.get_initial_spectra(0*u.s, 10*u.MeV)
-                self.assertEqual(type(f), dict)
-                self.assertEqual(len(f), len(Flavor))
-                self.assertEqual(f[Flavor.NU_E].unit, 1./(u.erg * u.s))
+#    def test_Warren_2020(self):
+#        """
+#        Instantiate a set of 'Warren 2020' models
+#        """
+#        masses = np.concatenate((np.linspace(9.25, 12.75, 15),
+#                                 np.linspace(13, 30., 171),
+#                                 np.linspace(31., 33., 3),
+#                                 np.linspace(35, 55, 5),
+#                                 np.linspace(60, 80, 3),
+#                                 np.linspace(100, 120, 2)))
+#
+#        for mixing in [1.23, 1.25, 1.27]:
+#            for mass in masses:
+#                model = Warren_2020(progenitor_mass=mass*u.Msun, turbmixing_param=mixing, eos='SFHo')
+#
+#                self.assertEqual(model.metadata['Progenitor mass'], float(mass)*u.Msun)
+#                self.assertEqual(model.metadata['Turb. mixing param.'], mixing)
+#                self.assertEqual(model.metadata['EOS'], 'SFHo')
+#
+#                # Check that times are in proper units.
+#                t = model.get_time()
+#                self.assertTrue(t.unit, u.s)
+#
+#                # Check that we can compute flux dictionaries.
+#                f = model.get_initial_spectra(0*u.s, 10*u.MeV)
+#                self.assertEqual(type(f), dict)
+#                self.assertEqual(len(f), len(Flavor))
+#                self.assertEqual(f[Flavor.NU_E].unit, 1./(u.erg * u.s))
 
     def test_Kuroda_2020(self):
         """
