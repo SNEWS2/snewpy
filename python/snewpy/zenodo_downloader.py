@@ -160,36 +160,6 @@ def from_github(release_version:str, model:str, filename:str, path:str=model_pat
                       remote = github_url)
 
 
-# def from_local(path:str, regex: str = '.*'):
-#     """Load model files from local places.
-# 
-#     Parameters
-#     ----------
-#     path : Relative path to files for a given model.
-#     regex : Pattern to match all possible file names.
-# 
-#     Returns
-#     -------
-#     files : dictionary of FileHandles for a given model.
-#     """
-#     path = Path(path)
-#     files_re = re.compile(regex)
-#     files = {}
-# 
-#     for f in path.iterdir():
-#         # model files can include subfolders...
-#         if f.is_dir():
-#             for _f in f.iterdir():
-#                 if files_re.match(_f.name):
-#                     files[_f.name] = FileHandle(path = _f)
-#         # ...or not:
-#         else:
-#             if files_re.match(f.name):
-#                 files[f.name] = FileHandle(path = f)
-# 
-#     return files
-
-
 import yaml
 from importlib.resources import files
 
