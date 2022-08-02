@@ -92,7 +92,7 @@ class OConnor_2013(PinchedModel):
     """Model based on the black hole formation simulation in `O'Connor & Ott (2013) <https://arxiv.org/abs/1207.1100>`_.
     """
 
-    def __init__(self, filename, progenitor_mass, eos, metadata={}):
+    def __init__(self, filename, metadata={}):
         """Model Initialization.
 
         Parameters
@@ -102,20 +102,18 @@ class OConnor_2013(PinchedModel):
         eos: str
             Equation of state. Valid values are {eos}.
         """
-        # Open luminosity file.
-        tf = tarfile.open(filename)
+        datafile = model_downloader.get_model_data(self.__class__.__name__, filename)
+        with datafile.open():
+            # Open luminosity file.
+            tf = tarfile.open(datafile.path)
 
         # Extract luminosity data.
-        dataname = 's{:d}_{}_timeseries.dat'.format(int(progenitor_mass.value), eos)
-        _filename = tf.extractfile(dataname)
+        dataname = 's{:d}_{}_timeseries.dat'.format(int(metadata['Progenitor mass'].value), metadata['EOS'])
 
-        # Open the requested filename using the model downloader.
-        datafile = model_downloader.get_model_data(self.__class__.__name__, _filename)
-        with datafile.open():
-            # Read FITS table using the astropy reader.
-            simtab = ascii.read(datafile, names=['TIME', 'L_NU_E', 'L_NU_E_BAR', 'L_NU_X',
-                                                 'E_NU_E', 'E_NU_E_BAR', 'E_NU_X',
-                                                 'RMS_NU_E', 'RMS_NU_E_BAR', 'RMS_NU_X'])
+        # Read FITS table using the astropy reader.
+        simtab = ascii.read(tf.extractfile(dataname), names=['TIME', 'L_NU_E', 'L_NU_E_BAR', 'L_NU_X',
+                                             'E_NU_E', 'E_NU_E_BAR', 'E_NU_X',
+                                             'RMS_NU_E', 'RMS_NU_E_BAR', 'RMS_NU_X'])
 
         simtab['ALPHA_NU_E'] = (2.0 * simtab['E_NU_E'] ** 2 - simtab['RMS_NU_E'] ** 2) / (
                 simtab['RMS_NU_E'] ** 2 - simtab['E_NU_E'] ** 2)
@@ -125,9 +123,6 @@ class OConnor_2013(PinchedModel):
                 simtab['RMS_NU_X'] ** 2 - simtab['E_NU_X'] ** 2)
 
         # note, here L_NU_X is already divided by 4
-
-
-
         super().__init__(simtab, metadata)
 
 

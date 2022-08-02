@@ -291,7 +291,7 @@ class OConnor_2013(PinchedModel): # TODO: Requires changes to the model file to 
 
     # TODO: This in its changed state will likely break user code -- check this before PR!
     # def __init__(self, base, mass=15, eos='LS220'):  # Previous signature
-    def __init__(self, *, progenitor_mass=None, eos=None):
+    def __new__(cls, *, progenitor_mass=None, eos=None):
         """Model Initialization.
 
         Parameters
@@ -309,37 +309,19 @@ class OConnor_2013(PinchedModel): # TODO: Requires changes to the model file to 
             If a combination of parameters is invalid when loading from parameters
 
         """
-        user_params = dict(zip(self.param.keys(), (progenitor_mass, eos)))
-        check_valid_params(self, **user_params)
-        filename = os.path.join(model_path, self.__class__.__name__, f'{eos}_timeseries.tar.gz')
-
-        # Open luminosity file.
-        tf = tarfile.open(filename)
-
-        # Extract luminosity data.
-        dataname = 's{:d}_{}_timeseries.dat'.format(int(progenitor_mass.value), eos)
-        datafile = tf.extractfile(dataname)
-        simtab = ascii.read(datafile, names=['TIME', 'L_NU_E', 'L_NU_E_BAR', 'L_NU_X',
-                                             'E_NU_E', 'E_NU_E_BAR', 'E_NU_X',
-                                             'RMS_NU_E', 'RMS_NU_E_BAR', 'RMS_NU_X'])
-
-        simtab['ALPHA_NU_E'] = (2.0*simtab['E_NU_E']**2 - simtab['RMS_NU_E']**2)/(simtab['RMS_NU_E']**2 - simtab['E_NU_E']**2)
-        simtab['ALPHA_NU_E_BAR'] = (2.0*simtab['E_NU_E_BAR']**2 - simtab['RMS_NU_E_BAR']**2)/(simtab['RMS_NU_E_BAR']**2 - simtab['E_NU_E_BAR']**2)
-        simtab['ALPHA_NU_X'] = (2.0*simtab['E_NU_X']**2 - simtab['RMS_NU_X']**2)/(simtab['RMS_NU_X']**2 - simtab['E_NU_X']**2)
-
-        #note, here L_NU_X is already divided by 4
-        self.filename = datafile
-        self.EOS = eos
-        self.progenitor_mass = progenitor_mass
+        user_params = dict(zip(cls.param.keys(), (progenitor_mass, eos)))
+        check_valid_params(cls, **user_params)
+        filename = f'{eos}_timeseries.tar.gz'
 
         metadata = {
-            'Progenitor mass': self.progenitor_mass,
-            'EOS': self.EOS,
+            'Progenitor mass': progenitor_mass,
+            'EOS': eos,
         }
-        super().__init__(simtab, metadata)
+
+        return loaders.OConnor_2013(filename=filename, metadata=metadata)
 
     # Populate Docstring with param values
-    __init__.__doc__ = __init__.__doc__.format(**_param_abbrv)
+    # __new__.__doc__ = __new__.__doc__.format(**_param_abbrv)
 
 
 class OConnor_2015(_RegistryModel):
