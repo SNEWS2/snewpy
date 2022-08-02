@@ -179,7 +179,7 @@ class Tamborra_2014(_RegistryModel):
 
     def __new__(cls,  *, progenitor_mass=None, eos=None):
         check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos)
-        filename = os.path.join(f's{progenitor_mass.value:3.1f}c_3D_dir1')
+        filename = f's{progenitor_mass.value:3.1f}c_3D_dir1'
 
         metadata = {
             'Progenitor mass': progenitor_mass,
@@ -342,7 +342,7 @@ class OConnor_2015(_RegistryModel):
         user_params = dict(zip(cls.param.keys(), (progenitor_mass, eos)))
         check_valid_params(cls, **user_params)
         # Filename is currently the same regardless of parameters
-        filename = os.path.join(model_path, cls.__name__, 'M1_neutrinos.dat')
+        filename = 'M1_neutrinos.dat'
 
         metadata = {
             'Progenitor mass': progenitor_mass,
@@ -551,7 +551,7 @@ class Fornax_2021(_RegistryModel):
     param = {'progenitor_mass': (list(range(12, 24)) + [25, 26, 26.99]) * u.Msun}
     param_combinations = get_param_combinations(param)
 
-    _param_abbrv =  {'progenitor_mass': '[12..26, 26.99] solMass'}
+    _param_abbrv = {'progenitor_mass': '[12..26, 26.99] solMass'}
 
     def __new__(cls, progenitor_mass=None):
         """Model Initialization.
@@ -563,10 +563,9 @@ class Fornax_2021(_RegistryModel):
         """
         check_valid_params(cls, progenitor_mass=progenitor_mass)
         if progenitor_mass.value.is_integer():
-            fname = f'lum_spec_{int(progenitor_mass.value):2d}M_r10000_dat.h5'
+            filename = f'lum_spec_{int(progenitor_mass.value):2d}M_r10000_dat.h5'
         else:
-            fname = f'lum_spec_{progenitor_mass.value:.2f}M_r10000_dat.h5'
-        filename = os.path.join(model_path, cls.__name__, fname)
+            filename = f'lum_spec_{progenitor_mass.value:.2f}M_r10000_dat.h5'
 
         metadata = {
             'Progenitor mass': progenitor_mass,
