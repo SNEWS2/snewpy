@@ -21,7 +21,7 @@ from astropy.table import Table
 from snewpy import model_path
 from snewpy.models import loaders
 from .base import PinchedModel
-from .registry import check_valid_params, get_param_combinations
+from .util import check_valid_params, get_param_combinations
 
 class _RegistryModel():
     """TODO: empty base class for now?"""

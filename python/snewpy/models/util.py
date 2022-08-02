@@ -14,7 +14,7 @@ from . import ccsn, presn
 import itertools as it
 
 
-def get_parameter_combinations(param, func_isvalid=None):
+def get_param_combinations(param, func_isvalid=None):
     """Returns all valid combinations of parameters for a given SNEWPY register model.
 
     Parameters
