@@ -7,13 +7,16 @@ possible model files. The model data files are stored in a dictionary
 returned by the function ``snewpy.zenodo_downloader.load_registry``.
 """
 
-from dataclasses import dataclass
-from pathlib import Path
-import requests
-import re
-from contextlib import contextmanager, AbstractContextManager
-from tqdm.auto import tqdm
 import hashlib
+import re
+import requests
+import yaml
+
+from contextlib import contextmanager, AbstractContextManager
+from dataclasses import dataclass
+from importlib.resources import open_text
+from pathlib import Path
+from tqdm.auto import tqdm
 from typing import Optional
 
 from snewpy import model_path
@@ -158,10 +161,6 @@ def from_github(release_version:str, model:str, filename:str, path:str=model_pat
 
     return FileHandle(path = localpath/filename,
                       remote = github_url)
-
-
-import yaml
-from importlib.resources import open_text
 
 
 def get_model_data(model:str, filename:str, path:str=model_path):
