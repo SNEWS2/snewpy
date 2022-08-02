@@ -181,7 +181,8 @@ def get_model_data(model:str, filename:str, path:str=model_path):
     params = { 'model':model, 'filename':filename, 'path':path }
 
     # Parse YAML file with model repository configurations.
-    configfile = files('snewpy').joinpath('model_files.yml')
+    configfile = files('snewpy').joinpath('models/model_files.yml')
+
     with open(configfile, 'r') as f:
         config = yaml.safe_load(f)
         models = config['models']
