@@ -153,7 +153,7 @@ class TestModels(unittest.TestCase):
             mfile = 'Fornax_2019/lum_spec_{}M.h5'.format(mass)
             model = Fornax_2019(os.path.join(model_path, mfile))
 
-            self.assertEqual(model.progenitor_mass, mass*u.Msun)
+            self.assertEqual(model.metadata['Progenitor mass'], mass*u.Msun)
 
             # Check that times are in proper units.
             t = model.get_time()
@@ -235,7 +235,7 @@ class TestModels(unittest.TestCase):
             mfile = 'Fornax_2021/lum_spec_{}M_r10000_dat.h5'.format(mass)
             model = Fornax_2021(os.path.join(model_path, mfile))
 
-            self.assertEqual(model.progenitor_mass, float(mass)*u.Msun)
+            self.assertEqual(model.metadata['Progenitor mass'], float(mass)*u.Msun)
 
             # Check that times are in proper units.
             t = model.get_time()
