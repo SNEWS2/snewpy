@@ -9,6 +9,7 @@ SNEWPY is installed under /home/user/.astropy/cache via snewpy.__init__.py.
 from astropy.units.quantity import Quantity
 from astropy.units import UnitTypeError, get_physical_type
 from snewpy import model_path, get_models
+import numpy as np
 import logging
 from . import ccsn, presn
 import itertools as it
@@ -30,6 +31,13 @@ def get_param_combinations(param, func_isvalid=None):
     valid_combinations: tuple[dict]
         A tuple of all valid parameter combinations stored as Dictionaries
     """
+    # Input sanitization
+    param = dict(param)
+    for key, val in param.items():
+        if not isinstance(val, (list, Quantity)):
+            param[key] = [val]
+        elif isinstance(val, Quantity) and val.size == 1:
+            param[key] = [val]
     combos = tuple(dict(zip(param, combo)) for combo in it.product(*param.values()))
     return tuple(c for c in filter(func_isvalid, combos))
 
@@ -127,7 +135,8 @@ def check_valid_params(model, **user_params):
             if get_physical_type(user_param.unit) != get_physical_type(allowed_params.unit):
                 raise UnitTypeError(f"Incorrect units {user_param.unit} provided for parameter {key}, "
                                     f"expected {allowed_params.unit}")
-            elif user_param.to(allowed_params.unit).value in allowed_params.value:
+
+            elif np.isin(user_param.to(allowed_params.unit).value, allowed_params.value):
                 continue
             else:
                 raise ValueError(f"Invalid value '{user_param}' provided for parameter {key}, "
@@ -149,8 +158,7 @@ def check_valid_params(model, **user_params):
                              f"allowed value(s): {allowed_params}")
 
     # Check Combinations (Logic lives inside model subclasses under model.isvalid_param_combo)
-    if hasattr(model, "isvalid_param_combo"):
-        if not model.isvalid_param_combo(**user_params):
-            raise ValueError(
-                f"Invalid parameter combination. See {model.__class__.__name__}.get_param_combinations for a "
-                "list of allowed parameter combinations.")
+    if user_params not in model.param_combinations:
+        raise ValueError(
+            f"Invalid parameter combination. See {model.__class__.__name__}.param_combinations for a "
+            "list of allowed parameter combinations.")
