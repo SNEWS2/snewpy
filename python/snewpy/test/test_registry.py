@@ -85,6 +85,26 @@ class TestModels(unittest.TestCase):
             self.assertEqual(len(f), len(Flavor))
             self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
 
+    def test_OConnor_2013(self):
+        """
+        Instantiate a set of "O'Connor 2015" models
+        """
+        for mass in list(range(12, 34)) + list(range(35, 61, 5)) + [70, 80, 100, 120]:
+            model = OConnor_2013(progenitor_mass=mass*u.Msun, eos='LS220')
+
+            self.assertEqual(model.metadata['EOS'], 'LS220')
+            self.assertEqual(model.metadata['Progenitor mass'].value, mass)
+
+            # Check that times are in proper units.
+            t = model.get_time()
+            self.assertTrue(t.unit, u.s)
+
+            # Check that we can compute flux dictionaries.
+            f = model.get_initial_spectra(0*u.s, 10*u.MeV)
+            self.assertEqual(type(f), dict)
+            self.assertEqual(len(f), len(Flavor))
+            self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
+
 
     def test_OConnor_2015(self):
         """
