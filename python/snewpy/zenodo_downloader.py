@@ -139,6 +139,27 @@ def from_zenodo(zenodo_id:str, model:str, filename:str, path:str=model_path):
         raise MissingFileError(filename)
 
 
+def from_github(model:str, filename:str, path:str=model_path):
+    """Access files on GitHub.
+
+    Parameters
+    ----------
+    model : Name of the model class for this model file.
+    filename : Expected filename storing simulation data.
+    path : Local installation path (defaults to astropy cache).
+
+    Returns
+    -------
+    file : FileHandle object.
+    """
+    github_url = f'https://github.com/SNEWS2/snewpy/raw/v1.2/models/{model}/{filename}'
+    localpath = Path(path)/str(model)
+    localpath.mkdir(exist_ok=True, parents=True)
+
+    return FileHandle(path = localpath/filename,
+                      remote = github_url)
+
+
 def from_local(path:str, regex: str = '.*'):
     """Load model files from local places.
 
