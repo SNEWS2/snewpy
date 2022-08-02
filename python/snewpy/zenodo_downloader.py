@@ -123,7 +123,6 @@ def from_zenodo(zenodo_id:str, model:str, filename:str, path:str=model_path):
     path = Path(path)/str(model)
     path.mkdir(exist_ok=True, parents=True)
 
-    zenodo_url = f'https://zenodo.org/api/records/{zenodo_id}'
     record = requests.get(zenodo_url).json()
 
     # Search for model file string in Zenodo request for this record.
