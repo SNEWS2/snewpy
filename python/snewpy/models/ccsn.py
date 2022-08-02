@@ -452,7 +452,7 @@ class Warren_2020(_RegistryModel):
         user_params = dict(zip(cls.param.keys(), (progenitor_mass, turbmixing_param, eos)))
         check_valid_params(cls, **user_params)
 
-        fname = f'stir_a{turbmixing_param:3.2f}/stir_multimessenger_a{turbmixing_param:3.2f}_'
+        fname = f'stir_multimessenger_a{turbmixing_param:3.2f}_'
         if progenitor_mass.value.is_integer():
             if progenitor_mass.value in (31, 32, 33, 35, 40, 45, 50, 55, 60, 70, 80, 100, 120):
                 fname += f'm{int(progenitor_mass.value):d}.h5'
@@ -460,7 +460,6 @@ class Warren_2020(_RegistryModel):
                 fname += f'm{progenitor_mass.value:.1f}.h5'
         else:
             fname += f'm{progenitor_mass.value:g}.h5'
-        filename = os.path.join(model_path, cls.__name__, fname)
 
         # Set model metadata.
         metadata = {
@@ -469,7 +468,7 @@ class Warren_2020(_RegistryModel):
             'EOS': eos,
         }
 
-        return loaders.Warren_2020(filename, metadata)
+        return loaders.Warren_2020(fname, metadata)
 
     # Populate Docstring with abbreviated param values
     __new__.__doc__ = __new__.__doc__.format(**_param_abbrv)
