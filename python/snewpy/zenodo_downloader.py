@@ -16,6 +16,8 @@ from tqdm.auto import tqdm
 import hashlib
 from typing import Optional
 
+from snewpy import model_path
+
 import logging
 logger = logging.getLogger('FileHandle')
 
@@ -44,6 +46,7 @@ class ChecksumError(FileNotFoundError):
     def __init__(self, path, md5_exp, md5_actual):
         super().__init__(f'Checksum error for file {path}: {md5_actual}!={md5_exp}')
     pass
+
 class MissingFileError(FileNotFoundError):
     pass
 
@@ -117,6 +120,37 @@ def from_zenodo(zenodo_id:str, path:str='/tmp/', regex: str = '.*'):
                                          md5 = f['checksum'].lstrip('md5:')
                                         )
     return files
+
+
+def get_zenodo(zenodo_id:str, model:str, filename:str, path:str=model_path):
+    """Access files on Zenodo.
+
+    Parameters
+    ----------
+    zenodo_id : Zenodo record for model files.
+    model : Name of the model class for this model file.
+    filename : Expected filename storing simulation data.
+    path : Local installation path (defaults to astropy cache).
+
+    Returns
+    -------
+    file : FileHandle object.
+    """
+    zenodo_url = f'https://zenodo.org/api/records/{zenodo_id}'
+    path = Path(path)/str(model)
+    path.mkdir(exist_ok=True, parents=True)
+
+    zenodo_url = f'https://zenodo.org/api/records/{zenodo_id}'
+    record = requests.get(zenodo_url).json()
+
+    file = next((_file for _file in record['files'] if _file['key'] == filename), None)
+    if file is not None:
+        return FileHandle(path = path/file['key'],
+                                 remote= file['links']['self'],
+                                 md5 = file['checksum'].lstrip('md5:'))
+    else:
+        raise MissingFileError(filename)
+
 
 def from_local(path:str, regex: str = '.*'):
     """Load model files from local places.
