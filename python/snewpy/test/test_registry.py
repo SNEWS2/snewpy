@@ -5,7 +5,7 @@ import unittest
 
 from snewpy.neutrino import Flavor
 from snewpy.flavor_transformation import NoTransformation
-from snewpy.models.ccsn import Nakazato_2013, Tamborra_2014, OConnor_2015, \
+from snewpy.models.ccsn import Nakazato_2013, Tamborra_2014, OConnor_2013, OConnor_2015, \
                           Sukhbold_2015, Bollig_2016, Walk_2018, \
                           Walk_2019, Fornax_2019, Warren_2020, \
                           Kuroda_2020, Fornax_2021, Zha_2021
@@ -16,6 +16,25 @@ import numpy as np
 
 
 class TestModels(unittest.TestCase):
+
+    def test_param_combinations(self):
+        models = [Nakazato_2013,
+                  Tamborra_2014,
+                  OConnor_2013,
+                  OConnor_2015,
+                  Sukhbold_2015,
+                  Bollig_2016,
+                  Walk_2018,
+                  Walk_2019,
+                  Fornax_2019,
+                  Warren_2020,
+                  Kuroda_2020,
+                  Fornax_2021,
+                  Zha_2021]
+
+        for model in models:
+            for pc in model.param_combinations:
+                model(**pc)  # Initialize
 
     def test_Nakazato_2013(self):
         """
