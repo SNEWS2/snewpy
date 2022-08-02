@@ -14,6 +14,26 @@ from . import ccsn, presn
 import itertools as it
 
 
+def get_parameter_combinations(param, func_isvalid=None):
+    """Returns all valid combinations of parameters for a given SNEWPY register model.
+
+    Parameters
+    ----------
+    param : dict
+        Dictionary of SNEWPY model parameter values.
+    func_isvalid : callable or None
+        Callable that acts upon argument param that returns True if a particular combinations of parameters is valid.
+        If None is provided, all combinations are considered valid
+
+    Returns
+    -------
+    valid_combinations: tuple[dict]
+        A tuple of all valid parameter combinations stored as Dictionaries
+    """
+    combos = tuple(dict(zip(param, combo)) for combo in it.product(*param.values()))
+    return tuple(c for c in filter(func_isvalid, combos))
+
+
 def init_model(model_name, download=True, download_dir=model_path, **user_param):
     """Attempts to retrieve instantiated SNEWPY model using model class name and model parameters.
     If a model name is valid, but is not found and `download`=True, this function will attempt to download the model
@@ -198,39 +218,3 @@ def check_valid_params(model, **user_params):
 #     # Check parameter combination for validity (model-specific)
 #     check_param_combo(model, **user_param)
 
-
-def get_param_combinations(model, **user_param):
-    """Returns all valid combinations of parameters for a given model. If specific parameters are provided as a
-    keyword argument, this will return only those combinations that match the requested parameters.
-    See the __init__ of a specific model for descriptions of the available parameters.
-
-    Parameters
-    ----------
-    model : snewpy.model.SupernovaModel
-        Model class used to build combinations
-    user_param : varies
-        User-requested model parameters matched against valid combinations.
-        NOTE: This must be provided as a kwargs that match the keys of model.param
-
-    Returns
-    -------
-    valid_combinations: tuple[dict]
-        A tuple of all valid combinations matching the requested parameters (if any). Combinations are stored as
-        dictionaries that are ready-to-use for model instantiation. If no valid combinations match the given parameters,
-        a zero-length tuple will be returned.
-
-    Raises
-    ------
-    ValueError
-        If an invalid value for a model parameter is provided.
-    """
-    # check_param_names(model, **user_param)
-    param = {}
-    for key, val, user_val in zip(model.param.keys(), model.param.values(), user_param.values()):
-        if user_val is not None and user_val in val:
-            param.update({key: [user_val]})
-        elif user_val is not None and user_val not in val:
-            raise ValueError(f"Invalid value for parameter {key}. Given {user_val}, but expected one from {val}")
-        else:
-            param.update({key: val})
-    return tuple(dict(zip(param, c)) for c in it.product(*param.values()) if model.isvalid_param_combo(*c))

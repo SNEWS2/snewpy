@@ -8,7 +8,7 @@ using ``snewpy.get_models("<model_name>")``.
 
 .. _Garching Supernova Archive: https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/
 """
-
+import itertools
 import logging
 import os
 import tarfile
@@ -54,6 +54,12 @@ class Nakazato_2013(_RegistryModel):
              'revival_time': [0, 100, 200, 300] * u.ms,
              'metallicity': [0.02, 0.004],
              'eos': ['LS220', 'shen', 'togashi']}
+
+    _isvalid_combo = lambda p: (p['revival_time'] == 0 * u.ms and p['progenitor_mass'] == 30 * u.Msun and
+                                p['metallicity'] == 0.004) or \
+                               (p['revival_time'] != 0 * u.ms and p['eos'] == 'shen' and
+                                not (p['progenitor_mass'] == 30 * u.Msun and p['metallicity'] != 0.004))
+    combinations = get_param_combinations(param, _isvalid_combo)
 
     def __new__(cls, *, progenitor_mass=None, revival_time=None, metallicity=None, eos=None):
         """Model initialization.
@@ -599,6 +605,8 @@ class Fornax_2021(_RegistryModel):
         """
     param = {'progenitor_mass': (list(range(12, 24)) + [25, 26, 26.99]) * u.Msun}
 
+    _param_abbrv =  {'progenitor_mass': '[12..26, 26.99] solMass'}
+
     def __new__(cls, progenitor_mass=None):
         """Model Initialization.
 
@@ -621,7 +629,7 @@ class Fornax_2021(_RegistryModel):
         return loaders.Fornax_2021(filename, metadata)
 
     # Populate Docstring with abbreviated param values
-    __new__.__doc__ = __new__.__doc__.format(**param)
+    __new__.__doc__ = __new__.__doc__.format(**_param_abbrv)
 
 class SNOwGLoBES:
     """A model that does not inherit from SupernovaModel (yet) and imports a group of SNOwGLoBES files."""
