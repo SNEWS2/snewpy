@@ -7,7 +7,7 @@ from astropy import units as u
 from astropy.table import Table, join
 from astropy.units.quantity import Quantity
 from scipy.special import loggamma
-from snewpy import model_downloader
+from snewpy import _model_downloader
 
 from snewpy.neutrino import Flavor
 from functools import wraps
@@ -317,7 +317,7 @@ class _GarchingArchiveModel(PinchedModel):
             _aname = 'ALPHA_{}'.format(flavor.name)
 
             # Open the requested filename using the model downloader.
-            datafile = model_downloader.get_model_data(self.__class__.__name__, _filename)
+            datafile = _model_downloader.get_model_data(self.__class__.__name__, _filename)
 
             with datafile.open():
                 simtab = Table.read(datafile.path,

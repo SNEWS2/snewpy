@@ -24,7 +24,7 @@ except ImportError:
 
 from snewpy.models.base import PinchedModel, _GarchingArchiveModel, SupernovaModel
 from snewpy.neutrino import Flavor
-from snewpy import model_downloader
+from snewpy import _model_downloader
 
 class Nakazato_2013(PinchedModel):
     def __init__(self, filename, metadata={}):
@@ -41,7 +41,7 @@ class Nakazato_2013(PinchedModel):
             If a file for the chosen model parameters cannot be found
         """
         # Open the requested filename using the model downloader.
-        datafile = model_downloader.get_model_data(self.__class__.__name__, filename)
+        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
         with datafile.open():
             # Read FITS table using the astropy reader.
             simtab = Table.read(datafile.path)
@@ -59,7 +59,7 @@ class Sukhbold_2015(PinchedModel):
             Absolute or relative path to FITS file with model data.
         """
         # Open the requested filename using the model downloader.
-        datafile = model_downloader.get_model_data(self.__class__.__name__, filename)
+        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
         with datafile.open():
             # Read FITS table using the astropy reader.
             simtab = Table.read(datafile.path)
@@ -99,7 +99,7 @@ class OConnor_2013(PinchedModel):
         filename : str
             Absolute or relative path to FITS file with model data.
         """
-        datafile = model_downloader.get_model_data(self.__class__.__name__, filename)
+        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
         with datafile.open():
             # Open luminosity file.
             tf = tarfile.open(datafile.path)
@@ -135,7 +135,7 @@ class OConnor_2015(PinchedModel):
             Absolute or relative path to FITS file with model data.
         """
 
-        datafile = model_downloader.get_model_data(self.__class__.__name__, filename)
+        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
         with datafile.open():
             simtab = Table.read(datafile.path,
                                 names=['TIME', 'L_NU_E', 'L_NU_E_BAR', 'L_NU_X',
@@ -171,7 +171,7 @@ class Zha_2021(PinchedModel):
             Absolute or relative path to file prefix, we add nue/nuebar/nux
         """
         # Open the requested filename using the model downloader.
-        datafile = model_downloader.get_model_data(self.__class__.__name__, filename)
+        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
         with datafile.open():
             simtab = Table.read(datafile.path,
                                 names=['TIME', 'L_NU_E', 'L_NU_E_BAR', 'L_NU_X',
@@ -212,7 +212,7 @@ class Warren_2020(PinchedModel):
             Absolute or relative path to file prefix, we add nue/nuebar/nux
         """
         # Open the requested filename using the model downloader.
-        datafile = model_downloader.get_model_data(self.__class__.__name__, filename)
+        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
         with datafile.open():
             # Read data from HDF5 files, then store.
             f = h5py.File(datafile.path, 'r')
@@ -257,7 +257,7 @@ class Kuroda_2020(PinchedModel):
         """
 
         # Open the requested filename using the model downloader.
-        datafile = model_downloader.get_model_data(self.__class__.__name__, filename)
+        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
         with datafile.open():
             # Read ASCII data.
             simtab = Table.read(datafile.path, format='ascii')
@@ -389,7 +389,7 @@ class Fornax_2019(SupernovaModel):
                                 Flavor.NU_X_BAR: 'nu2'}
 
             # Open the requested filename using the model downloader.
-            datafile = model_downloader.get_model_data(self.__class__.__name__, filename)
+            datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
             with datafile.open():
                 # Open HDF5 data file.
                 self._h5file = h5py.File(datafile.path, 'r')
@@ -657,7 +657,7 @@ class Fornax_2021(SupernovaModel):
         self.metadata = metadata
 
         # Open the requested filename using the model downloader.
-        datafile = model_downloader.get_model_data(self.__class__.__name__, filename)
+        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
         with datafile.open():
             # Open HDF5 data file.
             _h5file = h5py.File(datafile.path, 'r')
