@@ -18,7 +18,6 @@ from astropy import units as u
 from astropy.io import ascii
 from astropy.table import Table
 
-from snewpy import model_path
 from snewpy.models import loaders
 from .base import PinchedModel
 from .util import check_valid_params, get_param_combinations
