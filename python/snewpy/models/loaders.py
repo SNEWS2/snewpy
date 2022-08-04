@@ -213,9 +213,22 @@ class Warren_2020(PinchedModel):
         """
         # Open the requested filename using the model downloader.
         datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
+
+        dataname = os.path.splitext(os.path.basename(filename))[0]
+
+        if metadata["Progenitor mass"].value.is_integer():
+            if metadata["Progenitor mass"].value in (31, 32, 33, 35, 40, 45, 50, 55, 60, 70, 80, 100, 120):
+                dataname += f'_m{int(metadata["Progenitor mass"].value):d}.h5'
+            else:
+                dataname += f'_m{metadata["Progenitor mass"].value:.1f}.h5'
+        else:
+            dataname += f'_m{metadata["Progenitor mass"].value:g}.h5'
+
         with datafile.open():
+            # Open luminosity file.
+            tf = tarfile.open(datafile.path)
             # Read data from HDF5 files, then store.
-            f = h5py.File(datafile.path, 'r')
+            f = h5py.File(tf.extractfile(dataname), 'r')
             simtab = Table()
 
             for i in range(len(f['nue_data']['lum'])):
