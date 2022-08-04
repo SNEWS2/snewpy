@@ -84,7 +84,7 @@ class TestModels(unittest.TestCase):
         """
         Instantiate a set of "O'Connor 2015" models
         """
-        mfile = 'OConnor_2015/M1_neutrinos.dat'
+        mfile = 'M1_neutrinos.dat'
         model = OConnor_2015(os.path.join(model_path, mfile))
 
         # Check that times are in proper units.
@@ -223,9 +223,13 @@ class TestModels(unittest.TestCase):
 
         for mixing in [1.23, 1.25, 1.27]:
             for mass in masses:
-                mfile = 'Warren_2020/stir_a{}/stir_multimessenger_a{}_m{}.h5'.format(mixing, mixing, mass)
-
-                model = Warren_2020(os.path.join(model_path, mfile))
+                mfile = 'stir_multimessenger_a{}.tar'.format(mixing)
+                metadata = {
+                    'Progenitor mass': float(mass) * u.Msun,
+                    'Turb. mixing param.': mixing,
+                    'EOS': 'SFHo',
+                }
+                model = Warren_2020(mfile, metadata)
 
                 # Check that times are in proper units.
                 t = model.get_time()
