@@ -4,7 +4,10 @@
 import unittest
 
 from snewpy.neutrino import Flavor
-from snewpy.models.loaders import Fornax_2019, Fornax_2021, Nakazato_2013, Tamborra_2014, OConnor_2015, Sukhbold_2015, Bollig_2016, Walk_2018, Walk_2019, Warren_2020, Kuroda_2020, Zha_2021
+from snewpy.models.loaders import Nakazato_2013, Tamborra_2014, OConnor_2013, OConnor_2015, \
+                                  Sukhbold_2015, Bollig_2016, Walk_2018, \
+                                  Walk_2019, Fornax_2019, Warren_2020, \
+                                  Kuroda_2020, Fornax_2021, Zha_2021
 
 from astropy import units as u
 from snewpy import model_path
@@ -51,6 +54,31 @@ class TestModels(unittest.TestCase):
             self.assertEqual(type(f), dict)
             self.assertEqual(len(f), len(Flavor))
             self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
+
+    def test_OConnor_2013(self):
+        """
+        Instantiate a set of "O'Connor 2015" models
+        """
+        for mass in list(range(12, 34)) + list(range(35, 61, 5)) + [70, 80, 100, 120]:
+            for eos in ['LS220', 'HShen']:
+                metadata = {
+                    'Progenitor mass': mass * u.Msun,
+                    'EOS': eos,
+                }
+                model = OConnor_2013(filename=f'{eos}_timeseries.tar.gz', metadata=metadata)
+
+                self.assertEqual(model.metadata['EOS'], eos)
+                self.assertEqual(model.metadata['Progenitor mass'].value, mass)
+
+                # Check that times are in proper units.
+                t = model.get_time()
+                self.assertTrue(t.unit, u.s)
+
+                # Check that we can compute flux dictionaries.
+                f = model.get_initial_spectra(0*u.s, 10*u.MeV)
+                self.assertEqual(type(f), dict)
+                self.assertEqual(len(f), len(Flavor))
+                self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
 
     def test_OConnor_2015(self):
         """
