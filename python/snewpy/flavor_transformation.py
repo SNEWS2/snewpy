@@ -162,6 +162,201 @@ class FlavorTransformation(ABC):
         pass
 
 
+class CompositeTransformation(FlavorTransformation):
+    """Composite surival probabilities for a set of transformations.
+    """
+
+    def __init__(self, *xforms):
+        """Initialize with an arbitrary list of FlavorTransformation objects.
+        The transformations are applied in the order they are provided.
+
+        Parameters
+        ----------
+        *xforms : FlavorTransformation
+            A variable argument list of FlavorTransformation objects.
+        """
+
+        # Store a list of transformations. The first transformation in the list
+        # is applied first, the second is applied second, etc.
+        self._xforms = xforms
+
+        # Composed transformation matrices for neutrinos and antineutrinos.
+        self._U_nu  = np.identity(2, dtype=float)
+        self._U_bar = np.identity(2, dtype=float)
+
+        # Time and energy state variables used to "memoize" the calculation.
+        self._t = None
+        self._E = None
+
+    def _compute_matrices(self, t, E):
+        """Compute nu/nu-bar transformation matrices at a given time and energy.
+        """
+        # Only compute the matrix if it has not been previously computed for
+        # this t and E.
+        if t != self._t or E != self._E:
+            self._t = t
+            self._E = E
+
+            self._U_nu  = np.identity(2, dtype=float)
+            self._U_bar = np.identity(2, dtype=float)
+
+            # Compose the transformations in the given order.
+            for xform in self._xforms:
+                # Neutrino transformation matrix.
+                N = np.array([[xform.prob_ee(t, E), xform.prob_ex(t, E)],
+                              [xform.prob_xe(t, E), xform.prob_xx(t, E)]])
+                self._U_nu = np.einsum('ij,jk', N, self._U_nu)
+
+                # Antineutrino transformation matrix.
+                A = np.array([[xform.prob_eebar(t, E), xform.prob_exbar(t, E)],
+                              [xform.prob_xebar(t, E), xform.prob_xxbar(t, E)]])
+                self._U_bar = np.einsum('ij,jk', A, self._U_bar)
+
+    def prob_ee(self, t, E):
+        """Electron neutrino survival probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """
+        self._compute_matrices(t, E)
+        return self._U_nu[0,0]
+
+    def prob_ex(self, t, E):
+        """X -> e neutrino transition probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """
+        self._compute_matrices(t, E)
+        return self._U_nu[0,1]
+
+    def prob_xe(self, t, E):
+        """e -> X neutrino transition probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """
+        self._compute_matrices(t, E)
+        return self._U_nu[1,0]
+
+    def prob_xx(self, t, E):
+        """Flavor X neutrino survival probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """
+        self._compute_matrices(t, E)
+        return self._U_nu[1,1]
+
+    def prob_eebar(self, t, E):
+        """Electron antineutrino survival probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """
+        self._compute_matrices(t, E)
+        return self._U_bar[0,0]
+
+    def prob_exbar(self, t, E):
+        """X -> e antineutrino transition probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """
+        self._compute_matrices(t, E)
+        return self._U_bar[0,1]
+
+    def prob_xebar(self, t, E):
+        """e -> X antineutrino transition probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """
+        self._compute_matrices(t, E)
+        return self._U_bar[1,0]
+
+    def prob_xxbar(self, t, E):
+        """Flavor X antineutrino survival probability.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        prob : float or ndarray
+            Transition probability.
+        """
+        self._compute_matrices(t, E)
+        return self._U_bar[1,1]
+
+
 class NoTransformation(FlavorTransformation):
     """Survival probabilities for no oscillation case."""
 
