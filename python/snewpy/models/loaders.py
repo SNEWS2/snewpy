@@ -69,23 +69,19 @@ class Sukhbold_2015(PinchedModel):
 
 
 class Tamborra_2014(_GarchingArchiveModel):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    pass
 
 
 class Bollig_2016(_GarchingArchiveModel):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    pass
 
 
 class Walk_2018(_GarchingArchiveModel):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    pass
 
 
 class Walk_2019(_GarchingArchiveModel):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    pass
 
 
 class OConnor_2013(PinchedModel):

@@ -189,11 +189,12 @@ class Tamborra_2014(_RegistryModel):
         return loaders.Tamborra_2014(filename=filename, metadata=metadata)
 
     # Populate Docstring with param values
-    __new__.__doc__ = loaders._GarchingArchiveModel.__init__.__doc__.format(**param)
+    __new__.__doc__ = loaders.Tamborra_2014.__init__.__doc__.format(**param)
 
 
 class Bollig_2016(_RegistryModel):
-    """Model based on simulations from `Bollig et al. (2016) <https://arxiv.org/abs/1508.00785>`_. Models were taken, with permission, from the Garching Supernova Archive.
+    """Model based on simulations from `Bollig et al. (2016) <https://arxiv.org/abs/1508.00785>`_.
+    Models were taken, with permission, from the Garching Supernova Archive.
     """
 
     param = {'progenitor_mass': [11.2, 27.] * u.Msun,
@@ -211,8 +212,8 @@ class Bollig_2016(_RegistryModel):
 
         return loaders.Bollig_2016(filename=filename, metadata=metadata)
 
-    # Populate Docstring with param values
-    # __new__.__doc__ = loaders.Bollig_2016.__init__.__doc__.format(**param)
+    # Populate Docstring with param values (Docstring is inherited from base._GarchingArchiveModel.__init__)
+    __new__.__doc__ = loaders.Bollig_2016.__init__.__doc__.format(**param)
 
 
 class Walk_2018(_RegistryModel):
@@ -236,8 +237,8 @@ class Walk_2018(_RegistryModel):
 
         return loaders.Walk_2018(filename=filename, metadata=metadata)
 
-    # Populate Docstring with param values
-    # __new__.__doc__ = loaders.Walk_2018.__init__.__doc__.format(**param)
+    # Populate Docstring with param values (Docstring is inherited from base._GarchingArchiveModel.__init__)
+    __new__.__doc__ = loaders.Walk_2018.__init__.__doc__.format(**param)
 
 
 class Walk_2019(_RegistryModel):
@@ -261,8 +262,8 @@ class Walk_2019(_RegistryModel):
 
         return loaders.Walk_2019(filename=filename, metadata=metadata)
 
-    # Populate Docstring with param values
-    # __new__.__doc__ = loaders.Walk_2019.__init__.__doc__.format(**param)
+    # Populate Docstring with param values (Docstring is inherited from base._GarchingArchiveModel.__init__)
+    __new__.__doc__ = loaders.Walk_2019.__init__.__doc__.format(**param)
 
 
 class OConnor_2013(PinchedModel): # TODO: Requires changes to the model file to have one file per model instead of a single gzip archive!
