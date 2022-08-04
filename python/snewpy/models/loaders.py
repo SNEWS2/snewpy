@@ -98,16 +98,15 @@ class OConnor_2013(PinchedModel):
         datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
         with datafile.open():
             # Open luminosity file.
-            tf = tarfile.open(datafile.path)
+            with tarfile.open(datafile.path) as tf:
 
-        # Extract luminosity data.
-        dataname = 's{:d}_{}_timeseries.dat'.format(int(metadata['Progenitor mass'].value), metadata['EOS'])
+                # Extract luminosity data.
+                dataname = 's{:d}_{}_timeseries.dat'.format(int(metadata['Progenitor mass'].value), metadata['EOS'])
 
-        # Read FITS table using the astropy reader.
-        simtab = ascii.read(tf.extractfile(dataname), names=['TIME', 'L_NU_E', 'L_NU_E_BAR', 'L_NU_X',
-                                             'E_NU_E', 'E_NU_E_BAR', 'E_NU_X',
-                                             'RMS_NU_E', 'RMS_NU_E_BAR', 'RMS_NU_X'])
-
+                # Read FITS table using the astropy reader.
+                simtab = ascii.read(tf.extractfile(dataname), names=['TIME', 'L_NU_E', 'L_NU_E_BAR', 'L_NU_X',
+                                                                     'E_NU_E', 'E_NU_E_BAR', 'E_NU_X',
+                                                                     'RMS_NU_E', 'RMS_NU_E_BAR', 'RMS_NU_X'])
         simtab['ALPHA_NU_E'] = (2.0 * simtab['E_NU_E'] ** 2 - simtab['RMS_NU_E'] ** 2) / (
                 simtab['RMS_NU_E'] ** 2 - simtab['E_NU_E'] ** 2)
         simtab['ALPHA_NU_E_BAR'] = (2.0 * simtab['E_NU_E_BAR'] ** 2 - simtab['RMS_NU_E_BAR'] ** 2) / (
@@ -222,33 +221,34 @@ class Warren_2020(PinchedModel):
 
         with datafile.open():
             # Open luminosity file.
-            tf = tarfile.open(datafile.path)
-            # Read data from HDF5 files, then store.
-            f = h5py.File(tf.extractfile(dataname), 'r')
-            simtab = Table()
+            with tarfile.open(datafile.path) as tf:
+                # Read data from HDF5 files, then store.
+                f = h5py.File(tf.extractfile(dataname), 'r')
 
-            for i in range(len(f['nue_data']['lum'])):
-                if f['sim_data']['shock_radius'][i][1] > 0.00001:
-                    bounce = f['sim_data']['shock_radius'][i][0]
-                    break
+                simtab = Table()
 
-            simtab['TIME'] = f['nue_data']['lum'][:, 0] - bounce
-            simtab['L_NU_E'] = f['nue_data']['lum'][:, 1] * 1e51
-            simtab['L_NU_E_BAR'] = f['nuae_data']['lum'][:, 1] * 1e51
-            simtab['L_NU_X'] = f['nux_data']['lum'][:, 1] * 1e51
-            simtab['E_NU_E'] = f['nue_data']['avg_energy'][:, 1]
-            simtab['E_NU_E_BAR'] = f['nuae_data']['avg_energy'][:, 1]
-            simtab['E_NU_X'] = f['nux_data']['avg_energy'][:, 1]
-            simtab['RMS_NU_E'] = f['nue_data']['rms_energy'][:, 1]
-            simtab['RMS_NU_E_BAR'] = f['nuae_data']['rms_energy'][:, 1]
-            simtab['RMS_NU_X'] = f['nux_data']['rms_energy'][:, 1]
+                for i in range(len(f['nue_data']['lum'])):
+                    if f['sim_data']['shock_radius'][i][1] > 0.00001:
+                        bounce = f['sim_data']['shock_radius'][i][0]
+                        break
 
-            simtab['ALPHA_NU_E'] = (2.0 * simtab['E_NU_E'] ** 2 - simtab['RMS_NU_E'] ** 2) / \
-                (simtab['RMS_NU_E'] ** 2 - simtab['E_NU_E'] ** 2)
-            simtab['ALPHA_NU_E_BAR'] = (2.0 * simtab['E_NU_E_BAR'] ** 2 - simtab['RMS_NU_E_BAR']
-                                        ** 2) / (simtab['RMS_NU_E_BAR'] ** 2 - simtab['E_NU_E_BAR'] ** 2)
-            simtab['ALPHA_NU_X'] = (2.0 * simtab['E_NU_X'] ** 2 - simtab['RMS_NU_X'] ** 2) / \
-                (simtab['RMS_NU_X'] ** 2 - simtab['E_NU_X'] ** 2)
+                simtab['TIME'] = f['nue_data']['lum'][:, 0] - bounce
+                simtab['L_NU_E'] = f['nue_data']['lum'][:, 1] * 1e51
+                simtab['L_NU_E_BAR'] = f['nuae_data']['lum'][:, 1] * 1e51
+                simtab['L_NU_X'] = f['nux_data']['lum'][:, 1] * 1e51
+                simtab['E_NU_E'] = f['nue_data']['avg_energy'][:, 1]
+                simtab['E_NU_E_BAR'] = f['nuae_data']['avg_energy'][:, 1]
+                simtab['E_NU_X'] = f['nux_data']['avg_energy'][:, 1]
+                simtab['RMS_NU_E'] = f['nue_data']['rms_energy'][:, 1]
+                simtab['RMS_NU_E_BAR'] = f['nuae_data']['rms_energy'][:, 1]
+                simtab['RMS_NU_X'] = f['nux_data']['rms_energy'][:, 1]
+
+                simtab['ALPHA_NU_E'] = (2.0 * simtab['E_NU_E'] ** 2 - simtab['RMS_NU_E'] ** 2) / \
+                    (simtab['RMS_NU_E'] ** 2 - simtab['E_NU_E'] ** 2)
+                simtab['ALPHA_NU_E_BAR'] = (2.0 * simtab['E_NU_E_BAR'] ** 2 - simtab['RMS_NU_E_BAR']
+                                            ** 2) / (simtab['RMS_NU_E_BAR'] ** 2 - simtab['E_NU_E_BAR'] ** 2)
+                simtab['ALPHA_NU_X'] = (2.0 * simtab['E_NU_X'] ** 2 - simtab['RMS_NU_X'] ** 2) / \
+                    (simtab['RMS_NU_X'] ** 2 - simtab['E_NU_X'] ** 2)
 
         # Set model metadata.
         self.filename = os.path.basename(filename)
