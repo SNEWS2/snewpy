@@ -85,7 +85,7 @@ class TestModels(unittest.TestCase):
         Instantiate a set of "O'Connor 2015" models
         """
         mfile = 'M1_neutrinos.dat'
-        model = OConnor_2015(os.path.join(model_path, mfile))
+        model = OConnor_2015(mfile)
 
         # Check that times are in proper units.
         t = model.get_time()
