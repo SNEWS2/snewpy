@@ -7,7 +7,6 @@ The module ``snewpy.snowglobes_interface`` contains a low-level Python interface
     any time without warning, e.g. to support new SNOwGLoBES versions.
 """
 from pathlib import Path
-import jinja2
 import pandas as pd
 import numpy as np
 import os
@@ -15,10 +14,6 @@ import os
 import logging
 logger = logging.getLogger(__name__)
 
-from dataclasses import dataclass
-from concurrent.futures import ThreadPoolExecutor
-import threading
-import subprocess
 from tqdm.auto import tqdm
 
 def guess_material(detector):
@@ -118,8 +113,7 @@ class SimpleRate():
                 channel =  file.stem[len('effic_'):-len(detector)-1]
                 logger.debug(f'Reading file ({detector},{channel}): {file}')
                 with open(file) as f:
-                    line = f.readlines()[0].split("{")[-1].split("}")[0].split(",")
-                    effs = np.array(list(map(float,line)))
+                    effs = np.fromiter(f.readlines()[0].split("{")[-1].split("}")[0].split(","), float)
                     res_det[channel]= effs
             result[detector]=res_det
         self.efficiencies = result 
@@ -138,7 +132,7 @@ class SimpleRate():
                     while not "{" in lines[-1]: lines = lines[:-1]
                     matrix = np.zeros((len(lines),len(lines)))
                     for i,l in enumerate(lines):
-                        elements = np.array(list(map(float, l.split("{")[-1].split("}")[0].split(','))))
+                        elements = np.fromiter(l.split("{")[-1].split("}")[0].split(","), float)
                         matrix[i, int(elements[0]+0.1):int(elements[1]+0.1)+1] = elements[2:]
                     res_det[channel]= matrix
             result[detector]=res_det
