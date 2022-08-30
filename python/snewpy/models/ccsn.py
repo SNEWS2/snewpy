@@ -365,7 +365,7 @@ class OConnor_2013(PinchedModel): # TODO: Requires changes to the model file to 
                                  f' for allowed values')
             metadata = {'Progenitor mass': progenitor_mass if progenitor_mass is not None else mass * u.Msun,
                         'EOS': os.path.basename(filename).split('_')[0]}
-            return loaders.OConnor_2013(os.path.basename(filename), metadata)
+            return loaders.OConnor_2013(filename, metadata)
 
         # Load from Parameters
         user_params = dict(zip(cls.param.keys(), (progenitor_mass, eos)))
