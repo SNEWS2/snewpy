@@ -35,7 +35,7 @@ def guess_material(detector):
 
 
 class SimpleRate():
-    def __init__(self, detector_effects=True, base_dir:Path=''):
+    def __init__(self, detectors:str="all", detector_effects=True, base_dir:Path=''):
         """Simple rate calculation interface.
         Computes expected rate for a detector without using GLOBES. The formula for the rate is
 
@@ -58,6 +58,9 @@ class SimpleRate():
 
         Parameters
         ----------
+        detectors: str
+            Name of detector. If ``"all"``, will use all detectors supported by SNOwGLoBES.
+
         detector_effects: bool
             If true, account for efficiency and smearing. If false, consider a perfect detector.
 
@@ -68,7 +71,7 @@ class SimpleRate():
         if not base_dir:
             base_dir = os.environ['SNOWGLOBES']
         self.base_dir = Path(base_dir)
-        self._load_detectors(self.base_dir/'detector_configurations.dat')
+        self._load_detectors(self.base_dir/'detector_configurations.dat', detectors)
         self._load_channels(self.base_dir/'channels')
         self.efficiencies = None
         self.smearings = None
@@ -76,10 +79,17 @@ class SimpleRate():
             self._load_efficiency_vectors(self.base_dir/'effic')
             self._load_smearing_matrices(self.base_dir/'smear')
 
-    def _load_detectors(self, path:Path):
+    def _load_detectors(self, path:Path, detectors:str):
         df = pd.read_table(path,names=['name','mass','factor'], delim_whitespace=True, comment='#')
         df['tgt_mass']=df.mass*df.factor
-        self.detectors=df.set_index('name').T
+
+        if detectors == 'all':
+            detectors = list(df['name'])
+            detectors.remove('d2O')
+        elif isinstance(detectors, str):
+            detectors = [detectors]
+
+        self.detectors = df.set_index('name').T.filter(items=detectors)
         logger.info(f'read masses for detectors {list(self.detectors)}')
         logger.debug(f'detectors: {self.detectors}')
        
