@@ -328,12 +328,16 @@ class OConnor_2013(PinchedModel): # TODO: Requires changes to the model file to 
                     'eos': ['HShen', 'LS220']}
 
     # TODO: This in its changed state will likely break user code -- check this before PR!
-    # def __init__(self, base, mass=15, eos='LS220'):  # Previous signature
-    def __new__(cls, *, progenitor_mass=None, eos=None):
+    @_warn_deprecated_filename_argument
+    def __new__(cls, filename=None, mass=None, *, progenitor_mass=None, eos=None):
         """Model Initialization.
 
         Parameters
         ----------
+        filename : str
+            Absolute or relative path to tar.gz file with model data. This argument will be deprecated.
+        mass: int
+            Mass of model progenitor in units Msun. This argument will be deprecated.
         progenitor_mass: astropy.units.Quantity
             Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
         eos: str
@@ -347,6 +351,23 @@ class OConnor_2013(PinchedModel): # TODO: Requires changes to the model file to 
             If a combination of parameters is invalid when loading from parameters
 
         """
+        if mass is not None:
+            warn(f'Argument `mass` of type int will be deprecated. To initialize this model, use keyword arguments '
+                 f'{list(cls.param.keys())}. See {cls.__name__}.param, {cls.__name__}.param_combinations for more info',
+                 category=DeprecationWarning, stacklevel=2)
+
+        if filename is not None:
+            # If filename is provided, ony attempt to load from filename. Progenitor mass must also be provided
+            if progenitor_mass is None and mass is None:
+                raise ValueError('Missing Required argument `progenitor_mass` or `mass`')
+            if progenitor_mass not in cls.param and mass * u.Msun not in cls.param['progenitor_mass']:
+                raise ValueError(f'Invalid value for argument `progenitor mass` or `mass`, see {cls.__name__}.param'
+                                 f' for allowed values')
+            metadata = {'Progenitor mass': progenitor_mass if progenitor_mass is not None else mass * u.Msun,
+                        'EOS': os.path.basename(filename).split('_')[0]}
+            return loaders.OConnor_2013(os.path.basename(filename), metadata)
+
+        # Load from Parameters
         user_params = dict(zip(cls.param.keys(), (progenitor_mass, eos)))
         check_valid_params(cls, **user_params)
         filename = f'{eos}_timeseries.tar.gz'
