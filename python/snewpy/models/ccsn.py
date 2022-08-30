@@ -22,6 +22,27 @@ from snewpy.models import loaders
 from .base import PinchedModel
 from .util import check_valid_params, get_param_combinations
 
+from warnings import warn
+from functools import wraps
+
+
+def _warn_deprecated_filename_argument(func):
+    """Decorator for model.__new__ methods, causing them to issue a deprecation warning
+     if argument `filename` is used. Initialization by filename will be moved to
+     snewpy.models.init_model, and model classes are initialized from physical parameters.
+    """
+    @wraps(func)  # Ensures docstrings are preserved
+    def decorator(cls, *args, **kwargs):
+        filename = args[0] if len(args) > 0 else None  # Assumes filename is first pos. arg if provided
+        if filename is not None:
+            msg = '\n'.join(['\nArgument `filename` of type str will be deprecated. ',
+                             f'To initialize this model, use keyword arguments {list(cls.param.keys())}. ',
+                             f'See {cls.__name__}.param, {cls.__name__}.param_combinations for more info.'])
+            warn(DeprecationWarning(msg), stacklevel=2)
+        return func(cls, *args, **kwargs)
+    return decorator
+
+
 class _RegistryModel():
     """TODO: empty base class for now?"""
     pass
@@ -60,11 +81,14 @@ class Nakazato_2013(_RegistryModel):
                                 not (p['progenitor_mass'] == 30 * u.Msun and p['metallicity'] == 0.004))
     param_combinations = get_param_combinations(param, _isvalid_combo)
 
-    def __new__(cls, *, progenitor_mass=None, revival_time=None, metallicity=None, eos=None):
+    @_warn_deprecated_filename_argument
+    def __new__(cls, filename=None, *, progenitor_mass=None, revival_time=None, metallicity=None, eos=None):
         """Model initialization.
 
         Parameters
         ----------
+        filename : str
+            Absolute or relative path to FITS file with model data.
         progenitor_mass: astropy.units.Quantity
             Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
         revival_time: astropy.units.Quantity
@@ -93,7 +117,10 @@ class Nakazato_2013(_RegistryModel):
         # user_params = locals().pop('cls')
         # TODO: Check GitHub PR for error in this example
         # Attempt to load model from parameters
+        if filename is not None:
+            return loaders.Nakazato_2013(filename)
 
+        # Load from model parameters
         # Build user params, check validity, construct filename, then load from filename
         user_params = dict(zip(cls.param.keys(), (progenitor_mass, revival_time, metallicity, eos)))
         check_valid_params(cls, **user_params)
@@ -111,13 +138,13 @@ class Nakazato_2013(_RegistryModel):
         revival_time = revival_time.to(u.ms).value
 
         if revival_time != 0:
-            fname = f"nakazato-{eos}-z{metallicity}-t_rev{int(revival_time)}ms-s{progenitor_mass:3.1f}.fits"
+            filename = f"nakazato-{eos}-z{metallicity}-t_rev{int(revival_time)}ms-s{progenitor_mass:3.1f}.fits"
         else:
-            fname = f"nakazato-{eos}-BH-z{metallicity}-s{progenitor_mass:3.1f}.fits"
+            filename = f"nakazato-{eos}-BH-z{metallicity}-s{progenitor_mass:3.1f}.fits"
 
         # Pass the desired filename to the loaders. The simulation data will be
         # downloaded and cached automatically if necessary.
-        return loaders.Nakazato_2013(fname, metadata)
+        return loaders.Nakazato_2013(filename, metadata)
 
     # Populate Docstring with param values
     __new__.__doc__ = __new__.__doc__.format(**param)
