@@ -278,7 +278,7 @@ class _GarchingArchiveModel(PinchedModel):
         Parameters
         ----------
         filename : str
-            Absolute or relative path to file with model data, we add nue/nuebar/nux.
+            Absolute or relative path to file with model data, we add nue/nuebar/nux.  This argument will be deprecated.
 
         Other Parameters
         ----------------

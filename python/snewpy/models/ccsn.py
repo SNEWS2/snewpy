@@ -88,7 +88,7 @@ class Nakazato_2013(_RegistryModel):
         Parameters
         ----------
         filename : str
-            Absolute or relative path to FITS file with model data.
+            Absolute or relative path to FITS file with model data. This argument will be deprecated.
         progenitor_mass: astropy.units.Quantity
             Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
         revival_time: astropy.units.Quantity
@@ -158,11 +158,14 @@ class Sukhbold_2015(_RegistryModel):
 
     param_combinations = get_param_combinations(param)
 
-    def __new__(cls, *, progenitor_mass=None, eos=None):
+    @_warn_deprecated_filename_argument
+    def __new__(cls, filename, *, progenitor_mass=None, eos=None):
         """Model Initialization
 
         Parameters
         ----------
+        filename : str
+            Absolute or relative path to FITS file with model data. This argument will be deprecated.
         progenitor_mass: astropy.units.Quantity
             Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
         eos: str
@@ -175,6 +178,9 @@ class Sukhbold_2015(_RegistryModel):
         ValueError
             If a combination of parameters is invalid when loading from parameters
         """
+        if filename is not None:
+            return loaders.Sukhbold_2015(filename)
+
         user_params = dict(zip(cls.param.keys(), (progenitor_mass, eos)))
         check_valid_params(cls, **user_params)
 
@@ -203,7 +209,11 @@ class Tamborra_2014(_RegistryModel):
              'eos': 'LS220'}
     param_combinations = get_param_combinations(param)
 
-    def __new__(cls,  *, progenitor_mass=None, eos=None):
+    @_warn_deprecated_filename_argument
+    def __new__(cls, filename,  *, progenitor_mass=None, eos=None):
+        if filename is not None:
+            return loaders.Tamborra_2014(filename)
+
         check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos)
         filename = f's{progenitor_mass.value:3.1f}c_3D_dir1'
 
@@ -228,7 +238,10 @@ class Bollig_2016(_RegistryModel):
              'eos': 'LS220'}
     param_combinations = get_param_combinations(param)
 
-    def __new__(cls, *, progenitor_mass=None, eos=None):
+    def __new__(cls, filename, *, progenitor_mass=None, eos=None):
+        if filename is not None:
+            return loaders.Bollig_2016(filename)
+
         check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos)
         filename = f's{progenitor_mass.value:3.1f}c'
 
@@ -253,7 +266,11 @@ class Walk_2018(_RegistryModel):
              'eos': 'LS220'}
     param_combinations = get_param_combinations(param)
 
-    def __new__(cls, *, progenitor_mass=None, eos=None):
+    @_warn_deprecated_filename_argument
+    def __new__(cls, filename, *, progenitor_mass=None, eos=None):
+        if filename is not None:
+            return loaders.Walk_2018(filename)
+
         check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos)
         filename = f's{progenitor_mass.value:3.1f}c_3D_nonrot_dir1'
 
@@ -278,7 +295,11 @@ class Walk_2019(_RegistryModel):
              'eos': 'LS220'}
     param_combinations = get_param_combinations(param)
 
-    def __new__(cls, *, progenitor_mass=None, eos=None):
+    @_warn_deprecated_filename_argument
+    def __new__(cls, filename, *, progenitor_mass=None, eos=None):
+        if filename is not None:
+            return loaders.Walk_2019(filename)
+
         check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos)
         filename = f's{progenitor_mass.value:3.1f}c_3DBH_dir1'
 
@@ -349,11 +370,14 @@ class OConnor_2015(_RegistryModel):
              'eos': 'LS220'}
     param_combinations = get_param_combinations(param)
 
-    def __new__(cls, *, progenitor_mass=None, eos=None):
+    @_warn_deprecated_filename_argument
+    def __new__(cls, filename, *, progenitor_mass=None, eos=None):
         """Model Initialization.
 
         Parameters
         ----------
+        filename : str
+            Absolute or relative path to tar.gz file with model data. This argument will be deprecated.
         progenitor_mass: astropy.units.Quantity
             Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
         eos: str
@@ -366,6 +390,10 @@ class OConnor_2015(_RegistryModel):
         ValueError
             If a combination of parameters is invalid when loading from parameters
         """
+        if filename is not None:
+            return loaders.OConnor_2015(filename)
+
+        # Load from Parameters
         user_params = dict(zip(cls.param.keys(), (progenitor_mass, eos)))
         check_valid_params(cls, **user_params)
         # Filename is currently the same regardless of parameters
@@ -393,11 +421,14 @@ class Zha_2021(_RegistryModel):
     _param_abbrv = {'progenitor_mass': '[16..26, 19.89, 22.39, 30, 33] solMass',
                     'eos': 'STOS_B145'}
 
-    def __new__(cls, *, progenitor_mass=None, eos=None):
+    @_warn_deprecated_filename_argument
+    def __new__(cls, filename, *, progenitor_mass=None, eos=None):
         """Model Initialization.
 
         Parameters
         ----------
+        filename : str
+            Absolute or relative path to file with model data. This argument will be deprecated.
         progenitor_mass: astropy.units.Quantity
             Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
         eos: str
@@ -410,6 +441,10 @@ class Zha_2021(_RegistryModel):
         ValueError
             If a combination of parameters is invalid when loading from parameters
         """
+        if filename is not None:
+            return loaders.Zha_2021(filename)
+
+        # Load from Parameters
         user_params = dict(zip(cls.param.keys(), (progenitor_mass, eos)))
         check_valid_params(cls, **user_params)
 
@@ -445,12 +480,15 @@ class Warren_2020(_RegistryModel):
     _param_abbrv = {'progenitor_mass': '[9.25..0.25..13, 13..0.1..30, 31..35, 35..5..60, 70..10..90, 100, 120] solMass',
                     'turbmixing_param': [1.23, 1.25, 1.27],
                     'eos': 'SFHo'}
-    # Should turbmixing_param be named 'alpha_lambda'?
 
-    def __new__(cls, progenitor_mass=None, turbmixing_param=None, eos='SFHo'):
+    # Should turbmixing_param be named 'alpha_lambda'?
+    @_warn_deprecated_filename_argument
+    def __new__(cls, filename, *, progenitor_mass=None, turbmixing_param=None, eos='SFHo'):
         """
         Parameters
         ----------
+        filename : str
+            Absolute or relative path to file with model data. This argument will be deprecated.
         progenitor_mass: astropy.units.Quantity
             Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
         turbmixing_param: float
@@ -465,7 +503,10 @@ class Warren_2020(_RegistryModel):
         ValueError
             If a combination of parameters is invalid when loading from parameters
         """
+        if filename is not None:
+            return loaders.Warren_2020(filename)
 
+        # Load from Parameters
         user_params = dict(zip(cls.param.keys(), (progenitor_mass, turbmixing_param, eos)))
         check_valid_params(cls, **user_params)
 
@@ -495,10 +536,14 @@ class Kuroda_2020(_RegistryModel):
                                (p['rotational_velocity'].value == 0 and p['magnetic_field_exponent'] == 0)
     param_combinations = get_param_combinations(param, _isvalid_combo)
 
-    def __new__(cls, progenitor_mass=None, eos=None, rotational_velocity=None, magnetic_field_exponent=None):
+    @_warn_deprecated_filename_argument
+    def __new__(cls, filename, *, progenitor_mass=None, eos=None, rotational_velocity=None,
+                magnetic_field_exponent=None):
         """
         Parameters
         ----------
+        filename : str
+            Absolute or relative path to file with model data. This argument will be deprecated.
         progenitor_mass: astropy.units.Quantity
             Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
         eos: str
@@ -515,6 +560,10 @@ class Kuroda_2020(_RegistryModel):
         ValueError
             If a combination of parameters is invalid when loading from parameters
         """
+        if filename is not None:
+            return loaders.Kuroda_2020(filename)
+
+        # Load from Parameters
         check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos, rotational_velocity=rotational_velocity,
                            magnetic_field_exponent=magnetic_field_exponent)
         filename = f'LnuR{int(rotational_velocity.value):1d}0B{int(magnetic_field_exponent):02d}.dat'
@@ -538,16 +587,23 @@ class Fornax_2019(_RegistryModel):
     param = {'progenitor_mass': [9, 10, 12, 13, 14, 15, 16, 19, 25, 60] * u.Msun}
     param_combinations = get_param_combinations(param)
 
-    def __new__(cls, progenitor_mass=None, cache_flux=False):
+    @_warn_deprecated_filename_argument
+    def __new__(cls, filename, *, progenitor_mass=None, cache_flux=False):
         """Model Initialization.
 
         Parameters
         ----------
+        filename : str
+            Absolute or relative path to file with model data. This argument will be deprecated.
         progenitor_mass: astropy.units.Quantity
             Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
         cache_flux : bool
             If true, pre-compute the flux on a fixed angular grid and store the values in a FITS file.
         """
+        if filename is not None:
+            return loaders.Fornax_2019(filename)
+
+        # Load from Parameters
         metadata = {
             'Progenitor mass': progenitor_mass,
             }
@@ -573,14 +629,21 @@ class Fornax_2021(_RegistryModel):
 
     _param_abbrv = {'progenitor_mass': '[12..26, 26.99] solMass'}
 
-    def __new__(cls, progenitor_mass=None):
+    @_warn_deprecated_filename_argument
+    def __new__(cls, filename, *, progenitor_mass=None):
         """Model Initialization.
 
         Parameters
         ----------
+        filename : str
+            Absolute or relative path to file with model data. This argument will be deprecated.
         progenitor_mass: astropy.units.Quantity
             Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
         """
+        if filename is not None:
+            return loaders.Fornax_2021(filename)
+
+        # Load from Parameters
         check_valid_params(cls, progenitor_mass=progenitor_mass)
         if progenitor_mass.value.is_integer():
             filename = f'lum_spec_{int(progenitor_mass.value):2d}M_r10000_dat.h5'
