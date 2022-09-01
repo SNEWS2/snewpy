@@ -159,7 +159,7 @@ class Sukhbold_2015(_RegistryModel):
     param_combinations = get_param_combinations(param)
 
     @_warn_deprecated_filename_argument
-    def __new__(cls, filename, *, progenitor_mass=None, eos=None):
+    def __new__(cls, filename=None, *, progenitor_mass=None, eos=None):
         """Model Initialization
 
         Parameters
@@ -210,7 +210,7 @@ class Tamborra_2014(_RegistryModel):
     param_combinations = get_param_combinations(param)
 
     @_warn_deprecated_filename_argument
-    def __new__(cls, filename,  *, progenitor_mass=None, eos=None):
+    def __new__(cls, filename=None,  *, progenitor_mass=None, eos=None):
         if filename is not None:
             return loaders.Tamborra_2014(filename)
 
@@ -238,7 +238,7 @@ class Bollig_2016(_RegistryModel):
              'eos': 'LS220'}
     param_combinations = get_param_combinations(param)
 
-    def __new__(cls, filename, *, progenitor_mass=None, eos=None):
+    def __new__(cls, filename=None, *, progenitor_mass=None, eos=None):
         if filename is not None:
             return loaders.Bollig_2016(filename)
 
@@ -267,7 +267,7 @@ class Walk_2018(_RegistryModel):
     param_combinations = get_param_combinations(param)
 
     @_warn_deprecated_filename_argument
-    def __new__(cls, filename, *, progenitor_mass=None, eos=None):
+    def __new__(cls, filename=None, *, progenitor_mass=None, eos=None):
         if filename is not None:
             return loaders.Walk_2018(filename)
 
@@ -296,7 +296,7 @@ class Walk_2019(_RegistryModel):
     param_combinations = get_param_combinations(param)
 
     @_warn_deprecated_filename_argument
-    def __new__(cls, filename, *, progenitor_mass=None, eos=None):
+    def __new__(cls, filename=None, *, progenitor_mass=None, eos=None):
         if filename is not None:
             return loaders.Walk_2019(filename)
 
@@ -392,7 +392,7 @@ class OConnor_2015(_RegistryModel):
     param_combinations = get_param_combinations(param)
 
     @_warn_deprecated_filename_argument
-    def __new__(cls, filename, *, progenitor_mass=None, eos=None):
+    def __new__(cls, filename=None, *, progenitor_mass=None, eos=None):
         """Model Initialization.
 
         Parameters
@@ -443,7 +443,7 @@ class Zha_2021(_RegistryModel):
                     'eos': 'STOS_B145'}
 
     @_warn_deprecated_filename_argument
-    def __new__(cls, filename, *, progenitor_mass=None, eos=None):
+    def __new__(cls, filename=None, *, progenitor_mass=None, eos=None):
         """Model Initialization.
 
         Parameters
@@ -504,7 +504,7 @@ class Warren_2020(_RegistryModel):
 
     # Should turbmixing_param be named 'alpha_lambda'?
     @_warn_deprecated_filename_argument
-    def __new__(cls, filename, *, progenitor_mass=None, turbmixing_param=None, eos='SFHo'):
+    def __new__(cls, filename=None, *, progenitor_mass=None, turbmixing_param=None, eos='SFHo'):
         """
         Parameters
         ----------
@@ -558,7 +558,7 @@ class Kuroda_2020(_RegistryModel):
     param_combinations = get_param_combinations(param, _isvalid_combo)
 
     @_warn_deprecated_filename_argument
-    def __new__(cls, filename, *, progenitor_mass=None, eos=None, rotational_velocity=None,
+    def __new__(cls, filename=None, *, progenitor_mass=None, eos=None, rotational_velocity=None,
                 magnetic_field_exponent=None):
         """
         Parameters
@@ -609,7 +609,7 @@ class Fornax_2019(_RegistryModel):
     param_combinations = get_param_combinations(param)
 
     @_warn_deprecated_filename_argument
-    def __new__(cls, filename, *, progenitor_mass=None, cache_flux=False):
+    def __new__(cls, filename=None, *, progenitor_mass=None, cache_flux=False):
         """Model Initialization.
 
         Parameters
@@ -651,7 +651,7 @@ class Fornax_2021(_RegistryModel):
     _param_abbrv = {'progenitor_mass': '[12..26, 26.99] solMass'}
 
     @_warn_deprecated_filename_argument
-    def __new__(cls, filename, *, progenitor_mass=None):
+    def __new__(cls, filename=None, *, progenitor_mass=None):
         """Model Initialization.
 
         Parameters
