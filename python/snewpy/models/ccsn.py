@@ -35,10 +35,10 @@ def _warn_deprecated_filename_argument(func):
     def decorator(cls, *args, **kwargs):
         filename = args[0] if len(args) > 0 else None  # Assumes filename is first pos. arg if provided
         if filename is not None:
-            msg = '\n'.join(['\nArgument `filename` of type str will be deprecated. ',
-                             f'To initialize this model, use keyword arguments {list(cls.param.keys())}. ',
-                             f'See {cls.__name__}.param, {cls.__name__}.param_combinations for more info.'])
-            warn(DeprecationWarning(msg), stacklevel=2)
+            msg = ''.join(['Initializing this model with a filename is deprecated. ',
+                           f'Instead, use keyword arguments {list(cls.param.keys())}. ',
+                           f'See `{cls.__name__}.param`, `{cls.__name__}.param_combinations` for more info.'])
+            warn(FutureWarning(msg), stacklevel=2)
         return func(cls, *args, **kwargs)
     return decorator
 
@@ -622,7 +622,7 @@ class Fornax_2019(_RegistryModel):
             If true, pre-compute the flux on a fixed angular grid and store the values in a FITS file.
         """
         if filename is not None:
-            return loaders.Fornax_2019(filename)
+            return loaders.Fornax_2019(filename, cache_flux=cache_flux)
 
         # Load from Parameters
         metadata = {
