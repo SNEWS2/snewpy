@@ -96,13 +96,6 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
 
     # now process log data
     if (log_bins==True):
-        needed_offset = -1*u.s
-        # need to offset the times so no negatives
-        #if tedges[0] < 0:
-            #needed_offset = tedges[0] + 0.0001*u.s
-            #tedges = tedges + tedges[0] + 0.0001*u.s #shift so it's very close to 0
-            #tmin = 0.0001*u.s
-            #tmax+=tmin
         log_edges = np.asarray([])
 
         if tmax < 0 or tmin < 0:
@@ -115,11 +108,7 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
                 raise ValueError("Cannot use negative time coordinates in log scale. Consider adjusting model time window");
             log_edges = np.append(log_edges,t)
         log_edges = log_edges*u.s
-        #if needed_offset>-1*u.s:
-            #keep in mind needed_offset will still be a negative number here
-            #log_edges = log_edges + needed_offset
         times = 0.5*(log_edges[1:] + log_edges[:-1])
-        print(f'Proceeding with {len(times)} bin(s)')
 
     # Generate output.
     if output_filename is not None:
