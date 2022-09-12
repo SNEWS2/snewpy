@@ -40,7 +40,6 @@ setup_keywords['python_requires'] = '>=3.7'
 setup_keywords['zip_safe'] = False
 setup_keywords['packages'] = find_packages('python')
 setup_keywords['package_dir'] = {'': 'python'}
-setup_keywords['package_data'] = {'':['templates/*.glb']}
 setup_keywords['cmdclass'] = {'version': SetVersion, 'sdist': DistutilsSdist}
 setup_keywords['test_suite']='snewpy.test.snewpy_test_suite.snewpy_test_suite'
 
