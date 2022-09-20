@@ -99,7 +99,7 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
         log_edges = np.asarray([])
 
         if tmax <= 0 or tmin <= 0:
-            raise ValueError("Cannot apply log to time windows that are less than 0. Consider adjusting model time window")
+            raise ValueError("Cannot apply log to time windows that are less than or equal to 0. Consider adjusting model time window")
         tstep = math.log10(abs(tmax/tmin))/len(times)
 
         for i in range(0,len(times)):
