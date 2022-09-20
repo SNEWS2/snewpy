@@ -95,10 +95,10 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
     times = 0.5*(tedges[1:] + tedges[:-1])
 
     # now process log data
-    if (log_bins):
+    if log_bins:
         log_edges = np.asarray([])
 
-        if tmax < 0 or tmin < 0:
+        if tmax <= 0 or tmin <= 0:
             raise ValueError("Cannot apply log to time windows that are less than 0. Consider adjusting model time window")
         tstep = math.log10(abs(tmax/tmin))/len(times)
 
