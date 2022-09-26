@@ -160,7 +160,7 @@ class SimpleRate():
         data = {}
         energies = np.linspace(7.49e-4, 9.975e-2, 200) # Use the same energy grid as SNOwGLoBES
         if '_he' in detector:
-            energies = np.linspace(7.49e-4, 2*9.975e-2, 400) #SNOwGLoBES grid for he configurations
+            energies = np.linspace(7.49e-4, 19.975e-2, 400) #SNOwGLoBES grid for he configurations
         for channel in self.channels[material].itertuples():
             xsec_path = f"xscns/xs_{channel.name}.dat"
             xsec = np.loadtxt(self.base_dir/xsec_path)
