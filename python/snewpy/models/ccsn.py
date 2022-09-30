@@ -476,26 +476,26 @@ class Zha_2021(_RegistryModel):
 class Warren_2020(_RegistryModel):
     """Model based on simulations from Warren et al., ApJ 898:139, 2020.
     Neutrino fluxes available at https://doi.org/10.5281/zenodo.3667908."""
-
+    # TODO: Switch loader to GitHub, rather than zenodo for reliability and performance.
+    # TODO: Resolve zenodo issues in future PR
     # np.arange with decimal increments can produce floating point errors
-    # Though it it more intutive to use np.arange, these fp-errors quickly become hindersome
+    # Though it may be more intuitive to use np.arange, these fp-errors quickly become troublesome
     param = {'progenitor_mass': np.concatenate((np.linspace(9.25, 12.75, 15),
                                                 np.linspace(13, 30., 171),
                                                 np.linspace(31., 33., 3),
                                                 np.linspace(35, 55, 5),
                                                 np.linspace(60, 80, 3),
                                                 np.linspace(100, 120, 2))) * u.Msun,
-             'turbmixing_param': [1.23, 1.25, 1.27],
-             'eos': 'SFHo'}
+             'turbmixing_param': [1.23, 1.25, 1.27]}
     param_combinations = get_param_combinations(param)
 
     _param_abbrv = {'progenitor_mass': '[9.25..0.25..13, 13..0.1..30, 31..35, 35..5..60, 70..10..90, 100, 120] solMass',
-                    'turbmixing_param': [1.23, 1.25, 1.27],
-                    'eos': 'SFHo'}
-
+                    'turbmixing_param': [1.23, 1.25, 1.27]}
+    # TODO: Check Warren model notebook
+    # TODO: Broken, requests to individual files are broken, when massive tarball is expected for loader.
     # Should turbmixing_param be named 'alpha_lambda'?
     @_warn_deprecated_filename_argument
-    def __new__(cls, filename=None, *, progenitor_mass=None, turbmixing_param=None, eos='SFHo'):
+    def __new__(cls, filename=None, *, progenitor_mass=None, turbmixing_param=None):
         """
         Parameters
         ----------
@@ -514,13 +514,19 @@ class Warren_2020(_RegistryModel):
             If a combination of parameters is invalid when loading from parameters
         """
         if filename is not None:
-            return loaders.Warren_2020(filename)
+            _, _, turbmixing_param, progenitor_mass = os.path.splitext(os.path.basename(filename))[0].split('_')
+            metadata = {'Progenitor mass': float(progenitor_mass[1:]) * u.Msun,
+                        'Turb. mixing param.': float(turbmixing_param[1:]),
+                        'EOS': 'SFHo'}
+
+            return loaders.Warren_2020(filename, metadata)
 
         # Load from Parameters
-        user_params = dict(zip(cls.param.keys(), (progenitor_mass, turbmixing_param, eos)))
+        user_params = dict(zip(cls.param.keys(), (progenitor_mass, turbmixing_param)))
         check_valid_params(cls, **user_params)
 
-        fname = f'stir_multimessenger_a{turbmixing_param:3.2f}.tar'
+        fname = os.path.join(f'stir_a{turbmixing_param:3.2f},'
+                             f'stir_multimessenger_a{turbmixing_param:3.2f}_m{progenitor_mass.value:g}.h5')
 
         # Set model metadata.
         metadata = {

@@ -48,8 +48,8 @@ models:
         release_version: 1.2
 
     Warren_2020:
-        repository: zenodo
-        zenodo_id: 3952926
+        repository: github
+        release_version: 1.2
 
     Zha_2021: 
         repository: github

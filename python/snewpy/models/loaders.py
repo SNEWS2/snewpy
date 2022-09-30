@@ -209,46 +209,35 @@ class Warren_2020(PinchedModel):
         # Open the requested filename using the model downloader.
         datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
 
-        dataname = os.path.splitext(os.path.basename(filename))[0]
-
-        if metadata["Progenitor mass"].value.is_integer():
-            if metadata["Progenitor mass"].value in (31, 32, 33, 35, 40, 45, 50, 55, 60, 70, 80, 100, 120):
-                dataname += f'_m{int(metadata["Progenitor mass"].value):d}.h5'
-            else:
-                dataname += f'_m{metadata["Progenitor mass"].value:.1f}.h5'
-        else:
-            dataname += f'_m{metadata["Progenitor mass"].value:g}.h5'
-
         with datafile.open():
             # Open luminosity file.
-            with tarfile.open(datafile.path) as tf:
-                # Read data from HDF5 files, then store.
-                f = h5py.File(tf.extractfile(dataname), 'r')
+            # Read data from HDF5 files, then store.
+            f = h5py.File(datafile, 'r')
 
-                simtab = Table()
+            simtab = Table()
 
-                for i in range(len(f['nue_data']['lum'])):
-                    if f['sim_data']['shock_radius'][i][1] > 0.00001:
-                        bounce = f['sim_data']['shock_radius'][i][0]
-                        break
+            for i in range(len(f['nue_data']['lum'])):
+                if f['sim_data']['shock_radius'][i][1] > 0.00001:
+                    bounce = f['sim_data']['shock_radius'][i][0]
+                    break
 
-                simtab['TIME'] = f['nue_data']['lum'][:, 0] - bounce
-                simtab['L_NU_E'] = f['nue_data']['lum'][:, 1] * 1e51
-                simtab['L_NU_E_BAR'] = f['nuae_data']['lum'][:, 1] * 1e51
-                simtab['L_NU_X'] = f['nux_data']['lum'][:, 1] * 1e51
-                simtab['E_NU_E'] = f['nue_data']['avg_energy'][:, 1]
-                simtab['E_NU_E_BAR'] = f['nuae_data']['avg_energy'][:, 1]
-                simtab['E_NU_X'] = f['nux_data']['avg_energy'][:, 1]
-                simtab['RMS_NU_E'] = f['nue_data']['rms_energy'][:, 1]
-                simtab['RMS_NU_E_BAR'] = f['nuae_data']['rms_energy'][:, 1]
-                simtab['RMS_NU_X'] = f['nux_data']['rms_energy'][:, 1]
+            simtab['TIME'] = f['nue_data']['lum'][:, 0] - bounce
+            simtab['L_NU_E'] = f['nue_data']['lum'][:, 1] * 1e51
+            simtab['L_NU_E_BAR'] = f['nuae_data']['lum'][:, 1] * 1e51
+            simtab['L_NU_X'] = f['nux_data']['lum'][:, 1] * 1e51
+            simtab['E_NU_E'] = f['nue_data']['avg_energy'][:, 1]
+            simtab['E_NU_E_BAR'] = f['nuae_data']['avg_energy'][:, 1]
+            simtab['E_NU_X'] = f['nux_data']['avg_energy'][:, 1]
+            simtab['RMS_NU_E'] = f['nue_data']['rms_energy'][:, 1]
+            simtab['RMS_NU_E_BAR'] = f['nuae_data']['rms_energy'][:, 1]
+            simtab['RMS_NU_X'] = f['nux_data']['rms_energy'][:, 1]
 
-                simtab['ALPHA_NU_E'] = (2.0 * simtab['E_NU_E'] ** 2 - simtab['RMS_NU_E'] ** 2) / \
-                    (simtab['RMS_NU_E'] ** 2 - simtab['E_NU_E'] ** 2)
-                simtab['ALPHA_NU_E_BAR'] = (2.0 * simtab['E_NU_E_BAR'] ** 2 - simtab['RMS_NU_E_BAR']
-                                            ** 2) / (simtab['RMS_NU_E_BAR'] ** 2 - simtab['E_NU_E_BAR'] ** 2)
-                simtab['ALPHA_NU_X'] = (2.0 * simtab['E_NU_X'] ** 2 - simtab['RMS_NU_X'] ** 2) / \
-                    (simtab['RMS_NU_X'] ** 2 - simtab['E_NU_X'] ** 2)
+            simtab['ALPHA_NU_E'] = (2.0 * simtab['E_NU_E'] ** 2 - simtab['RMS_NU_E'] ** 2) / \
+                (simtab['RMS_NU_E'] ** 2 - simtab['E_NU_E'] ** 2)
+            simtab['ALPHA_NU_E_BAR'] = (2.0 * simtab['E_NU_E_BAR'] ** 2 - simtab['RMS_NU_E_BAR']
+                                        ** 2) / (simtab['RMS_NU_E_BAR'] ** 2 - simtab['E_NU_E_BAR'] ** 2)
+            simtab['ALPHA_NU_X'] = (2.0 * simtab['E_NU_X'] ** 2 - simtab['RMS_NU_X'] ** 2) / \
+                (simtab['RMS_NU_X'] ** 2 - simtab['E_NU_X'] ** 2)
 
         # Set model metadata.
         self.filename = os.path.basename(filename)
