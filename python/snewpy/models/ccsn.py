@@ -205,21 +205,20 @@ class Tamborra_2014(_RegistryModel):
     Data files are from the `Garching Supernova Archive`_.
     """
 
-    param = {'progenitor_mass': [20., 27.] * u.Msun,
-             'eos': 'LS220'}
+    param = {'progenitor_mass': [20., 27.] * u.Msun}
     param_combinations = get_param_combinations(param)
 
     @_warn_deprecated_filename_argument
-    def __new__(cls, filename=None,  *, progenitor_mass=None, eos=None):
+    def __new__(cls, filename=None,  *, progenitor_mass=None):
         if filename is not None:
             return loaders.Tamborra_2014(filename)
 
-        check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos)
+        check_valid_params(cls, progenitor_mass=progenitor_mass)
         filename = f's{progenitor_mass.value:3.1f}c_3D_dir1'
 
         metadata = {
             'Progenitor mass': progenitor_mass,
-            'EOS': eos
+            'EOS': 'LS220'
         }
 
         # Metadata is handled by __init__ in _GarchingArchiveModel
@@ -234,20 +233,19 @@ class Bollig_2016(_RegistryModel):
     Models were taken, with permission, from the Garching Supernova Archive.
     """
 
-    param = {'progenitor_mass': [11.2, 27.] * u.Msun,
-             'eos': 'LS220'}
+    param = {'progenitor_mass': [11.2, 27.] * u.Msun}
     param_combinations = get_param_combinations(param)
 
-    def __new__(cls, filename=None, *, progenitor_mass=None, eos=None):
+    def __new__(cls, filename=None, *, progenitor_mass=None):
         if filename is not None:
             return loaders.Bollig_2016(filename)
 
-        check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos)
+        check_valid_params(cls, progenitor_mass=progenitor_mass)
         filename = f's{progenitor_mass.value:3.1f}c'
 
         metadata = {
             'Progenitor mass': progenitor_mass,
-            'EOS': eos
+            'EOS': 'LS220'
         }
 
         return loaders.Bollig_2016(filename=filename, metadata=metadata)
@@ -262,21 +260,20 @@ class Walk_2018(_RegistryModel):
     the `Garching Supernova Archive`_.
     """
 
-    param = {'progenitor_mass': 15. * u.Msun,
-             'eos': 'LS220'}
+    param = {'progenitor_mass': 15. * u.Msun}
     param_combinations = get_param_combinations(param)
 
     @_warn_deprecated_filename_argument
-    def __new__(cls, filename=None, *, progenitor_mass=None, eos=None):
+    def __new__(cls, filename=None, *, progenitor_mass=None):
         if filename is not None:
             return loaders.Walk_2018(filename)
 
-        check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos)
+        check_valid_params(cls, progenitor_mass=progenitor_mass)
         filename = f's{progenitor_mass.value:3.1f}c_3D_nonrot_dir1'
 
         metadata = {
             'Progenitor mass': progenitor_mass,
-            'EOS': eos
+            'EOS': 'LS220'
         }
 
         return loaders.Walk_2018(filename=filename, metadata=metadata)
@@ -291,21 +288,20 @@ class Walk_2019(_RegistryModel):
     from the `Garching Supernova Archive`_.
     """
 
-    param = {'progenitor_mass': 40 * u.Msun,
-             'eos': 'LS220'}
+    param = {'progenitor_mass': 40 * u.Msun}
     param_combinations = get_param_combinations(param)
 
     @_warn_deprecated_filename_argument
-    def __new__(cls, filename=None, *, progenitor_mass=None, eos=None):
+    def __new__(cls, filename=None, *, progenitor_mass=None):
         if filename is not None:
             return loaders.Walk_2019(filename)
 
-        check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos)
+        check_valid_params(cls, progenitor_mass=progenitor_mass)
         filename = f's{progenitor_mass.value:3.1f}c_3DBH_dir1'
 
         metadata = {
             'Progenitor mass': progenitor_mass,
-            'EOS': eos
+            'EOS': 'LS220'
         }
 
         return loaders.Walk_2019(filename=filename, metadata=metadata)
@@ -387,12 +383,11 @@ class OConnor_2015(_RegistryModel):
     """Model based on the black hole formation simulation in `O'Connor (2015) <https://arxiv.org/abs/1411.7058>`_.
     """
 
-    param = {'progenitor_mass': 40 * u.Msun,
-             'eos': 'LS220'}
+    param = {'progenitor_mass': 40 * u.Msun}
     param_combinations = get_param_combinations(param)
 
     @_warn_deprecated_filename_argument
-    def __new__(cls, filename=None, *, progenitor_mass=None, eos=None):
+    def __new__(cls, filename=None, *, progenitor_mass=None):
         """Model Initialization.
 
         Parameters
@@ -411,19 +406,18 @@ class OConnor_2015(_RegistryModel):
         ValueError
             If a combination of parameters is invalid when loading from parameters
         """
+        metadata = {
+            'Progenitor mass': 40*u.Msun,
+            'EOS': 'LS220',
+        }
+
         if filename is not None:
-            return loaders.OConnor_2015(filename)
+            return loaders.OConnor_2015(filename, metadata)
 
         # Load from Parameters
-        user_params = dict(zip(cls.param.keys(), (progenitor_mass, eos)))
-        check_valid_params(cls, **user_params)
+        check_valid_params(cls, progenitor_mass=progenitor_mass)
         # Filename is currently the same regardless of parameters
         filename = 'M1_neutrinos.dat'
-
-        metadata = {
-            'Progenitor mass': progenitor_mass,
-            'EOS': eos,
-        }
 
         return loaders.OConnor_2015(filename, metadata)
 
