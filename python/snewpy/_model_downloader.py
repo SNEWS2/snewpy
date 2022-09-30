@@ -3,8 +3,7 @@
 available for the models supported by SNEWPY. These data files can either
 be local (in the SNEWPY source tree) or uploaded to a model repository on
 Zenodo. The YAML file supports regular expressions to allow matching of all
-possible model files. The model data files are stored in a dictionary
-returned by the function ``snewpy.zenodo_downloader.load_registry``.
+possible model files.
 """
 
 import hashlib
