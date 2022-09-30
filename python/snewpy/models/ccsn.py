@@ -11,6 +11,7 @@ using ``snewpy.get_models("<model_name>")``.
 import itertools
 import logging
 import os
+import re
 import tarfile
 
 import numpy as np
@@ -455,7 +456,9 @@ class Zha_2021(_RegistryModel):
             If a combination of parameters is invalid when loading from parameters
         """
         if filename is not None:
-            return loaders.Zha_2021(filename)
+            metadata = {'Progenitor Mass': float(os.path.splitext(os.path.basename(filename))[0][1:]) * u.Msun,
+                        'EOS': 'STOS_B145'}
+            return loaders.Zha_2021(filename, metadata)
 
         # Load from Parameters
         check_valid_params(cls, progenitor_mass=progenitor_mass)
@@ -557,10 +560,6 @@ class Kuroda_2020(_RegistryModel):
         ----------
         filename : str
             Absolute or relative path to file with model data. This argument will be deprecated.
-        progenitor_mass: astropy.units.Quantity
-            Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
-        eos: str
-            Equation of state. Valid values are {eos}.
         rotational_velocity: astropy.units.Quantity
             Rotational velocity of progenitor. Valid values are {rotational_velocity}
         magnetic_field_exponent: int
@@ -574,7 +573,15 @@ class Kuroda_2020(_RegistryModel):
             If a combination of parameters is invalid when loading from parameters
         """
         if filename is not None:
-            return loaders.Kuroda_2020(filename)
+            _, rotational_velocity, magnetic_field_exponent = re.split('R|B',
+                                                                       os.path.splitext(os.path.basename(filename))[0])
+            metadata = {
+                'Progenitor mass': 20 * u.Msun,
+                'Rotational Velocity': int(rotational_velocity[0]),
+                'B_0 Exponent': int(magnetic_field_exponent),
+                'EOS': 'LS220'
+            }
+            return loaders.Kuroda_2020(filename, metadata)
 
         # Load from Parameters
         check_valid_params(cls, rotational_velocity=rotational_velocity,
@@ -614,7 +621,9 @@ class Fornax_2019(_RegistryModel):
             If true, pre-compute the flux on a fixed angular grid and store the values in a FITS file.
         """
         if filename is not None:
-            return loaders.Fornax_2019(filename, cache_flux=cache_flux)
+            progenitor_mass = os.path.splitext(os.path.basename(filename))[0].split('_')[2]
+            metadata = {'Progenitor mass': int(progenitor_mass[:-1]) * u.Msun}
+            return loaders.Fornax_2019(filename, metadata, cache_flux=cache_flux)
 
         # Load from Parameters
         metadata = {'Progenitor mass': progenitor_mass}
