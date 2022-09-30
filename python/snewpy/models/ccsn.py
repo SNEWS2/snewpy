@@ -429,15 +429,13 @@ class Zha_2021(_RegistryModel):
     """Model based on the hadron-quark phse transition models from `Zha et al. 2021 <https://arxiv.org/abs/2103.02268>`_.
     """
 
-    param = {'progenitor_mass': (list(range(16, 27)) + [19.89, 22.39, 30, 33]) * u.Msun,
-             'eos': 'STOS_B145'}
+    param = {'progenitor_mass': (list(range(16, 27)) + [19.89, 22.39, 30, 33]) * u.Msun}
     param_combinations = get_param_combinations(param)
 
-    _param_abbrv = {'progenitor_mass': '[16..26, 19.89, 22.39, 30, 33] solMass',
-                    'eos': 'STOS_B145'}
+    _param_abbrv = {'progenitor_mass': '[16..26, 19.89, 22.39, 30, 33] solMass'}
 
     @_warn_deprecated_filename_argument
-    def __new__(cls, filename=None, *, progenitor_mass=None, eos=None):
+    def __new__(cls, filename=None, *, progenitor_mass=None):
         """Model Initialization.
 
         Parameters
@@ -460,12 +458,11 @@ class Zha_2021(_RegistryModel):
             return loaders.Zha_2021(filename)
 
         # Load from Parameters
-        user_params = dict(zip(cls.param.keys(), (progenitor_mass, eos)))
-        check_valid_params(cls, **user_params)
+        check_valid_params(cls, progenitor_mass=progenitor_mass)
 
         metadata = {
             'Progenitor mass': progenitor_mass,
-            'EOS': eos,
+            'EOS': 'STOS_B145',
         }
 
         filename = f's{progenitor_mass.value:g}.dat'
@@ -508,8 +505,6 @@ class Warren_2020(_RegistryModel):
             Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
         turbmixing_param: float
             Turbulent mixing parameter alpha_lambda. Valid Values are {turbmixing_param}
-        eos: str
-            Equation of state. Valid values are {eos}.
 
         Raises
         ------
@@ -531,7 +526,7 @@ class Warren_2020(_RegistryModel):
         metadata = {
             'Progenitor mass': progenitor_mass,
             'Turb. mixing param.': turbmixing_param,
-            'EOS': eos,
+            'EOS': 'SFHo',
         }
 
         return loaders.Warren_2020(fname, metadata)
@@ -543,17 +538,14 @@ class Warren_2020(_RegistryModel):
 class Kuroda_2020(_RegistryModel):
     """Model based on simulations from `Kuroda et al. (2020) <https://arxiv.org/abs/2009.07733>`_."""
 
-    param = {'progenitor_mass': 20 * u.Msun,
-             'eos': 'LS220',
-             'rotational_velocity': [0, 1] * u.rad / u.s,
+    param = {'rotational_velocity': [0, 1] * u.rad / u.s,
              'magnetic_field_exponent': [0, 12, 13]}
     _isvalid_combo = lambda p: (p['rotational_velocity'].value == 1 and p['magnetic_field_exponent'] in (12, 13)) or \
                                (p['rotational_velocity'].value == 0 and p['magnetic_field_exponent'] == 0)
     param_combinations = get_param_combinations(param, _isvalid_combo)
 
     @_warn_deprecated_filename_argument
-    def __new__(cls, filename=None, *, progenitor_mass=None, eos=None, rotational_velocity=None,
-                magnetic_field_exponent=None):
+    def __new__(cls, filename=None, *, rotational_velocity=None, magnetic_field_exponent=None):
         """
         Parameters
         ----------
@@ -579,15 +571,15 @@ class Kuroda_2020(_RegistryModel):
             return loaders.Kuroda_2020(filename)
 
         # Load from Parameters
-        check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos, rotational_velocity=rotational_velocity,
+        check_valid_params(cls, rotational_velocity=rotational_velocity,
                            magnetic_field_exponent=magnetic_field_exponent)
         filename = f'LnuR{int(rotational_velocity.value):1d}0B{int(magnetic_field_exponent):02d}.dat'
 
         metadata = {
-            'Progenitor mass': progenitor_mass,
-            'EOS': eos,
+            'Progenitor mass': 20 * u.Msun,
             'Rotational Velocity': rotational_velocity,
-            'B_0 Exponent': magnetic_field_exponent
+            'B_0 Exponent': magnetic_field_exponent,
+            'EOS': 'LS220',
             }
 
         return loaders.Kuroda_2020(filename, metadata)
@@ -619,9 +611,7 @@ class Fornax_2019(_RegistryModel):
             return loaders.Fornax_2019(filename, cache_flux=cache_flux)
 
         # Load from Parameters
-        metadata = {
-            'Progenitor mass': progenitor_mass,
-            }
+        metadata = {'Progenitor mass': progenitor_mass}
 
         check_valid_params(cls, progenitor_mass=progenitor_mass)
         if progenitor_mass.value == 16:
@@ -656,6 +646,8 @@ class Fornax_2021(_RegistryModel):
             Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
         """
         if filename is not None:
+            progenitor_mass = os.path.splitext(os.path.basename(filename))[0].split('_')[2]
+            metadata = {'Progenitor mass': float(progenitor_mass[:-1]) * u.Msun}
             return loaders.Fornax_2021(filename)
 
         # Load from Parameters
