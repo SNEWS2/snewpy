@@ -271,7 +271,8 @@ class PinchedModel(SupernovaModel):
 
 
 class _GarchingArchiveModel(PinchedModel):
-    """Subclass that reads models in the format used in the `Garching Supernova Archive <https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/>`_."""
+    """Subclass that reads models in the format used in the
+    `Garching Supernova Archive <https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/>`_."""
     def __init__(self, filename, eos='LS220', metadata={}):
         """Model Initialization.
 
