@@ -153,14 +153,9 @@ class SimpleRate():
         logger.info(f'read smearing matrices for detectors: {list(self.smearings.keys())}')
         logger.debug(f'smearing matrices: {self.smearings}')
 
-    def _compute_rates(self, detector, material, flux_file:Path):
-        flux_file = flux_file.resolve()
-        fluxes = np.loadtxt(flux_file)
+    def compute_rates(self, detector:str, material:str, fluxes:np.ndarray, energies:np.ndarray):
         TargetMass = self.detectors[detector].tgt_mass
         data = {}
-        energies = np.linspace(7.49e-4, 9.975e-2, 200) # Use the same energy grid as SNOwGLoBES
-        if '_he' in detector:
-            energies = np.linspace(7.49e-4, 19.975e-2, 400) #SNOwGLoBES grid for he configurations
         for channel in self.channels[material].itertuples():
             xsec_path = f"xscns/xs_{channel.name}.dat"
             xsec = np.loadtxt(self.base_dir/xsec_path)
@@ -239,11 +234,17 @@ class SimpleRate():
             raise ValueError(f'Material "{material}" is not in {self.materials}')
         if isinstance(flux_files,str):
             flux_files = [flux_files]
-        
+
+        #define energy bins
+        energies = np.linspace(7.49e-4, 9.975e-2, 200) # Use the same energy grid as SNOwGLoBES
+        if '_he' in detector:
+            energies = np.linspace(7.49e-4, 19.975e-2, 400) #SNOwGLoBES grid for he configurations
+
         with tqdm(total=len(flux_files), leave=False, desc='Flux files') as progressbar:
             results = []
             for flux_file in flux_files:
-                result = self._compute_rates(detector,material,Path(flux_file))
+                flux = np.loadtxt(Path(flux_file).resolve())
+                result = self.compute_rates(detector, material, flux, energies)
                 progressbar.update()
                 results.append(result)
             return results
