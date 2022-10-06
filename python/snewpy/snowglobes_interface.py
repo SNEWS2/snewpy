@@ -104,7 +104,10 @@ class SimpleRate():
                 if not l.startswith('%'):
                     l = '% 200 0.0005 0.100 200 0.0005 0.100'
                 tokens = l.split(' ')[1:]
-                return dict(zip(['nsamples','smin','smax','nbins','emin','emax'],tokens))
+                nsamples,smin,smax, nbins,emin,emax = [float(t) for t in tokens]
+                return {'e_true' :np.linspace(smin,smax,nsamples),
+                        'e_smear':np.linspace(emin,emax,nbins)
+                        }
 
         self.channels = {}
         self.binning = {}
