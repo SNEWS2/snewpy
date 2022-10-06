@@ -154,6 +154,30 @@ class SimpleRate():
         logger.debug(f'smearing matrices: {self.smearings}')
 
     def compute_rates(self, detector:str, material:str, fluxes:np.ndarray, energies:np.ndarray):
+        """ Calculate the rates for the given neutrino fluxes interacting in the given detector.
+
+        Parameters
+        ----------
+        detector: str
+            Detector name in SNOwGLoBES. Check `SimpleRate.detectors` for the list of options
+        material: str
+            Material name in SNOwGLoBES. Check `SimpleRate.materials` for the list of options
+        fluxes:
+            2d array of the neutrino fluxes.
+            First array dimension corresponds to the `energies` bins,
+            Second array dimension corresponds to flavors [nu_e, nu_mu, anti_nu_e, anti_nu_mu]
+
+        energies:
+            1d array of the neutrino energy bins in GeV, corresponding to the `fluxes`
+
+        Returns
+        -------
+        pd.DataFrame
+            Table with Energy (GeV) as index values,
+            and number of events for each energy bin, for all interaction channels.
+            Columns are hierarchical: (is_weighted, channel),
+            so one can easily access the desired final table. 
+        """
         TargetMass = self.detectors[detector].tgt_mass
         data = {}
         for channel in self.channels[material].itertuples():
