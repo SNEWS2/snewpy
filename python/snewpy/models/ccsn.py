@@ -8,7 +8,6 @@ using ``snewpy.get_models("<model_name>")``.
 
 .. _Garching Supernova Archive: https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/
 """
-import itertools
 import logging
 import os
 import re
@@ -16,7 +15,6 @@ import tarfile
 
 import numpy as np
 from astropy import units as u
-from astropy.io import ascii
 from astropy.table import Table
 
 from snewpy.models import loaders
@@ -115,8 +113,6 @@ class Nakazato_2013(_RegistryModel):
         Metallicity      : 0.004
         Revival time     : 0.0 ms
         """
-        # user_params = locals().pop('cls')
-        # TODO: Check GitHub PR for error in this example
         # Attempt to load model from parameters
         if filename is not None:
             metadata = {'Progenitor mass': float(filename.split('-')[-1].strip('s%.fits')) * u.Msun}
@@ -136,7 +132,6 @@ class Nakazato_2013(_RegistryModel):
             return loaders.Nakazato_2013(filename)
 
         # Load from model parameters
-        # Build user params, check validity, construct filename, then load from filename
         user_params = dict(zip(cls.param.keys(), (progenitor_mass, revival_time, metallicity, eos)))
         check_valid_params(cls, **user_params)
 
@@ -157,8 +152,6 @@ class Nakazato_2013(_RegistryModel):
         else:
             filename = f"nakazato-{eos}-BH-z{metallicity}-s{progenitor_mass:3.1f}.fits"
 
-        # Pass the desired filename to the loaders. The simulation data will be
-        # downloaded and cached automatically if necessary.
         return loaders.Nakazato_2013(filename, metadata)
 
     # Populate Docstring with param values
@@ -212,7 +205,6 @@ class Sukhbold_2015(_RegistryModel):
             'Progenitor mass': progenitor_mass,
             'EOS': eos
         }
-
         return loaders.Sukhbold_2015(filename, metadata)
 
     # Populate Docstring with param values
@@ -518,7 +510,6 @@ class Warren_2020(_RegistryModel):
                     'turbmixing_param': [1.23, 1.25, 1.27]}
     # TODO: Check Warren model notebook
     # TODO: Broken, requests to individual files are broken, when massive tarball is expected for loader.
-    # Should turbmixing_param be named 'alpha_lambda'?
     @_warn_deprecated_filename_argument
     def __new__(cls, filename=None, eos='SFHo', *, progenitor_mass=None, turbmixing_param=None):
         """
