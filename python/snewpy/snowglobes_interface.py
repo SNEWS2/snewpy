@@ -198,7 +198,7 @@ class SimpleRate():
             flavor = flavor_index + (3 if channel.parity == '-' else 0)
             flux = fluxes[flavor]
             # Cross-section in 10^-38 cm^2
-            xsecs = np.interp(np.log(energies)/np.log(10), xsec[:, 0], xsec[:, 1+flavor], left=0, right=0) * energies_t
+            xsecs = np.interp(np.log(energies_t)/np.log(10), xsec[:, 0], xsec[:, 1+flavor], left=0, right=0) * energies_t
             # Fluence (flux integrated over time bin) in cm^-2 
             # (must be divided by 0.2 MeV to compensate the multiplication in generate_time_series)
             fluxs = np.interp(energies_t, flux_energies, flux, left=0, right=0)/2e-4
@@ -211,8 +211,8 @@ class SimpleRate():
             data[(channel.name,'unsmeared','weighted')] = weighted_rates
             # Add detector effects
             if self.smearings and self.efficiencies:
-                smear = self.smearings[detector].get(channel.name, default=np.eye(len(rates)))
-                effic = self.efficiencies[detector].get(channel.name, default=np.ones(len(rates)))
+                smear = self.smearings[detector].get(channel.name, np.eye(len(rates)))
+                effic = self.efficiencies[detector].get(channel.name, np.ones(len(rates)))
                 rates = np.dot(smear,rates) * effic
                 weighted_rates = rates * channel.weight
                 # Write to dictionary
