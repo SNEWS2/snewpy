@@ -212,7 +212,7 @@ class Warren_2020(PinchedModel):
         with datafile.open():
             # Open luminosity file.
             # Read data from HDF5 files, then store.
-            f = h5py.File(datafile, 'r')
+            f = h5py.File(datafile.path, 'r')
 
             simtab = Table()
 

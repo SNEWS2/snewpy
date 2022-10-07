@@ -170,14 +170,14 @@ def get_model_data(model:str, filename:str, path:str=model_path):
     Parameters
     ----------
     model : Name of the model class for this model file.
-    filename : Expected filename storing simulation data.
+    filename : Name of simulation datafile, or a relative path from the model sub-directory
     path : Local installation path (defaults to astropy cache).
 
     Returns
     -------
     file : FileHandle object.
     """
-    params = { 'model':model, 'filename':os.path.basename(filename), 'path':path }
+    params = { 'model':model, 'filename':filename, 'path':path }
 
     # Parse YAML file with model repository configurations.
     with open_text('snewpy.models', 'model_files.yml') as f:

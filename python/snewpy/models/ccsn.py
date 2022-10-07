@@ -528,8 +528,12 @@ class Warren_2020(_RegistryModel):
         user_params = dict(zip(cls.param.keys(), (progenitor_mass, turbmixing_param)))
         check_valid_params(cls, **user_params)
 
-        fname = os.path.join(f'stir_a{turbmixing_param:3.2f},'
-                             f'stir_multimessenger_a{turbmixing_param:3.2f}_m{progenitor_mass.value:g}.h5')
+        if progenitor_mass.value.is_integer() and progenitor_mass.value <= 30.:
+            fname = os.path.join(f'stir_a{turbmixing_param:3.2f}',
+                                 f'stir_multimessenger_a{turbmixing_param:3.2f}_m{progenitor_mass.value:.1f}.h5')
+        else:
+            fname = os.path.join(f'stir_a{turbmixing_param:3.2f}',
+                                 f'stir_multimessenger_a{turbmixing_param:3.2f}_m{progenitor_mass.value:g}.h5')
 
         # Set model metadata.
         metadata = {
