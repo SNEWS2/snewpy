@@ -45,8 +45,7 @@ class TestModels(unittest.TestCase):
                 for mass in [13., 20., 50.]:
                     model = Nakazato_2013(progenitor_mass=mass * u.Msun, metallicity=z, eos='shen',
                                           revival_time=trev * u.ms)
-                    # mfile = 'models/Nakazato_2013/nakazato-shen-z{}-t_rev{}ms-s{:.1f}.fits'.format(z, trev, mass)
-                    # model = Nakazato_2013(mfile)
+
                     self.assertEqual(model.metadata['EOS'], 'shen')
                     self.assertEqual(model.metadata['Progenitor mass'], mass*u.Msun)
                     self.assertEqual(model.metadata['Revival time'], trev*u.ms)
@@ -69,8 +68,6 @@ class TestModels(unittest.TestCase):
         """
         for mass in [20., 27.]:
             model = Tamborra_2014(progenitor_mass=mass*u.Msun, eos='LS220')
-            # mfile = 'models/Tamborra_2014/s{:.1f}c_3D_dir1'.format(mass)
-            # model = Tamborra_2014(mfile, eos='LS220')
 
             self.assertEqual(model.metadata['EOS'], 'LS220')
             self.assertEqual(model.metadata['Progenitor mass'], mass*u.Msun)
@@ -192,9 +189,6 @@ class TestModels(unittest.TestCase):
         Instantiate a set of 'Walk 2019' models
         """
         model = Walk_2019(progenitor_mass=40*u.Msun, eos='LS220')
-        # mass = 40.
-        # mfile = 'models/Walk_2019/s{:.1f}c_3DBH_dir1'.format(mass)
-        # model = Walk_2019(mfile, eos='LS220')
 
         self.assertEqual(model.metadata['EOS'], 'LS220')
         self.assertEqual(model.metadata['Progenitor mass'], 40*u.Msun)
