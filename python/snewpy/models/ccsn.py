@@ -277,7 +277,7 @@ class Walk_2018(_RegistryModel):
     param_combinations = get_param_combinations(param)
 
     @_warn_deprecated_filename_argument
-    def __new__(cls, filename=None, *, progenitor_mass=None):
+    def __new__(cls, filename=None, eos='LS220', *, progenitor_mass=None):
         if filename is not None:
             # Metadata creation is implemented in snewpy.models.base._GarchingArchiveModel
             return loaders.Walk_2018(filename)
@@ -306,7 +306,7 @@ class Walk_2019(_RegistryModel):
     param_combinations = get_param_combinations(param)
 
     @_warn_deprecated_filename_argument
-    def __new__(cls, filename=None, *, progenitor_mass=None):
+    def __new__(cls, filename=None, eos='LS220', *, progenitor_mass=None):
         if filename is not None:
             # Metadata creation is implemented in snewpy.models.base._GarchingArchiveModel
             return loaders.Walk_2019(filename)
@@ -339,7 +339,7 @@ class OConnor_2013(PinchedModel):
                     'eos': ['HShen', 'LS220']}
 
     @_warn_deprecated_filename_argument
-    def __new__(cls, base, mass=15, eos='LS220', *, progenitor_mass=None):
+    def __new__(cls, base=None, mass=15, eos='LS220', *, progenitor_mass=None):
         """Model Initialization.
 
         Parameters
