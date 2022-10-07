@@ -27,7 +27,7 @@ class TestModels(unittest.TestCase):
                   Walk_2018,
                   Walk_2019,
                   Fornax_2019,
-                  # Warren_2020,
+                  Warren_2020,
                   Kuroda_2020,
                   Fornax_2021,
                   Zha_2021]
