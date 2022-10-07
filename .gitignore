@@ -9,6 +9,13 @@ dist/
 # default directory for downloaded model files
 SNEWPY_models/
 
+# snewpy.snowglobes output files
+*_SNOprocessed.tar.gz
+*.npy
+
+# used for integration tests in test_snowglobes.py
+fluence_Bollig_2016_s*
+
 # editor-specific
 .ipynb_checkpoints/
 .vscode/

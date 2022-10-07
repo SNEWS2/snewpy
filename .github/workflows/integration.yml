@@ -37,25 +37,12 @@ jobs:
         run: |
           mkdir opt
           cd opt
-          wget https://www.mpi-hd.mpg.de/personalhomes/globes/download/globes-3.2.17.tar.gz
-          tar -zxf globes-3.2.17.tar.gz
-          cd globes-3.2.17/
-          ./configure --prefix=$GITHUB_WORKSPACE/opt/globes-3.2.17-install  --disable-binary
-          make
-          make install
-          export GLB_DIR=${GITHUB_WORKSPACE}/opt/globes-3.2.17-install
-          # Install SNOwGLoBES
-          cd ${GITHUB_WORKSPACE}/opt/
           git clone https://github.com/SNOwGLoBES/snowglobes.git
           cd snowglobes
           export SNOWGLOBES=${PWD}
-          cd src
-          make
-          make install
       - name: Run Integration Tests
         run: |
           export SNOWGLOBES=${GITHUB_WORKSPACE}/opt/snowglobes
-          python -m unittest python/snewpy/test/snowglobes_integrationtest.py
           python -m unittest python/snewpy/test/simplerate_integrationtest.py
           pytest -m 'snowglobes' --benchmark-json output.json
       - name: Publish benchmark results
