@@ -132,7 +132,7 @@ class Nakazato_2013(_RegistryModel):
                     'Metallicity': float(filename.split('-')[-2].strip('z%')),
                     'Revival time': 0 * u.ms
                 })
-            return loaders.Nakazato_2013(filename)
+            return loaders.Nakazato_2013(filename, metadata)
 
         # Load from model parameters
         user_params = dict(zip(cls.param.keys(), (progenitor_mass, revival_time, metallicity, eos)))
