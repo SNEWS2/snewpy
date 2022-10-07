@@ -16,8 +16,7 @@ src_path = os.path.realpath(__path__[0])
 base_path = os.sep.join(src_path.split(os.sep)[:-2])
 model_path = os.path.join(get_cache_dir(), 'snewpy/models')
 
-
-def get_models(models=None, download_dir=model_path):
+def get_models(models=None, download_dir='SNEWPY_models'):
     """Download model files from the snewpy repository.
 
     Parameters
@@ -28,8 +27,8 @@ def get_models(models=None, download_dir=model_path):
         Local directory to download model files to.
     """
     from concurrent.futures import ThreadPoolExecutor, as_completed
-    from urllib.request import urlretrieve
     from ._model_urls import model_urls
+    from ._model_downloader import _download as download
 
     for model in list(model_urls):
         if model_urls[model] == []:
@@ -73,14 +72,6 @@ def get_models(models=None, download_dir=model_path):
         print(f"Creating directory '{download_dir}' ...")
         os.makedirs(download_dir)
 
-    def retrieve(url, local_file):
-        try:
-            urlretrieve(url, filename=local_file)
-            print(f"Successfully downloaded {url} to '{local_file}'.")
-        except IOError:
-            print(f"Failed to download {url} to '{local_file}'.")
-            raise
-
     pool = ThreadPoolExecutor(max_workers=8)
     results = []
     for model in models:
@@ -94,7 +85,7 @@ def get_models(models=None, download_dir=model_path):
             else:
                 if not os.path.isdir(os.path.dirname(local_file)):
                     os.makedirs(os.path.dirname(local_file))
-                results.append(pool.submit(retrieve, url, local_file))
+                results.append(pool.submit(download, url, local_file))
 
     exceptions = []
     for result in as_completed(results):
