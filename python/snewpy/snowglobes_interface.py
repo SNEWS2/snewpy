@@ -104,9 +104,9 @@ class SimpleRate():
                 if not l.startswith('%'):
                     l = '% 200 0.0005 0.100 200 0.0005 0.100'
                 tokens = l.split(' ')[1:]
-                nsamples,smin,smax, nbins,emin,emax = [float(t) for t in tokens]
-                return {'e_true' :np.linspace(smin,smax,nsamples),
-                        'e_smear':np.linspace(emin,emax,nbins)
+                nsamples, smin,smax, nbins,emin,emax = [float(t) for t in tokens]
+                return {'e_true' :np.linspace(smin,smax,int(nsamples)+1),
+                        'e_smear':np.linspace(emin,emax,int(nbins)+1)
                         }
 
         self.channels = {}
@@ -156,7 +156,7 @@ class SimpleRate():
         logger.info(f'read smearing matrices for detectors: {list(self.smearings.keys())}')
         logger.debug(f'smearing matrices: {self.smearings}')
 
-    def compute_rates(self, detector:str, material:str, fluxes:np.ndarray, energies:np.ndarray):
+    def compute_rates(self, detector:str, material:str, fluxes:np.ndarray, flux_energies:np.ndarray):
         """ Calculate the rates for the given neutrino fluxes interacting in the given detector.
 
         Parameters
@@ -167,10 +167,10 @@ class SimpleRate():
             Material name in SNOwGLoBES. Check `SimpleRate.materials` for the list of options
         fluxes:
             2d array of the neutrino fluxes.
-            First array dimension corresponds to the `energies` bins,
-            Second array dimension corresponds to flavors [nu_e, nu_mu, anti_nu_e, anti_nu_mu]
+            First array dimension corresponds to flavors [nu_e, nu_mu, anti_nu_e, anti_nu_mu]
+            Second array dimension corresponds to the `energies` bins,
 
-        energies:
+        flux_energies:
             1d array of the neutrino energy bins in GeV, corresponding to the `fluxes`
 
         Returns
@@ -183,18 +183,26 @@ class SimpleRate():
         """
         TargetMass = self.detectors[detector].tgt_mass
         data = {}
+
+        #load the binning for the smearing
+        binning= self.binning[material]
+        #calculate bin centers 
+        bin_centers_true = 0.5*(binning['e_true'][1:]+ binning['e_true'][:-1] )
+        bin_centers_smear= 0.5*(binning['e_smear'][1:]+binning['e_smear'][:-1])
+        binsize = np.diff(binning['e_true'])
+        energies = bin_centers_true
+
         for channel in self.channels[material].itertuples():
             xsec_path = f"xscns/xs_{channel.name}.dat"
             xsec = np.loadtxt(self.base_dir/xsec_path)
             flavor_index = 0 if 'e' in channel.flavor else (1 if 'm' in channel.flavor else 2)
             flavor = flavor_index + (3 if channel.parity == '-' else 0)
-            flux = fluxes[:, (0,1+flavor)]
-            binsize = energies[1] - energies[0]
+            flux = fluxes[flavor]
             # Cross-section in 10^-38 cm^2
             xsecs = np.interp(np.log(energies)/np.log(10), xsec[:, 0], xsec[:, 1+flavor], left=0, right=0) * energies
             # Fluence (flux integrated over time bin) in cm^-2 
             # (must be divided by 0.2 MeV to compensate the multiplication in generate_time_series)
-            fluxs = np.interp(energies, flux[:, 0], flux[:, 1], left=0, right=0)/2e-4
+            fluxs = np.interp(energies, flux_energies, flux, left=0, right=0)/2e-4
             # Rate computation
             rates = xsecs * 1e-38 * fluxs * float(TargetMass) * 1./1.661e-33 * binsize
             # Weighting
@@ -262,16 +270,13 @@ class SimpleRate():
         if isinstance(flux_files,str):
             flux_files = [flux_files]
 
-        #define energy bins
-        energies = np.linspace(7.49e-4, 9.975e-2, 200) # Use the same energy grid as SNOwGLoBES
-        if '_he' in detector:
-            energies = np.linspace(7.49e-4, 19.975e-2, 400) #SNOwGLoBES grid for he configurations
-
         with tqdm(total=len(flux_files), leave=False, desc='Flux files') as progressbar:
             results = []
             for flux_file in flux_files:
-                flux = np.loadtxt(Path(flux_file).resolve())
-                result = self.compute_rates(detector, material, flux, energies)
+                e_flux = np.loadtxt(Path(flux_file).resolve()).T
+                energies = e_flux[0]
+                fluxes = e_flux[1:]
+                result = self.compute_rates(detector, material, fluxes, energies)
                 progressbar.update()
                 results.append(result)
             return results
