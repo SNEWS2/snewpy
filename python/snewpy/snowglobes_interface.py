@@ -187,10 +187,9 @@ class SimpleRate():
         #load the binning for the smearing
         binning= self.binning[material]
         #calculate bin centers 
-        bin_centers_true = 0.5*(binning['e_true'][1:]+ binning['e_true'][:-1] )
-        bin_centers_smear= 0.5*(binning['e_smear'][1:]+binning['e_smear'][:-1])
+        energies_t = 0.5*(binning['e_true'][1:]+ binning['e_true'][:-1] )
+        energies_s= 0.5*(binning['e_smear'][1:]+binning['e_smear'][:-1])
         binsize = np.diff(binning['e_true'])
-        energies = bin_centers_true
 
         for channel in self.channels[material].itertuples():
             xsec_path = f"xscns/xs_{channel.name}.dat"
@@ -199,10 +198,10 @@ class SimpleRate():
             flavor = flavor_index + (3 if channel.parity == '-' else 0)
             flux = fluxes[flavor]
             # Cross-section in 10^-38 cm^2
-            xsecs = np.interp(np.log(energies)/np.log(10), xsec[:, 0], xsec[:, 1+flavor], left=0, right=0) * energies
+            xsecs = np.interp(np.log(energies)/np.log(10), xsec[:, 0], xsec[:, 1+flavor], left=0, right=0) * energies_t
             # Fluence (flux integrated over time bin) in cm^-2 
             # (must be divided by 0.2 MeV to compensate the multiplication in generate_time_series)
-            fluxs = np.interp(energies, flux_energies, flux, left=0, right=0)/2e-4
+            fluxs = np.interp(energies_t, flux_energies, flux, left=0, right=0)/2e-4
             # Rate computation
             rates = xsecs * 1e-38 * fluxs * float(TargetMass) * 1./1.661e-33 * binsize
             # Weighting
@@ -212,22 +211,15 @@ class SimpleRate():
             data[(channel.name,'unsmeared','weighted')] = weighted_rates
             # Add detector effects
             if self.smearings and self.efficiencies:
-                smear,effic = None,None
-                if channel.name in self.smearings[detector].keys():
-                    smear = self.smearings[detector][channel.name]
-                else:
-                    smear = np.eye(len(rates))
-                if channel.name in self.efficiencies[detector].keys():
-                    effic = self.efficiencies[detector][channel.name]
-                else:
-                    effic = np.ones(len(rates))
+                smear = self.smearings[detector].get(channel.name, default=np.eye(len(rates)))
+                effic = self.efficiencies[detector].get(channel.name, default=np.ones(len(rates)))
                 rates = np.dot(smear,rates) * effic
                 weighted_rates = rates * channel.weight
                 # Write to dictionary
                 data[(channel.name,'smeared','unweighted')] = rates
                 data[(channel.name,'smeared','weighted')] = weighted_rates
         #collect everything to pandas DataFrame
-        df = pd.DataFrame(data, index = energies)
+        df = pd.DataFrame(data, index = energies_s)
         df.index.rename('E', inplace=True)
         df.columns.rename(['channel','is_smeared','is_weighted'], inplace=True)
         return df.reorder_levels([2,1,0], axis='columns')
