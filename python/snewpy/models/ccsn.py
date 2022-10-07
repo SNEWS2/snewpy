@@ -493,8 +493,7 @@ class Zha_2021(_RegistryModel):
 class Warren_2020(_RegistryModel):
     """Model based on simulations from Warren et al., ApJ 898:139, 2020.
     Neutrino fluxes available at https://doi.org/10.5281/zenodo.3667908."""
-    # TODO: Switch loader to GitHub, rather than zenodo for reliability and performance.
-    # TODO: Resolve zenodo issues in future PR
+    # TODO: (For v2.0) Resolve Zenodo issues (Missing files)
     # np.arange with decimal increments can produce floating point errors
     # Though it may be more intuitive to use np.arange, these fp-errors quickly become troublesome
     param = {'progenitor_mass': np.concatenate((np.linspace(9.25, 12.75, 15),
@@ -508,8 +507,8 @@ class Warren_2020(_RegistryModel):
 
     _param_abbrv = {'progenitor_mass': '[9.25..0.25..13, 13..0.1..30, 31..35, 35..5..60, 70..10..90, 100, 120] solMass',
                     'turbmixing_param': [1.23, 1.25, 1.27]}
-    # TODO: Check Warren model notebook
-    # TODO: Broken, requests to individual files are broken, when massive tarball is expected for loader.
+
+
     @_warn_deprecated_filename_argument
     def __new__(cls, filename=None, eos='SFHo', *, progenitor_mass=None, turbmixing_param=None):
         """
