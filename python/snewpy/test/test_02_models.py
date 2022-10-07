@@ -8,13 +8,19 @@ from snewpy.models.loaders import Nakazato_2013, Tamborra_2014, OConnor_2013, OC
                                   Sukhbold_2015, Bollig_2016, Walk_2018, \
                                   Walk_2019, Fornax_2019, Warren_2020, \
                                   Kuroda_2020, Fornax_2021, Zha_2021
-
+from snewpy._model_urls import model_urls
 from astropy import units as u
 from snewpy import model_path
 import os
 
 
 class TestModels(unittest.TestCase):
+
+    def test_model_urls(self):
+        """Test that snewpy._model_urls.model_urls is empty. This should be populated if snewpy is downloaded from PyPI.
+        This serves as a guard against accidentally committing/merging a populated model_urls to main.
+        """
+        self.assertFalse(model_urls)
 
     def test_Nakazato_2013(self):
         """
