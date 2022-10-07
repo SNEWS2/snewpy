@@ -345,7 +345,7 @@ class OConnor_2013(PinchedModel):
                     'eos': ['HShen', 'LS220']}
 
     @_warn_deprecated_filename_argument
-    def __new__(cls, base=None, mass=15, eos='LS220', *, progenitor_mass=None):
+    def __new__(cls, base=None, mass=None, eos='LS220', *, progenitor_mass=None):
         """Model Initialization.
 
         Parameters
@@ -375,9 +375,11 @@ class OConnor_2013(PinchedModel):
             warn(f'Argument `mass` of type int will be deprecated. To initialize this model, use keyword arguments '
                  f'{list(cls.param.keys())}. See {cls.__name__}.param, {cls.__name__}.param_combinations for more info',
                  category=DeprecationWarning, stacklevel=2)
+        else:
+            mass = 15  # Default Value, this is handled this way for backwards compatibility -- TODO (For V2.0) Remove
 
         if base is not None:
-            # If base is provided, do not attempt to load from param. Progenitor mass must also be provided
+            # If base is provided, do not attempt to load from param.
             if mass * u.Msun not in cls.param['progenitor_mass']:
                 raise ValueError(f'Invalid value for argument `progenitor mass` or `mass`, see {cls.__name__}.param'
                                  f' for allowed values')
