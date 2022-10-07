@@ -513,7 +513,7 @@ class Warren_2020(_RegistryModel):
     # TODO: (For v2.0) Resolve Zenodo issues (Missing files)
     # np.arange with decimal increments can produce floating point errors
     # Though it may be more intuitive to use np.arange, these fp-errors quickly become troublesome
-    param = {'progenitor_mass': np.concatenate((np.linspace(9.25, 12.75, 15),
+    param = {'progenitor_mass': np.concatenate((np.linspace(9.0, 12.75, 16),
                                                 np.linspace(13, 30., 171),
                                                 np.linspace(31., 33., 3),
                                                 np.linspace(35, 55, 5),
@@ -522,7 +522,7 @@ class Warren_2020(_RegistryModel):
              'turbmixing_param': [1.23, 1.25, 1.27]}
     param_combinations = get_param_combinations(param)
 
-    _param_abbrv = {'progenitor_mass': '[9.25..0.25..13, 13..0.1..30, 31..35, 35..5..60, 70..10..90, 100, 120] solMass',
+    _param_abbrv = {'progenitor_mass': '[9..0.25..13, 13..0.1..30, 31..35, 35..5..60, 70..10..90, 100, 120] solMass',
                     'turbmixing_param': [1.23, 1.25, 1.27]}
 
 

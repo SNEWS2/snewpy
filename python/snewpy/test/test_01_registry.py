@@ -232,7 +232,7 @@ class TestModels(unittest.TestCase):
         """
         Instantiate a set of 'Warren 2020' models
         """
-        masses = np.concatenate((np.linspace(9.25, 12.75, 15),
+        masses = np.concatenate((np.linspace(9.0, 12.75, 16),
                                  np.linspace(13, 30., 171),
                                  np.linspace(31., 33., 3),
                                  np.linspace(35, 55, 5),
