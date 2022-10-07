@@ -166,8 +166,8 @@ class TestModels(unittest.TestCase):
         mfile = 'Walk_2019/s{:.1f}c_3DBH_dir1'.format(mass)
         model = Walk_2019(os.path.join(model_path, mfile), eos='LS220')
 
-        self.assertEqual(model.EOS, 'LS220')
-        self.assertEqual(model.progenitor_mass, mass*u.Msun)
+        self.assertEqual(model.metadata['EOS'], 'LS220')
+        self.assertEqual(model.metadata['Progenitor mass'], mass*u.Msun)
 
         # Check that times are in proper units.
         t = model.get_time()
@@ -229,7 +229,7 @@ class TestModels(unittest.TestCase):
 
         for mixing in [1.23, 1.25, 1.27]:
             for mass in masses:
-                mfile = 'stir_multimessenger_a{}.tar'.format(mixing)
+                mfile = f'stir_a{mixing}/stir_multimessenger_a{mixing}_m{mass}.h5'
                 metadata = {
                     'Progenitor mass': float(mass) * u.Msun,
                     'Turb. mixing param.': mixing,

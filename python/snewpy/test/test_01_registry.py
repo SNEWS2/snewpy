@@ -27,7 +27,7 @@ class TestModels(unittest.TestCase):
                   Walk_2018,
                   Walk_2019,
                   Fornax_2019,
-                  Warren_2020,
+                  # Warren_2020,
                   Kuroda_2020,
                   Fornax_2021,
                   Zha_2021]
@@ -72,8 +72,8 @@ class TestModels(unittest.TestCase):
             # mfile = 'models/Tamborra_2014/s{:.1f}c_3D_dir1'.format(mass)
             # model = Tamborra_2014(mfile, eos='LS220')
 
-            self.assertEqual(model.EOS, 'LS220')
-            self.assertEqual(model.progenitor_mass, mass*u.Msun)
+            self.assertEqual(model.metadata['EOS'], 'LS220')
+            self.assertEqual(model.metadata['Progenitor mass'], mass*u.Msun)
 
             # Check that times are in proper units.
             t = model.get_time()
@@ -154,8 +154,8 @@ class TestModels(unittest.TestCase):
         for mass in [11.2, 27.]:
             model = Bollig_2016(progenitor_mass=mass*u.Msun, eos='LS220')
 
-            self.assertEqual(model.EOS, 'LS220')
-            self.assertEqual(model.progenitor_mass, mass*u.Msun)
+            self.assertEqual(model.metadata['EOS'], 'LS220')
+            self.assertEqual(model.metadata['Progenitor mass'], mass*u.Msun)
 
             # Check that times are in proper units.
             t = model.get_time()
@@ -172,10 +172,10 @@ class TestModels(unittest.TestCase):
         Instantiate a set of 'Walk 2018' models
         """
         mass = 15.
-        model = Walk_2018(progenitor_mass=mass*u.Msun, eos='LS220')
+        model = Walk_2018(progenitor_mass=mass*u.Msun)
 
-        self.assertEqual(model.EOS, 'LS220')
-        self.assertEqual(model.progenitor_mass, mass*u.Msun)
+        self.assertEqual(model.metadata['EOS'], 'LS220')
+        self.assertEqual(model.metadata['Progenitor mass'], mass*u.Msun)
 
         # Check that times are in proper units.
         t = model.get_time()
@@ -196,8 +196,8 @@ class TestModels(unittest.TestCase):
         # mfile = 'models/Walk_2019/s{:.1f}c_3DBH_dir1'.format(mass)
         # model = Walk_2019(mfile, eos='LS220')
 
-        self.assertEqual(model.EOS, 'LS220')
-        self.assertEqual(model.progenitor_mass, 40*u.Msun)
+        self.assertEqual(model.metadata['EOS'], 'LS220')
+        self.assertEqual(model.metadata['Progenitor mass'], 40*u.Msun)
 
         # Check that times are in proper units.
         t = model.get_time()
@@ -265,7 +265,7 @@ class TestModels(unittest.TestCase):
         for rot_vel, exponents in [(0, [0]),
                                    (1, [12, 13])]:
             for exponent in exponents:
-                model = Kuroda_2020(progenitor_mass=20*u.Msun, rotational_velocity=rot_vel * u.rad / u.s,
+                model = Kuroda_2020(rotational_velocity=rot_vel * u.rad / u.s,
                                     magnetic_field_exponent=exponent, eos='LS220')
 
                 self.assertEqual(model.metadata['EOS'], 'LS220')
