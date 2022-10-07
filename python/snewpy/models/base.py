@@ -296,7 +296,7 @@ class _GarchingArchiveModel(PinchedModel):
         """
         if not metadata:
             metadata = {
-                'Progenitor mass': float((filename.split('s'))[1].split('c')[0]) * u.Msun,
+                'Progenitor mass': float(os.path.basename(filename).split('s')[1].split('c')[0]) * u.Msun,
                 'EOS': eos,
             }
 
