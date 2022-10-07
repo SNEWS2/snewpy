@@ -383,11 +383,10 @@ class OConnor_2013(PinchedModel):
             if mass * u.Msun not in cls.param['progenitor_mass']:
                 raise ValueError(f'Invalid value for argument `progenitor mass` or `mass`, see {cls.__name__}.param'
                                  f' for allowed values')
-
             metadata = {'Progenitor mass': progenitor_mass if progenitor_mass is not None else mass * u.Msun,
-                        'EOS': os.path.basename(base).split('_')[0]}
+                        'EOS': eos}
 
-            filename = f"{os.path.basename(base).split('_')[0]}_timeseries.tar.gz"
+            filename = os.path.join(base, f"{eos}_timeseries.tar.gz")
             return loaders.OConnor_2013(filename, metadata)
 
         # Load from Parameters
