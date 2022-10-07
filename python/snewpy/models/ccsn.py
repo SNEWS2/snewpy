@@ -486,7 +486,7 @@ class Zha_2021(_RegistryModel):
             If a combination of parameters is invalid when loading from parameters
         """
         if filename is not None:
-            metadata = {'Progenitor Mass': float(os.path.splitext(os.path.basename(filename))[0][1:]) * u.Msun,
+            metadata = {'Progenitor mass': float(os.path.splitext(os.path.basename(filename))[0][1:]) * u.Msun,
                         'EOS': 'STOS_B145'}
             return loaders.Zha_2021(filename, metadata)
 
