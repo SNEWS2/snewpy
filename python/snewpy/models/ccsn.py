@@ -88,6 +88,9 @@ class Nakazato_2013(_RegistryModel):
         ----------
         filename : str
             Absolute or relative path to FITS file with model data. This argument will be deprecated.
+
+        Other Parameters
+        ----------------
         progenitor_mass: astropy.units.Quantity
             Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
         revival_time: astropy.units.Quantity
@@ -174,6 +177,9 @@ class Sukhbold_2015(_RegistryModel):
         ----------
         filename : str
             Absolute or relative path to FITS file with model data. This argument will be deprecated.
+
+        Other Parameters
+        ----------------
         progenitor_mass: astropy.units.Quantity
             Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
         eos: str
@@ -349,10 +355,13 @@ class OConnor_2013(PinchedModel):
             TODO: (For v2.0) Change base to filename, move compressed model files to OCOnnor_2013 model folder
         mass: int
             Mass of model progenitor in units Msun. This argument will be deprecated.
-        progenitor_mass: astropy.units.Quantity
-            Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
         eos: str
             Equation of state. Valid values are {eos}.
+
+        Other Parameters
+        ----------------
+        progenitor_mass: astropy.units.Quantity
+            Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
 
         Raises
         ------
@@ -410,7 +419,10 @@ class OConnor_2015(_RegistryModel):
         filename : str
             Absolute or relative path to tar.gz file with model data. This argument will be deprecated.
         eos: str
-            Equation of state. Valid value is 'LS220'.
+            Equation of state. Valid value is 'LS220'. This argument will be deprecated.
+
+        Other Parameters
+        ----------------
         progenitor_mass: astropy.units.Quantity
             Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
 
@@ -459,6 +471,9 @@ class Zha_2021(_RegistryModel):
             Absolute or relative path to file with model data. This argument will be deprecated.
         eos : str
             Equation of state. Valid value is 'ST0S_B145'. This argument will be deprecated.
+
+        Other Parameters
+        ----------------
         progenitor_mass: astropy.units.Quantity
             Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
 
@@ -518,6 +533,9 @@ class Warren_2020(_RegistryModel):
             Absolute or relative path to file with model data. This argument will be deprecated.
         eos : str
             Equation of state. Valid value is 'SFHo'. This argument will be deprecated.
+
+        Other Parameters
+        ----------------
         progenitor_mass: astropy.units.Quantity
             Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
         turbmixing_param: float
@@ -583,6 +601,9 @@ class Kuroda_2020(_RegistryModel):
             Equation of state. Valid value is 'LS220'. This argument will be deprecated.
         mass: astropy.units.Quantity
             Mass of model progenitor in units Msun. Valid value is 20 * u.Msun. This argument will be deprecated.
+
+        Other Parameters
+        ----------------
         rotational_velocity: astropy.units.Quantity
             Rotational velocity of progenitor. Valid values are {rotational_velocity}
         magnetic_field_exponent: int
@@ -640,6 +661,9 @@ class Fornax_2019(_RegistryModel):
             Absolute or relative path to file with model data. This argument will be deprecated.
         cache_flux : bool
             If true, pre-compute the flux on a fixed angular grid and store the values in a FITS file.
+
+        Other Parameters
+        ----------------
         progenitor_mass: astropy.units.Quantity
             Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
         """
@@ -680,6 +704,9 @@ class Fornax_2021(_RegistryModel):
         ----------
         filename : str
             Absolute or relative path to file with model data. This argument will be deprecated.
+
+        Other Parameters
+        ----------------
         progenitor_mass: astropy.units.Quantity
             Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
         """

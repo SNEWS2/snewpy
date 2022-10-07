@@ -280,6 +280,8 @@ class _GarchingArchiveModel(PinchedModel):
         ----------
         filename : str
             Absolute or relative path to file with model data, we add nue/nuebar/nux.  This argument will be deprecated.
+        eos: str
+            Equation of state. Valid value is 'LS220'. This argument will be deprecated.
 
         Other Parameters
         ----------------
