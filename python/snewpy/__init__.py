@@ -8,7 +8,7 @@ Front-end for supernova models which provide neutrino luminosity and spectra.
 """
 
 from ._version import __version__
-
+from pathlib import Path
 from astropy.config.paths import get_cache_dir
 import os
 
@@ -43,7 +43,8 @@ def get_models(models=None, download_dir='SNEWPY_models'):
         # Select model(s) to download
         print(f"Available models in this version of SNEWPY: {list(model_urls.keys())}")
         if not model_urls:
-            print("Error: `get_models()` only works after installing SNEWPY via `pip install snewpy`. If you have cloned the git repo, model files are available in the `models/` folder.")
+            print("Error: `get_models()` only works after installing SNEWPY via `pip install snewpy`. "
+                  "If you have cloned the git repo, model files are available in the `models/` folder.")
             return False
 
         selected = input("\nType a model name, 'all' to download all models or <Enter> to cancel: ").strip()
@@ -85,7 +86,7 @@ def get_models(models=None, download_dir='SNEWPY_models'):
             else:
                 if not os.path.isdir(os.path.dirname(local_file)):
                     os.makedirs(os.path.dirname(local_file))
-                results.append(pool.submit(download, url, local_file))
+                results.append(pool.submit(download, src=url, dest=Path(local_file)))
 
     exceptions = []
     for result in as_completed(results):
