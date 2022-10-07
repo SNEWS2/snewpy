@@ -119,6 +119,20 @@ class Nakazato_2013(_RegistryModel):
         # TODO: Check GitHub PR for error in this example
         # Attempt to load model from parameters
         if filename is not None:
+            metadata = {'Progenitor mass': float(filename.split('-')[-1].strip('s%.fits')) * u.Msun}
+            if 't_rev' in filename:
+                metadata.update({
+                    'EOS': filename.split('-')[-4].upper(),
+                    'Metallicity': float(filename.split('-')[-3].strip('z%')),
+                    'Revival time': float(filename.split('-')[-2].strip('t_rev%ms')) * u.ms
+                })
+            # No revival time because the explosion "failed" (BH formation).
+            else:
+                metadata.update({
+                    'EOS': filename.split('-')[-4].upper(),
+                    'Metallicity': float(filename.split('-')[-2].strip('z%')),
+                    'Revival time': 0 * u.ms
+                })
             return loaders.Nakazato_2013(filename)
 
         # Load from model parameters
@@ -180,7 +194,11 @@ class Sukhbold_2015(_RegistryModel):
             If a combination of parameters is invalid when loading from parameters
         """
         if filename is not None:
-            return loaders.Sukhbold_2015(filename)
+            metadata = {
+                'Progenitor mass': float(filename.split('-')[-1].strip('z%.fits')) * u.Msun,
+                'EOS': filename.split('-')[-2]
+            }
+            return loaders.Sukhbold_2015(filename, metadata)
 
         user_params = dict(zip(cls.param.keys(), (progenitor_mass, eos)))
         check_valid_params(cls, **user_params)
@@ -212,6 +230,7 @@ class Tamborra_2014(_RegistryModel):
     @_warn_deprecated_filename_argument
     def __new__(cls, filename=None, eos='LS220', *, progenitor_mass=None):
         if filename is not None:
+            # Metadata creation is implemented in snewpy.models.base._GarchingArchiveModel
             return loaders.Tamborra_2014(filename)
 
         check_valid_params(cls, progenitor_mass=progenitor_mass)
@@ -239,6 +258,7 @@ class Bollig_2016(_RegistryModel):
 
     def __new__(cls, filename=None,  eos='LS220', *, progenitor_mass=None):
         if filename is not None:
+            # Metadata creation is implemented in snewpy.models.base._GarchingArchiveModel
             return loaders.Bollig_2016(filename)
 
         check_valid_params(cls, progenitor_mass=progenitor_mass)
@@ -267,6 +287,7 @@ class Walk_2018(_RegistryModel):
     @_warn_deprecated_filename_argument
     def __new__(cls, filename=None, *, progenitor_mass=None):
         if filename is not None:
+            # Metadata creation is implemented in snewpy.models.base._GarchingArchiveModel
             return loaders.Walk_2018(filename)
 
         check_valid_params(cls, progenitor_mass=progenitor_mass)
@@ -295,6 +316,7 @@ class Walk_2019(_RegistryModel):
     @_warn_deprecated_filename_argument
     def __new__(cls, filename=None, *, progenitor_mass=None):
         if filename is not None:
+            # Metadata creation is implemented in snewpy.models.base._GarchingArchiveModel
             return loaders.Walk_2019(filename)
 
         check_valid_params(cls, progenitor_mass=progenitor_mass)
@@ -674,7 +696,7 @@ class Fornax_2021(_RegistryModel):
         if filename is not None:
             progenitor_mass = os.path.splitext(os.path.basename(filename))[0].split('_')[2]
             metadata = {'Progenitor mass': float(progenitor_mass[:-1]) * u.Msun}
-            return loaders.Fornax_2021(filename)
+            return loaders.Fornax_2021(filename, metadata)
 
         # Load from Parameters
         check_valid_params(cls, progenitor_mass=progenitor_mass)
@@ -683,9 +705,7 @@ class Fornax_2021(_RegistryModel):
         else:
             filename = f'lum_spec_{progenitor_mass.value:.2f}M_r10000_dat.h5'
 
-        metadata = {
-            'Progenitor mass': progenitor_mass,
-            }
+        metadata = {'Progenitor mass': progenitor_mass}
 
         return loaders.Fornax_2021(filename, metadata)
 
