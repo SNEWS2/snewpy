@@ -9,6 +9,7 @@ from astropy.units.quantity import Quantity
 from scipy.special import loggamma
 
 from snewpy.neutrino import Flavor
+from snewpy.flavor_transformation import NoTransformation, FlavorTransformation
 from functools import wraps
 
 
@@ -160,6 +161,33 @@ class SupernovaModel(ABC):
             flavor_xform.prob_xxbar(t, E) * initialspectra[Flavor.NU_X_BAR] 
 
         return transformed_spectra   
+
+    def get_flux (self, t, E, distance, flavor_xform=NoTransformation, **kwargs):
+        """Get neutrino flux through 1cm^2 surface at the given distance
+
+        Parameters
+        ----------
+        t : astropy.Quantity
+            Time to evaluate the neutrino spectra.
+        E : astropy.Quantity or ndarray of astropy.Quantity
+            Energies to evaluate the the neutrino spectra.
+        distance : astropy.Quantity or float (in kpc)
+            Distance from supernova to the 
+        flavor_xform : FlavorTransformation
+            An instance from the flavor_transformation module.
+
+        Returns
+        -------
+        dict
+            Dictionary of neutrino fluxes in [neutrinos/(cm^2*MeV*s)], 
+            keyed by neutrino flavor.
+
+        """
+        distance = distance << u.kpc #assume that provided distance is in kpc, or convert
+        factor = 1/(4*np.pi*(distance.to('cm'))**2)
+        flux = get_transformed_spectra(self, t, E, flavor_transform)
+        return {flavor: f*factor for flavor,f in flux.items()}
+
 
 
     def get_oscillatedspectra(self, *args):
