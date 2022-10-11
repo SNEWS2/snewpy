@@ -162,7 +162,7 @@ class SupernovaModel(ABC):
 
         return transformed_spectra   
 
-    def get_flux (self, t, E, distance, flavor_xform=NoTransformation, **kwargs):
+    def get_flux (self, t, E, distance, flavor_xform=NoTransformation(), **kwargs):
         """Get neutrino flux through 1cm^2 surface at the given distance
 
         Parameters
@@ -185,7 +185,7 @@ class SupernovaModel(ABC):
         """
         distance = distance << u.kpc #assume that provided distance is in kpc, or convert
         factor = 1/(4*np.pi*(distance.to('cm'))**2)
-        flux = get_transformed_spectra(self, t, E, flavor_transform)
+        flux = self.get_transformed_spectra(t, E, flavor_xform)
         return {flavor: f*factor for flavor,f in flux.items()}
 
 
