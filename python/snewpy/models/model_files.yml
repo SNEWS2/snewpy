@@ -1,0 +1,57 @@
+# Define remote locations of simulation files for each model.
+#  1. Model data on GitHub must provide the SNEWPY release version.
+#  2. Model data on Zenodo must provide the Zenodo record ID.
+models:
+
+    Bollig_2016:
+        repository: github
+        release_version: 1.2
+
+    Fornax_2019: 
+        repository: github
+        release_version: 1.2
+
+    Fornax_2021: 
+        repository: github
+        release_version: 1.2
+
+    Kuroda_2020: 
+        repository: github
+        release_version: 1.2
+
+    Nakazato_2013: 
+        repository: github
+        release_version: 1.2
+
+    OConnor_2013: 
+        repository: github
+        release_version: 1.2
+
+    OConnor_2015: 
+        repository: github
+        release_version: 1.2
+ 
+    Sukhbold_2015: 
+        repository: github
+        release_version: 1.2
+ 
+    Tamborra_2014: 
+        repository: github
+        release_version: 1.2
+ 
+    Walk_2018: 
+        repository: github
+        release_version: 1.2
+ 
+    Walk_2019: 
+        repository: github
+        release_version: 1.2
+
+    Warren_2020:
+        repository: github
+        release_version: 1.2
+
+    Zha_2021: 
+        repository: github
+        release_version: 1.2
+
