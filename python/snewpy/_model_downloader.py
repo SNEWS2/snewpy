@@ -100,8 +100,7 @@ local path.
             logger.info(f'Downloading file {self.path}')
             _download(self.remote, self.path)
             self.check()
-        finally:
-            return self.path
+        return self.path
 
     def open(self, flags='r'):
         """ Load and open the local file, return the file object"""
@@ -177,6 +176,9 @@ def get_model_data(model:str, filename:str, path:str=model_path):
     -------
     file : FileHandle object.
     """
+    if os.path.isabs(filename):
+        return FileHandle(path=Path(filename))
+
     params = { 'model':model, 'filename':filename, 'path':path }
 
     # Parse YAML file with model repository configurations.

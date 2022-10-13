@@ -132,7 +132,7 @@ class Nakazato_2013(_RegistryModel):
                     'Metallicity': float(filename.split('-')[-2].strip('z%')),
                     'Revival time': 0 * u.ms
                 })
-            return loaders.Nakazato_2013(filename, metadata)
+            return loaders.Nakazato_2013(os.path.abspath(filename), metadata)
 
         # Load from model parameters
         user_params = dict(zip(cls.param.keys(), (progenitor_mass, revival_time, metallicity, eos)))
@@ -197,7 +197,7 @@ class Sukhbold_2015(_RegistryModel):
                 'Progenitor mass': float(filename.split('-')[-1].strip('z%.fits')) * u.Msun,
                 'EOS': filename.split('-')[-2]
             }
-            return loaders.Sukhbold_2015(filename, metadata)
+            return loaders.Sukhbold_2015(os.path.abspath(filename), metadata)
 
         user_params = dict(zip(cls.param.keys(), (progenitor_mass, eos)))
         check_valid_params(cls, **user_params)
@@ -229,7 +229,7 @@ class Tamborra_2014(_RegistryModel):
     def __new__(cls, filename=None, eos='LS220', *, progenitor_mass=None):
         if filename is not None:
             # Metadata creation is implemented in snewpy.models.base._GarchingArchiveModel
-            return loaders.Tamborra_2014(filename)
+            return loaders.Tamborra_2014(os.path.abspath(filename))
 
         check_valid_params(cls, progenitor_mass=progenitor_mass)
         filename = f's{progenitor_mass.value:3.1f}c_3D_dir1'
@@ -257,7 +257,7 @@ class Bollig_2016(_RegistryModel):
     def __new__(cls, filename=None,  eos='LS220', *, progenitor_mass=None):
         if filename is not None:
             # Metadata creation is implemented in snewpy.models.base._GarchingArchiveModel
-            return loaders.Bollig_2016(filename)
+            return loaders.Bollig_2016(os.path.abspath(filename))
 
         check_valid_params(cls, progenitor_mass=progenitor_mass)
         filename = f's{progenitor_mass.value:3.1f}c'
@@ -286,7 +286,7 @@ class Walk_2018(_RegistryModel):
     def __new__(cls, filename=None, eos='LS220', *, progenitor_mass=None):
         if filename is not None:
             # Metadata creation is implemented in snewpy.models.base._GarchingArchiveModel
-            return loaders.Walk_2018(filename)
+            return loaders.Walk_2018(os.path.abspath(filename))
 
         check_valid_params(cls, progenitor_mass=progenitor_mass)
         filename = f's{progenitor_mass.value:3.1f}c_3D_nonrot_dir1'
@@ -315,7 +315,7 @@ class Walk_2019(_RegistryModel):
     def __new__(cls, filename=None, eos='LS220', *, progenitor_mass=None):
         if filename is not None:
             # Metadata creation is implemented in snewpy.models.base._GarchingArchiveModel
-            return loaders.Walk_2019(filename)
+            return loaders.Walk_2019(os.path.abspath(filename))
 
         check_valid_params(cls, progenitor_mass=progenitor_mass)
         filename = f's{progenitor_mass.value:3.1f}c_3DBH_dir1'
@@ -387,7 +387,7 @@ class OConnor_2013(PinchedModel):
                         'EOS': eos}
 
             filename = os.path.join(base, f"{eos}_timeseries.tar.gz")
-            return loaders.OConnor_2013(filename, metadata)
+            return loaders.OConnor_2013(os.path.abspath(filename), metadata)
 
         # Load from Parameters
         check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos)
@@ -440,7 +440,7 @@ class OConnor_2015(_RegistryModel):
         }
 
         if filename is not None:
-            return loaders.OConnor_2015(filename, metadata)
+            return loaders.OConnor_2015(os.path.abspath(filename), metadata)
 
         # Load from Parameters
         check_valid_params(cls, progenitor_mass=progenitor_mass)
@@ -488,7 +488,7 @@ class Zha_2021(_RegistryModel):
         if filename is not None:
             metadata = {'Progenitor mass': float(os.path.splitext(os.path.basename(filename))[0][1:]) * u.Msun,
                         'EOS': 'STOS_B145'}
-            return loaders.Zha_2021(filename, metadata)
+            return loaders.Zha_2021(os.path.abspath(filename), metadata)
 
         # Load from Parameters
         check_valid_params(cls, progenitor_mass=progenitor_mass)
@@ -555,7 +555,7 @@ class Warren_2020(_RegistryModel):
                         'Turb. mixing param.': float(turbmixing_param[1:]),
                         'EOS': 'SFHo'}
 
-            return loaders.Warren_2020(filename, metadata)
+            return loaders.Warren_2020(os.path.abspath(filename), metadata)
 
         # Load from Parameters
         user_params = dict(zip(cls.param.keys(), (progenitor_mass, turbmixing_param)))
@@ -626,7 +626,7 @@ class Kuroda_2020(_RegistryModel):
                 'B_0 Exponent': int(magnetic_field_exponent),
                 'EOS': 'LS220'
             }
-            return loaders.Kuroda_2020(filename, metadata)
+            return loaders.Kuroda_2020(os.path.abspath(filename), metadata)
 
         # Load from Parameters
         check_valid_params(cls, rotational_velocity=rotational_velocity,
@@ -671,7 +671,7 @@ class Fornax_2019(_RegistryModel):
         if filename is not None:
             progenitor_mass = os.path.splitext(os.path.basename(filename))[0].split('_')[2]
             metadata = {'Progenitor mass': int(progenitor_mass[:-1]) * u.Msun}
-            return loaders.Fornax_2019(filename, metadata, cache_flux=cache_flux)
+            return loaders.Fornax_2019(os.path.abspath(filename), metadata, cache_flux=cache_flux)
 
         # Load from Parameters
         metadata = {'Progenitor mass': progenitor_mass}
@@ -714,7 +714,7 @@ class Fornax_2021(_RegistryModel):
         if filename is not None:
             progenitor_mass = os.path.splitext(os.path.basename(filename))[0].split('_')[2]
             metadata = {'Progenitor mass': float(progenitor_mass[:-1]) * u.Msun}
-            return loaders.Fornax_2021(filename, metadata)
+            return loaders.Fornax_2021(os.path.abspath(filename), metadata)
 
         # Load from Parameters
         check_valid_params(cls, progenitor_mass=progenitor_mass)
