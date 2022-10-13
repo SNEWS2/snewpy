@@ -11,7 +11,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  run:
     # Only execute integration test if PR is *not* a draft
     if: github.event.pull_request.draft == false
 
@@ -50,11 +50,3 @@ jobs:
       - name: Publish benchmark results
         if: ${{ github.event_name == 'pull_request' }}
         uses: nils-braun/pytest-benchmark-commenter@v2
-
-  skip:
-    # Only execute this job if PR *is* a draft
-    if: github.event.pull_request.draft
-
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo 'Skipping integration test'
