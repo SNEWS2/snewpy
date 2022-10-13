@@ -238,8 +238,11 @@ class PinchedModel(SupernovaModel):
         initialspectra : dict
             Dictionary of model spectra, keyed by neutrino flavor.
         """
+        #convert input arguments to 1D arrays
         t = u.Quantity(t, ndmin=1)
-        E = u.Quantity(E, ndmin=2)
+        E = u.Quantity(E, ndmin=1)
+        #Reshape the Energy array to shape [1,len(E)]
+        E = np.expand_dims(E, axis=0)
 
         initialspectra = {}
 
@@ -260,7 +263,7 @@ class PinchedModel(SupernovaModel):
             Ea = get_value(np.interp(t, self.time, self.meanE[flavor].to('erg')))
             a  = np.interp(t, self.time, self.pinch[flavor])
 
-            # Sanity check to avoid invalid values of Ea, alpha, and L.
+            #Reshape the time-related arrays to shape [len(t),1]
             L  = np.expand_dims(L, axis=1)
             Ea = np.expand_dims(Ea,axis=1)
             a  = np.expand_dims(a, axis=1)
