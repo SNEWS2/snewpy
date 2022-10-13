@@ -9,7 +9,7 @@ from astropy.units.quantity import Quantity
 from scipy.special import loggamma
 
 from snewpy.neutrino import Flavor
-from snewpy.flavor_transformation import NoTransformation, FlavorTransformation
+from snewpy.flavor_transformation import NoTransformation
 from functools import wraps
 
 
@@ -162,7 +162,7 @@ class SupernovaModel(ABC):
 
         return transformed_spectra   
 
-    def get_flux (self, t, E, distance, flavor_xform=NoTransformation(), **kwargs):
+    def get_flux (self, t, E, distance, flavor_xform=NoTransformation()):
         """Get neutrino flux through 1cm^2 surface at the given distance
 
         Parameters
@@ -172,14 +172,14 @@ class SupernovaModel(ABC):
         E : astropy.Quantity or ndarray of astropy.Quantity
             Energies to evaluate the the neutrino spectra.
         distance : astropy.Quantity or float (in kpc)
-            Distance from supernova to the 
+            Distance from supernova.
         flavor_xform : FlavorTransformation
             An instance from the flavor_transformation module.
 
         Returns
         -------
         dict
-            Dictionary of neutrino fluxes in [neutrinos/(cm^2*MeV*s)], 
+            Dictionary of neutrino fluxes in [neutrinos/(cm^2*erg*s)], 
             keyed by neutrino flavor.
 
         """
