@@ -29,7 +29,8 @@ jobs:
       run: |
         python -c 'import python.snewpy; python.snewpy._get_model_urls()'
         cat python/snewpy/_model_urls.py
-        python -c 'import python.snewpy; python.snewpy.get_models(models="Bollig_2016")'
+        pip install .
+        python -c 'import snewpy; snewpy.get_models(models="Bollig_2016")'
         rm -r SNEWPY_models/
         python setup.py sdist bdist_wheel
         twine upload dist/*
