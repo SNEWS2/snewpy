@@ -267,6 +267,12 @@ class PinchedModel(SupernovaModel):
         initialspectra : dict
             Dictionary of model spectra, keyed by neutrino flavor.
         """
+        #convert input arguments to 1D arrays
+        t = u.Quantity(t, ndmin=1)
+        E = u.Quantity(E, ndmin=1)
+        #Reshape the Energy array to shape [1,len(E)]
+        E = np.expand_dims(E, axis=0)
+
         initialspectra = {}
 
         # Avoid division by zero in energy PDF below.
@@ -286,15 +292,19 @@ class PinchedModel(SupernovaModel):
             Ea = get_value(np.interp(t, self.time, self.meanE[flavor].to('erg')))
             a  = np.interp(t, self.time, self.pinch[flavor])
 
-            # Sanity check to avoid invalid values of Ea, alpha, and L.
-            initialspectra[flavor] = np.zeros_like(E, dtype=float) / (u.erg*u.s)
-            if L <= 0. or Ea <= 0. or a <= -2.:
-                continue
+            #Reshape the time-related arrays to shape [len(t),1]
+            L  = np.expand_dims(L, axis=1)
+            Ea = np.expand_dims(Ea,axis=1)
+            a  = np.expand_dims(a, axis=1)
             # For numerical stability, evaluate log PDF and then exponentiate.
-            initialspectra[flavor] = \
+            result = \
               np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a)
                     - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea)) / (u.erg * u.s)
-
+            #remove bad values
+            result[np.isnan(result)] = 0
+            #remove unnecessary dimensions, if E or t was scalar:
+            result = np.squeeze(result)
+            initialspectra[flavor] = result
         return initialspectra
 
 
