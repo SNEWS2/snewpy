@@ -4,13 +4,14 @@ Using SNEWPY as a Front End for SNOwGLoBES
 
 Install SNOwGLoBES
 ------------------
-Important parts of SNEWPY’s functionality require `SNOwGLoBES <https://github.com/SNOwGLoBES/snowglobes>`_ (v1.2 recommended),
+Important parts of SNEWPY’s functionality require `SNOwGLoBES <https://github.com/SNOwGLoBES/snowglobes>`_,
 which needs to be downloaded separately:
 
 .. code-block:: bash
 
    git clone https://github.com/SNOwGLoBES/snowglobes.git
    cd snowglobes
+   git checkout v1.3
    export SNOWGLOBES=${PWD}
 
 
