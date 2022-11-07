@@ -125,7 +125,7 @@ class SimpleRate():
         result = {}
         for detector in self.detectors:
             res_det = {}
-            for file in path.glob(f'effic_*_{detector}.dat'):
+            for file in (path/str(detector)).glob(f'effic_*_{detector}.dat'):
                 channel =  file.stem[len('effic_'):-len(detector)-1]
                 logger.debug(f'Reading file ({detector},{channel}): {file}')
                 with open(file) as f:
@@ -140,7 +140,7 @@ class SimpleRate():
         result = {}
         for detector in self.detectors:
             res_det = {}
-            for file in path.glob(f'smear*_{detector}.dat'):
+            for file in (path/str(detector)).glob(f'smear*_{detector}.dat'):
                 channel =  file.stem[len('smear_'):-len(detector)-1]
                 with open(file) as f:
                     lines = f.readlines()[1:-1]
