@@ -353,10 +353,9 @@ class _GarchingArchiveModel(PinchedModel):
             # Open the requested filename using the model downloader.
             datafile = _model_downloader.get_model_data(self.__class__.__name__, _filename)
 
-            with datafile.open():
-                simtab = Table.read(datafile.path,
-                                    names=['TIME', _lname, _ename, _e2name],
-                                    format='ascii')
+            simtab = Table.read(datafile,
+                                names=['TIME', _lname, _ename, _e2name],
+                                format='ascii')
             simtab['TIME'].unit = 's'
             simtab[_lname].unit = '1e51 erg/s'
             simtab[_aname] = (2*simtab[_ename]**2 - simtab[_e2name]) / (simtab[_e2name] - simtab[_ename]**2)
