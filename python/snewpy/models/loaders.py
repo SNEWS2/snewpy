@@ -50,22 +50,8 @@ class Nakazato_2013(PinchedModel):
         super().__init__(simtab, metadata)
 
 
-class Sukhbold_2015(PinchedModel):
-    def __init__(self, filename, metadata={}):
-        """
-        Parameters
-        ----------
-        filename : str
-            Absolute or relative path to FITS file with model data.
-        """
-        # Open the requested filename using the model downloader.
-        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
-        with datafile.open():
-            # Read FITS table using the astropy reader.
-            simtab = Table.read(datafile.path)
-
-        self.filename = os.path.basename(filename)
-        super().__init__(simtab, metadata)
+class Sukhbold_2015(Nakazato_2013):
+    pass
 
 
 class Tamborra_2014(_GarchingArchiveModel):
@@ -152,42 +138,6 @@ class OConnor_2015(PinchedModel):
         # SYB: double-check on this factor of 4. Should be factor of 2?
         simtab['L_NU_X'] /= 4.0
 
-        self.filename = os.path.basename(filename)
-
-        super().__init__(simtab, metadata)
-
-
-class Zha_2021(PinchedModel):
-    def __init__(self, filename, metadata={}):
-        """
-        Parameters
-        ----------
-        filename : str
-            Absolute or relative path to file prefix, we add nue/nuebar/nux
-        """
-        # Open the requested filename using the model downloader.
-        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
-        with datafile.open():
-            simtab = Table.read(datafile.path,
-                                names=['TIME', 'L_NU_E', 'L_NU_E_BAR', 'L_NU_X',
-                                       'E_NU_E', 'E_NU_E_BAR', 'E_NU_X',
-                                       'RMS_NU_E', 'RMS_NU_E_BAR', 'RMS_NU_X'],
-                                format='ascii')
-
-        header = ascii.read(simtab.meta['comments'], delimiter='=', format='no_header', names=['key', 'val'])
-        tbounce = float(header['val'][0])
-        simtab['TIME'] -= tbounce
-
-        simtab['ALPHA_NU_E'] = (2.0*simtab['E_NU_E']**2 - simtab['RMS_NU_E']**2) / \
-            (simtab['RMS_NU_E']**2 - simtab['E_NU_E']**2)
-        simtab['ALPHA_NU_E_BAR'] = (2.0*simtab['E_NU_E_BAR']**2 - simtab['RMS_NU_E_BAR']**2) / \
-            (simtab['RMS_NU_E_BAR']**2 - simtab['E_NU_E_BAR']**2)
-        simtab['ALPHA_NU_X'] = (2.0*simtab['E_NU_X']**2 - simtab['RMS_NU_X']**2) / \
-            (simtab['RMS_NU_X']**2 - simtab['E_NU_X']**2)
-
-        # SYB: double-check on this factor of 4. Should be factor of 2?
-        simtab['L_NU_X'] /= 4.0
-
         # prevent negative lums
         simtab['L_NU_E'][simtab['L_NU_E'] < 0] = 1
         simtab['L_NU_E_BAR'][simtab['L_NU_E_BAR'] < 0] = 1
@@ -196,6 +146,10 @@ class Zha_2021(PinchedModel):
         self.filename = os.path.basename(filename)
 
         super().__init__(simtab, metadata)
+
+
+class Zha_2021(OConnor_2015):
+    pass
 
 
 class Warren_2020(PinchedModel):
