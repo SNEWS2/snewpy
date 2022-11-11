@@ -397,7 +397,7 @@ class _RegistryModel(ABC):
             if not isinstance(val, (list, Quantity)):
                 cls.param[key] = [val]
             elif isinstance(val, Quantity) and val.size == 1:
-                cls.param[key] = [val]
+                cls.param[key] = [val.value] * val.unit
         combos = tuple(dict(zip(cls.param, combo)) for combo in it.product(*cls.param.values()))
         return tuple(c for c in filter(cls._param_validator, combos))
 
