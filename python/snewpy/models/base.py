@@ -373,3 +373,66 @@ class _GarchingArchiveModel(PinchedModel):
         super().__init__(simtab, metadata)
 
 
+class _RegistryModel(ABC):
+    """Base class for supernova model classes that initialise from physics parameters."""
+    def check_valid_params(cls, **user_params):
+        """Checks that the model-specific values, units, names and conbinations of requested parameters are valid.
+
+        Parameters
+        ----------
+        user_params : varies
+            User-requested model parameters to be tested for validity.
+            NOTE: This must be provided as kwargs that match the keys of cls.param
+
+        Raises
+        ------
+        ValueError
+            If invalid model parameters are provided based on units, allowed values, etc.
+        UnitTypeError
+            If invalid units are provided for a model parameter
+
+        See Also
+        --------
+        snewpy.models.ccsn
+        snewpy.models.presn
+
+        """
+        # Check that the appropriate number of params are provided
+        if not all(key in user_params for key in cls.param.keys()):
+            raise ValueError(f"Missing parameter! Expected {cls.param.keys()} but was given {user_params.keys()}")
+
+        # Check parameter units and values
+        for (key, allowed_params), user_param in zip(cls.param.items(), user_params.values()):
+
+            # If both have units, check that the user param value is valid. If valid, continue. Else, error
+            if type(user_param) == Quantity and type(allowed_params) == Quantity:
+                if get_physical_type(user_param.unit) != get_physical_type(allowed_params.unit):
+                    raise UnitTypeError(f"Incorrect units {user_param.unit} provided for parameter {key}, "
+                                        f"expected {allowed_params.unit}")
+
+                elif np.isin(user_param.to(allowed_params.unit).value, allowed_params.value):
+                    continue
+                else:
+                    raise ValueError(f"Invalid value '{user_param}' provided for parameter {key}, "
+                                     f"allowed value(s): {allowed_params}")
+
+            # If one only one has units, then error
+            elif (type(user_param) == Quantity) ^ (type(allowed_params) == Quantity):
+                # User param has units, model param is unitless
+                if type(user_param) == Quantity:
+                    raise ValueError(f"Invalid units {user_param.unit} for parameter {key} provided, expected None")
+                else:
+                    raise ValueError(f"Missing units for parameter {key}, expected {allowed_params.unit}")
+
+            # Check that unitless user param value is valid. If valid, continue. Else, Error
+            elif user_param in allowed_params:
+                continue
+            else:
+                raise ValueError(f"Invalid value '{user_param}' provided for parameter {key}, "
+                                 f"allowed value(s): {allowed_params}")
+
+        # Check Combinations (Logic lives inside model subclasses under model.isvalid_param_combo)
+        if user_params not in cls.param_combinations:
+            raise ValueError(
+                f"Invalid parameter combination. See {cls.__class__.__name__}.param_combinations for a "
+                "list of allowed parameter combinations.")

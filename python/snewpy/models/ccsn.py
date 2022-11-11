@@ -18,8 +18,8 @@ from astropy import units as u
 from astropy.table import Table
 
 from snewpy.models import loaders
-from .base import PinchedModel
-from .util import check_valid_params, get_param_combinations
+from .base import PinchedModel, _RegistryModel
+from .util import get_param_combinations
 
 from warnings import warn
 from functools import wraps
@@ -41,10 +41,6 @@ def _warn_deprecated_filename_argument(func):
         return func(cls, *args, **kwargs)
     return decorator
 
-
-class _RegistryModel():
-    """TODO: empty base class for now?"""
-    pass
 
 class Analytic3Species(PinchedModel):
     """An analytical model calculating spectra given total luminosity,
@@ -136,7 +132,7 @@ class Nakazato_2013(_RegistryModel):
 
         # Load from model parameters
         user_params = dict(zip(cls.param.keys(), (progenitor_mass, revival_time, metallicity, eos)))
-        check_valid_params(cls, **user_params)
+        cls.check_valid_params(cls, **user_params)
 
         # Store model metadata.
         metadata = {
@@ -200,7 +196,7 @@ class Sukhbold_2015(_RegistryModel):
             return loaders.Sukhbold_2015(os.path.abspath(filename), metadata)
 
         user_params = dict(zip(cls.param.keys(), (progenitor_mass, eos)))
-        check_valid_params(cls, **user_params)
+        cls.check_valid_params(cls, **user_params)
 
         if progenitor_mass.value == 9.6:
             filename = f'sukhbold-{eos}-z{progenitor_mass.value:3.1f}.fits'
@@ -231,7 +227,7 @@ class Tamborra_2014(_RegistryModel):
             # Metadata creation is implemented in snewpy.models.base._GarchingArchiveModel
             return loaders.Tamborra_2014(os.path.abspath(filename))
 
-        check_valid_params(cls, progenitor_mass=progenitor_mass)
+        cls.check_valid_params(cls, progenitor_mass=progenitor_mass)
         filename = f's{progenitor_mass.value:3.1f}c_3D_dir1'
 
         metadata = {
@@ -259,7 +255,7 @@ class Bollig_2016(_RegistryModel):
             # Metadata creation is implemented in snewpy.models.base._GarchingArchiveModel
             return loaders.Bollig_2016(os.path.abspath(filename))
 
-        check_valid_params(cls, progenitor_mass=progenitor_mass)
+        cls.check_valid_params(cls, progenitor_mass=progenitor_mass)
         filename = f's{progenitor_mass.value:3.1f}c'
 
         metadata = {
@@ -288,7 +284,7 @@ class Walk_2018(_RegistryModel):
             # Metadata creation is implemented in snewpy.models.base._GarchingArchiveModel
             return loaders.Walk_2018(os.path.abspath(filename))
 
-        check_valid_params(cls, progenitor_mass=progenitor_mass)
+        cls.check_valid_params(cls, progenitor_mass=progenitor_mass)
         filename = f's{progenitor_mass.value:3.1f}c_3D_nonrot_dir1'
 
         metadata = {
@@ -317,7 +313,7 @@ class Walk_2019(_RegistryModel):
             # Metadata creation is implemented in snewpy.models.base._GarchingArchiveModel
             return loaders.Walk_2019(os.path.abspath(filename))
 
-        check_valid_params(cls, progenitor_mass=progenitor_mass)
+        cls.check_valid_params(cls, progenitor_mass=progenitor_mass)
         filename = f's{progenitor_mass.value:3.1f}c_3DBH_dir1'
 
         metadata = {
@@ -390,7 +386,7 @@ class OConnor_2013(PinchedModel):
             return loaders.OConnor_2013(os.path.abspath(filename), metadata)
 
         # Load from Parameters
-        check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos)
+        cls.check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos)
         filename = f'{eos}_timeseries.tar.gz'
 
         metadata = {
@@ -443,7 +439,7 @@ class OConnor_2015(_RegistryModel):
             return loaders.OConnor_2015(os.path.abspath(filename), metadata)
 
         # Load from Parameters
-        check_valid_params(cls, progenitor_mass=progenitor_mass)
+        cls.check_valid_params(cls, progenitor_mass=progenitor_mass)
         # Filename is currently the same regardless of parameters
         filename = 'M1_neutrinos.dat'
 
@@ -491,7 +487,7 @@ class Zha_2021(_RegistryModel):
             return loaders.Zha_2021(os.path.abspath(filename), metadata)
 
         # Load from Parameters
-        check_valid_params(cls, progenitor_mass=progenitor_mass)
+        cls.check_valid_params(cls, progenitor_mass=progenitor_mass)
 
         metadata = {
             'Progenitor mass': progenitor_mass,
@@ -559,7 +555,7 @@ class Warren_2020(_RegistryModel):
 
         # Load from Parameters
         user_params = dict(zip(cls.param.keys(), (progenitor_mass, turbmixing_param)))
-        check_valid_params(cls, **user_params)
+        cls.check_valid_params(cls, **user_params)
 
         if progenitor_mass.value.is_integer() and progenitor_mass.value <= 30.:
             fname = os.path.join(f'stir_a{turbmixing_param:3.2f}',
@@ -629,8 +625,8 @@ class Kuroda_2020(_RegistryModel):
             return loaders.Kuroda_2020(os.path.abspath(filename), metadata)
 
         # Load from Parameters
-        check_valid_params(cls, rotational_velocity=rotational_velocity,
-                           magnetic_field_exponent=magnetic_field_exponent)
+        cls.check_valid_params(cls, rotational_velocity=rotational_velocity,
+                               magnetic_field_exponent=magnetic_field_exponent)
         filename = f'LnuR{int(rotational_velocity.value):1d}0B{int(magnetic_field_exponent):02d}.dat'
 
         metadata = {
@@ -676,7 +672,7 @@ class Fornax_2019(_RegistryModel):
         # Load from Parameters
         metadata = {'Progenitor mass': progenitor_mass}
 
-        check_valid_params(cls, progenitor_mass=progenitor_mass)
+        cls.check_valid_params(cls, progenitor_mass=progenitor_mass)
         if progenitor_mass.value == 16:
             filename = f'lum_spec_{int(progenitor_mass.value):d}M_r250.h5'
         else:
@@ -717,7 +713,7 @@ class Fornax_2021(_RegistryModel):
             return loaders.Fornax_2021(os.path.abspath(filename), metadata)
 
         # Load from Parameters
-        check_valid_params(cls, progenitor_mass=progenitor_mass)
+        cls.check_valid_params(cls, progenitor_mass=progenitor_mass)
         if progenitor_mass.value.is_integer():
             filename = f'lum_spec_{int(progenitor_mass.value):2d}M_r10000_dat.h5'
         else:
