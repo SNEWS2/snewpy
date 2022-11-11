@@ -1,3 +1,4 @@
+import itertools as it
 import os
 from abc import ABC, abstractmethod
 from warnings import warn
@@ -5,6 +6,7 @@ from warnings import warn
 import numpy as np
 from astropy import units as u
 from astropy.table import Table, join
+from astropy.units import UnitTypeError, get_physical_type
 from astropy.units.quantity import Quantity
 from scipy.special import loggamma
 from snewpy import _model_downloader
@@ -375,6 +377,30 @@ class _GarchingArchiveModel(PinchedModel):
 
 class _RegistryModel(ABC):
     """Base class for supernova model classes that initialise from physics parameters."""
+
+    _param_validator = None
+
+    @classmethod
+    def get_param_combinations(cls):
+        """Returns all valid combinations of parameters for a given SNEWPY register model.
+
+        Subclasses can provide a Callable `cls._param_validator` that takes a combination of parameters
+        as an argument and returns True if a particular combinations of parameters is valid.
+        If None is provided, all combinations are considered valid.
+
+        Returns
+        -------
+        valid_combinations: tuple[dict]
+            A tuple of all valid parameter combinations stored as Dictionaries
+        """
+        for key, val in cls.param.items():
+            if not isinstance(val, (list, Quantity)):
+                cls.param[key] = [val]
+            elif isinstance(val, Quantity) and val.size == 1:
+                cls.param[key] = [val]
+        combos = tuple(dict(zip(cls.param, combo)) for combo in it.product(*cls.param.values()))
+        return tuple(c for c in filter(cls._param_validator, combos))
+
     def check_valid_params(cls, **user_params):
         """Checks that the model-specific values, units, names and conbinations of requested parameters are valid.
 
@@ -395,7 +421,6 @@ class _RegistryModel(ABC):
         --------
         snewpy.models.ccsn
         snewpy.models.presn
-
         """
         # Check that the appropriate number of params are provided
         if not all(key in user_params for key in cls.param.keys()):
@@ -432,7 +457,7 @@ class _RegistryModel(ABC):
                                  f"allowed value(s): {allowed_params}")
 
         # Check Combinations (Logic lives inside model subclasses under model.isvalid_param_combo)
-        if user_params not in cls.param_combinations:
+        if user_params not in cls.get_param_combinations():
             raise ValueError(
-                f"Invalid parameter combination. See {cls.__class__.__name__}.param_combinations for a "
+                f"Invalid parameter combination. See {cls.__class__.__name__}.get_param_combinations() for a "
                 "list of allowed parameter combinations.")

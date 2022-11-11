@@ -33,7 +33,7 @@ class TestModels(unittest.TestCase):
                   Zha_2021]
 
         for model in models:
-            for pc in model.param_combinations:
+            for pc in model.get_param_combinations():
                 model(**pc)  # Initialize
 
     def test_Nakazato_2013(self):

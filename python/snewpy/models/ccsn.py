@@ -19,7 +19,6 @@ from astropy.table import Table
 
 from snewpy.models import loaders
 from .base import PinchedModel, _RegistryModel
-from .util import get_param_combinations
 
 from warnings import warn
 from functools import wraps
@@ -36,7 +35,7 @@ def _warn_deprecated_filename_argument(func):
         if filename is not None:
             msg = ''.join(['Initializing this model with a filename is deprecated. ',
                            f'Instead, use keyword arguments {list(cls.param.keys())}. ',
-                           f'See `{cls.__name__}.param`, `{cls.__name__}.param_combinations` for more info.'])
+                           f'See `{cls.__name__}.param`, `{cls.__name__}.get_param_combinations()` for more info.'])
             warn(FutureWarning(msg), stacklevel=2)
         return func(cls, *args, **kwargs)
     return decorator
@@ -70,11 +69,10 @@ class Nakazato_2013(_RegistryModel):
              'metallicity': [0.02, 0.004],
              'eos': ['LS220', 'shen', 'togashi']}
 
-    _isvalid_combo = lambda p: (p['revival_time'] == 0 * u.ms and p['progenitor_mass'] == 30 * u.Msun and
-                                p['metallicity'] == 0.004) or \
-                               (p['revival_time'] != 0 * u.ms and p['eos'] == 'shen' and
-                                not (p['progenitor_mass'] == 30 * u.Msun and p['metallicity'] == 0.004))
-    param_combinations = get_param_combinations(param, _isvalid_combo)
+    _param_validator = lambda p: (p['revival_time'] == 0 * u.ms and p['progenitor_mass'] == 30 * u.Msun
+                                  and p['metallicity'] == 0.004) or \
+                                 (p['revival_time'] != 0 * u.ms and p['eos'] == 'shen'
+                                  and not (p['progenitor_mass'] == 30 * u.Msun and p['metallicity'] == 0.004))
 
     @_warn_deprecated_filename_argument
     def __new__(cls, filename=None, *, progenitor_mass=None, revival_time=None, metallicity=None, eos=None):
@@ -163,8 +161,6 @@ class Sukhbold_2015(_RegistryModel):
     param = {'progenitor_mass': [27., 9.6] * u.Msun,
              'eos': ['LS220', 'SFHo']}
 
-    param_combinations = get_param_combinations(param)
-
     @_warn_deprecated_filename_argument
     def __new__(cls, filename=None, *, progenitor_mass=None, eos=None):
         """Model Initialization
@@ -219,7 +215,6 @@ class Tamborra_2014(_RegistryModel):
     """
 
     param = {'progenitor_mass': [20., 27.] * u.Msun}
-    param_combinations = get_param_combinations(param)
 
     @_warn_deprecated_filename_argument
     def __new__(cls, filename=None, eos='LS220', *, progenitor_mass=None):
@@ -248,7 +243,6 @@ class Bollig_2016(_RegistryModel):
     """
 
     param = {'progenitor_mass': [11.2, 27.] * u.Msun}
-    param_combinations = get_param_combinations(param)
 
     def __new__(cls, filename=None,  eos='LS220', *, progenitor_mass=None):
         if filename is not None:
@@ -276,7 +270,6 @@ class Walk_2018(_RegistryModel):
     """
 
     param = {'progenitor_mass': 15. * u.Msun}
-    param_combinations = get_param_combinations(param)
 
     @_warn_deprecated_filename_argument
     def __new__(cls, filename=None, eos='LS220', *, progenitor_mass=None):
@@ -305,7 +298,6 @@ class Walk_2019(_RegistryModel):
     """
 
     param = {'progenitor_mass': 40 * u.Msun}
-    param_combinations = get_param_combinations(param)
 
     @_warn_deprecated_filename_argument
     def __new__(cls, filename=None, eos='LS220', *, progenitor_mass=None):
@@ -327,7 +319,7 @@ class Walk_2019(_RegistryModel):
     __new__.__doc__ = loaders.Walk_2019.__init__.__doc__.format(**param)
 
 
-class OConnor_2013(PinchedModel):
+class OConnor_2013(_RegistryModel):
     """Model based on the black hole formation simulation in `O'Connor & Ott (2013) <https://arxiv.org/abs/1207.1100>`_.
     """
 
@@ -335,7 +327,6 @@ class OConnor_2013(PinchedModel):
                                  list(range(35, 61, 5)) +
                                  [70, 80, 100, 120]) * u.Msun,
              'eos': ['HShen', 'LS220']}
-    param_combinations = get_param_combinations(param)
 
     _param_abbrv = {'progenitor_mass': '[12..33, 35..5..60, 70, 80, 100, 120] solMass',
                     'eos': ['HShen', 'LS220']}
@@ -369,7 +360,7 @@ class OConnor_2013(PinchedModel):
         """
         if mass is not None:
             warn(f'Argument `mass` of type int will be deprecated. To initialize this model, use keyword arguments '
-                 f'{list(cls.param.keys())}. See {cls.__name__}.param, {cls.__name__}.param_combinations for more info',
+                 f'{list(cls.param.keys())}. See {cls.__name__}.param, {cls.__name__}.get_param_combinations() for more info',
                  category=DeprecationWarning, stacklevel=2)
         else:
             mass = 15  # Default Value, this is handled this way for backwards compatibility -- TODO (For V2.0) Remove
@@ -405,7 +396,6 @@ class OConnor_2015(_RegistryModel):
     """
 
     param = {'progenitor_mass': 40 * u.Msun}
-    param_combinations = get_param_combinations(param)
 
     @_warn_deprecated_filename_argument
     def __new__(cls, filename=None, eos='LS220', *, progenitor_mass=None):
@@ -454,7 +444,6 @@ class Zha_2021(_RegistryModel):
     """
 
     param = {'progenitor_mass': (list(range(16, 27)) + [19.89, 22.39, 30, 33]) * u.Msun}
-    param_combinations = get_param_combinations(param)
 
     _param_abbrv = {'progenitor_mass': '[16..26, 19.89, 22.39, 30, 33] solMass'}
 
@@ -515,7 +504,6 @@ class Warren_2020(_RegistryModel):
                                                 np.linspace(60, 80, 3),
                                                 np.linspace(100, 120, 2))) * u.Msun,
              'turbmixing_param': [1.23, 1.25, 1.27]}
-    param_combinations = get_param_combinations(param)
 
     _param_abbrv = {'progenitor_mass': '[9..0.25..13, 13..0.1..30, 31..35, 35..5..60, 70..10..90, 100, 120] solMass',
                     'turbmixing_param': [1.23, 1.25, 1.27]}
@@ -582,9 +570,8 @@ class Kuroda_2020(_RegistryModel):
 
     param = {'rotational_velocity': [0, 1] * u.rad / u.s,
              'magnetic_field_exponent': [0, 12, 13]}
-    _isvalid_combo = lambda p: (p['rotational_velocity'].value == 1 and p['magnetic_field_exponent'] in (12, 13)) or \
+    _param_validator = lambda p: (p['rotational_velocity'].value == 1 and p['magnetic_field_exponent'] in (12, 13)) or \
                                (p['rotational_velocity'].value == 0 and p['magnetic_field_exponent'] == 0)
-    param_combinations = get_param_combinations(param, _isvalid_combo)
 
     @_warn_deprecated_filename_argument
     def __new__(cls, filename=None, eos='LS220', mass=20*u.Msun, *, rotational_velocity=None,
@@ -646,7 +633,6 @@ class Fornax_2019(_RegistryModel):
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/
     """
     param = {'progenitor_mass': [9, 10, 12, 13, 14, 15, 16, 19, 25, 60] * u.Msun}
-    param_combinations = get_param_combinations(param)
 
     @_warn_deprecated_filename_argument
     def __new__(cls, filename=None, cache_flux=False, *, progenitor_mass=None, ):
@@ -689,7 +675,6 @@ class Fornax_2021(_RegistryModel):
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/
         """
     param = {'progenitor_mass': (list(range(12, 24)) + [25, 26, 26.99]) * u.Msun}
-    param_combinations = get_param_combinations(param)
 
     _param_abbrv = {'progenitor_mass': '[12..26, 26.99] solMass'}
 

@@ -6,40 +6,9 @@ SNEWPY is installed under /home/user/.astropy/cache via snewpy.__init__.py.
 """
 
 
-from astropy.units.quantity import Quantity
-from astropy.units import UnitTypeError, get_physical_type
 from snewpy import model_path, get_models
-import numpy as np
 import logging
 from . import ccsn, presn
-import itertools as it
-
-
-def get_param_combinations(param, func_isvalid=None):
-    """Returns all valid combinations of parameters for a given SNEWPY register model.
-
-    Parameters
-    ----------
-    param : dict
-        Dictionary of SNEWPY model parameter values.
-    func_isvalid : callable or None
-        Callable that acts upon argument param that returns True if a particular combinations of parameters is valid.
-        If None is provided, all combinations are considered valid
-
-    Returns
-    -------
-    valid_combinations: tuple[dict]
-        A tuple of all valid parameter combinations stored as Dictionaries
-    """
-    # Input sanitization
-    param = dict(param)
-    for key, val in param.items():
-        if not isinstance(val, (list, Quantity)):
-            param[key] = [val]
-        elif isinstance(val, Quantity) and val.size == 1:
-            param[key] = [val]
-    combos = tuple(dict(zip(param, combo)) for combo in it.product(*param.values()))
-    return tuple(c for c in filter(func_isvalid, combos))
 
 
 def init_model(model_name, download=True, download_dir=model_path, **user_param):
