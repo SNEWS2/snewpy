@@ -8,28 +8,43 @@ using ``snewpy.get_models("<model_name>")``.
 
 .. _Garching Supernova Archive: https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/
 """
-
 import logging
 import os
-import sys
+import re
 import tarfile
 
-import h5py
 import numpy as np
 from astropy import units as u
-from astropy.io import ascii, fits
 from astropy.table import Table
-from scipy.special import gamma, lpmv
-import re
 
-try:
-    import healpy as hp
-except ImportError:
+from snewpy.models import loaders
+from .base import PinchedModel
+from .util import check_valid_params, get_param_combinations
+
+from warnings import warn
+from functools import wraps
+
+
+def _warn_deprecated_filename_argument(func):
+    """Decorator for model.__new__ methods, causing them to issue a deprecation warning
+     if argument `filename` is used. Initialization by filename will be moved to
+     snewpy.models.init_model, and model classes are initialized from physical parameters.
+    """
+    @wraps(func)  # Ensures docstrings are preserved
+    def decorator(cls, *args, **kwargs):
+        filename = args[0] if len(args) > 0 else None  # Assumes filename is first pos. arg if provided
+        if filename is not None:
+            msg = ''.join(['Initializing this model with a filename is deprecated. ',
+                           f'Instead, use keyword arguments {list(cls.param.keys())}. ',
+                           f'See `{cls.__name__}.param`, `{cls.__name__}.param_combinations` for more info.'])
+            warn(FutureWarning(msg), stacklevel=2)
+        return func(cls, *args, **kwargs)
+    return decorator
+
+
+class _RegistryModel():
+    """TODO: empty base class for now?"""
     pass
-
-from snewpy.neutrino import Flavor
-from .base import PinchedModel, SupernovaModel, _GarchingArchiveModel
-
 
 class Analytic3Species(PinchedModel):
     """An analytical model calculating spectra given total luminosity,
@@ -49,801 +64,671 @@ class Analytic3Species(PinchedModel):
         super().__init__(simtab, metadata={})
 
 
-class Nakazato_2013(PinchedModel):
+class Nakazato_2013(_RegistryModel):
     """Model based on simulations from Nakazato et al., ApJ S 205:2
     (2013), ApJ 804:75 (2015), PASJ 73:639 (2021). See also http://asphwww.ph.noda.tus.ac.jp/snn/.
     """
 
-    def __init__(self, filename):
-        """
+    param = {'progenitor_mass': [13, 20, 30, 50] * u.Msun,
+             'revival_time': [0, 100, 200, 300] * u.ms,
+             'metallicity': [0.02, 0.004],
+             'eos': ['LS220', 'shen', 'togashi']}
+
+    _isvalid_combo = lambda p: (p['revival_time'] == 0 * u.ms and p['progenitor_mass'] == 30 * u.Msun and
+                                p['metallicity'] == 0.004) or \
+                               (p['revival_time'] != 0 * u.ms and p['eos'] == 'shen' and
+                                not (p['progenitor_mass'] == 30 * u.Msun and p['metallicity'] == 0.004))
+    param_combinations = get_param_combinations(param, _isvalid_combo)
+
+    @_warn_deprecated_filename_argument
+    def __new__(cls, filename=None, *, progenitor_mass=None, revival_time=None, metallicity=None, eos=None):
+        """Model initialization.
+
         Parameters
         ----------
         filename : str
-            Absolute or relative path to FITS file with model data.
+            Absolute or relative path to FITS file with model data. This argument will be deprecated.
+
+        Other Parameters
+        ----------------
+        progenitor_mass: astropy.units.Quantity
+            Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
+        revival_time: astropy.units.Quantity
+            Time of shock revival in model in units ms. Valid values are {revival_time}.
+            Selecting 0 ms will load a black hole formation model
+        metallicity: float
+            Progenitor metallicity. Valid values are {metallicity}.
+        eos: str
+            Equation of state. Valid values are {eos}.
+
+        Raises
+        ------
+        ValueError
+            If a combination of parameters is invalid when loading from parameters
+
+        Examples
+        --------
+        >>> from snewpy.models.ccsn import Nakazato_2013; import astropy.units as u
+        >>> Nakazato_2013(progenitor_mass=13*u.Msun, metallicity=0.004, revival_time=0*u.s, eos='togashi')
+        Nakazato_2013 Model: nakazato-togashi-BH-z0.004-s30.0.fits
+        Progenitor mass  : 30.0 solMass
+        EOS              : Togashi
+        Metallicity      : 0.004
+        Revival time     : 0.0 ms
         """
+        # Attempt to load model from parameters
+        if filename is not None:
+            metadata = {'Progenitor mass': float(filename.split('-')[-1].strip('s%.fits')) * u.Msun}
+            if 't_rev' in filename:
+                metadata.update({
+                    'EOS': filename.split('-')[-4].upper(),
+                    'Metallicity': float(filename.split('-')[-3].strip('z%')),
+                    'Revival time': float(filename.split('-')[-2].strip('t_rev%ms')) * u.ms
+                })
+            # No revival time because the explosion "failed" (BH formation).
+            else:
+                metadata.update({
+                    'EOS': filename.split('-')[-4].upper(),
+                    'Metallicity': float(filename.split('-')[-2].strip('z%')),
+                    'Revival time': 0 * u.ms
+                })
+            return loaders.Nakazato_2013(os.path.abspath(filename), metadata)
+
+        # Load from model parameters
+        user_params = dict(zip(cls.param.keys(), (progenitor_mass, revival_time, metallicity, eos)))
+        check_valid_params(cls, **user_params)
+
         # Store model metadata.
-        if 't_rev' in filename:
-            self.progenitor_mass = float(filename.split('-')[-1].strip('s%.fits')) * u.Msun
-            self.revival_time = float(filename.split('-')[-2].strip('t_rev%ms')) * u.ms
-            self.metallicity = float(filename.split('-')[-3].strip('z%'))
-            self.EOS = filename.split('-')[-4].upper()
-        # No revival time because the explosion "failed" (BH formation).
-        else:
-            self.progenitor_mass = float(filename.split('-')[-1].strip('s%.fits')) * u.Msun
-            self.metallicity = float(filename.split('-')[-2].strip('z%'))
-            self.revival_time = 0 * u.ms
-            self.EOS = filename.split('-')[-4].upper()
-
         metadata = {
-            'Progenitor mass':self.progenitor_mass,
-            'EOS':self.EOS,
-            'Metallicity':self.metallicity,
-            'Revival time':self.revival_time
-            }
-        # Read FITS table using the astropy reader.
-        simtab = Table.read(filename)
-        self.filename = os.path.basename(filename)
-        super().__init__(simtab, metadata)
+            'Progenitor mass': progenitor_mass,
+            'EOS': eos,
+            'Metallicity': metallicity,
+            'Revival time': revival_time
+        }
+
+        # Strip units for filename construction
+        progenitor_mass = progenitor_mass.to(u.Msun).value
+        revival_time = revival_time.to(u.ms).value
+
+        if revival_time != 0:
+            filename = f"nakazato-{eos}-z{metallicity}-t_rev{int(revival_time)}ms-s{progenitor_mass:3.1f}.fits"
+        else:
+            filename = f"nakazato-{eos}-BH-z{metallicity}-s{progenitor_mass:3.1f}.fits"
+
+        return loaders.Nakazato_2013(filename, metadata)
+
+    # Populate Docstring with param values
+    __new__.__doc__ = __new__.__doc__.format(**param)
 
 
-class Sukhbold_2015(PinchedModel):
+class Sukhbold_2015(_RegistryModel):
     """Model based on simulations from Sukhbold et al., ApJ 821:38,2016. Models were shared privately by email.
     """
+    param = {'progenitor_mass': [27., 9.6] * u.Msun,
+             'eos': ['LS220', 'SFHo']}
 
-    def __init__(self, filename):
-        """
+    param_combinations = get_param_combinations(param)
+
+    @_warn_deprecated_filename_argument
+    def __new__(cls, filename=None, *, progenitor_mass=None, eos=None):
+        """Model Initialization
+
         Parameters
         ----------
         filename : str
-            Absolute or relative path to FITS file with model data.
+            Absolute or relative path to FITS file with model data. This argument will be deprecated.
+
+        Other Parameters
+        ----------------
+        progenitor_mass: astropy.units.Quantity
+            Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
+        eos: str
+            Equation of state. Valid values are {eos}.
+
+        Raises
+        ------
+        FileNotFoundError
+            If a file for the chosen model parameters cannot be found
+        ValueError
+            If a combination of parameters is invalid when loading from parameters
         """
-        # Store model metadata.
-        self.progenitor_mass = float(filename.split('-')[-1].strip('z%.fits')) * u.Msun
-        self.EOS = filename.split('-')[-2]
+        if filename is not None:
+            metadata = {
+                'Progenitor mass': float(filename.split('-')[-1].strip('z%.fits')) * u.Msun,
+                'EOS': filename.split('-')[-2]
+            }
+            return loaders.Sukhbold_2015(os.path.abspath(filename), metadata)
+
+        user_params = dict(zip(cls.param.keys(), (progenitor_mass, eos)))
+        check_valid_params(cls, **user_params)
+
+        if progenitor_mass.value == 9.6:
+            filename = f'sukhbold-{eos}-z{progenitor_mass.value:3.1f}.fits'
+        else:
+            filename = f'sukhbold-{eos}-s{progenitor_mass.value:3.1f}.fits'
 
         metadata = {
-            'Progenitor mass':self.progenitor_mass,
-            'EOS':self.EOS,
-            }
+            'Progenitor mass': progenitor_mass,
+            'EOS': eos
+        }
+        return loaders.Sukhbold_2015(filename, metadata)
 
-        # Read FITS table using the astropy unified Table reader.
-        simtab = Table.read(filename)
-        self.filename = os.path.basename(filename)
-        super().__init__(simtab, metadata)
+    # Populate Docstring with param values
+    __new__.__doc__ = __new__.__doc__.format(**param)
 
-class Tamborra_2014(_GarchingArchiveModel):
+
+class Tamborra_2014(_RegistryModel):
     """Model based on 3D simulations from `Tamborra et al., PRD 90:045032, 2014 <https://arxiv.org/abs/1406.0006>`_.
     Data files are from the `Garching Supernova Archive`_.
     """
-    pass
 
-class Bollig_2016(_GarchingArchiveModel):
-    """Model based on simulations from `Bollig et al. (2016) <https://arxiv.org/abs/1508.00785>`_. Models were taken, with permission, from the Garching Supernova Archive.
+    param = {'progenitor_mass': [20., 27.] * u.Msun}
+    param_combinations = get_param_combinations(param)
+
+    @_warn_deprecated_filename_argument
+    def __new__(cls, filename=None, eos='LS220', *, progenitor_mass=None):
+        if filename is not None:
+            # Metadata creation is implemented in snewpy.models.base._GarchingArchiveModel
+            return loaders.Tamborra_2014(os.path.abspath(filename))
+
+        check_valid_params(cls, progenitor_mass=progenitor_mass)
+        filename = f's{progenitor_mass.value:3.1f}c_3D_dir1'
+
+        metadata = {
+            'Progenitor mass': progenitor_mass,
+            'EOS': 'LS220'
+        }
+
+        # Metadata is handled by __init__ in _GarchingArchiveModel
+        return loaders.Tamborra_2014(filename=filename, metadata=metadata)
+
+    # Populate Docstring with param values
+    __new__.__doc__ = loaders.Tamborra_2014.__init__.__doc__.format(**param)
+
+
+class Bollig_2016(_RegistryModel):
+    """Model based on simulations from `Bollig et al. (2016) <https://arxiv.org/abs/1508.00785>`_.
+    Models were taken, with permission, from the Garching Supernova Archive.
     """
-    pass
 
-class Walk_2018(_GarchingArchiveModel):
+    param = {'progenitor_mass': [11.2, 27.] * u.Msun}
+    param_combinations = get_param_combinations(param)
+
+    def __new__(cls, filename=None,  eos='LS220', *, progenitor_mass=None):
+        if filename is not None:
+            # Metadata creation is implemented in snewpy.models.base._GarchingArchiveModel
+            return loaders.Bollig_2016(os.path.abspath(filename))
+
+        check_valid_params(cls, progenitor_mass=progenitor_mass)
+        filename = f's{progenitor_mass.value:3.1f}c'
+
+        metadata = {
+            'Progenitor mass': progenitor_mass,
+            'EOS': 'LS220'
+        }
+
+        return loaders.Bollig_2016(filename=filename, metadata=metadata)
+
+    # Populate Docstring with param values (Docstring is inherited from base._GarchingArchiveModel.__init__)
+    __new__.__doc__ = loaders.Bollig_2016.__init__.__doc__.format(**param)
+
+
+class Walk_2018(_RegistryModel):
     """Model based on SASI-dominated simulations from `Walk et al.,
     PRD 98:123001, 2018 <https://arxiv.org/abs/1807.02366>`_. Data files are from
     the `Garching Supernova Archive`_.
     """
-    pass
 
-class Walk_2019(_GarchingArchiveModel):
+    param = {'progenitor_mass': 15. * u.Msun}
+    param_combinations = get_param_combinations(param)
+
+    @_warn_deprecated_filename_argument
+    def __new__(cls, filename=None, eos='LS220', *, progenitor_mass=None):
+        if filename is not None:
+            # Metadata creation is implemented in snewpy.models.base._GarchingArchiveModel
+            return loaders.Walk_2018(os.path.abspath(filename))
+
+        check_valid_params(cls, progenitor_mass=progenitor_mass)
+        filename = f's{progenitor_mass.value:3.1f}c_3D_nonrot_dir1'
+
+        metadata = {
+            'Progenitor mass': progenitor_mass,
+            'EOS': 'LS220'
+        }
+
+        return loaders.Walk_2018(filename=filename, metadata=metadata)
+
+    # Populate Docstring with param values (Docstring is inherited from base._GarchingArchiveModel.__init__)
+    __new__.__doc__ = loaders.Walk_2018.__init__.__doc__.format(**param)
+
+
+class Walk_2019(_RegistryModel):
     """Model based on SASI-dominated simulations from `Walk et al.,
     PRD 101:123013, 2019 <https://arxiv.org/abs/1910.12971>`_. Data files are
     from the `Garching Supernova Archive`_.
     """
-    pass
+
+    param = {'progenitor_mass': 40 * u.Msun}
+    param_combinations = get_param_combinations(param)
+
+    @_warn_deprecated_filename_argument
+    def __new__(cls, filename=None, eos='LS220', *, progenitor_mass=None):
+        if filename is not None:
+            # Metadata creation is implemented in snewpy.models.base._GarchingArchiveModel
+            return loaders.Walk_2019(os.path.abspath(filename))
+
+        check_valid_params(cls, progenitor_mass=progenitor_mass)
+        filename = f's{progenitor_mass.value:3.1f}c_3DBH_dir1'
+
+        metadata = {
+            'Progenitor mass': progenitor_mass,
+            'EOS': 'LS220'
+        }
+
+        return loaders.Walk_2019(filename=filename, metadata=metadata)
+
+    # Populate Docstring with param values (Docstring is inherited from base._GarchingArchiveModel.__init__)
+    __new__.__doc__ = loaders.Walk_2019.__init__.__doc__.format(**param)
 
 
 class OConnor_2013(PinchedModel):
     """Model based on the black hole formation simulation in `O'Connor & Ott (2013) <https://arxiv.org/abs/1207.1100>`_.
     """
-    def __init__(self, base, mass=15, eos='LS220'):
-        """
+
+    param = {'progenitor_mass': (list(range(12, 34)) +
+                                 list(range(35, 61, 5)) +
+                                 [70, 80, 100, 120]) * u.Msun,
+             'eos': ['HShen', 'LS220']}
+    param_combinations = get_param_combinations(param)
+
+    _param_abbrv = {'progenitor_mass': '[12..33, 35..5..60, 70, 80, 100, 120] solMass',
+                    'eos': ['HShen', 'LS220']}
+
+    @_warn_deprecated_filename_argument
+    def __new__(cls, base=None, mass=None, eos='LS220', *, progenitor_mass=None):
+        """Model Initialization.
+
         Parameters
         ----------
         base : str
-            Path of directory containing model files
-        mass : int
-            Progenitor mass
-        eos : string
-            Equation of state used in simulation
+            Absolute or relative path folder with model data. This argument will be deprecated.
+            TODO: (For v2.0) Change base to filename, move compressed model files to OCOnnor_2013 model folder
+        mass: int
+            Mass of model progenitor in units Msun. This argument will be deprecated.
+        eos: str
+            Equation of state. Valid values are {eos}.
+
+        Other Parameters
+        ----------------
+        progenitor_mass: astropy.units.Quantity
+            Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
+
+        Raises
+        ------
+        FileNotFoundError
+            If a file for the chosen model parameters cannot be found
+        ValueError
+            If a combination of parameters is invalid when loading from parameters
+
         """
+        if mass is not None:
+            warn(f'Argument `mass` of type int will be deprecated. To initialize this model, use keyword arguments '
+                 f'{list(cls.param.keys())}. See {cls.__name__}.param, {cls.__name__}.param_combinations for more info',
+                 category=DeprecationWarning, stacklevel=2)
+        else:
+            mass = 15  # Default Value, this is handled this way for backwards compatibility -- TODO (For V2.0) Remove
 
-        # Open luminosity file.
-        tf = tarfile.open(base+'{}_timeseries.tar.gz'.format(eos))
-        
-        # Extract luminosity data.
-        dataname = 's{:d}_{}_timeseries.dat'.format(mass, eos)
-        datafile = tf.extractfile(dataname)
-        simtab = ascii.read(datafile, names=['TIME', 'L_NU_E', 'L_NU_E_BAR', 'L_NU_X',
-                                               'E_NU_E', 'E_NU_E_BAR', 'E_NU_X',
-                                               'RMS_NU_E', 'RMS_NU_E_BAR', 'RMS_NU_X'])
-        
-        simtab['ALPHA_NU_E'] = (2.0*simtab['E_NU_E']**2 - simtab['RMS_NU_E']**2)/(simtab['RMS_NU_E']**2 - simtab['E_NU_E']**2)
-        simtab['ALPHA_NU_E_BAR'] = (2.0*simtab['E_NU_E_BAR']**2 - simtab['RMS_NU_E_BAR']**2)/(simtab['RMS_NU_E_BAR']**2 - simtab['E_NU_E_BAR']**2)
-        simtab['ALPHA_NU_X'] = (2.0*simtab['E_NU_X']**2 - simtab['RMS_NU_X']**2)/(simtab['RMS_NU_X']**2 - simtab['E_NU_X']**2)
+        if base is not None:
+            # If base is provided, do not attempt to load from param.
+            if mass * u.Msun not in cls.param['progenitor_mass']:
+                raise ValueError(f'Invalid value for argument `progenitor mass` or `mass`, see {cls.__name__}.param'
+                                 f' for allowed values')
+            metadata = {'Progenitor mass': progenitor_mass if progenitor_mass is not None else mass * u.Msun,
+                        'EOS': eos}
 
-        #note, here L_NU_X is already divided by 4
+            filename = os.path.join(base, f"{eos}_timeseries.tar.gz")
+            return loaders.OConnor_2013(os.path.abspath(filename), metadata)
 
-        self.filename = datafile
-        self.EOS = eos
-        self.progenitor_mass = mass * u.Msun
+        # Load from Parameters
+        check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos)
+        filename = f'{eos}_timeseries.tar.gz'
 
         metadata = {
-            'Progenitor mass':self.progenitor_mass,
-            'EOS':self.EOS,
+            'Progenitor mass': progenitor_mass,
+            'EOS': eos,
         }
-        super().__init__(simtab, metadata)
+
+        return loaders.OConnor_2013(filename=filename, metadata=metadata)
+
+    # Populate Docstring with param values
+    # __new__.__doc__ = __new__.__doc__.format(**_param_abbrv)
 
 
-class OConnor_2015(PinchedModel):
+class OConnor_2015(_RegistryModel):
     """Model based on the black hole formation simulation in `O'Connor (2015) <https://arxiv.org/abs/1411.7058>`_.
     """
-    def __init__(self, filename, eos='LS220'):
-        """
+
+    param = {'progenitor_mass': 40 * u.Msun}
+    param_combinations = get_param_combinations(param)
+
+    @_warn_deprecated_filename_argument
+    def __new__(cls, filename=None, eos='LS220', *, progenitor_mass=None):
+        """Model Initialization.
+
         Parameters
         ----------
         filename : str
-            Absolute or relative path to file prefix, we add nue/nuebar/nux
-        eos : string
-            Equation of state used in simulation
+            Absolute or relative path to tar.gz file with model data. This argument will be deprecated.
+        eos: str
+            Equation of state. Valid value is 'LS220'. This argument will be deprecated.
+
+        Other Parameters
+        ----------------
+        progenitor_mass: astropy.units.Quantity
+            Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
+
+        Raises
+        ------
+        FileNotFoundError
+            If a file for the chosen model parameters cannot be found
+        ValueError
+            If a combination of parameters is invalid when loading from parameters
         """
-        simtab = Table.read(filename, 
-                     names= ['TIME','L_NU_E','L_NU_E_BAR','L_NU_X',
-                                    'E_NU_E','E_NU_E_BAR','E_NU_X',
-                                    'RMS_NU_E','RMS_NU_E_BAR','RMS_NU_X'],
-                     format='ascii')
-
-        header = ascii.read(simtab.meta['comments'], delimiter='=',format='no_header', names=['key', 'val'])
-        tbounce = float(header['val'][0])
-        simtab['TIME'] -= tbounce
-        
-        simtab['ALPHA_NU_E'] = (2.0*simtab['E_NU_E']**2 - simtab['RMS_NU_E']**2)/(simtab['RMS_NU_E']**2 - simtab['E_NU_E']**2)
-        simtab['ALPHA_NU_E_BAR'] = (2.0*simtab['E_NU_E_BAR']**2 - simtab['RMS_NU_E_BAR']**2)/(simtab['RMS_NU_E_BAR']**2 - simtab['E_NU_E_BAR']**2)
-        simtab['ALPHA_NU_X'] = (2.0*simtab['E_NU_X']**2 - simtab['RMS_NU_X']**2)/(simtab['RMS_NU_X']**2 - simtab['E_NU_X']**2)
-
-        # SYB: double-check on this factor of 4. Should be factor of 2?
-        simtab['L_NU_X'] /= 4.0
-
-        self.filename = 'OConnor2015_s40WH07_LS220'
-        self.EOS = eos
-        self.progenitor_mass = 40 * u.Msun
-
         metadata = {
-            'Progenitor mass':self.progenitor_mass,
-            'EOS':self.EOS,
+            'Progenitor mass': 40*u.Msun,
+            'EOS': 'LS220',
         }
 
-        super().__init__(simtab, metadata)
+        if filename is not None:
+            return loaders.OConnor_2015(os.path.abspath(filename), metadata)
 
-class Zha_2021(PinchedModel):
+        # Load from Parameters
+        check_valid_params(cls, progenitor_mass=progenitor_mass)
+        # Filename is currently the same regardless of parameters
+        filename = 'M1_neutrinos.dat'
+
+        return loaders.OConnor_2015(filename, metadata)
+
+    # Populate Docstring with param values
+    __new__.__doc__ = __new__.__doc__.format(**param)
+
+
+class Zha_2021(_RegistryModel):
     """Model based on the hadron-quark phse transition models from `Zha et al. 2021 <https://arxiv.org/abs/2103.02268>`_.
     """
-    def __init__(self, filename, eos='STOS_B145'):
-        """
+
+    param = {'progenitor_mass': (list(range(16, 27)) + [19.89, 22.39, 30, 33]) * u.Msun}
+    param_combinations = get_param_combinations(param)
+
+    _param_abbrv = {'progenitor_mass': '[16..26, 19.89, 22.39, 30, 33] solMass'}
+
+    @_warn_deprecated_filename_argument
+    def __new__(cls, filename=None, eos='ST0S_B145', *, progenitor_mass=None):
+        """Model Initialization.
+
         Parameters
         ----------
         filename : str
-            Absolute or relative path to file prefix, we add nue/nuebar/nux
-        eos : string
-            Equation of state used in simulation
+            Absolute or relative path to file with model data. This argument will be deprecated.
+        eos : str
+            Equation of state. Valid value is 'ST0S_B145'. This argument will be deprecated.
+
+        Other Parameters
+        ----------------
+        progenitor_mass: astropy.units.Quantity
+            Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
+
+        Raises
+        ------
+        FileNotFoundError
+            If a file for the chosen model parameters cannot be found
+        ValueError
+            If a combination of parameters is invalid when loading from parameters
         """
-        simtab = Table.read(filename, 
-                     names= ['TIME','L_NU_E','L_NU_E_BAR','L_NU_X',
-                                    'E_NU_E','E_NU_E_BAR','E_NU_X',
-                                    'RMS_NU_E','RMS_NU_E_BAR','RMS_NU_X'],
-                     format='ascii')
+        if filename is not None:
+            metadata = {'Progenitor mass': float(os.path.splitext(os.path.basename(filename))[0][1:]) * u.Msun,
+                        'EOS': 'STOS_B145'}
+            return loaders.Zha_2021(os.path.abspath(filename), metadata)
 
-        header = ascii.read(simtab.meta['comments'], delimiter='=',format='no_header', names=['key', 'val'])
-        tbounce = float(header['val'][0])
-        simtab['TIME'] -= tbounce
-        
-        simtab['ALPHA_NU_E'] = (2.0*simtab['E_NU_E']**2 - simtab['RMS_NU_E']**2)/(simtab['RMS_NU_E']**2 - simtab['E_NU_E']**2)
-        simtab['ALPHA_NU_E_BAR'] = (2.0*simtab['E_NU_E_BAR']**2 - simtab['RMS_NU_E_BAR']**2)/(simtab['RMS_NU_E_BAR']**2 - simtab['E_NU_E_BAR']**2)
-        simtab['ALPHA_NU_X'] = (2.0*simtab['E_NU_X']**2 - simtab['RMS_NU_X']**2)/(simtab['RMS_NU_X']**2 - simtab['E_NU_X']**2)
-
-        # SYB: double-check on this factor of 4. Should be factor of 2?
-        simtab['L_NU_X'] /= 4.0
-
-        #prevent neagative lums
-        simtab['L_NU_E'][simtab['L_NU_E'] < 0] = 1
-        simtab['L_NU_E_BAR'][simtab['L_NU_E_BAR'] < 0] = 1
-        simtab['L_NU_X'][simtab['L_NU_X'] < 0] = 1
-
-        
-        basename =os.path.basename(filename)[:-4]
-        
-        self.filename = 'Zha2021_'+basename
-        self.EOS = eos
-        self.progenitor_mass =  float(basename[1:])* u.Msun
+        # Load from Parameters
+        check_valid_params(cls, progenitor_mass=progenitor_mass)
 
         metadata = {
-            'Progenitor mass':self.progenitor_mass,
-            'EOS':self.EOS,
+            'Progenitor mass': progenitor_mass,
+            'EOS': 'STOS_B145',
         }
-        super().__init__(simtab, metadata)
+
+        filename = f's{progenitor_mass.value:g}.dat'
+
+        return loaders.Zha_2021(filename, metadata)
+
+    # Populate Docstring with abbreviated param values
+    __new__.__doc__ = __new__.__doc__.format(**_param_abbrv)
 
 
-class Warren_2020(PinchedModel):
+class Warren_2020(_RegistryModel):
     """Model based on simulations from Warren et al., ApJ 898:139, 2020.
     Neutrino fluxes available at https://doi.org/10.5281/zenodo.3667908."""
+    # TODO: (For v2.0) Resolve Zenodo issues (Missing files)
+    # np.arange with decimal increments can produce floating point errors
+    # Though it may be more intuitive to use np.arange, these fp-errors quickly become troublesome
+    param = {'progenitor_mass': np.concatenate((np.linspace(9.0, 12.75, 16),
+                                                np.linspace(13, 30., 171),
+                                                np.linspace(31., 33., 3),
+                                                np.linspace(35, 55, 5),
+                                                np.linspace(60, 80, 3),
+                                                np.linspace(100, 120, 2))) * u.Msun,
+             'turbmixing_param': [1.23, 1.25, 1.27]}
+    param_combinations = get_param_combinations(param)
 
-    def __init__(self, filename, eos='SFHo'):
+    _param_abbrv = {'progenitor_mass': '[9..0.25..13, 13..0.1..30, 31..35, 35..5..60, 70..10..90, 100, 120] solMass',
+                    'turbmixing_param': [1.23, 1.25, 1.27]}
+
+
+    @_warn_deprecated_filename_argument
+    def __new__(cls, filename=None, eos='SFHo', *, progenitor_mass=None, turbmixing_param=None):
         """
         Parameters
         ----------
         filename : str
-            Absolute or relative path to file prefix, we add nue/nuebar/nux
-        eos : string
-            Equation of state used in simulation
+            Absolute or relative path to file with model data. This argument will be deprecated.
+        eos : str
+            Equation of state. Valid value is 'SFHo'. This argument will be deprecated.
+
+        Other Parameters
+        ----------------
+        progenitor_mass: astropy.units.Quantity
+            Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
+        turbmixing_param: float
+            Turbulent mixing parameter alpha_lambda. Valid Values are {turbmixing_param}
+
+        Raises
+        ------
+        FileNotFoundError
+            If a file for the chosen model parameters cannot be found
+        ValueError
+            If a combination of parameters is invalid when loading from parameters
         """
-        # Read data from HDF5 files, then store.
-        f = h5py.File(filename, 'r')
-        simtab = Table()
+        if filename is not None:
+            _, _, turbmixing_param, progenitor_mass = os.path.splitext(os.path.basename(filename))[0].split('_')
+            metadata = {'Progenitor mass': float(progenitor_mass[1:]) * u.Msun,
+                        'Turb. mixing param.': float(turbmixing_param[1:]),
+                        'EOS': 'SFHo'}
 
-        for i in range(len(f['nue_data']['lum'])):
-            if f['sim_data']['shock_radius'][i][1] > 0.00001:
-                bounce = f['sim_data']['shock_radius'][i][0]
-                break
+            return loaders.Warren_2020(os.path.abspath(filename), metadata)
 
-        simtab['TIME'] = f['nue_data']['lum'][:, 0] - bounce
-        simtab['L_NU_E'] = f['nue_data']['lum'][:, 1] * 1e51
-        simtab['L_NU_E_BAR'] = f['nuae_data']['lum'][:, 1] * 1e51
-        simtab['L_NU_X'] = f['nux_data']['lum'][:, 1] * 1e51
-        simtab['E_NU_E'] = f['nue_data']['avg_energy'][:, 1]
-        simtab['E_NU_E_BAR'] = f['nuae_data']['avg_energy'][:, 1]
-        simtab['E_NU_X'] = f['nux_data']['avg_energy'][:, 1]
-        simtab['RMS_NU_E'] = f['nue_data']['rms_energy'][:, 1]
-        simtab['RMS_NU_E_BAR'] = f['nuae_data']['rms_energy'][:, 1]
-        simtab['RMS_NU_X'] = f['nux_data']['rms_energy'][:, 1]
+        # Load from Parameters
+        user_params = dict(zip(cls.param.keys(), (progenitor_mass, turbmixing_param)))
+        check_valid_params(cls, **user_params)
 
-        simtab['ALPHA_NU_E'] = (2.0 * simtab['E_NU_E'] ** 2 - simtab['RMS_NU_E'] ** 2) / (simtab['RMS_NU_E'] ** 2 - simtab['E_NU_E'] ** 2)
-        simtab['ALPHA_NU_E_BAR'] = (2.0 * simtab['E_NU_E_BAR'] ** 2 - simtab['RMS_NU_E_BAR'] ** 2) / (simtab['RMS_NU_E_BAR'] ** 2 - simtab['E_NU_E_BAR'] ** 2)
-        simtab['ALPHA_NU_X'] = (2.0 * simtab['E_NU_X'] ** 2 - simtab['RMS_NU_X'] ** 2) / (simtab['RMS_NU_X'] ** 2 - simtab['E_NU_X'] ** 2)
+        if progenitor_mass.value.is_integer() and progenitor_mass.value <= 30.:
+            fname = os.path.join(f'stir_a{turbmixing_param:3.2f}',
+                                 f'stir_multimessenger_a{turbmixing_param:3.2f}_m{progenitor_mass.value:.1f}.h5')
+        else:
+            fname = os.path.join(f'stir_a{turbmixing_param:3.2f}',
+                                 f'stir_multimessenger_a{turbmixing_param:3.2f}_m{progenitor_mass.value:g}.h5')
 
         # Set model metadata.
-        self.filename = os.path.basename(filename)
-        self.EOS = eos
-        self.progenitor_mass = float(filename.split('_')[-1][1:-3]) * u.Msun
-        self.turbmixing_param = float(filename.split('_')[-2].strip('a%'))
-
         metadata = {
-            'Progenitor mass':self.progenitor_mass,
-            'Turb. mixing param.':self.turbmixing_param,
-            'EOS':self.EOS,
+            'Progenitor mass': progenitor_mass,
+            'Turb. mixing param.': turbmixing_param,
+            'EOS': 'SFHo',
         }
-        super().__init__(simtab, metadata)
+
+        return loaders.Warren_2020(fname, metadata)
+
+    # Populate Docstring with abbreviated param values
+    __new__.__doc__ = __new__.__doc__.format(**_param_abbrv)
 
 
-class Kuroda_2020(PinchedModel):
+class Kuroda_2020(_RegistryModel):
     """Model based on simulations from `Kuroda et al. (2020) <https://arxiv.org/abs/2009.07733>`_."""
 
-    def __init__(self, filename, eos='LS220', mass=20*u.Msun):
+    param = {'rotational_velocity': [0, 1] * u.rad / u.s,
+             'magnetic_field_exponent': [0, 12, 13]}
+    _isvalid_combo = lambda p: (p['rotational_velocity'].value == 1 and p['magnetic_field_exponent'] in (12, 13)) or \
+                               (p['rotational_velocity'].value == 0 and p['magnetic_field_exponent'] == 0)
+    param_combinations = get_param_combinations(param, _isvalid_combo)
+
+    @_warn_deprecated_filename_argument
+    def __new__(cls, filename=None, eos='LS220', mass=20*u.Msun, *, rotational_velocity=None,
+                magnetic_field_exponent=None):
         """
         Parameters
         ----------
         filename : str
-            Absolute or relative path to file prefix, we add nue/nuebar/nux
-        eos : string
-            Equation of state used in simulation
+            Absolute or relative path to file with model data. This argument will be deprecated.
+        eos : str
+            Equation of state. Valid value is 'LS220'. This argument will be deprecated.
+        mass: astropy.units.Quantity
+            Mass of model progenitor in units Msun. Valid value is 20 * u.Msun. This argument will be deprecated.
+
+        Other Parameters
+        ----------------
+        rotational_velocity: astropy.units.Quantity
+            Rotational velocity of progenitor. Valid values are {rotational_velocity}
+        magnetic_field_exponent: int
+            Exponent of magnetic field (See Eq. 46). Valid Values are {magnetic_field_exponent}
+
+        Raises
+        ------
+        FileNotFoundError
+            If a file for the chosen model parameters cannot be found
+        ValueError
+            If a combination of parameters is invalid when loading from parameters
         """
-        # Load up model metadata.
-        self.filename = filename
-        self.EOS = eos
-        self.progenitor_mass = mass
+        if filename is not None:
+            _, rotational_velocity, magnetic_field_exponent = re.split('R|B',
+                                                                       os.path.splitext(os.path.basename(filename))[0])
+            metadata = {
+                'Progenitor mass': 20 * u.Msun,
+                'Rotational Velocity': int(rotational_velocity[0]),
+                'B_0 Exponent': int(magnetic_field_exponent),
+                'EOS': 'LS220'
+            }
+            return loaders.Kuroda_2020(os.path.abspath(filename), metadata)
+
+        # Load from Parameters
+        check_valid_params(cls, rotational_velocity=rotational_velocity,
+                           magnetic_field_exponent=magnetic_field_exponent)
+        filename = f'LnuR{int(rotational_velocity.value):1d}0B{int(magnetic_field_exponent):02d}.dat'
 
         metadata = {
-            'Progenitor mass':self.progenitor_mass,
-            'EOS':self.EOS,
+            'Progenitor mass': 20 * u.Msun,
+            'Rotational Velocity': rotational_velocity,
+            'B_0 Exponent': magnetic_field_exponent,
+            'EOS': 'LS220',
             }
-        # Read ASCII data.
-        simtab = Table.read(filename, format='ascii')
 
-        # Get grid of model times.
-        simtab['TIME'] = simtab['Tpb[ms]'] << u.ms
-        for f in [Flavor.NU_E, Flavor.NU_E_BAR, Flavor.NU_X]:
-            fkey = re.sub('(E|X)_BAR',r'A\g<1>', f.name).lower()
-            simtab[f'L_{f.name}'] = simtab[f'<L{fkey}>'] * 1e51 << u.erg / u.s
-            simtab[f'E_{f.name}'] = simtab[f'<E{fkey}>'] << u.MeV
-            # There is no pinch parameter so use alpha=2.0.
-            simtab[f'ALPHA_{f.name}'] = np.full_like(simtab[f'E_{f.name}'].value, 2.)
+        return loaders.Kuroda_2020(filename, metadata)
 
-        super().__init__(simtab, metadata)
+    __new__.__doc__ = __new__.__doc__.format(**param)
 
-class Fornax_2019(SupernovaModel):
+
+class Fornax_2019(_RegistryModel):
     """Model based on 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019. 
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/
     """
+    param = {'progenitor_mass': [9, 10, 12, 13, 14, 15, 16, 19, 25, 60] * u.Msun}
+    param_combinations = get_param_combinations(param)
 
-    def __init__(self, filename, cache_flux=False):
-        """
+    @_warn_deprecated_filename_argument
+    def __new__(cls, filename=None, cache_flux=False, *, progenitor_mass=None, ):
+        """Model Initialization.
+
         Parameters
         ----------
         filename : str
-            Absolute or relative path to FITS file with model data.
+            Absolute or relative path to file with model data. This argument will be deprecated.
         cache_flux : bool
             If true, pre-compute the flux on a fixed angular grid and store the values in a FITS file.
+
+        Other Parameters
+        ----------------
+        progenitor_mass: astropy.units.Quantity
+            Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
         """
-        # Set up model metadata.
-        self.filename = filename
+        if filename is not None:
+            progenitor_mass = os.path.splitext(os.path.basename(filename))[0].split('_')[2]
+            metadata = {'Progenitor mass': int(progenitor_mass[:-1]) * u.Msun}
+            return loaders.Fornax_2019(os.path.abspath(filename), metadata, cache_flux=cache_flux)
 
-        mass_str = filename.split('_')[-1]
-        if 'M' in mass_str:
-            self.progenitor_mass = float(mass_str[:-4]) * u.Msun
+        # Load from Parameters
+        metadata = {'Progenitor mass': progenitor_mass}
+
+        check_valid_params(cls, progenitor_mass=progenitor_mass)
+        if progenitor_mass.value == 16:
+            filename = f'lum_spec_{int(progenitor_mass.value):d}M_r250.h5'
         else:
-            mass_str = filename.split('_')[-2]
-            self.progenitor_mass = float(mass_str[:-1]) * u.Msun
+            filename = f'lum_spec_{int(progenitor_mass.value):d}M.h5'
 
-        self.metadata = {
-            'Progenitor mass':self.progenitor_mass,
-            }
-        self.fluxunit = 1e50 * u.erg/(u.s*u.MeV)
-        self.time = None
+        return loaders.Fornax_2019(filename, metadata, cache_flux=cache_flux)
 
-        # Read a cached flux file in FITS format or generate one.
-        self.is_cached = cache_flux and 'healpy' in sys.modules
-        if cache_flux and not 'healpy' in sys.modules:
-                logger = logging.getLogger()
-                logger.warning("No module named 'healpy'. Cannot enable caching.")
+    # Populate Docstring with abbreviated param values
+    __new__.__doc__ = __new__.__doc__.format(**param)
 
-        if self.is_cached:
 
-            self.E = {}
-            self.dE = {}
-            self.dLdE = {}
-            self.luminosity = {}
+class Fornax_2021(_RegistryModel):
+    """Model based on 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019. 
+       Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/
+        """
+    param = {'progenitor_mass': (list(range(12, 24)) + [25, 26, 26.99]) * u.Msun}
+    param_combinations = get_param_combinations(param)
 
-            # Check if we're initializing on a FITS file or not.
-            if filename.endswith('.fits'):
-                fitsfile = filename
-            else:
-                fitsfile = filename.replace('h5', 'fits')
+    _param_abbrv = {'progenitor_mass': '[12..26, 26.99] solMass'}
 
-            if os.path.exists(fitsfile):
-                self._read_fits(fitsfile)
-                ntim, nene, npix = self.dLdE[Flavor.NU_E].shape
-                self.npix = npix
-                self.nside = hp.npix2nside(npix)
-            else:
-                with h5py.File(filename, 'r') as _h5file:
-                    # Conversion of flavor to key name in the model HDF5 file.
-                    self._flavorkeys = { Flavor.NU_E : 'nu0',
-                                         Flavor.NU_E_BAR : 'nu1',
-                                         Flavor.NU_X : 'nu2',
-                                         Flavor.NU_X_BAR : 'nu2' }
-
-                    if self.time is None:
-                        self.time = _h5file['nu0']['g0'].attrs['time'] * u.s
-
-                    # Use a HEALPix grid with nside=4 (192 pixels) to cache the
-                    # values of Y_lm(theta, phi).
-                    self.nside = 4
-                    self.npix = hp.nside2npix(self.nside)
-                    thetac, phic = hp.pix2ang(self.nside, np.arange(self.npix))
-
-                    Ylm = {}
-                    for l in range(3):
-                        Ylm[l] = {}
-                        for m in range(-l, l+1):
-                            Ylm[l][m] = self._real_sph_harm(l, m, thetac, phic)
-
-                    # Store 3D tables of dL/dE for each flavor.
-                    logger = logging.getLogger()
-                    for flavor in Flavor:
-
-                        key = self._flavorkeys[flavor]
-                        logger.info('Caching {} for {} ({})'.format(filename, str(flavor), key))
-
-                        # HDF5 file only contains NU_E, NU_E_BAR, and NU_X.
-                        if flavor == Flavor.NU_X_BAR:
-                            self.E[flavor] = self.E[Flavor.NU_X]
-                            self.dE[flavor] = self.dE[Flavor.NU_X]
-                            self.dLdE[flavor] = self.dLdE[Flavor.NU_X]
-                            self.luminosity[flavor] = self.luminosity[Flavor.NU_X]
-                            continue
-
-                        self.E[flavor]  = _h5file[key]['egroup'][()] * u.MeV
-                        self.dE[flavor] = _h5file[key]['degroup'][()] * u.MeV
-
-                        ntim, nene = self.E[flavor].shape
-                        self.dLdE[flavor] = np.zeros((ntim, nene, self.npix), dtype=float)
-                        # Loop over time bins.
-                        for i in range(ntim):
-                            # Loop over energy bins.
-                            for j in range(nene):
-                                dLdE_ij = 0.
-                                # Sum over multipole moments.
-                                for l in range(3):
-                                    for m in range(-l, l+1):
-                                        dLdE_ij += _h5file[key]['g{}'.format(j)]['l={} m={}'.format(l,m)][i] * Ylm[l][m]
-                                self.dLdE[flavor][i][j] = dLdE_ij
-
-                        # Integrate over energy to get L(t).
-                        factor = 1. if flavor.is_electron else 0.25
-                        self.dLdE[flavor] = self.dLdE[flavor] * factor * self.fluxunit
-                        self.dLdE[flavor] = self.dLdE[flavor].to('erg/(s*MeV)')
-
-                        self.luminosity[flavor] = np.sum(self.dLdE[flavor] * self.dE[flavor][:,:,np.newaxis], axis=1)
-
-                    # Write output to FITS.
-                    self._write_fits(fitsfile, overwrite=True)
-        else:
-            # Conversion of flavor to key name in the model HDF5 file.
-            self._flavorkeys = { Flavor.NU_E : 'nu0',
-                                 Flavor.NU_E_BAR : 'nu1',
-                                 Flavor.NU_X : 'nu2',
-                                 Flavor.NU_X_BAR : 'nu2' }
-
-            # Open HDF5 data file.
-            self._h5file = h5py.File(filename, 'r')
-
-            # Get grid of model times in seconds.
-            self.time = self._h5file['nu0']['g0'].attrs['time'] * u.s
-
-    def _read_fits(self, filename):
-        """Read cached angular data from FITS.
+    @_warn_deprecated_filename_argument
+    def __new__(cls, filename=None, *, progenitor_mass=None):
+        """Model Initialization.
 
         Parameters
         ----------
         filename : str
-            Input filename.
+            Absolute or relative path to file with model data. This argument will be deprecated.
+
+        Other Parameters
+        ----------------
+        progenitor_mass: astropy.units.Quantity
+            Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
         """
-        hdus = fits.open(filename)
+        if filename is not None:
+            progenitor_mass = os.path.splitext(os.path.basename(filename))[0].split('_')[2]
+            metadata = {'Progenitor mass': float(progenitor_mass[:-1]) * u.Msun}
+            return loaders.Fornax_2021(os.path.abspath(filename), metadata)
 
-        self.time = hdus['TIME'].data * u.Unit(hdus['TIME'].header['BUNIT'])
-
-        for flavor in Flavor:
-            name = str(flavor).split('.')[-1]
-
-            ext = '{}_ENERGY'.format(name)
-            self.E[flavor] = hdus[ext].data * u.Unit(hdus[ext].header['BUNIT'])
-
-            ext = '{}_DE'.format(name)
-            self.dE[flavor] = hdus[ext].data * u.Unit(hdus[ext].header['BUNIT'])
-
-            ext = '{}_FLUX'.format(name)
-            self.dLdE[flavor] = hdus[ext].data * u.Unit(hdus[ext].header['BUNIT'])
-            self.dLdE[flavor] = self.dLdE[flavor].to('erg/(s*MeV)')
-
-            self.luminosity[flavor] = np.sum(self.dLdE[flavor] * self.dE[flavor][:,:,np.newaxis], axis=1)
-
-    def _write_fits(self, filename, overwrite=False):
-        """Write angular-dependent calculated flux in FITS format.
-
-        Parameters
-        ----------
-        filename : str
-            Output filename.
-        """
-        hx = fits.HDUList()
-
-        hdu_time = fits.PrimaryHDU(self.time.to_value('s'))
-        hdu_time.header['EXTNAME'] = 'TIME'
-        hdu_time.header['BUNIT'] = 'second'
-        hx.append(hdu_time)
-
-        for flavor in Flavor:
-            name = str(flavor).split('.')[-1]
-
-            hdu_E = fits.ImageHDU(self.E[flavor].to_value('MeV'))
-            hdu_E.header['EXTNAME'] = '{}_ENERGY'.format(name)
-            hdu_E.header['BUNIT'] = 'MeV'
-            hx.append(hdu_E)
-
-            hdu_dE = fits.ImageHDU(self.dE[flavor].to_value('MeV'))
-            hdu_dE.header['EXTNAME'] = '{}_DE'.format(name)
-            hdu_dE.header['BUNIT'] = 'MeV'
-            hx.append(hdu_dE)
-
-            hdu_flux = fits.ImageHDU(self.dLdE[flavor].to_value(str(self.fluxunit)))
-            hdu_flux.header['EXTNAME'] = '{}_FLUX'.format(name)
-            hdu_flux.header['BUNIT'] = str(self.fluxunit)
-            hx.append(hdu_flux)
-        
-        hx.writeto(filename, overwrite=overwrite)
-
-    def _fact(self, n):
-        """Calculate n!.
-
-        Parameters
-        ----------
-        n : int or float
-            Input for computing n factorial.
-
-        Returns
-        -------
-        factorial : float
-            Factorial n!, computed as Gamma(n+1).
-        """
-        return gamma(n + 1.)
-
-    def _real_sph_harm(self, l, m, theta, phi):
-        """Compute orthonormalized real (tesseral) spherical harmonics Y_lm.
-
-        Parameters
-        ----------
-        l : int
-            Degree of the spherical harmonics.
-        m : int
-            Order of the spherical harmonics.
-        theta : float or ndarray
-            Input zenith angles.
-        phi : float or ndarray
-            Input azimuth angles.
-
-        Returns
-        -------
-        Y_lm : float or ndarray
-            Real-valued spherical harmonic function at theta, phi.
-        """
-        if m < 0:
-            norm = np.sqrt((2*l + 1.)/(2*np.pi)*self._fact(l + m)/self._fact(l - m))
-            return norm * lpmv(-m, l, np.cos(theta)) * np.sin(-m*phi)
-        elif m == 0:
-            norm = np.sqrt((2*l + 1.)/(4*np.pi))
-            return norm * lpmv(0, l, np.cos(theta)) * np.ones_like(phi)
+        # Load from Parameters
+        check_valid_params(cls, progenitor_mass=progenitor_mass)
+        if progenitor_mass.value.is_integer():
+            filename = f'lum_spec_{int(progenitor_mass.value):2d}M_r10000_dat.h5'
         else:
-            norm = np.sqrt((2*l + 1.)/(2*np.pi)*self._fact(l - m)/self._fact(l + m))
-            return norm * lpmv(m, l, np.cos(theta)) * np.cos(m*phi)
+            filename = f'lum_spec_{progenitor_mass.value:.2f}M_r10000_dat.h5'
 
-    def _get_binnedspectra(self, t, theta, phi):
-        """Get binned neutrino spectrum at a particular time.
+        metadata = {'Progenitor mass': progenitor_mass}
 
-        Parameters
-        ----------
-        t : float or astropy.Quantity
-            Time to evaluate initial and oscillated spectra.
-        theta : astropy.Quantity
-            Zenith angle of the spectral emission.
-        phi : astropy.Quantity
-            Azimuth angle of the spectral emission.
+        return loaders.Fornax_2021(filename, metadata)
 
-        Returns
-        -------
-        E : dict
-            Dictionary of energy bin central values, keyed by neutrino flavor.
-        dE : dict
-            Dictionary of energy bin widths, keyed by neutrino flavor.
-        binspec : dict
-            Dictionary of binned model spectra, keyed by neutrino flavor.
-        """
-        E = {}
-        dE = {}
-        binspec = {}
-
-        # Convert input time to a time index.
-        t = t.to(self.time.unit)
-        j = (np.abs(t - self.time)).argmin()
-        
-        for flavor in Flavor:
-            # Cached data: read out the relevant time and angular rows.
-            if self.is_cached:
-                # Convert input angles to a HEALPix index.
-                k = hp.ang2pix(self.nside, theta.to_value('radian'), phi.to_value('radian'))
-                E[flavor] = self.E[flavor][j]
-                dE[flavor] = self.dE[flavor][j]
-                binspec[flavor] = self.dLdE[flavor][j,:,k]
-
-            # Read the HDF5 input file directly and extract the spectra.
-            else:
-                # File only contains NU_E, NU_E_BAR, and NU_X.
-                if flavor == Flavor.NU_X_BAR:
-                    E[flavor] = E[Flavor.NU_X]
-                    dE[flavor] = dE[Flavor.NU_X]
-                    binspec[flavor] = binspec[Flavor.NU_X]
-                    continue
-
-                key = self._flavorkeys[flavor]
-
-                # Energy binning of the model for this flavor, in units of MeV.
-                E[flavor]  = self._h5file[key]['egroup'][j] * u.MeV
-                dE[flavor] = self._h5file[key]['degroup'][j] * u.MeV
-                
-                # Storage of differential flux per energy, angle, and time.
-                dLdE = np.zeros(len(E[flavor]), dtype=float)
-
-                # Loop over energy bins.
-                for ebin in range(len(E[flavor])):
-                    dLdE_j = 0
-                    # Sum over multipole moments.
-                    for l in range(3):
-                        for m in range(-l, l + 1):
-                            Ylm = self._real_sph_harm(l, m, theta.to_value('radian'), phi.to_value('radian'))
-                            dLdE_j += self._h5file[key]['g{}'.format(ebin)]['l={} m={}'.format(l,m)][j] * Ylm
-                    dLdE[ebin] = dLdE_j
-
-                factor = 1. if flavor.is_electron else 0.25
-                binspec[flavor] = dLdE * factor * self.fluxunit
-                binspec[flavor] = binspec[flavor].to('erg/(s*MeV)')
-
-        return E, dE, binspec
-
-    def get_initial_spectra(self, t, E, theta, phi, flavors=Flavor, interpolation='linear'):
-        """Get neutrino spectra/luminosity curves before flavor transformation.
-
-        Parameters
-        ----------
-        t : astropy.Quantity
-            Time to evaluate initial spectra.
-        E : astropy.Quantity or ndarray of astropy.Quantity
-            Energies to evaluate the initial spectra.
-        theta : astropy.Quantity
-            Zenith angle of the spectral emission.
-        phi : astropy.Quantity
-            Azimuth angle of the spectral emission.
-        flavors: iterable of snewpy.neutrino.Flavor
-            Return spectra for these flavors only (default: all)
-        interpolation : str
-            Scheme to interpolate in spectra ('nearest', 'linear').
-
-        Returns
-        -------
-        initialspectra : dict
-            Dictionary of model spectra, keyed by neutrino flavor.
-        """
-        initialspectra = {}
-
-        # Extract the binned spectra for the input t, theta, phi:
-        _E, _dE, _spec = self._get_binnedspectra(t, theta, phi)
-        
-        # Avoid "division by zero" in retrieval of the spectrum.
-        E[E == 0] = np.finfo(float).eps * E.unit
-        logE = np.log10(E.to_value('MeV'))
-        
-        for flavor in flavors:
-
-            # Linear interpolation in flux.
-            if interpolation.lower() == 'linear':
-                # Pad log(E) array with values where flux is fixed to zero.
-                _logE = np.log10(_E[flavor].to_value('MeV'))
-                _dlogE = np.diff(_logE)
-                _logEbins = np.insert(_logE, 0, np.log10(np.finfo(float).eps))
-                _logEbins = np.append(_logEbins, _logE[-1] + _dlogE[-1])
-
-                # Pad with values where flux is fixed to zero.
-                _dLdE = _spec[flavor].to_value(self.fluxunit)
-                _dLdE = np.insert(_dLdE, 0, 0.)
-                _dLdE = np.append(_dLdE, 0.)
-
-                initialspectra[flavor] = np.interp(logE, _logEbins, _dLdE) * self.fluxunit
-
-            elif interpolation.lower() == 'nearest':
-                _logE = np.log10(_E[flavor].to_value('MeV'))
-                _dlogE = np.diff(_logE)[0]
-                _logEbins = _logE - _dlogE
-                _logEbins = np.concatenate((_logEbins, [_logE[-1] + _dlogE]))
-                _Ebins = 10**_logEbins
-
-                idx = np.searchsorted(_Ebins, E) - 1
-                select = (idx > 0) & (idx < len(_E[flavor]))
-
-                _dLdE = np.zeros(len(E))
-                _dLdE[np.where(select)] = np.asarray([_spec[flavor][i].to_value(self.fluxunit) for i in idx[select]])
-                initialspectra[flavor] = _dLdE * self.fluxunit
-
-            else:
-                raise ValueError('Unrecognized interpolation type "{}"'.format(interpolation))
-
-        return initialspectra
-
-class Fornax_2021(SupernovaModel):
-    """Model based on axisymmetric simulations from A. Burrows and D.  Vartanyan, Nature 589:29, 2021. Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.2d/.
-    """
-
-    def __init__(self, filename):
-        """
-        Parameters
-        ----------
-        filename : str
-            Absolute or relative path to FITS file with model data.
-        """
-        # Set up model metadata.
-        self.progenitor_mass = float(filename.split('/')[-1].split('_')[2][:-1]) * u.Msun
-        self.metadata = {
-            'Progenitor mass':self.progenitor_mass,
-            }
-
-        # Read time and flux information from HDF5 data file.
-        _h5file = h5py.File(filename, 'r')
-
-        self.time = _h5file['nu0'].attrs['time'] * u.s
-
-        self.luminosity = {}
-        self._E = {}
-        self._dLdE = {}
-        for flavor in Flavor:
-            # Convert flavor to key name in the model HDF5 file
-            key = {Flavor.NU_E: 'nu0',
-                   Flavor.NU_E_BAR: 'nu1',
-                   Flavor.NU_X: 'nu2',
-                   Flavor.NU_X_BAR: 'nu2'}[flavor]
-
-            self._E[flavor] = np.asarray(_h5file[key]['egroup'])
-            self._dLdE[flavor] = {f"g{i}": np.asarray(_h5file[key][f'g{i}']) for i in range(12)}
-
-            # Compute luminosity by integrating over model energy bins.
-            dE = np.asarray(_h5file[key]['degroup'])
-            n = len(dE[0])
-            dLdE = np.zeros((len(self.time), n), dtype=float)
-            for i in range(n):
-                dLdE[:, i] = self._dLdE[flavor][f"g{i}"]
-
-            # Note factor of 0.25 in nu_x and nu_x_bar.
-            factor = 1. if flavor.is_electron else 0.25
-            self.luminosity[flavor] = np.sum(dLdE*dE, axis=1) * factor * 1e50 * u.erg/u.s
-
-
-    def get_initial_spectra(self, t, E, flavors=Flavor, interpolation='linear'):
-        """Get neutrino spectra/luminosity curves after oscillation.
-
-        Parameters
-        ----------
-        t : astropy.Quantity
-            Time to evaluate initial spectra.
-        E : astropy.Quantity or ndarray of astropy.Quantity
-            Energies to evaluate the initial spectra.
-        flavors: iterable of snewpy.neutrino.Flavor
-            Return spectra for these flavors only (default: all)
-        interpolation : str
-            Scheme to interpolate in spectra ('nearest', 'linear').
-
-        Returns
-        -------
-        initialspectra : dict
-            Dictionary of model spectra, keyed by neutrino flavor.
-        """
-        initialspectra = {}
-
-        # Avoid "division by zero" in retrieval of the spectrum.
-        E[E == 0] = np.finfo(float).eps * E.unit
-        logE = np.log10(E.to_value('MeV'))
-
-        # Make sure the input time uses the same units as the model time grid.
-        # Convert input time to a time index.
-        t = t.to(self.time.unit)
-        j = (np.abs(t - self.time)).argmin()
-
-        for flavor in flavors:
-            # Energy bin centers (in MeV)
-            _E = self._E[flavor][j]
-            _logE = np.log10(_E)
-            _dlogE = np.diff(_logE)
-
-            # Model flavors (internally) are nu_e, nu_e_bar, and nu_x, which stands
-            # for nu_mu(_bar) and nu_tau(_bar), making the flux 4x higher than nu_e and nu_e_bar.
-            factor = 1. if flavor.is_electron else 0.25
-
-            # Linear interpolation in flux.
-            if interpolation.lower() == 'linear':
-                # Pad log(E) array with values where flux is fixed to zero.
-                _logEbins = np.insert(_logE, 0, np.log10(np.finfo(float).eps))
-                _logEbins = np.append(_logEbins, _logE[-1] + _dlogE[-1])
-
-                # Luminosity spectrum _dLdE is in units of 1e50 erg/s/MeV.
-                # Pad with values where flux is fixed to zero, then divide by E to get number luminosity
-                _dNLdE = np.asarray([0.] + [self._dLdE[flavor]['g{}'.format(i)][j] for i in range(12)] + [0.])
-                initialspectra[flavor] = (np.interp(logE, _logEbins, _dNLdE) / E * factor * 1e50 * u.erg/u.s/u.MeV).to('1 / (erg s)')
-
-            elif interpolation.lower() == 'nearest':
-                # Find edges of energy bins and identify which energy bin (each entry of) E falls into
-                _logEbinEdges = _logE - _dlogE[0] / 2
-                _logEbinEdges = np.concatenate((_logEbinEdges, [_logE[-1] + _dlogE[-1] / 2]))
-                _EbinEdges = 10**_logEbinEdges
-                idx = np.searchsorted(_EbinEdges, E) - 1
-                select = (idx > 0) & (idx < len(_E))
-
-                # Divide luminosity spectrum by energy at bin center to get number luminosity spectrum
-                _dNLdE = np.zeros(len(E))
-                _dNLdE[np.where(select)] = np.asarray([self._dLdE[flavor]['g{}'.format(i)][j] / _E[i] for i in idx[select]])
-                initialspectra[flavor] = ((_dNLdE << 1/u.MeV) * factor * 1e50 * u.erg/u.s/u.MeV).to('1 / (erg s)')
-
-            else:
-                raise ValueError('Unrecognized interpolation type "{}"'.format(interpolation))
-
-        return initialspectra
+    # Populate Docstring with abbreviated param values
+    __new__.__doc__ = __new__.__doc__.format(**_param_abbrv)
 
 class SNOwGLoBES:
     """A model that does not inherit from SupernovaModel (yet) and imports a group of SNOwGLoBES files."""

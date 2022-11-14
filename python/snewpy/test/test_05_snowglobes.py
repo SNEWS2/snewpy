@@ -1,9 +1,8 @@
 import pytest
 import numpy as np
-from snewpy.snowglobes import simulate,collate, generate_time_series, generate_fluence, SNOwGLoBES, SimpleRate
+from snewpy.snowglobes import simulate,collate, generate_time_series, generate_fluence, SimpleRate
 from pathlib import Path
 import tarfile
-import asyncio
 
 pytestmark=pytest.mark.snowglobes
 
@@ -12,7 +11,7 @@ transformations = ['AdiabaticMSW_NMO','AdiabaticMSW_IMO']
 
 @pytest.mark.parametrize('model',models)
 @pytest.mark.parametrize('transformation',transformations)
-def test_generate_fluence(sng,model,transformation):
+def test_generate_fluence(splr, model, transformation):
     """make some input fluxes"""
     model_path = Path('./models')/model
     model_type = model_path.parent.stem
@@ -42,19 +41,8 @@ crosscheck_table_unsmeared=[  ('icecube',          7.2352e6),
 
 
 @pytest.fixture(autouse=True)
-def sng():
-    return SNOwGLoBES()
-
-@pytest.fixture(autouse=True)
 def splr():
     return SimpleRate()
-
-@pytest.mark.parametrize('detector, expected_total',crosscheck_table)
-def test_snowglobes_crosscheck(sng, detector, expected_total):
-    flux = './models/Bollig_2016/fluence_Bollig_2016_s11.2c_AdiabaticMSW_NMO.dat'
-    data = sng.run(flux,detector)
-    total = data[0].weighted.smeared.sum().sum()
-    assert total == pytest.approx(expected_total, 0.1)
 
 @pytest.mark.parametrize('detector, expected_total_unsmeared',crosscheck_table_unsmeared)
 def test_simplerate_crosscheck(splr, detector, expected_total_unsmeared):
@@ -62,6 +50,13 @@ def test_simplerate_crosscheck(splr, detector, expected_total_unsmeared):
     data = splr.run(flux,detector)
     total = data[0].weighted.unsmeared.sum().sum()
     assert total == pytest.approx(expected_total_unsmeared, 0.01)
+
+@pytest.mark.parametrize('detector, expected_total',crosscheck_table)
+def test_simplerate_smear_crosscheck(splr, detector, expected_total):
+    flux = './models/Bollig_2016/fluence_Bollig_2016_s11.2c_AdiabaticMSW_NMO.dat'
+    data = splr.run(flux,detector)
+    total = data[0].weighted.smeared.sum().sum()
+    assert total == pytest.approx(expected_total, 0.1)
 
 def process(tarball_name):
     simulate(None,tarball_name,'icecube')
@@ -71,11 +66,3 @@ def process(tarball_name):
 def test_simulation_chain_benchmark(benchmark):
     tarball_name='./models/Bollig_2016/fluence_Bollig_2016_s27.0c_AdiabaticMSW_IMO.tar.bz2'
     r = benchmark(process,tarball_name)
-
-def test_running_from_async_loop(sng):
-    async def main():
-        flux = './models/Bollig_2016/fluence_Bollig_2016_s11.2c_AdiabaticMSW_NMO.dat'
-        detector='icecube'
-        data = sng.run(flux, detector)
-        return data
-    asyncio.run(main())

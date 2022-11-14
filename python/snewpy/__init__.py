@@ -8,13 +8,15 @@ Front-end for supernova models which provide neutrino luminosity and spectra.
 """
 
 from ._version import __version__
+from pathlib import Path
+from astropy.config.paths import get_cache_dir
 import os
 
 src_path = os.path.realpath(__path__[0])
 base_path = os.sep.join(src_path.split(os.sep)[:-2])
+model_path = os.path.join(get_cache_dir(), 'snewpy/models')
 
-
-def get_models(models=None, download_dir="SNEWPY_models"):
+def get_models(models=None, download_dir='SNEWPY_models'):
     """Download model files from the snewpy repository.
 
     Parameters
@@ -25,8 +27,8 @@ def get_models(models=None, download_dir="SNEWPY_models"):
         Local directory to download model files to.
     """
     from concurrent.futures import ThreadPoolExecutor, as_completed
-    from urllib.request import urlretrieve
     from ._model_urls import model_urls
+    from ._model_downloader import _download as download
 
     for model in list(model_urls):
         if model_urls[model] == []:
@@ -41,7 +43,8 @@ def get_models(models=None, download_dir="SNEWPY_models"):
         # Select model(s) to download
         print(f"Available models in this version of SNEWPY: {list(model_urls.keys())}")
         if not model_urls:
-            print("Error: `get_models()` only works after installing SNEWPY via `pip install snewpy`. If you have cloned the git repo, model files are available in the `models/` folder.")
+            print("Error: `get_models()` only works after installing SNEWPY via `pip install snewpy`. "
+                  "If you have cloned the git repo, model files are available in the `models/` folder.")
             return False
 
         selected = input("\nType a model name, 'all' to download all models or <Enter> to cancel: ").strip()
@@ -68,15 +71,7 @@ def get_models(models=None, download_dir="SNEWPY_models"):
     # Download model files
     if not os.path.isdir(download_dir):
         print(f"Creating directory '{download_dir}' ...")
-        os.mkdir(download_dir)
-
-    def retrieve(url, local_file):
-        try:
-            urlretrieve(url, filename=local_file)
-            print(f"Successfully downloaded {url} to '{local_file}'.")
-        except IOError:
-            print(f"Failed to download {url} to '{local_file}'.")
-            raise
+        os.makedirs(download_dir)
 
     pool = ThreadPoolExecutor(max_workers=8)
     results = []
@@ -91,7 +86,7 @@ def get_models(models=None, download_dir="SNEWPY_models"):
             else:
                 if not os.path.isdir(os.path.dirname(local_file)):
                     os.makedirs(os.path.dirname(local_file))
-                results.append(pool.submit(retrieve, url, local_file))
+                results.append(pool.submit(download, src=url, dest=Path(local_file)))
 
     exceptions = []
     for result in as_completed(results):

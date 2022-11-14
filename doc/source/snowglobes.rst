@@ -4,9 +4,14 @@ Using SNEWPY as a Front End for SNOwGLoBES
 
 Install SNOwGLoBES
 ------------------
-Important parts of SNEWPY’s functionality require the `SNOwGLoBES <https://github.com/SNOwGLoBES/snowglobes>`_ (v1.2 recommended) and
-`GLoBES <https://www.mpi-hd.mpg.de/personalhomes/globes/>`_ libraries, which need to be installed separately.
-(See the respective documentation for instructions.)
+Important parts of SNEWPY’s functionality require `SNOwGLoBES <https://github.com/SNOwGLoBES/snowglobes>`_ (v1.2 recommended),
+which needs to be downloaded separately:
+
+.. code-block:: bash
+
+   git clone https://github.com/SNOwGLoBES/snowglobes.git
+   cd snowglobes
+   export SNOWGLOBES=${PWD}
 
 
 Usage
@@ -18,4 +23,4 @@ Usage
 Low-level interface
 -------------------
 .. automodule:: snewpy.snowglobes_interface
-   :members: SNOwGLoBES, SimpleRate
+   :members: SimpleRate
