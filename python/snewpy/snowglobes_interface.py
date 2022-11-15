@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 from tqdm.auto import tqdm
 
 def guess_material(detector):
-    if detector.startswith('wc') or detector.startswith('ice'):
+    if detector.startswith('wc') or detector.startswith('ice') or detector.startswith('km3'):
         mat = 'water'
     elif detector.startswith('d2O'):
         mat = 'heavywater'
