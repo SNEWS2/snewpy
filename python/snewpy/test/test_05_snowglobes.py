@@ -57,12 +57,3 @@ def test_simplerate_smear_crosscheck(splr, detector, expected_total):
     data = splr.run(flux,detector)
     total = data[0].weighted.smeared.sum().sum()
     assert total == pytest.approx(expected_total, 0.1)
-
-def process(tarball_name):
-    simulate(None,tarball_name,'icecube')
-    collate(None, tarball_name)
-
-@pytest.mark.timing
-def test_simulation_chain_benchmark(benchmark):
-    tarball_name='./models/Bollig_2016/fluence_Bollig_2016_s27.0c_AdiabaticMSW_IMO.tar.bz2'
-    r = benchmark(process,tarball_name)

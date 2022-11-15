@@ -31,7 +31,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest pytest-benchmark 
+          pip install pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
       - name: Install SNEWPY
         run: |
@@ -47,7 +47,4 @@ jobs:
         run: |
           export SNOWGLOBES=${GITHUB_WORKSPACE}/opt/snowglobes
           python -m unittest python/snewpy/test/simplerate_integrationtest.py
-          pytest -m 'snowglobes' --benchmark-json output.json
-      - name: Publish benchmark results
-        if: ${{ github.event_name == 'pull_request' }}
-        uses: nils-braun/pytest-benchmark-commenter@v2
+          pytest -m 'snowglobes'
