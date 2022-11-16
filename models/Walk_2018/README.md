@@ -2,6 +2,7 @@ Data from L. Walk, I. Tamborra, H.-T. Janka, A. Summa, [Identifying rotation in 
 
 Data taken from the [Garching Supernova archive](https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/data/Walk2018/) for 15Msun progenitor, with permission to use them within snewpy.
 
+Here we indicate the angles (theta,phi) for the different directions with respect to the SASI sloshing used in the paper, for three different rotational conditions, for which the data are available:
 
 Non Rotating
 Strong: (3.0166, 0.19636) dir1

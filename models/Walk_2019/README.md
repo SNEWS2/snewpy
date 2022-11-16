@@ -2,6 +2,8 @@ Model from L. Walk, I. Tamborra, H.-T. Janka, A. Summa, D. Kresse, [Neutrino emi
 
 Data taken from the [Garching Supernova archive](https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/data/Walk2019/) for 40Msun progenitor, with permission to use them within snewpy.
 
+Here we indicate the angles (theta,phi) for the different directions with respect to the SASI sloshing used in the paper, for 2 progenitor massses, for which the data are available:
+
 40Msun
 Direction 1: (1.553, 0.9817)
 Direction 2: (2.9452, 0.51766)
