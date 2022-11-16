@@ -278,7 +278,7 @@ class Walk_2018(_RegistryModel):
             return loaders.Walk_2018(os.path.abspath(filename))
 
         cls.check_valid_params(cls, progenitor_mass=progenitor_mass)
-        filename = f's{progenitor_mass.value:3.1f}c_3D_{rotation:3.1f}rot_dir{direction:3.1f}'
+        filename = f's{progenitor_mass.value:3.1f}c_3D_{rotation}rot_dir{direction}'
 
         metadata = {
             'Progenitor mass': progenitor_mass,
@@ -309,7 +309,7 @@ class Walk_2019(_RegistryModel):
             return loaders.Walk_2019(os.path.abspath(filename))
 
         cls.check_valid_params(cls, progenitor_mass=progenitor_mass)
-        filename = f's{progenitor_mass.value:3.1f}c_3DBH_dir{direction:3.1f}'
+        filename = f's{progenitor_mass.value:3.1f}c_3DBH_dir{direction}'
 
         metadata = {
             'Progenitor mass': progenitor_mass,
