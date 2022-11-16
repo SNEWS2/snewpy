@@ -269,7 +269,7 @@ class Walk_2018(_RegistryModel):
     the `Garching Supernova Archive`_.
     """
 
-    param = {'progenitor_mass': 15. * u.Msun}
+    param = {'progenitor_mass': 15. * u.Msun, 'rotation': ['fast','slow','non'], 'direction': [1,2,3]}
 
     @_warn_deprecated_filename_argument
     def __new__(cls, filename=None, eos='LS220', *, progenitor_mass=None):
@@ -278,7 +278,7 @@ class Walk_2018(_RegistryModel):
             return loaders.Walk_2018(os.path.abspath(filename))
 
         cls.check_valid_params(cls, progenitor_mass=progenitor_mass)
-        filename = f's{progenitor_mass.value:3.1f}c_3D_nonrot_dir1'
+        filename = f's{progenitor_mass.value:3.1f}c_3D_{rotation:3.1f}rot_dir{direction:3.1f}'
 
         metadata = {
             'Progenitor mass': progenitor_mass,
@@ -297,8 +297,11 @@ class Walk_2019(_RegistryModel):
     from the `Garching Supernova Archive`_.
     """
 
-    param = {'progenitor_mass': 40 * u.Msun}
-
+    param = {'progenitor_mass': [40., 75.] * u.Msun,
+             'direction': [1,2,3]}
+    _param_validator = lambda p: (p['progenitor_mass'] == 75. * u.Msun and p['direction'] in (1,2)) or \
+        (p['progenitor_mass'] == 40. * u.Msun and p['direction'] in (1,2,3))
+    
     @_warn_deprecated_filename_argument
     def __new__(cls, filename=None, eos='LS220', *, progenitor_mass=None):
         if filename is not None:
@@ -306,7 +309,7 @@ class Walk_2019(_RegistryModel):
             return loaders.Walk_2019(os.path.abspath(filename))
 
         cls.check_valid_params(cls, progenitor_mass=progenitor_mass)
-        filename = f's{progenitor_mass.value:3.1f}c_3DBH_dir1'
+        filename = f's{progenitor_mass.value:3.1f}c_3DBH_dir{direction:3.1f}'
 
         metadata = {
             'Progenitor mass': progenitor_mass,
