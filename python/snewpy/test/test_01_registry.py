@@ -169,39 +169,44 @@ class TestModels(unittest.TestCase):
         Instantiate a set of 'Walk 2018' models
         """
         mass = 15.
-        model = Walk_2018(progenitor_mass=mass*u.Msun)
+        for angles in [1,2,3]:
+            for rot in ['fast','slow','non']:
+                model = Walk_2018(progenitor_mass=mass*u.Msun, direction=angles, rotation=rot)
 
-        self.assertEqual(model.metadata['EOS'], 'LS220')
-        self.assertEqual(model.metadata['Progenitor mass'], mass*u.Msun)
+                self.assertEqual(model.metadata['EOS'], 'LS220')
+                self.assertEqual(model.metadata['Progenitor mass'], mass*u.Msun)
 
-        # Check that times are in proper units.
-        t = model.get_time()
-        self.assertTrue(t.unit, u.s)
+                # Check that times are in proper units.
+                t = model.get_time()
+                self.assertTrue(t.unit, u.s)
 
-        # Check that we can compute flux dictionaries.
-        f = model.get_initial_spectra(0*u.s, 10*u.MeV)
-        self.assertEqual(type(f), dict)
-        self.assertEqual(len(f), len(Flavor))
-        self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
+                # Check that we can compute flux dictionaries.
+                f = model.get_initial_spectra(0*u.s, 10*u.MeV)
+                self.assertEqual(type(f), dict)
+                self.assertEqual(len(f), len(Flavor))
+                self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
 
     def test_Walk_2019(self):
         """
         Instantiate a set of 'Walk 2019' models
         """
-        model = Walk_2019(progenitor_mass=40*u.Msun, eos='LS220')
 
-        self.assertEqual(model.metadata['EOS'], 'LS220')
-        self.assertEqual(model.metadata['Progenitor mass'], 40*u.Msun)
+        for mass in [40.,75.]:
+            for angles in [1,2]:
+                model = Walk_2019(progenitor_mass=mass*u.Msun, direction=angles)
 
-        # Check that times are in proper units.
-        t = model.get_time()
-        self.assertTrue(t.unit, u.s)
+                self.assertEqual(model.metadata['EOS'], 'LS220')
+                self.assertEqual(model.metadata['Progenitor mass'], 40*u.Msun)
 
-        # Check that we can compute flux dictionaries.
-        f = model.get_initial_spectra(0*u.s, 10*u.MeV)
-        self.assertEqual(type(f), dict)
-        self.assertEqual(len(f), len(Flavor))
-        self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
+                # Check that times are in proper units.
+                t = model.get_time()
+                self.assertTrue(t.unit, u.s)
+
+                # Check that we can compute flux dictionaries.
+                f = model.get_initial_spectra(0*u.s, 10*u.MeV)
+                self.assertEqual(type(f), dict)
+                self.assertEqual(len(f), len(Flavor))
+                self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
 
     def test_Fornax_2019(self):
         """
