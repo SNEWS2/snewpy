@@ -3,8 +3,26 @@
 The submodule ``snewpy.models.ccsn`` contains models of core-collapse supernovae
 derived from the :class:`SupernovaModel` base class.
 
-You can :ref:`download neutrino fluxes for each of these models <sec-download_models>`
-using ``snewpy.get_models("<model_name>")``.
+Since SNEWPY v1.3, the prefered method is to initialise a model based on its physics parameters.
+Initialisation from a file name is deprecated.
+
+Use the ``param`` class property to view all physics parameters and their possible values:
+
+>>> from snewpy.models.ccsn import Nakazato_2013
+>>> Nakazato_2013.param
+{'progenitor_mass': <Quantity [13., 20., 30., 50.] solMass>,
+ 'revival_time': <Quantity [  0., 100., 200., 300.] ms>,
+ 'metallicity': [0.02, 0.004],
+ 'eos': ['LS220', 'shen', 'togashi']}
+
+For some models, not all combinations of parameters are valid. Use the ``get_param_combinations()``
+class method to get a list of all valid combinations and filter it:
+
+>>> list(params for params in Nakazato_2013.get_param_combinations() if params['eos'] != 'shen')
+[{'progenitor_mass': <Quantity 30. solMass>, 'revival_time': <Quantity 0. ms>,
+  'metallicity': 0.004, 'eos': 'LS220'},
+ {'progenitor_mass': <Quantity 30. solMass>, 'revival_time': <Quantity 0. ms>,
+  'metallicity': 0.004, 'eos': 'togashi'}]
 
 .. _Garching Supernova Archive: https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/
 """
@@ -46,6 +64,12 @@ class Analytic3Species(PinchedModel):
     average energy, and rms or pinch, for each species.
     """
 
+    param = "There are no input files available for this class. Use `doc/scripts/Analytic.py` in the SNEWPY GitHub repo to create a custom input file."
+
+    def get_param_combinations(cls):
+        print(cls.param)
+        return []
+
     def __init__(self, filename):
         """
         Parameters
@@ -81,7 +105,7 @@ class Nakazato_2013(_RegistryModel):
         Parameters
         ----------
         filename : str
-            Absolute or relative path to FITS file with model data. This argument will be deprecated.
+            Absolute or relative path to FITS file with model data. This argument is deprecated.
 
         Other Parameters
         ----------------
@@ -103,10 +127,10 @@ class Nakazato_2013(_RegistryModel):
         Examples
         --------
         >>> from snewpy.models.ccsn import Nakazato_2013; import astropy.units as u
-        >>> Nakazato_2013(progenitor_mass=13*u.Msun, metallicity=0.004, revival_time=0*u.s, eos='togashi')
+        >>> Nakazato_2013(progenitor_mass=30*u.Msun, metallicity=0.004, revival_time=0*u.s, eos='togashi')
         Nakazato_2013 Model: nakazato-togashi-BH-z0.004-s30.0.fits
         Progenitor mass  : 30.0 solMass
-        EOS              : Togashi
+        EOS              : togashi
         Metallicity      : 0.004
         Revival time     : 0.0 ms
         """
@@ -168,7 +192,7 @@ class Sukhbold_2015(_RegistryModel):
         Parameters
         ----------
         filename : str
-            Absolute or relative path to FITS file with model data. This argument will be deprecated.
+            Absolute or relative path to FITS file with model data. This argument is deprecated.
 
         Other Parameters
         ----------------
@@ -239,7 +263,7 @@ class Tamborra_2014(_RegistryModel):
 
 class Bollig_2016(_RegistryModel):
     """Model based on simulations from `Bollig et al. (2016) <https://arxiv.org/abs/1508.00785>`_.
-    Models were taken, with permission, from the Garching Supernova Archive.
+    Models were taken, with permission, from the `Garching Supernova Archive`_.
     """
 
     param = {'progenitor_mass': [11.2, 27.] * u.Msun}
@@ -338,10 +362,9 @@ class OConnor_2013(_RegistryModel):
         Parameters
         ----------
         base : str
-            Absolute or relative path folder with model data. This argument will be deprecated.
-            TODO: (For v2.0) Change base to filename, move compressed model files to OCOnnor_2013 model folder
+            Absolute or relative path folder with model data. This argument is deprecated.
         mass: int
-            Mass of model progenitor in units Msun. This argument will be deprecated.
+            Mass of model progenitor in units Msun. This argument is deprecated.
         eos: str
             Equation of state. Valid values are {eos}.
 
@@ -358,8 +381,9 @@ class OConnor_2013(_RegistryModel):
             If a combination of parameters is invalid when loading from parameters
 
         """
+        # TODO: (For v2.0) Change `base` to filename, move compressed model files to OConnor_2013 model folder
         if mass is not None:
-            warn(f'Argument `mass` of type int will be deprecated. To initialize this model, use keyword arguments '
+            warn(f'Argument `mass` of type int is deprecated. To initialize this model, use keyword arguments '
                  f'{list(cls.param.keys())}. See {cls.__name__}.param, {cls.__name__}.get_param_combinations() for more info',
                  category=DeprecationWarning, stacklevel=2)
         else:
@@ -404,9 +428,9 @@ class OConnor_2015(_RegistryModel):
         Parameters
         ----------
         filename : str
-            Absolute or relative path to tar.gz file with model data. This argument will be deprecated.
+            Absolute or relative path to tar.gz file with model data. This argument is deprecated.
         eos: str
-            Equation of state. Valid value is 'LS220'. This argument will be deprecated.
+            Equation of state. Valid value is 'LS220'. This argument is deprecated.
 
         Other Parameters
         ----------------
@@ -454,9 +478,9 @@ class Zha_2021(_RegistryModel):
         Parameters
         ----------
         filename : str
-            Absolute or relative path to file with model data. This argument will be deprecated.
+            Absolute or relative path to file with model data. This argument is deprecated.
         eos : str
-            Equation of state. Valid value is 'ST0S_B145'. This argument will be deprecated.
+            Equation of state. Valid value is 'ST0S_B145'. This argument is deprecated.
 
         Other Parameters
         ----------------
@@ -515,9 +539,9 @@ class Warren_2020(_RegistryModel):
         Parameters
         ----------
         filename : str
-            Absolute or relative path to file with model data. This argument will be deprecated.
+            Absolute or relative path to file with model data. This argument is deprecated.
         eos : str
-            Equation of state. Valid value is 'SFHo'. This argument will be deprecated.
+            Equation of state. Valid value is 'SFHo'. This argument is deprecated.
 
         Other Parameters
         ----------------
@@ -580,11 +604,11 @@ class Kuroda_2020(_RegistryModel):
         Parameters
         ----------
         filename : str
-            Absolute or relative path to file with model data. This argument will be deprecated.
+            Absolute or relative path to file with model data. This argument is deprecated.
         eos : str
-            Equation of state. Valid value is 'LS220'. This argument will be deprecated.
+            Equation of state. Valid value is 'LS220'. This argument is deprecated.
         mass: astropy.units.Quantity
-            Mass of model progenitor in units Msun. Valid value is 20 * u.Msun. This argument will be deprecated.
+            Mass of model progenitor in units Msun. Valid value is 20 * u.Msun. This argument is deprecated.
 
         Other Parameters
         ----------------
@@ -641,7 +665,7 @@ class Fornax_2019(_RegistryModel):
         Parameters
         ----------
         filename : str
-            Absolute or relative path to file with model data. This argument will be deprecated.
+            Absolute or relative path to file with model data. This argument is deprecated.
         cache_flux : bool
             If true, pre-compute the flux on a fixed angular grid and store the values in a FITS file.
 
@@ -685,7 +709,7 @@ class Fornax_2021(_RegistryModel):
         Parameters
         ----------
         filename : str
-            Absolute or relative path to file with model data. This argument will be deprecated.
+            Absolute or relative path to file with model data. This argument is deprecated.
 
         Other Parameters
         ----------------
