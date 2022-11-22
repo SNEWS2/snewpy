@@ -308,7 +308,7 @@ class Walk_2019(_RegistryModel):
             # Metadata creation is implemented in snewpy.models.base._GarchingArchiveModel
             return loaders.Walk_2019(os.path.abspath(filename))
 
-        cls.check_valid_params(cls, progenitor_mass=progenitor_mass)
+        cls.check_valid_params(cls, progenitor_mass=progenitor_mass, direction=direction)
         filename = f's{progenitor_mass.value:3.1f}c_3DBH_dir{direction}'
 
         metadata = {
