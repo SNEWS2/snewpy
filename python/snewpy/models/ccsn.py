@@ -303,7 +303,7 @@ class Walk_2019(_RegistryModel):
         (p['progenitor_mass'] == 40. * u.Msun and p['direction'] in (1,2,3))
     
     @_warn_deprecated_filename_argument
-    def __new__(cls, filename=None, eos='LS220', *, progenitor_mass=None):
+    def __new__(cls, filename=None, eos='LS220', *, progenitor_mass=None, direction=None):
         if filename is not None:
             # Metadata creation is implemented in snewpy.models.base._GarchingArchiveModel
             return loaders.Walk_2019(os.path.abspath(filename))
