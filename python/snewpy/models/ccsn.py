@@ -412,7 +412,7 @@ class OConnor_2013(_RegistryModel):
         return loaders.OConnor_2013(filename=filename, metadata=metadata)
 
     # Populate Docstring with param values
-    # __new__.__doc__ = __new__.__doc__.format(**_param_abbrv)
+    __new__.__doc__ = __new__.__doc__.format(**_param_abbrv)
 
 
 class OConnor_2015(_RegistryModel):
