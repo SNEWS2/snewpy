@@ -11,6 +11,7 @@ which needs to be downloaded separately:
 
    git clone https://github.com/SNOwGLoBES/snowglobes.git
    cd snowglobes
+   git checkout v1.2
    export SNOWGLOBES=${PWD}
 
 
