@@ -40,8 +40,8 @@ def _init_model(model_name, download=True, download_dir=model_path, **user_param
 
     Example
     -------
-    >>> from snewpy.models import init_model; import astropy.units as u
-    >>> init_model('Nakazato_2013', progenitor_mass=13*u.Msun, metallicity=0.004, revival_time=0*u.s, eos='shen')
+    >>> from snewpy.models import _init_model; import astropy.units as u
+    >>> _init_model('Nakazato_2013', progenitor_mass=13*u.Msun, metallicity=0.004, revival_time=0*u.s, eos='shen')
     Nakazato_2013 Model: nakazato-shen-BH-z0.004-s30.0.fits
     Progenitor mass  : 30.0 solMass
     EOS              : Shen
