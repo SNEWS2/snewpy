@@ -102,10 +102,6 @@ local path.
             self.check()
         return self.path
 
-    def open(self, flags='r'):
-        """ Load and open the local file, return the file object"""
-        return open(self.load(), flags)
-
 
 def from_zenodo(zenodo_id:str, model:str, filename:str, path:str=model_path):
     """Access files on Zenodo.
@@ -162,7 +158,7 @@ def from_github(release_version:str, model:str, filename:str, path:str=model_pat
                       remote = github_url)
 
 
-def get_model_data(model:str, filename:str, path:str=model_path):
+def get_model_data(model: str, filename: str, path: str = model_path) -> Path:
     """Access model data. Configuration for each model is in a YAML file
     distributed with SNEWPY.
 
@@ -174,10 +170,10 @@ def get_model_data(model:str, filename:str, path:str=model_path):
 
     Returns
     -------
-    file : FileHandle object.
+    Path of downloaded file.
     """
     if os.path.isabs(filename):
-        return FileHandle(path=Path(filename))
+        return Path(filename)
 
     params = { 'model':model, 'filename':filename, 'path':path }
 
@@ -193,12 +189,13 @@ def get_model_data(model:str, filename:str, path:str=model_path):
 
             if repo == 'github':
                 params['release_version'] = modconf['release_version']
-                return from_github(**params)
+                fh = from_github(**params)
             elif repo == 'zenodo':
                 params['zenodo_id'] = modconf['zenodo_id']
-                return from_zenodo(**params)
+                fh = from_zenodo(**params)
             else:
                 raise ValueError(f'Repository {repo} not recognized')
+            return fh.load()
         else:
             raise KeyError(f'No configuration for {model}')
 
