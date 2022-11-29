@@ -42,6 +42,7 @@ jobs:
           cd opt
           git clone https://github.com/SNOwGLoBES/snowglobes.git
           cd snowglobes
+          git checkout v1.2
           export SNOWGLOBES=${PWD}
       - name: Run Integration Tests
         run: |
