@@ -38,6 +38,7 @@ In your project directory, run the following commands to get SNOwGLoBES and set 
 ```bash
 	git clone https://github.com/SNOwGLoBES/snowglobes.git
 	cd snowglobes
+	git checkout v1.3
 	export SNOWGLOBES=${PWD}
 ```
 

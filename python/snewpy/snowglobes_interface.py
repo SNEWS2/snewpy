@@ -1,5 +1,5 @@
 """
-The module ``snewpy.snowglobes_interface`` contains a low-level Python interface for SNOwGLoBES v1.2.
+The module ``snewpy.snowglobes_interface`` contains a low-level Python interface for SNOwGLoBES v1.3.
 
 .. note::
     Users should only use the high-level interface described above.
