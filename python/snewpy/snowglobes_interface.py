@@ -1,5 +1,5 @@
 """
-The module ``snewpy.snowglobes_interface`` contains a low-level Python interface for SNOwGLoBES v1.2.
+The module ``snewpy.snowglobes_interface`` contains a low-level Python interface for SNOwGLoBES v1.3.
 
 .. note::
     Users should only use the high-level interface described above.
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 from tqdm.auto import tqdm
 
 def guess_material(detector):
-    if detector.startswith('wc') or detector.startswith('ice'):
+    if detector.startswith('wc') or detector.startswith('ice') or detector.startswith('km3'):
         mat = 'water'
     elif detector.startswith('d2O'):
         mat = 'heavywater'
@@ -97,25 +97,35 @@ class SimpleRate():
         logger.debug(f'detectors: {self.detectors}')
        
     def _load_channels(self, chan_dir):
-
-        def _read_binning(fname):
-            with open(fname) as f:
-                l = f.readline().strip()
-                if not l.startswith('%'):
-                    l = '% 200 0.0005 0.100 200 0.0005 0.100'
-                tokens = l.split(' ')[1:]
-                nsamples, smin,smax, nbins,emin,emax = [float(t) for t in tokens]
-                return {'e_true' :np.linspace(smin,smax,int(nsamples)+1),
-                        'e_smear':np.linspace(emin,emax,int(nbins)+1)
-                        }
-
         self.channels = {}
         self.binning = {}
         for f in chan_dir.glob('channels_*.dat'):
             material = f.stem[len('channels_'):]
-            df = pd.read_table(f,delim_whitespace=True, index_col=1, comment='%', names=['name','n','parity','flavor','weight'])
+            # in SNOwGLoBES v1.3, there are three different formats of channel files
+            # We identify these based on their first line and read them in separately:
+            with open(f) as _f:
+                l = _f.readline().strip()
+            if l.startswith('%'):
+                # Format 1: explicit binning, same for all channels
+                tokens = l.split()[1:]
+                df = pd.read_table(f, delim_whitespace=True, index_col=1, comment='%', names=['name','n','parity','flavor','weight'])
+            elif l.startswith('SN_nu'):
+                # Format 2: explicit binning, differs per channel
+                tokens = l.split()[6:]
+                df = pd.read_table(f, delim_whitespace=True, index_col=1, comment='%', names=['name','n','parity','flavor','weight'], usecols=range(1,6))
+                # drop coherent scattering channels, which have different binning
+                df = df[df["name"].str.startswith('coh_') == False]
+            else:
+                # Format 3: no binning specified, use SNOwGLoBES default values
+                tokens = '% 200 0.0005 0.100 200 0.0005 0.100'.split()[1:]
+                df = pd.read_table(f, delim_whitespace=True, index_col=1, comment='%', names=['name','n','parity','flavor','weight'])
+
             self.channels[material] = df
-            self.binning[material] = _read_binning(f)
+
+            nsamples, smin, smax, nbins, emin, emax = [float(t) for t in tokens]
+            self.binning[material] = {'e_true': np.linspace(smin, smax, int(nsamples)+1),
+                                      'e_smear': np.linspace(emin, emax, int(nbins)+1)
+                                      }
         self.materials = list(self.channels.keys())
         self.chan_dir = chan_dir
         logger.info(f'read channels for materials: {self.materials}')
@@ -125,7 +135,7 @@ class SimpleRate():
         result = {}
         for detector in self.detectors:
             res_det = {}
-            for file in path.glob(f'effic_*_{detector}.dat'):
+            for file in (path/str(detector)).glob(f'effic_*_{detector}.dat'):
                 channel =  file.stem[len('effic_'):-len(detector)-1]
                 logger.debug(f'Reading file ({detector},{channel}): {file}')
                 with open(file) as f:
@@ -140,7 +150,7 @@ class SimpleRate():
         result = {}
         for detector in self.detectors:
             res_det = {}
-            for file in path.glob(f'smear*_{detector}.dat'):
+            for file in (path/str(detector)).glob(f'smear*_{detector}.dat'):
                 channel =  file.stem[len('smear_'):-len(detector)-1]
                 with open(file) as f:
                     lines = f.readlines()[1:-1]
