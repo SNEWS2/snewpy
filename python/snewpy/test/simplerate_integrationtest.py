@@ -71,5 +71,5 @@ class TestSimpleRate(unittest.TestCase):
         discrepancy = abs(sk_computed - sk_expected)/sk_expected
         discrepancy_smeared = abs(sk_computed_smeared - sk_expected_smeared)/sk_expected_smeared
 
-        assert discrepancy < 0.001, f"Number of events computed for SK is {sk_computed}, should be {sk_expected}"
-        assert discrepancy_smeared < 0.001, f"Number of events computed for SK is {sk_computed}, should be {sk_expected}"
+        assert discrepancy < 0.001, f"Number of unsmeared events computed for SK is {sk_computed}, should be {sk_expected}"
+        assert discrepancy_smeared < 0.001, f"Number of smeared events computed for SK is {sk_computed_smeared}, should be {sk_expected_smeared}"

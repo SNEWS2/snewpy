@@ -18,13 +18,14 @@ Download Supernova Models
 
 SNEWPY includes a large number of supernova models from different simulation groups.
 Since these models have a size of several 100 MB, they are not included in the initial install.
-Instead, after installing, run the following command to download models you want to use:
+Instead, SNEWPY automatically loads these files the first time you use a model. By default,
+they are downloaded to a hidden directory given by ``snewpy.model_path``.
+
+Alternatively, you can run the following command to bulk download model files to the current directory:
 
 .. code-block:: console
 
    $ python -c 'import snewpy; snewpy.get_models()'
-
-By default, they will be downloaded to a subdirectory named ``SNEWPY-models/<model_name>/`` in the current directory.
 
 .. note::
 
@@ -39,24 +40,24 @@ This example script shows how to use SNEWPY to compare the luminosity of two dif
 
 .. code-block:: python
 
+   import astropy.units as u
    import matplotlib as mpl
    import matplotlib.pyplot as plt
+
    import snewpy
-   from snewpy.models import Nakazato_2013, Bollig_2016
+   from snewpy.models.ccsn import Nakazato_2013, Bollig_2016
    from snewpy.neutrino import Flavor
 
    mpl.rc('font', size=16)
+   %matplotlib inline
 
-   # Download a few model files we can plot
-   snewpy.get_models(models=["Nakazato_2013", "Bollig_2016"])
-
-   # Read data from downloaded files
-   nakazato = Nakazato_2013('SNEWPY_models/Nakazato_2013/nakazato-shen-z0.004-t_rev100ms-s20.0.fits')
-   bollig = Bollig_2016('SNEWPY_models/Bollig_2016/s27.0c')  # This model has one file per flavor. Use common prefix, not full filename.
+   # Initialise two different models. This automatically downloads the required data files.
+   nakazato = Nakazato_2013(progenitor_mass=20*u.solMass, revival_time=100*u.ms, metallicity=0.004, eos='shen')
+   bollig = Bollig_2016(progenitor_mass=27*u.solMass)
 
    # Plot luminosity of both models
    fig, ax = plt.subplots(1, figsize=(10, 6))
-   
+
    for flavor in Flavor:
        ax.plot(nakazato.time, nakazato.luminosity[flavor]/1e51,  # Report luminosity in units foe/s
                label=flavor.to_tex() + ' (Nakazato)',
@@ -75,14 +76,12 @@ This example script shows how to use SNEWPY to compare the luminosity of two dif
    ax.grid()
    ax.legend(loc='upper right', ncol=2, fontsize=18)
 
-   fig.tight_layout()
-
 This will generate the following figure:
 
 .. image:: luminosity-comparison.*
 
 
-The SNEWPY repository contains many Jupyter notebooks in ``doc/nb/`` with sample code
+The SNEWPY repository contains many Jupyter notebooks in ``models/<model-name>/`` or ``doc/nb/`` with sample code
 showing different models or how to apply flavor transformations to the neutrino fluxes.
 
 More advanced usage of SNEWPY requires SNOwGLoBES and is described in the following section.
