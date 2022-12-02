@@ -2,13 +2,16 @@
 read them into the Analytic3Species model found in model.py which is part of SNEWPY.
 """
 
-from astropy.table import *
+from astropy.table import Table
 import numpy as np
 
 total_energy = (5e52,5e52,2e53)
 mean_energy = (15., 15., 15.)
 rms_or_pinch = "pinch"
 pinch_values = (2.3, 2.3, 2.3)
+# Alternative parameters, for rms. Uncomment the following 2 lines:
+#rms_or_pinch = "rms"
+#rms_energy = (280, 280, 280)
 
 file_name = "analytic.dat"
 
