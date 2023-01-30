@@ -57,34 +57,34 @@ class MixingParameters:
             Desired mass ordering: NORMAL or INVERTED.
         version : str
             Version of mixing parameters. Default is "NuFIT5.0".
-            Other available values are "NuFIT5.1" and "PDG2022".
+            Other available values are "NuFIT5.2" and "PDG2022".
         """
         if type(mh) == MassHierarchy:
             self.mass_order = mh
         else:
             raise TypeError('mh must be of type MassHierarchy')
 
-        if version == "NuFIT5.1":
+        if version == "NuFIT5.2":
             # Values from www.nu-fit.org
             # The reported precision is not significant given current
             # uncertainties, but is useful for comparing to the table of
             # parameters presented on nu-fit.org.
             if self.mass_order == MassHierarchy.NORMAL:
                 # Note: in NH, the mass splittings are: m1..m2..............m3.
-                self.theta12 = 33.45 * u.deg
-                self.theta13 = 8.62 * u.deg
-                self.theta23 = 42.10 * u.deg
-                self.deltaCP = 230 * u.deg
-                self.dm21_2 = 7.42e-5 * u.eV**2
-                self.dm32_2 = 2.510e-3 * u.eV**2
+                self.theta12 = 33.41 * u.deg
+                self.theta13 = 8.58 * u.deg
+                self.theta23 = 42.20 * u.deg
+                self.deltaCP = 232 * u.deg
+                self.dm21_2 = 7.41e-5 * u.eV**2
+                self.dm32_2 = 2.507e-3 * u.eV**2
             else:
                 # Note: in IH, the mass splittings are: m3..............m1..m2.
-                self.theta12 = 33.45 * u.deg
-                self.theta13 = 8.61 * u.deg
+                self.theta12 = 33.41 * u.deg
+                self.theta13 = 8.57 * u.deg
                 self.theta23 = 49.00 * u.deg
-                self.deltaCP = 278 * u.deg
-                self.dm21_2 = 7.42e-5 * u.eV**2
-                self.dm31_2 = -2.490e-3 * u.eV**2
+                self.deltaCP = 276 * u.deg
+                self.dm21_2 = 7.41e-5 * u.eV**2
+                self.dm31_2 = -2.486e-3 * u.eV**2
         elif version == "NuFIT5.0":
             # Values from JHEP 09 (2020) 178 [arXiv:2007.14792] and www.nu-fit.org.
             if self.mass_order == MassHierarchy.NORMAL:
