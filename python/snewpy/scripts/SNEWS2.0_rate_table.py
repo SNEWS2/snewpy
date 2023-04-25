@@ -6,7 +6,7 @@ from astropy.io import ascii
 from snewpy import snowglobes
 
 home_directory = os.getcwd()
-SNOwGLoBES_path = "/path/to/snowglobes/"  # directory where SNOwGLoBES is located
+SNOwGLoBES_path = None  # change to SNOwGLoBES directory if using a custom detector configuration
 SNEWPY_models_base = "/path/to/snewpy/models/"  # directory containing model input files
 
 d = 10  # distance of supernova in kpc

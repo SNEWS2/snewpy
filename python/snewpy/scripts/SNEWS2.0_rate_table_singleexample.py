@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from snewpy import snowglobes
 
-SNOwGLoBES_path = "/path/to/snowglobes/"  # directory where SNOwGLoBES is located
+SNOwGLoBES_path = None  # change to SNOwGLoBES directory if using a custom detector configuration
 SNEWPY_model_dir = "/path/to/snewpy/models/"  # directory containing model input files
 
 distance = 10  # Supernova distance in kpc

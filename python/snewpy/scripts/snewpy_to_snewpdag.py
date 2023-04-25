@@ -3,7 +3,7 @@ from snewpy import snowglobes
 import numpy as np
 from astropy import units as u
 
-SNOwGLoBES_path = "/location/of/snowglobes/" #where snowglobes is located
+SNOwGLoBES_path = None  # change to SNOwGLoBES directory if using a custom detector configuration
 SNEWPY_models_base = "/location/of/models/" #where models (aka input for to_snowglobes) is located
 output_path = "/path/to/output/" #where the output files will be located
 

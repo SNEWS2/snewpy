@@ -31,17 +31,6 @@ To contribute, first clone the repository (`git clone https://github.com/SNEWS2/
 Once you’re happy with your changes, please submit a pull request.
 Unit tests will run automatically for every pull request or you can run them locally using `python -m unittest python/snewpy/test/test_*.py`.
 
-### Dependencies 
-
-Some functionality of SNEWPY requires that [SNOwGLoBES](https://github.com/SNOwGLoBES/snowglobes) is downloaded.
-In your project directory, run the following commands to get SNOwGLoBES and set it up for use with SNEWPY:
-```bash
-	git clone https://github.com/SNOwGLoBES/snowglobes.git
-	cd snowglobes
-	git checkout v1.3
-	export SNOWGLOBES=${PWD}
-```
-
 ## Usage and Documentation
 Example scripts which show how SNEWPY can be used are available in the
 `python/snewpy/scripts/` subfolder as well as notebooks in `doc/nb/`.
