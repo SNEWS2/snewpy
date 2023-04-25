@@ -18,7 +18,7 @@ from tqdm.auto import tqdm
 
 import snowglobes_data
 import sys
-if sys.version_info >= (3, 10):
+if sys.version_info >= (3, 9):
     from importlib.resources import files
 else:
     from importlib_resources import files
@@ -79,7 +79,7 @@ class SimpleRate():
             If empty, try to get it from ``$SNOWGLOBES`` environment var or the `snowglobes_data` module.
         """
         try:
-            self.base_dir = Path(base_dir) if base_dir else os.environ['SNOWGLOBES']
+            self.base_dir = Path(base_dir if base_dir else os.environ['SNOWGLOBES'])
         except KeyError:
             print("Using snowglobes_data module ...")
             self.base_dir = files(snowglobes_data)

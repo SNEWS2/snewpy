@@ -7,5 +7,5 @@ matplotlib
 h5py
 requests
 pyyaml
-importlib_resources; python_version < "3.10"
-snowglobes-data==1.3a1
+importlib_resources; python_version < "3.9"
+snowglobes-data==1.3a2
