@@ -7,12 +7,10 @@ possible model files.
 """
 
 import hashlib
-import re
 import os
 import requests
 import yaml
 
-from contextlib import contextmanager, AbstractContextManager
 from dataclasses import dataclass
 from importlib.resources import open_text
 from pathlib import Path

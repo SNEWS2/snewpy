@@ -1,6 +1,5 @@
 import pytest
-import numpy as np
-from snewpy.snowglobes import simulate,collate, generate_time_series, generate_fluence, SimpleRate
+from snewpy.snowglobes import generate_fluence, SimpleRate
 from pathlib import Path
 import tarfile
 

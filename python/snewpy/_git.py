@@ -32,9 +32,9 @@
 """
 
 import re
-from os.path import abspath, exists, isdir, isfile, join
+from os.path import abspath, isdir, isfile, join
 from setuptools import Command
-from distutils.log import INFO, WARN, ERROR
+from distutils.log import INFO
 
 
 def get_version():
@@ -175,7 +175,6 @@ class SetVersion(Command):
         pass
 
     def run(self):
-        meta = self.distribution.metadata
         update_version(tag=self.tag)
         ver = get_version()
         self.announce("Version is now {}.".format(ver), level=INFO)

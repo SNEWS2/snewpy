@@ -208,7 +208,7 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
     model_tend = model_times*1.0
 
     model_tstart[0] = model_times[0]
-    for i in range(1, len(model_times), 1):
+    for i in range(1, len(model_times)):
         model_tstart[i] = 0.5*(model_times[i]+model_times[i-1])
         model_tend[i-1] = model_tstart[i]
     model_tend[len(model_times)-1] = model_times[-1]
@@ -255,14 +255,12 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
             #first time bin of model in requested interval
             osc_spectra = snmodel.get_transformed_spectra(model_times[starting_index[i]], energy, flavor_transformation)
 
-            if dt < model_tend[starting_index[i]]-ta:
-                dt = dt
-            else:
+            if dt >= model_tend[starting_index[i]]-ta:
                 for flavor in Flavor:
                     osc_spectra[flavor] *= (model_tend[starting_index[i]]-ta)
 
                 #intermediate time bins of model in requested interval
-                for j in range(starting_index[i]+1, ending_index[i], 1):
+                for j in range(starting_index[i]+1, ending_index[i]):
                     temp_spectra = snmodel.get_transformed_spectra(model_times[j], energy, flavor_transformation)
                     for flavor in Flavor:
                         osc_spectra[flavor] += temp_spectra[flavor]*(model_tend[j]-model_tstart[j])
@@ -482,7 +480,8 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="", skip_plots=False, ve
                             plt.figure(dpi=300)
                             do_plot(table,(flux,det,w,s))
                             filename = tempdir/f'{filename_base}_log_plot.png'
-                            plt.savefig(filename.with_suffix('.png'), dpi=300, bbox_inches='tight')
+                            plt.savefig(filename, dpi=300, bbox_inches='tight')
+                            plt.close()
         #Make a tarfile with the condensed data files and plots
         output_name = Path(tarball_path).stem
         output_name = output_name[:output_name.rfind('.tar')]+'_SNOprocessed'

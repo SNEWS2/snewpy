@@ -65,4 +65,4 @@ your contribution or simply `submit a pull request
 
 Ideally, your pull request should include a customized SupernovaModel subclass
 to read in your model files. See the code of existing models for examples or
-let us know in you issue or pull request if you need help.
+let us know in your issue or pull request if you need help.

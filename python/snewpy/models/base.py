@@ -64,7 +64,6 @@ class SupernovaModel(ABC):
 
     def __post_init_check(self):
         """A function to check model integrity after initialization"""
-        clsname = self.__class__.__name__
         try:
             t = self.time
             m = self.metadata
