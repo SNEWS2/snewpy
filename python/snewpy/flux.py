@@ -19,14 +19,13 @@ class _Container:
                        energy: u.Quantity[u.MeV],
 
                 ):
-        assert self.unit.is_equivalent(data.unit)
-        self.array = data
+        self.array = data.to(self.unit)
         self.flavor = flavor
         self.time = time
         self.energy = energy
         
-        if(data.shape != self._axshape):
-            print(f'{data.shape}!={self._axshape}')
+        #if(data.shape != self._axshape):
+        #    print(f'{data.shape}!={self._axshape}')
         
     @property
     def _axes(self):
@@ -35,7 +34,7 @@ class _Container:
     def _axshape(self):
         return tuple(len(a) for a in self._axes)
     
-    def __getitem__(self, args) -> Flux:
+    def __getitem__(self, args):
         """Slice the flux array and produce a new Flux object.
         Parameters
         ----------
@@ -53,7 +52,7 @@ class _Container:
         args = [a if isinstance(a, slice) else slice(a, a + 1) for a in args]
         array = self.array.__getitem__(tuple(args))
         newaxes = [ax.__getitem__(arg) for arg, ax in zip(args, self._axes)]
-        return Flux(array, *newaxes)
+        return self.__class__(array, *newaxes)
     
     def __repr__(self):
         s = [
@@ -89,16 +88,16 @@ class _Container:
         
 
 class Flux (_Container):
-    unit = (u.dimensionless_unscaled/u.s/u.MeV)
+    unit = u.dimensionless_unscaled/u.s/u.MeV/u.cm**2
 class Fluence (_Container):
-    unit = u.dimensionless_unscaled/u.MeV
+    unit = u.dimensionless_unscaled/u.MeV/u.cm**2
 class Rate (_Container):
-    unit = u.dimensionless_unscaled/u.s
+    unit = u.dimensionless_unscaled/u.s/u.cm**2
 class Events (_Container):
-    unit = u.dimensionless_unscaled
+    unit = u.dimensionless_unscaled/u.cm**2
 
 def _choose_class(unit):
-    for c in Flux,Fluence,Rate,Events:
-        if c.unit.is_equivalent(unit):
-            return c
+    for cls in Flux,Fluence,Rate,Events:
+        if cls.unit.is_equivalent(unit):
+            return cls
     raise RuntimeError(f"Class not found for unit {unit}")
