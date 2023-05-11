@@ -15,6 +15,7 @@ from snewpy.neutrino import Flavor
 from snewpy.flavor_transformation import NoTransformation
 from functools import wraps
 
+from snewpy.flux import Flux
 
 def _wrap_init(init, check):
     @wraps(init)
@@ -187,7 +188,10 @@ class SupernovaModel(ABC):
         """
         distance = distance << u.kpc #assume that provided distance is in kpc, or convert
         factor = 1/(4*np.pi*(distance.to('cm'))**2)
-        flux = self.get_transformed_spectra(t, E, flavor_xform)
+        f = self.get_transformed_spectra(t, E, flavor_xform)
+
+        array = np.stack([f[flv] for flv in sorted(Flavor)])
+        return  Flux(data=array*factor, flavor=np.sort(Flavor), time=t, energy=E)
         return {flavor: f*factor for flavor,f in flux.items()}
 
 
