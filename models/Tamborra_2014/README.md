@@ -3,3 +3,6 @@ Data from I. Tamborra, G. Raffelt, F. Hanke, H.-T. Janka, and B. Mueller *Neutri
 Files taken from the [Garching Supernova archive](http://wwwmpa.mpa-garching.mpg.de/ccsnarchive/data/Tamborra2014/) for 20Msun and 27Msun, with permission to include them into snewpy.
 
 NOTE: same file format as for Bollig_2016 models.
+
+- For 20Msun, the directions were not stored
+- For 27Msun, the directions [1,2,3] correspond to the violet, black and blue directions in the paper, repectively. The violet direction (dir1) shows the enhanced SASI.
