@@ -67,20 +67,21 @@ class TestModels(unittest.TestCase):
         Instantiate a set of 'Tamborra 2014' models
         """
         for mass in [20., 27.]:
-            model = Tamborra_2014(progenitor_mass=mass*u.Msun, eos='LS220')
-
-            self.assertEqual(model.metadata['EOS'], 'LS220')
-            self.assertEqual(model.metadata['Progenitor mass'], mass*u.Msun)
-
-            # Check that times are in proper units.
-            t = model.get_time()
-            self.assertTrue(t.unit, u.s)
-
-            # Check that we can compute flux dictionaries.
-            f = model.get_initial_spectra(0*u.s, 10*u.MeV)
-            self.assertEqual(type(f), dict)
-            self.assertEqual(len(f), len(Flavor))
-            self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
+            for angles in [1,2,3]:
+                model = Tamborra_2014(progenitor_mass=mass*u.Msun, eos='LS220',direction=angles)
+                
+                self.assertEqual(model.metadata['EOS'], 'LS220')
+                self.assertEqual(model.metadata['Progenitor mass'], mass*u.Msun)
+                
+                # Check that times are in proper units.
+                t = model.get_time()
+                self.assertTrue(t.unit, u.s)
+                
+                # Check that we can compute flux dictionaries.
+                f = model.get_initial_spectra(0*u.s, 10*u.MeV)
+                self.assertEqual(type(f), dict)
+                self.assertEqual(len(f), len(Flavor))
+                self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
 
     def test_OConnor_2013(self):
         """
@@ -196,7 +197,7 @@ class TestModels(unittest.TestCase):
                 model = Walk_2019(progenitor_mass=mass*u.Msun, direction=angles)
 
                 self.assertEqual(model.metadata['EOS'], 'LS220')
-                self.assertEqual(model.metadata['Progenitor mass'], 40*u.Msun)
+                self.assertEqual(model.metadata['Progenitor mass'], mass*u.Msun)
 
                 # Check that times are in proper units.
                 t = model.get_time()

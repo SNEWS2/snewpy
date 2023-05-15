@@ -48,18 +48,20 @@ class TestModels(unittest.TestCase):
         Instantiate a set of 'Tamborra 2014' models
         """
         for mass in [20., 27.]:
-            mfile = 'Tamborra_2014/s{:.1f}c_3D_dir1'.format(mass)
-            model = Tamborra_2014(os.path.join(model_path, mfile), eos='LS220')
+            for direction in [1,2]:
 
-            # Check that times are in proper units.
-            t = model.get_time()
-            self.assertTrue(t.unit, u.s)
+                mfile = 'Tamborra_2014/s{:.1f}c_3D_dir1'.format(mass,direction)
+                model = Tamborra_2014(os.path.join(model_path, mfile), eos='LS220')
 
-            # Check that we can compute flux dictionaries.
-            f = model.get_initial_spectra(0*u.s, 10*u.MeV)
-            self.assertEqual(type(f), dict)
-            self.assertEqual(len(f), len(Flavor))
-            self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
+                # Check that times are in proper units.
+                t = model.get_time()
+                self.assertTrue(t.unit, u.s)
+
+                # Check that we can compute flux dictionaries.
+                f = model.get_initial_spectra(0*u.s, 10*u.MeV)
+                self.assertEqual(type(f), dict)
+                self.assertEqual(len(f), len(Flavor))
+                self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
 
     def test_OConnor_2013(self):
         """
