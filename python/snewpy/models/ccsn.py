@@ -214,16 +214,19 @@ class Tamborra_2014(_RegistryModel):
     Data files are from the `Garching Supernova Archive`_.
     """
 
-    param = {'progenitor_mass': [20., 27.] * u.Msun}
-
+    param = {'progenitor_mass': [20., 27.] * u.Msun,
+             'direction': [1,2,3]}
+    _param_validator = lambda p: (p['progenitor_mass'] == 20. * u.Msun and p['direction'] in (1)) or \
+        (p['progenitor_mass'] == 27. * u.Msun and p['direction'] in (1,2,3))
+    
     @_warn_deprecated_filename_argument
-    def __new__(cls, filename=None, eos='LS220', *, progenitor_mass=None):
+    def __new__(cls, filename=None, eos='LS220', *, progenitor_mass=None, direction=None):
         if filename is not None:
             # Metadata creation is implemented in snewpy.models.base._GarchingArchiveModel
             return loaders.Tamborra_2014(os.path.abspath(filename))
 
-        cls.check_valid_params(cls, progenitor_mass=progenitor_mass)
-        filename = f's{progenitor_mass.value:3.1f}c_3D_dir1'
+        cls.check_valid_params(cls, progenitor_mass=progenitor_mass, direction=direction)
+        filename = f's{progenitor_mass.value:3.1f}c_3D_dir{direction}'
 
         metadata = {
             'Progenitor mass': progenitor_mass,
