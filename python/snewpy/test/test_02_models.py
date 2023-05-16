@@ -48,20 +48,23 @@ class TestModels(unittest.TestCase):
         Instantiate a set of 'Tamborra 2014' models
         """
         for mass in [20., 27.]:
-            for direction in [1,2]:
+            for direction in [1, 2, 3]:
+                mfile = 'Tamborra_2014/s{:.1f}c_3D_dir{}'.format(mass, direction)
+                if mass == 20. and direction > 1:
+                    with self.assertRaises(FileNotFoundError):
+                        model = Tamborra_2014(os.path.join(model_path, mfile), eos='LS220')
+                else:
+                    model = Tamborra_2014(os.path.join(model_path, mfile), eos='LS220')
 
-                mfile = 'Tamborra_2014/s{:.1f}c_3D_dir1'.format(mass,direction)
-                model = Tamborra_2014(os.path.join(model_path, mfile), eos='LS220')
+                    # Check that times are in proper units.
+                    t = model.get_time()
+                    self.assertTrue(t.unit, u.s)
 
-                # Check that times are in proper units.
-                t = model.get_time()
-                self.assertTrue(t.unit, u.s)
-
-                # Check that we can compute flux dictionaries.
-                f = model.get_initial_spectra(0*u.s, 10*u.MeV)
-                self.assertEqual(type(f), dict)
-                self.assertEqual(len(f), len(Flavor))
-                self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
+                    # Check that we can compute flux dictionaries.
+                    f = model.get_initial_spectra(0*u.s, 10*u.MeV)
+                    self.assertEqual(type(f), dict)
+                    self.assertEqual(len(f), len(Flavor))
+                    self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
 
     def test_OConnor_2013(self):
         """
@@ -149,7 +152,7 @@ class TestModels(unittest.TestCase):
         mass = 15.
         for direction in [1,2,3]:
             for rot in ['fast','slow','non']:
-                mfile = 'Walk_2018/s{:.1f}c_3D_{}rot_{}'.format(mass,rot,direction)
+                mfile = 'Walk_2018/s{:.1f}c_3D_{}rot_dir{}'.format(mass,rot,direction)
                 model = Walk_2018(os.path.join(model_path, mfile), eos='LS220')
 
                 # Check that times are in proper units.
@@ -168,7 +171,7 @@ class TestModels(unittest.TestCase):
         """
         for mass in [40.,75.]:
             for direction in [1,2]:
-                mfile = 'Walk_2019/s{:.1f}c_3DBH_{}'.format(mass,direction)
+                mfile = 'Walk_2019/s{:.1f}c_3DBH_dir{}'.format(mass,direction)
                 model = Walk_2019(os.path.join(model_path, mfile), eos='LS220')
 
                 self.assertEqual(model.metadata['EOS'], 'LS220')
