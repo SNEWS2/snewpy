@@ -67,7 +67,7 @@ class Odrzywolek_2010(SupernovaModel):
         alpha = np.expand_dims(alpha, 0)
         b = np.expand_dims(b, 0)
         fluence = a * Enu ** alpha * np.exp(-b * Enu) / (u.MeV * u.s)
-        result = {f: fluence * self.factor[f] for f in flavors}
+        result = {f: fluence.T * self.factor[f] for f in flavors}
         return result
 
 
@@ -103,7 +103,7 @@ class Patton_2017(SupernovaModel):
         t = np.array(-t.to_value("hour"), ndmin=1)
         E = np.array(E.to_value("MeV"), ndmin=1)
         flux = self.interpolated(t, E) / (u.MeV * u.s)
-        return {f: flux[f].T for f in flavors}
+        return {f: flux[f] for f in flavors}
 
 class Kato_2017(SupernovaModel):
     """Set up a presupernova model based on 
@@ -138,5 +138,5 @@ class Kato_2017(SupernovaModel):
         t = np.array(-t.to_value("s"), ndmin=1)
         E = np.array(E.to_value("MeV"), ndmin=1)
         flux = self.interpolated(t, E) / (u.MeV * u.s)
-        return {f: flux[f].T for f in flavors}
+        return {f: flux[f] for f in flavors}
 
