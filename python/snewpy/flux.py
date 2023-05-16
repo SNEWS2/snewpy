@@ -7,17 +7,16 @@ from scipy.integrate import cumulative_trapezoid
 from scipy.interpolate import interp1d
 from enum import Enum
 
-class Axes(Enum):
-    flavor=0
-    time=1
-    energy=2
-
 class _Container:
+    class Axes(Enum):
+        flavor=0
+        time=1
+        energy=2
+        
     def __init__(self, data: u.Quantity,
                        flavor: np.array,
                        time: u.Quantity[u.s], 
                        energy: u.Quantity[u.MeV],
-
                 ):
         self.array = data.to(self.unit)
         self.flavor = flavor
@@ -57,7 +56,7 @@ class _Container:
     def __repr__(self):
         s = [
             f"{len(values)} {label.name}({values.min()};{values.max()})"
-            for label, values in zip(Axes,self._axes)
+            for label, values in zip(self.Axes,self._axes)
         ]
         return f"{self.__class__.__name__} {self.array.shape} [{self.array.unit}]: <{' x '.join(s)}>"
     
@@ -85,16 +84,14 @@ class _Container:
 
         #choose the proper class
         return _choose_class(array.unit)(array, *axes)
-        
-
-class Flux (_Container):
-    unit = u.dimensionless_unscaled/u.s/u.MeV/u.cm**2
-class Fluence (_Container):
-    unit = u.dimensionless_unscaled/u.MeV/u.cm**2
-class Rate (_Container):
-    unit = u.dimensionless_unscaled/u.s/u.cm**2
 class Events (_Container):
-    unit = u.dimensionless_unscaled/u.cm**2
+    unit = u.dimensionless_unscaled/u.cm**2        
+class Flux (_Container):
+    unit = Events.unit/u.s/u.MeV
+class Fluence (_Container):
+    unit = Events.unit/u.MeV
+class Rate (_Container):
+    unit = Events.unit/u.s
 
 def _choose_class(unit):
     for cls in Flux,Fluence,Rate,Events:
