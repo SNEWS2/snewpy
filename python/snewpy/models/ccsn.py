@@ -216,7 +216,7 @@ class Tamborra_2014(_RegistryModel):
 
     param = {'progenitor_mass': [20., 27.] * u.Msun,
              'direction': [1,2,3]}
-    _param_validator = lambda p: (p['progenitor_mass'] == 20. * u.Msun and p['direction'] in (1)) or \
+    _param_validator = lambda p: (p['progenitor_mass'] == 20. * u.Msun and p['direction'] in (1,)) or \
         (p['progenitor_mass'] == 27. * u.Msun and p['direction'] in (1,2,3))
     
     @_warn_deprecated_filename_argument
