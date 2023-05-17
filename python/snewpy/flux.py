@@ -7,7 +7,9 @@ from scipy.integrate import cumulative_trapezoid
 from scipy.interpolate import interp1d
 from enum import Enum
 
-class _Container:
+from copy import copy
+
+class Container:
     class Axes(Enum):
         flavor=0
         time=1
@@ -18,7 +20,7 @@ class _Container:
                        time: u.Quantity[u.s], 
                        energy: u.Quantity[u.MeV],
                 ):
-        self.array = data.to(self.unit)
+        self.array = data
         self.flavor = flavor
         self.time = time
         self.energy = energy
@@ -62,6 +64,9 @@ class _Container:
     
     def sum(self, axis: Axes):
         array = np.sum(self.array, axis = axis.value, keepdims=True)
+        axes = list(self._axes)
+        axes[axis.value] = axes[axis.value].take([0,-1])
+        return ContainerClass(array.unit)(array,*axes)
     
     def integrate(self, axis:Axes, limits:np.ndarray = None):
         #set the limits
@@ -84,17 +89,48 @@ class _Container:
 
         #choose the proper class
         return _choose_class(array.unit)(array, *axes)
-class Events (_Container):
-    unit = u.dimensionless_unscaled/u.cm**2        
-class Flux (_Container):
-    unit = Events.unit/u.s/u.MeV
-class Fluence (_Container):
-    unit = Events.unit/u.MeV
-class Rate (_Container):
-    unit = Events.unit/u.s
+
+    def __rmul__(self, factor):
+        return self.__mul__(self, factor)
+        
+    def __mul__(self, factor):
+        #if not (np.isscalar(factor)):
+        #    raise ValueError("Factor should be a scalar value")
+        array = self.array*factor
+        axes = list(self._axes)
+        return _choose_class(array.unit)(array, *axes)
+
+
+_unit_classes = {}
+
+def ContainerClass(Unit, name=None):
+    if Unit in _unit_classes:
+        return _unit_classes[Unit]
+        
+    class _cls(Container):
+        unit = Unit
+        def __init__(self, data: u.Quantity,
+                           flavor: np.array,
+                           time: u.Quantity[u.s], 
+                           energy: u.Quantity[u.MeV]
+                    ):
+            
+            super().__init__(data.to(self.unit),flavor,time,energy)
+            
+    if(name):
+        _cls.__name__=name
+    #register unit classes
+    _unit_classes[Unit] = _cls
+    #return the registered class
+    return _unit_classes[Unit]
+
+per_unit_area = u.one/u.cm**2
+Flux = ContainerClass(u.one/u.MeV/u.s/u.cm**2, "d2FdEdT")
+Fluence = ContainerClass(Flux.unit*u.s, "dFdT")
+Spectrum= ContainerClass(Flux.unit*u.MeV, "dFdE")
+
+EventSpectrumRate = ContainerClass(u.one/u.MeV/u.s, "d2NdEdT")
+EventRate = ContainerClass(u.one/u.s, "dNdT")
 
 def _choose_class(unit):
-    for cls in Flux,Fluence,Rate,Events:
-        if cls.unit.is_equivalent(unit):
-            return cls
-    raise RuntimeError(f"Class not found for unit {unit}")
+    return _unit_classes.get(unit, Container)
