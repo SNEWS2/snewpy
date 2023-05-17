@@ -66,9 +66,9 @@ class TestModels(unittest.TestCase):
         """
         Instantiate a set of 'Tamborra 2014' models
         """
-        for mass in [20., 27.]:
+        for mass in [11.2, 20., 27.]:
             for angles in [1,2,3]:
-                if mass == 20. and angles > 1:
+                if mass != 27. and angles > 1:
                     with self.assertRaises(ValueError):
                         model = Tamborra_2014(progenitor_mass=mass*u.Msun, eos='LS220', direction=angles)
                 else:
