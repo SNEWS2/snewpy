@@ -30,6 +30,7 @@ def _load_xsec(self, channel, energies):
     yp = xsec[:, _get_xsec_column(channel)]
     xsecs = np.interp(np.log(E)/np.log(10), xp, yp, left=0, right=0)*E*1e-38 <<u.cm**2
     return xsecs
+    
 #--------------------------------------
 class RateCalculator(SimpleRate):
     def __init__(self, base_dir=''):
@@ -54,9 +55,48 @@ class RateCalculator(SimpleRate):
         for channel in self.channels[material].itertuples():
             rate = self.calc_rate(channel, TargetMass, flux)
             #apply channel weight 
-            rateW = rate*channel.weight
+            rate = rate*channel.weight
             #integrate over given energy bins
             rateI = rate.integrate(rate.Axes.energy, energies_t)
+            if self.smearings and self.efficiencies:
+                smear = self.smearings[detector].get(channel.name, 
+                                                     np.eye(*smearing_shape)
+                                                    )
+                effic = self.efficiencies[detector].get(channel.name, 
+                                                        np.ones(len(energies_s)-1)
+                                                       )
+                #apply smearing
+                rateS_array = np.dot(rateI.array, smear.T) * effic
+                rateS = ContainerClass(rateS_array.unit,'EventRate')(rateS_array, rateI.flavor, rateI.time, energies_s)
+                rateI = rateS
+                
+            #result[(channel.name,'unsmeared','unweighted')] = rateI
+            result[channel.name] = rateI
+        return result
+
+    def run_simple(self, flux, material:str, detector:str):
+        """This function tries to reproduce the calculations in generate_fluence/simulate
+        Main difference: use bin centers to evaluate the cross-sections
+        """
+        TargetMass = float(self.detectors[detector].tgt_mass)<<(1e3*u.tonne)
+    
+        binning = self.binning[material]
+        energies_t = binning['e_true']<<u.GeV
+        energies_s = binning['e_smear']<<u.GeV
+        binwidth = np.diff(energies_t).to(flux.energy.unit)
+        
+        smearing_shape = (len(energies_t)-1, len(energies_s)-1)
+        #check that energy is the same
+        assert np.allclose(flux.energy,center(energies_t))
+        
+        result = {}
+        for channel in self.channels[material].itertuples():
+            rate = self.calc_rate(channel, TargetMass, flux)
+            #apply channel weight 
+            rate = rate*channel.weight
+            #"integrate" over energy bins
+            rateI = rate*binwidth
+            #rateI = rate.integrate(rate.Axes.energy, energies_t)
             if self.smearings and self.efficiencies:
                 smear = self.smearings[detector].get(channel.name, 
                                                      np.eye(*smearing_shape)
