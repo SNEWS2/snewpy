@@ -5,12 +5,12 @@ import numpy as np
 
 from scipy.integrate import cumulative_trapezoid
 from scipy.interpolate import interp1d
-from enum import Enum
+from enum import IntEnum
 
 from copy import copy
 
 class Container:
-    class Axes(Enum):
+    class Axes(IntEnum):
         flavor=0
         time=1
         energy=2
@@ -63,9 +63,9 @@ class Container:
         return f"{self.__class__.__name__} {self.array.shape} [{self.array.unit}]: <{' x '.join(s)}>"
     
     def sum(self, axis: Axes):
-        array = np.sum(self.array, axis = axis.value, keepdims=True)
+        array = np.sum(self.array, axis = axis, keepdims=True)
         axes = list(self._axes)
-        axes[axis.value] = axes[axis.value].take([0,-1])
+        axes[axis] = axes[axis].take([0,-1])
         return ContainerClass(array.unit)(array,*axes)
     
     def integrate(self, axis:Axes, limits:np.ndarray = None):
@@ -79,13 +79,13 @@ class Container:
         limits = limits.clip(xmin, xmax)
 
         #compute the integral
-        x  = self._axes[axis.value]
-        yc = cumulative_trapezoid(self.array, x=x, axis=axis.value, initial=0)
-        _integral = interp1d(x=x, y=yc, fill_value=0, axis=axis.value, bounds_error=False)
+        x  = self._axes[axis]
+        yc = cumulative_trapezoid(self.array, x=x, axis=axis, initial=0)
+        _integral = interp1d(x=x, y=yc, fill_value=0, axis=axis, bounds_error=False)
 
-        array = np.diff(_integral(limits),axis=axis.value) << (self.array.unit*ax.unit)
+        array = np.diff(_integral(limits),axis=axis) << (self.array.unit*ax.unit)
         axes = list(self._axes)
-        axes[axis.value] = limits
+        axes[axis] = limits
 
         #choose the proper class
         return _choose_class(array.unit)(array, *axes)
