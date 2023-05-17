@@ -1,3 +1,4 @@
+from typing import Union
 from snewpy.neutrino import Flavor
 from astropy import units as u
 
@@ -68,7 +69,7 @@ class Container:
         ]
         return f"{self.__class__.__name__} {self.array.shape} [{self.array.unit}]: <{' x '.join(s)}>"
     
-    def sum(self, axis: Axes|str):
+    def sum(self, axis: Union[Axes,str]):
         if(isinstance(axis, str)):
             axis = Axes[axis]
         array = np.sum(self.array, axis = axis, keepdims=True)
@@ -76,7 +77,7 @@ class Container:
         axes[axis] = axes[axis].take([0,-1])
         return ContainerClass(array.unit)(array,*axes)
     
-    def integrate(self, axis:Axes|str, limits:np.ndarray = None):
+    def integrate(self, axis:Union[Axes,str], limits:np.ndarray = None):
         if(isinstance(axis, str)):
             axis = Axes[axis]
         #set the limits
@@ -138,9 +139,12 @@ per_unit_area = u.one/u.cm**2
 Flux = ContainerClass(u.one/u.MeV/u.s/u.cm**2, "d2FdEdT")
 Fluence = ContainerClass(Flux.unit*u.s, "dFdT")
 Spectrum= ContainerClass(Flux.unit*u.MeV, "dFdE")
+IntegralFlux = ContainerClass(u.one/u.MeV/u.s/u.cm**2, "F")
 
-EventSpectrumRate = ContainerClass(u.one/u.MeV/u.s, "d2NdEdT")
+DifferrentialEventRate = ContainerClass(u.one/u.MeV/u.s, "d2NdEdT")
 EventRate = ContainerClass(u.one/u.s, "dNdT")
+EventSpectrum = ContainerClass(u.one/u.MeV, "dNdE")
+EventNumbers = ContainerClass(u.one, "N")
 
 def _choose_class(unit):
     return _unit_classes.get(unit, Container)
