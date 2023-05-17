@@ -14,7 +14,7 @@ def _get_flavor_index(channel):
             '-m':Flavor.NU_X_BAR,
             '+t':Flavor.NU_X,
             '-t':Flavor.NU_X_BAR
-               }
+            }
     return _map[channel.parity+channel.flavor]
 
 def _get_xsec_column(channel):
@@ -41,7 +41,7 @@ class RateCalculator(SimpleRate):
         flavor = _get_flavor_index(channel)
         xsec = _load_xsec(self, channel, flux.energy)
         Ntargets = TargetMass.to_value(u.Dalton)
-        rate = flux[flavor,:,:]*xsec*Ntargets
+        rate = flux[flavor]*xsec*Ntargets
         return rate
     
     def run(self, flux, material:str, detector:str):
@@ -57,7 +57,7 @@ class RateCalculator(SimpleRate):
             #apply channel weight 
             rate = rate*channel.weight
             #integrate over given energy bins
-            rateI = rate.integrate(rate.Axes.energy, energies_t)
+            rateI = rate.integrate('energy', energies_t)
             if self.smearings and self.efficiencies:
                 smear = self.smearings[detector].get(channel.name, 
                                                      np.eye(*smearing_shape)
@@ -96,7 +96,6 @@ class RateCalculator(SimpleRate):
             rate = rate*channel.weight
             #"integrate" over energy bins
             rateI = rate*binwidth
-            #rateI = rate.integrate(rate.Axes.energy, energies_t)
             if self.smearings and self.efficiencies:
                 smear = self.smearings[detector].get(channel.name, 
                                                      np.eye(*smearing_shape)

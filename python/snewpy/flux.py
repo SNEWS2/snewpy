@@ -9,12 +9,16 @@ from enum import IntEnum
 
 from copy import copy
 
-class Container:
-    class Axes(IntEnum):
+class Axes(IntEnum):
         flavor=0
         time=1
         energy=2
-        
+    
+        @staticmethod
+        def __getitem__(name: str):
+            return getattr(Axes, name)
+            
+class Container:
     def __init__(self, data: u.Quantity,
                        flavor: np.array,
                        time: u.Quantity[u.s], 
@@ -34,7 +38,7 @@ class Container:
     @property
     def _axshape(self):
         return tuple(len(a) for a in self._axes)
-    
+
     def __getitem__(self, args):
         """Slice the flux array and produce a new Flux object.
         Parameters
@@ -51,6 +55,8 @@ class Container:
         except TypeError:
             args = [args]
         args = [a if isinstance(a, slice) else slice(a, a + 1) for a in args]
+        #expand args to match axes
+        args+=[slice(None)]*(len(Axes)-len(args))
         array = self.array.__getitem__(tuple(args))
         newaxes = [ax.__getitem__(arg) for arg, ax in zip(args, self._axes)]
         return self.__class__(array, *newaxes)
@@ -58,19 +64,23 @@ class Container:
     def __repr__(self):
         s = [
             f"{len(values)} {label.name}({values.min()};{values.max()})"
-            for label, values in zip(self.Axes,self._axes)
+            for label, values in zip(Axes,self._axes)
         ]
         return f"{self.__class__.__name__} {self.array.shape} [{self.array.unit}]: <{' x '.join(s)}>"
     
-    def sum(self, axis: Axes):
+    def sum(self, axis: Axes|str):
+        if(isinstance(axis, str)):
+            axis = Axes[axis]
         array = np.sum(self.array, axis = axis, keepdims=True)
         axes = list(self._axes)
         axes[axis] = axes[axis].take([0,-1])
         return ContainerClass(array.unit)(array,*axes)
     
-    def integrate(self, axis:Axes, limits:np.ndarray = None):
+    def integrate(self, axis:Axes|str, limits:np.ndarray = None):
+        if(isinstance(axis, str)):
+            axis = Axes[axis]
         #set the limits
-        ax = self._axes[axis.value]
+        ax = self._axes[axis]
         xmin, xmax = ax.min(), ax.max()
         if limits is None:
             limits = u.Quantity([xmin, xmax])
