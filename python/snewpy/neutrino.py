@@ -13,10 +13,10 @@ class MassHierarchy(IntEnum):
 
 class Flavor(IntEnum):
     """Enumeration of CCSN Neutrino flavors."""
-    NU_E = 2
-    NU_E_BAR = 1
-    NU_X = 3
-    NU_X_BAR = 0
+    NU_E = 0
+    NU_X = 1
+    NU_E_BAR = 2
+    NU_X_BAR = 3
     
     def to_tex(self):
         """LaTeX-compatible string representations of flavor."""
