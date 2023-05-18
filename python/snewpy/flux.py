@@ -11,7 +11,7 @@ from enum import IntEnum
 from copy import copy
 
 class Axes(IntEnum):
-    """Number of the array dimension for each axis""" 
+        """Number of the array dimension for each axis""" 
         flavor=0
         time=1
         energy=2
