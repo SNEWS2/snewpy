@@ -52,7 +52,7 @@ class Flavor(IntEnum):
         return self.value in (Flavor.NU_E_BAR.value, Flavor.NU_X_BAR.value)
         
 @dataclass
-class NeutrinoMixingParameters:
+class MixingParameters3Flavor:
     """Mixing angles and mass differences, assuming three neutrino flavors.
     This class contains the default values used throughout SNEWPY, which are
     based on `NuFIT 5.0 <http://www.nu-fit.org>`_ results from July 2020,
@@ -119,6 +119,7 @@ class NeutrinoMixingParameters:
             Angles theta12, theta13, theta23.
         """
         return (self.theta12, self.theta13, self.theta23)
+        
     def get_mass_square_differences(self):
         """Mass squared differences .
         
@@ -129,12 +130,17 @@ class NeutrinoMixingParameters:
         """        
         return (self.dm21_2, self.dm31_2, self.dm32_2)
 
+@dataclass
+class MixingParameters4Flavor(MixingParameters3Flavor):
+    """A class for four flavor neutrino mixing"""
+    theta14: u.Quantity[u.deg] = 0
+    
 
 parameter_presets = {
     # Values from JHEP 09 (2020) 178 [arXiv:2007.14792] and www.nu-fit.org.
     'NuFIT5.0': {
         MassHierarchy.NORMAL:
-        NeutrinoMixingParameters(
+        MixingParameters3Flavor(
             theta12 = 33.44<< u.deg,
             theta13 = 8.57 << u.deg,
             theta23 = 49.20 << u.deg,
@@ -143,7 +149,7 @@ parameter_presets = {
             dm31_2 =  2.517e-3 << u.eV**2
         ),
         MassHierarchy.INVERTED:
-        NeutrinoMixingParameters(    
+        MixingParameters3Flavor(    
             theta12 = 33.45 << u.deg,
             theta13 = 8.60 << u.deg,
             theta23 = 49.30 << u.deg,
@@ -154,7 +160,7 @@ parameter_presets = {
     },
     'NuFIT5.2': {
         MassHierarchy.NORMAL:
-        NeutrinoMixingParameters(
+        MixingParameters3Flavor(
             theta12 = 33.41 << u.deg,
             theta13 = 8.58 << u.deg,
             theta23 = 42.20 << u.deg,
@@ -163,7 +169,7 @@ parameter_presets = {
             dm31_2 = 2.507e-3 << u.eV**2
         ),
         MassHierarchy.INVERTED:
-        NeutrinoMixingParameters(        
+        MixingParameters3Flavor(        
             theta12 = 33.41 << u.deg,
             theta13 = 8.57 << u.deg,
             theta23 = 49.00 << u.deg,
@@ -175,7 +181,7 @@ parameter_presets = {
     'PDG2022':{
     # Values from https://pdg.lbl.gov
         MassHierarchy.NORMAL:
-        NeutrinoMixingParameters(
+        MixingParameters3Flavor(
             theta12 = 33.65 << u.deg,
             theta13 = 8.53 << u.deg,
             theta23 = 47.64 << u.deg,
@@ -184,7 +190,7 @@ parameter_presets = {
             dm32_2 = 2.453e-3 << u.eV**2
         ),
         MassHierarchy.INVERTED:
-        NeutrinoMixingParameters(
+        MixingParameters3Flavor(
             theta12 = 33.65 << u.deg,
             theta13 = 8.53 << u.deg,
             theta23 = 47.24 << u.deg,
@@ -196,5 +202,5 @@ parameter_presets = {
 }
    
 
-def MixingParameters(mass_order:MassHierarchy, version:str='NuFIT5.0'):
+def MixingParameters(mass_order:MassHierarchy=MassHierarchy.NORMAL, version:str='NuFIT5.0'):
     return parameter_presets[version][mass_order]
