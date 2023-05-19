@@ -33,7 +33,10 @@ class Flavor(IntEnum):
         if '_BAR' in self.name:
             return r'$\overline{{\nu}}_{0}$'.format(self.name[3].lower())
         return r'$\{0}$'.format(self.name.lower())
-
+        
+    def __repr_latex__(self):
+        return self.to_tex()
+        
     @property
     def is_electron(self):
         """Return ``True`` for ``Flavor.NU_E`` and ``Flavor.NU_E_BAR``."""
@@ -69,7 +72,21 @@ class NeutrinoMixingParameters:
     #mass ordering
     mass_order: Optional[MassHierarchy] = None
     # Note: in IH, the mass splittings are: m3..............m1..m2.
-
+    
+    def _repr_markdown_(self):
+        s = [f'**{self.__class__.__name__}**']
+        s+=  ['|Parameter|Value|',
+              '|:--------|:----:|']
+        for name, v in self.__dict__.items():
+            try: 
+                s += [f"|{name}|{v._repr_latex_()}"]
+            except:
+                try: 
+                    s += [f"|{name}|{v.name}"]
+                except:
+                    s += [f"|{name}|{v}|"]
+        return '\n'.join(s)
+        
     def __post_init__(self):
         #calculate the missing dm2
         if self.dm31_2 is None: 
@@ -112,80 +129,72 @@ class NeutrinoMixingParameters:
         """        
         return (self.dm21_2, self.dm31_2, self.dm32_2)
 
-    
-# Values from JHEP 09 (2020) 178 [arXiv:2007.14792] and www.nu-fit.org.
-NuFIT50_NH = NeutrinoMixingParameters(
-        #mass_order = MassHierarchy.NORMAL,
-        theta12 = 33.44<< u.deg,
-        theta13 = 8.57 << u.deg,
-        theta23 = 49.20 << u.deg,
-        deltaCP = 197  << u.deg,
-        dm21_2 =  7.42e-5  << u.eV**2,
-        dm31_2 =  2.517e-3 << u.eV**2
-)
-# Values from JHEP 09 (2020) 178 [arXiv:2007.14792] and www.nu-fit.org.
-NuFIT50_IH = NeutrinoMixingParameters(
-        #mass_order = MassHierarchy.INVERTED,
-        theta12 = 33.45 << u.deg,
-        theta13 = 8.60 << u.deg,
-        theta23 = 49.30 << u.deg,
-        deltaCP = 282 << u.deg,
-        dm21_2 = 7.42e-5 << u.eV**2,
-        dm32_2 = -2.498e-3 << u.eV**2
-)
 
-NuFIT52_NH = NeutrinoMixingParameters(
-        mass_order = MassHierarchy.NORMAL,
-        theta12 = 33.41 << u.deg,
-        theta13 = 8.58 << u.deg,
-        theta23 = 42.20 << u.deg,
-        deltaCP = 232 << u.deg,
-        dm21_2 = 7.41e-5 << u.eV**2,
-        dm31_2 = 2.507e-3 << u.eV**2
-)
-NuFIT52_IH = NeutrinoMixingParameters(
-        mass_order = MassHierarchy.INVERTED,
-        theta12 = 33.41 << u.deg,
-        theta13 = 8.57 << u.deg,
-        theta23 = 49.00 << u.deg,
-        deltaCP = 276 << u.deg,
-        dm21_2 = 7.41e-5 << u.eV**2,
-        dm32_2 = -2.486e-3 << u.eV**2
-)
-
-# Values from https://pdg.lbl.gov
-PDG2022_NH = NeutrinoMixingParameters(
-        mass_order = MassHierarchy.NORMAL,
-        theta12 = 33.65 << u.deg,
-        theta13 = 8.53 << u.deg,
-        theta23 = 47.64 << u.deg,
-        deltaCP = 245 << u.deg,
-        dm21_2 = 7.53e-5 << u.eV**2,
-        dm32_2 = 2.453e-3 << u.eV**2
-)
-PDG2022_IH = NeutrinoMixingParameters(
-        mass_order = MassHierarchy.INVERTED,
-        theta12 = 33.65 << u.deg,
-        theta13 = 8.53 << u.deg,
-        theta23 = 47.24 << u.deg,
-        deltaCP = 245 << u.deg,
-        dm21_2 = 7.53e-5 << u.eV**2,
-        dm32_2 = -2.536e-3 << u.eV**2
-)
+parameter_presets = {
+    # Values from JHEP 09 (2020) 178 [arXiv:2007.14792] and www.nu-fit.org.
+    'NuFIT5.0': {
+        MassHierarchy.NORMAL:
+        NeutrinoMixingParameters(
+            theta12 = 33.44<< u.deg,
+            theta13 = 8.57 << u.deg,
+            theta23 = 49.20 << u.deg,
+            deltaCP = 197  << u.deg,
+            dm21_2 =  7.42e-5  << u.eV**2,
+            dm31_2 =  2.517e-3 << u.eV**2
+        ),
+        MassHierarchy.INVERTED:
+        NeutrinoMixingParameters(    
+            theta12 = 33.45 << u.deg,
+            theta13 = 8.60 << u.deg,
+            theta23 = 49.30 << u.deg,
+            deltaCP = 282 << u.deg,
+            dm21_2 = 7.42e-5 << u.eV**2,
+            dm32_2 = -2.498e-3 << u.eV**2
+        )
+    },
+    'NuFIT5.2': {
+        MassHierarchy.NORMAL:
+        NeutrinoMixingParameters(
+            theta12 = 33.41 << u.deg,
+            theta13 = 8.58 << u.deg,
+            theta23 = 42.20 << u.deg,
+            deltaCP = 232 << u.deg,
+            dm21_2 = 7.41e-5 << u.eV**2,
+            dm31_2 = 2.507e-3 << u.eV**2
+        ),
+        MassHierarchy.INVERTED:
+        NeutrinoMixingParameters(        
+            theta12 = 33.41 << u.deg,
+            theta13 = 8.57 << u.deg,
+            theta23 = 49.00 << u.deg,
+            deltaCP = 276 << u.deg,
+            dm21_2 = 7.41e-5 << u.eV**2,
+            dm32_2 = -2.486e-3 << u.eV**2
+        )
+    },
+    'PDG2022':{
+    # Values from https://pdg.lbl.gov
+        MassHierarchy.NORMAL:
+        NeutrinoMixingParameters(
+            theta12 = 33.65 << u.deg,
+            theta13 = 8.53 << u.deg,
+            theta23 = 47.64 << u.deg,
+            deltaCP = 245 << u.deg,
+            dm21_2 = 7.53e-5 << u.eV**2,
+            dm32_2 = 2.453e-3 << u.eV**2
+        ),
+        MassHierarchy.INVERTED:
+        NeutrinoMixingParameters(
+            theta12 = 33.65 << u.deg,
+            theta13 = 8.53 << u.deg,
+            theta23 = 47.24 << u.deg,
+            deltaCP = 245 << u.deg,
+            dm21_2 = 7.53e-5 << u.eV**2,
+            dm32_2 = -2.536e-3 << u.eV**2
+        )
+    }
+}
+   
 
 def MixingParameters(mass_order:MassHierarchy, version:str='NuFIT5.0'):
-    match mass_order, version:
-        case MassHierarchy.NORMAL,   'NuFIT5.0':
-            return NuFIT50_NH
-        case MassHierarchy.INVERTED, 'NuFIT5.0':
-            return NuFIT50_IH
-        case MassHierarchy.NORMAL,   'NuFIT5.2':
-            return NuFIT52_NH
-        case MassHierarchy.INVERTED, 'NuFIT5.2':
-            return NuFIT52_IH
-        case MassHierarchy.NORMAL,   'PDG2022':
-            return PDG2022_NH
-        case MassHierarchy.INVERTED, 'PDG2022':
-            return PDG2022_IH
-        case _:
-            raise ValueError(f'No parameter preset for {mass_order}, vesrion={version}')
+    return parameter_presets[version][mass_order]
