@@ -67,8 +67,8 @@ class NeutrinoMixingParameters:
     deltaCP: u.Quantity[u.deg]
     #square mass difference
     dm21_2: u.Quantity[u.eV**2]
-    dm32_2: Optional[u.Quantity[u.eV**2]] = None
-    dm31_2: Optional[u.Quantity[u.eV**2]] = None
+    dm32_2: Optional[u.Quantity] = None
+    dm31_2: Optional[u.Quantity] = None
     #mass ordering
     mass_order: Optional[MassHierarchy] = None
     # Note: in IH, the mass splittings are: m3..............m1..m2.
