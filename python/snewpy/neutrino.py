@@ -33,10 +33,7 @@ class Flavor(IntEnum):
         if '_BAR' in self.name:
             return r'$\overline{{\nu}}_{0}$'.format(self.name[3].lower())
         return r'$\{0}$'.format(self.name.lower())
-        
-    def __repr_latex__(self):
-        return self.to_tex()
-        
+
     @property
     def is_electron(self):
         """Return ``True`` for ``Flavor.NU_E`` and ``Flavor.NU_E_BAR``."""
