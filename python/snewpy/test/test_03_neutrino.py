@@ -46,7 +46,7 @@ class TestNeutrino(unittest.TestCase):
         self.assertEqual(mixpars.theta23, 49.20 * u.deg)
         self.assertEqual(mixpars.deltaCP, 197 * u.deg)
         self.assertEqual(mixpars.dm21_2, 7.42e-5 * u.eV**2)
-        self.assertEqual(mixpars.dm32_2, 2.517e-3 * u.eV**2)
+        self.assertEqual(mixpars.dm31_2, 2.517e-3 * u.eV**2)
 
 
     def test_mixing_imo(self):
@@ -59,4 +59,4 @@ class TestNeutrino(unittest.TestCase):
         self.assertEqual(mixpars.theta23, 49.30 * u.deg)
         self.assertEqual(mixpars.deltaCP, 282 * u.deg)
         self.assertEqual(mixpars.dm21_2, 7.42e-5 * u.eV**2)
-        self.assertEqual(mixpars.dm31_2, -2.498e-3 * u.eV**2)
+        self.assertEqual(mixpars.dm32_2, -2.498e-3 * u.eV**2)
