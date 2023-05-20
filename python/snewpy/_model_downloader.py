@@ -164,7 +164,7 @@ def get_model_data(model: str, filename: str, path: str = model_path) -> Path:
     if os.path.isabs(filename):
         return Path(filename)
 
-    params = { 'model':model, 'filename':filename, 'path':path }
+    params = { 'model':model, 'filename':filename }
 
     # Parse YAML file with model repository configurations.
     with open_text('snewpy.models', 'model_files.yml') as f:
