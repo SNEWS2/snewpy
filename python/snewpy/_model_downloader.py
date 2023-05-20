@@ -101,7 +101,7 @@ local path.
         return self.path
 
 
-def from_zenodo(zenodo_id:str, model:str, filename:str, path:str=model_path):
+def from_zenodo(zenodo_id:str, model:str, filename:str):
     """Access files on Zenodo.
 
     Parameters
@@ -113,7 +113,7 @@ def from_zenodo(zenodo_id:str, model:str, filename:str, path:str=model_path):
 
     Returns
     -------
-    file : FileHandle object.
+    file_url, md5sum
     """
     zenodo_url = f'https://zenodo.org/api/records/{zenodo_id}'
     path = Path(path)/str(model)
@@ -124,17 +124,13 @@ def from_zenodo(zenodo_id:str, model:str, filename:str, path:str=model_path):
     # Search for model file string in Zenodo request for this record.
     file = next((_file for _file in record['files'] if _file['key'] == filename), None)
 
-    # If matched, return a FileHandle which takes care of downloading and
-    # checksum (or loads a local data file). Otherwise raise an exception.
+    # If matched, return a tuple of URL and checksum.Otherwise raise an exception.
     if file is not None:
-        return FileHandle(path = path/file['key'],
-                                 remote= file['links']['self'],
-                                 md5 = file['checksum'].split(':')[1])
+        return file['links']['self'], file['checksum'].split(':')[1]
     else:
         raise MissingFileError(filename)
 
-
-def from_github(release_version:str, model:str, filename:str, path:str=model_path):
+def from_github(release_version:str, model:str, filename:str):
     """Access files on GitHub.
 
     Parameters
@@ -146,15 +142,10 @@ def from_github(release_version:str, model:str, filename:str, path:str=model_pat
 
     Returns
     -------
-    file : FileHandle object.
+    file_url, md5sum
     """
     github_url = f'https://github.com/SNEWS2/snewpy/raw/v{release_version}/models/{model}/{filename}'
-    localpath = Path(path)/str(model)
-    localpath.mkdir(exist_ok=True, parents=True)
-
-    return FileHandle(path = localpath/filename,
-                      remote = github_url)
-
+    return github_url, None
 
 def get_model_data(model: str, filename: str, path: str = model_path) -> Path:
     """Access model data. Configuration for each model is in a YAML file
@@ -183,16 +174,20 @@ def get_model_data(model: str, filename: str, path: str = model_path) -> Path:
         if model in models.keys():
             # Get data from GitHub or Zenodo.
             modconf = models[model]
-            repo = modconf['repository']
+            repo = modconf.pop('repository')
 
             if repo == 'github':
                 params['release_version'] = modconf['release_version']
-                fh = from_github(**params)
+                url, md5 = from_github(**params)
             elif repo == 'zenodo':
                 params['zenodo_id'] = modconf['zenodo_id']
-                fh = from_zenodo(**params)
+                url, md5 = from_zenodo(**params)
             else:
-                raise ValueError(f'Repository {repo} not recognized')
+                #format the url directly
+                url, md5 = repo.format(**params, **modconf), None
+            localpath = Path(path)/str(model)
+            localpath.mkdir(exist_ok=True, parents=True)
+            fh = FileHandle(path = localpath/filename,remote = url, md5=md5)
             return fh.load()
         else:
             raise KeyError(f'No configuration for {model}')
