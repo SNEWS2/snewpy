@@ -6,6 +6,7 @@ from astropy import units as u
 from dataclasses import dataclass
 from typing import Optional
 import numpy as np
+from collections.abc import Mapping
 
 class MassHierarchy(IntEnum):
     """Neutrino mass ordering: ``NORMAL`` or ``INVERTED``."""
@@ -50,7 +51,7 @@ class Flavor(IntEnum):
         return self.value in (Flavor.NU_E_BAR.value, Flavor.NU_X_BAR.value)
         
 @dataclass
-class MixingParameters3Flavor:
+class MixingParameters3Flavor(Mapping):
     """Mixing angles and mass differences, assuming three neutrino flavors.
     This class contains the default values used throughout SNEWPY, which are
     based on `NuFIT 5.0 <http://www.nu-fit.org>`_ results from July 2020,
@@ -70,7 +71,13 @@ class MixingParameters3Flavor:
     #mass ordering
     mass_order: Optional[MassHierarchy] = None
     # Note: in IH, the mass splittings are: m3..............m1..m2.
-    
+
+    def __iter__(self):
+        return iter(self.__dict__)
+    def __getitem__(self, item):
+        return self.__dict__[item]
+    def __len__(self):
+        return len(self.__dict__)
     def _repr_markdown_(self):
         s = [f'**{self.__class__.__name__}**']
         s+=  ['|Parameter|Value|',
@@ -130,7 +137,12 @@ class MixingParameters3Flavor:
 
 @dataclass
 class MixingParameters4Flavor(MixingParameters3Flavor):
-    """A class for four flavor neutrino mixing"""
+    """A class for four flavor neutrino mixing. 
+    ..Note: it is an extension of :class:`MixingParameters3Flavor`, and can be constructed using it:
+    
+        >>> pars_3f = MixingParameters() #standard 3flavor mixing
+        >>> pars_4f = MixingParameters4Flavor(**pars_3f, theta14=90<<u.deg, dm41_2=1<<u.GeV**2)
+    """
     #sterile neutrino miging angles
     theta14: u.Quantity[u.deg] = 0<<u.deg
     theta24: u.Quantity[u.deg] = 0<<u.deg
