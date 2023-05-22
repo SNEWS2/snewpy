@@ -83,9 +83,8 @@ class Container:
         limits = limits.to(ax.unit)
         limits = limits.clip(xmin, xmax)
         #compute the integral
-        x  = self._axes[axis]
-        yc = cumulative_trapezoid(self.array, x=x, axis=axis, initial=0)
-        _integral = interp1d(x=x, y=yc, fill_value=0, axis=axis, bounds_error=False)
+        yc = cumulative_trapezoid(self.array, x=ax, axis=axis, initial=0)
+        _integral = interp1d(x=ax, y=yc, fill_value=0, axis=axis, bounds_error=False)
         array = np.diff(_integral(limits),axis=axis) << (self.array.unit*ax.unit)
         axes = list(self._axes)
         axes[axis] = limits
@@ -131,11 +130,10 @@ def ContainerClass(Unit, name=None):
 
 #some standard container classes that can be used for 
 Flux = ContainerClass(u.one/u.MeV/u.s/u.cm**2, "d2FdEdT")
-Fluence = ContainerClass(Flux.unit*u.s, "dFdT")
-Spectrum= ContainerClass(Flux.unit*u.MeV, "dFdE")
-IntegralFlux = ContainerClass(u.one/u.MeV/u.s/u.cm**2, "F")
+Fluence = ContainerClass(Flux.unit*u.s, "dFdE")
+Spectrum= ContainerClass(Flux.unit*u.MeV, "dFdT")
 
-DifferrentialEventRate = ContainerClass(u.one/u.MeV/u.s, "d2NdEdT")
+DifferentialEventRate = ContainerClass(u.one/u.MeV/u.s, "d2NdEdT")
 EventRate = ContainerClass(u.one/u.s, "dNdT")
 EventSpectrum = ContainerClass(u.one/u.MeV, "dNdE")
-EventNumbers = ContainerClass(u.one, "N")
+EventNumber = ContainerClass(u.one, "N")

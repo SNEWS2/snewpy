@@ -192,7 +192,6 @@ class SupernovaModel(ABC):
 
         array = np.stack([f[flv] for flv in sorted(Flavor)])
         return  Flux(data=array*factor, flavor=np.sort(Flavor), time=t, energy=E)
-        return {flavor: f*factor for flavor,f in flux.items()}
 
 
 
