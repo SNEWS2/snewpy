@@ -15,26 +15,29 @@ class Axes(IntEnum):
         flavor=0
         time=1
         energy=2
-    
-        @staticmethod
-        def __getitem__(name: Union[str,'Axes']):
-            """if given a string, return corresponding Axes value"""
-            if(isinstance(name, str)):
-                return getattr(Axes, name)
-            else: 
-                return name
             
 class Container:
-    def __init__(self, data: u.Quantity,
-                       flavor: np.array,
-                       time: u.Quantity[u.s], 
-                       energy: u.Quantity[u.MeV],
-                ):
+    def __init__(self, 
+                 data: u.Quantity,
+                 flavor: np.array,
+                 time: u.Quantity[u.s], 
+                 energy: u.Quantity[u.MeV],
+                 *,
+                 integrable_axes = None
+    ):
         self.array = data
         self.flavor = flavor
         self.time = time
         self.energy = energy
-        
+        #guess which axes can be integrated
+        if(integrable_axes):
+            self._integrable_axes = integrable_axes
+        else:
+            self._integrable_axes = {a for a in Axes if(self._axshape[a]==self.array.shape[a])}
+            self._integrable_axes.discard(Axes.flavor)
+    @property
+    def _sumable_axes(self):
+        return set(Axes).difference(self._integrable_axes)
     @property
     def _axes(self):
         return self.flavor, self.time, self.energy
@@ -55,7 +58,7 @@ class Container:
         array = self.array.__getitem__(tuple(args))
         newaxes = [ax.__getitem__(arg) for arg, ax in zip(args, self._axes)]
         return self.__class__(array, *newaxes)
-    
+
     def __repr__(self) -> str:
         """print information about the container"""
         s = [f"{len(values)} {label.name}({values.min()};{values.max()})"
@@ -64,17 +67,21 @@ class Container:
     
     def sum(self, axis: Union[Axes,str])->'Container':
         """sum along given axis, producing a reduced array"""
-        if(isinstance(axis, str)):
+        if isinstance(axis, str):
             axis = Axes[axis]
+        if axis not in self._sumable_axes:
+            raise ValueError(f'Cannot sum over {axis.name}! Valid axes are {self._sumable_axes}')
         array = np.sum(self.array, axis = axis, keepdims=True)
         axes = list(self._axes)
         axes[axis] = axes[axis].take([0,-1])
-        return ContainerClass(array.unit)(array,*axes)
-    
+        return ContainerClass(array.unit)(array,*axes, integrable_axes = self._integrable_axes.difference({axis}))
+
     def integrate(self, axis:Union[Axes,str], limits:np.ndarray=None)->'Container':
         """integrate along given axis, producing a reduced array"""
-        if(isinstance(axis, str)):
+        if isinstance(axis, str):
             axis = Axes[axis]
+        if not axis in self._integrable_axes:
+            raise ValueError(f'Cannot integrate over {axis.name}! Valid axes are {self._integrable_axes}')
         #set the limits
         ax = self._axes[axis]
         xmin, xmax = ax.min(), ax.max()
@@ -89,7 +96,8 @@ class Container:
         axes = list(self._axes)
         axes[axis] = limits
         #choose the proper class
-        return ContainerClass(array.unit)(array, *axes)
+        return ContainerClass(array.unit)(array, *axes, integrable_axes=self._integrable_axes.difference({axis}))
+        return result
 
     def __rmul__(self, factor):
         "multiply array by givem factor or matrix"
