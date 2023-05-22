@@ -5,6 +5,7 @@ from enum import IntEnum
 from astropy import units as u
 from dataclasses import dataclass
 from typing import Optional
+import numpy as np
 
 class MassHierarchy(IntEnum):
     """Neutrino mass ordering: ``NORMAL`` or ``INVERTED``."""
@@ -92,7 +93,7 @@ class MixingParameters3Flavor:
             self.dm32_2 = self.dm31_2-self.dm21_2  
         #evaluate mass ordering
         if self.mass_order is None:
-            self.mass_order = MassHierarchy.derive_from_dm2(*self.get_mass_square_differences())
+            self.mass_order = MassHierarchy.derive_from_dm2(*self.get_mass_squared_differences())
         #validate angles
         #angles_sum = sum(self.get_mixing_angles())
         #assert angles_sum==90<<u.deg, f'Mixing angles sum is {angles_sum}!=90 degrees'
@@ -105,7 +106,7 @@ class MixingParameters3Flavor:
             assert self.dm31_2<0, 'dm31_2 should be negative for IH'
         #validate dm2
         dm2_sum = self.dm32_2+self.dm21_2-self.dm31_2
-        assert dm2_sum==0, f'dm32_2+dm31_2-dm31_2 = {dm2_sum} !=0'
+        assert np.isclose(dm2_sum,0), f'dm32_2+dm31_2-dm31_2 = {dm2_sum} !=0'
 
     def get_mixing_angles(self):
         """Mixing angles of the PMNS matrix.
@@ -117,7 +118,7 @@ class MixingParameters3Flavor:
         """
         return (self.theta12, self.theta13, self.theta23)
         
-    def get_mass_square_differences(self):
+    def get_mass_squared_differences(self):
         """Mass squared differences .
         
         Returns
