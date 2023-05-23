@@ -154,15 +154,13 @@ class MixingParameters4Flavor(MixingParameters3Flavor):
     
     def __post_init__(self):
         super().__post_init__()
-        self.dm42_2 = self.dm42_2 or self.dm41_2 + self.dm21_2
-        self.dm43_2 = self.dm43_2 or self.dm41_2 + self.dm31_2
+        self.dm42_2 = self.dm42_2 or self.dm41_2 - self.dm21_2
+        self.dm43_2 = self.dm43_2 or self.dm41_2 - self.dm31_2
 
-        dm2_sum = self.dm41_2 - self.dm42_2 + self.dm21_2
-        assert np.isclose(dm2_sum,0), f'dm41_2-dm42_2-dm21_2 = {dm2_sum} !=0'
-        dm2_sum = self.dm41_2 - self.dm43_2 + self.dm31_2
-        assert np.isclose(dm2_sum,0), f'dm41_2-dm43_2-dm31_2 = {dm2_sum} !=0'
-        dm2_sum = self.dm42_2 - self.dm43_2 + self.dm32_2
-        assert np.isclose(dm2_sum,0), f'dm42_2-dm43_2-dm32_2 = {dm2_sum} !=0'
+        dm2_sum = self.dm41_2 - self.dm42_2 - self.dm21_2
+        assert np.isclose(dm2_sum,0), f'dm41_2 - dm42_2 - dm21_2 = {dm2_sum} !=0'
+        dm2_sum = self.dm41_2 - self.dm43_2 - self.dm31_2
+        assert np.isclose(dm2_sum,0), f'dm41_2 - dm43_2 - dm31_2 = {dm2_sum} !=0'
 
 parameter_presets = {
     # Values from JHEP 09 (2020) 178 [arXiv:2007.14792] and www.nu-fit.org.
