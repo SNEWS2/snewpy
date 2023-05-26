@@ -98,7 +98,13 @@ class Container:
         #choose the proper class
         return ContainerClass(array.unit)(array, *axes, integrable_axes=self._integrable_axes.difference({axis}))
         return result
-
+    def integrate_or_sum(self, axis:Union[Axes,str])->'Container':
+        if isinstance(axis, str):
+            axis = Axes[axis]
+        if axis in self._integrable_axes:
+            return self.integrate(axis)
+        else:
+            return self.sum(axis)
     def __rmul__(self, factor):
         "multiply array by givem factor or matrix"
         return self.__mul__(self, factor)
@@ -124,7 +130,9 @@ def ContainerClass(Unit, name=None):
         def __init__(self, data: u.Quantity,
                            flavor: np.array,
                            time: u.Quantity[u.s], 
-                           energy: u.Quantity[u.MeV]
+                           energy: u.Quantity[u.MeV],
+                           *,
+                           integrable_axes = None
                     ):
             
             super().__init__(data.to(self.unit),flavor,time,energy)
@@ -140,6 +148,7 @@ def ContainerClass(Unit, name=None):
 Flux = ContainerClass(u.one/u.MeV/u.s/u.cm**2, "d2FdEdT")
 Fluence = ContainerClass(Flux.unit*u.s, "dFdE")
 Spectrum= ContainerClass(Flux.unit*u.MeV, "dFdT")
+IntegralFlux= ContainerClass(Flux.unit*u.s*u.MeV, "dF")
 
 DifferentialEventRate = ContainerClass(u.one/u.MeV/u.s, "d2NdEdT")
 EventRate = ContainerClass(u.one/u.s, "dNdT")
