@@ -117,6 +117,44 @@ class Container:
         axes = list(self._axes)
         return ContainerClass(array.unit)(array, *axes)
 
+    def save(self, fname:str):
+        """Save container data to a NPZ file"""
+        def _save_quantity(name):
+            values = self.__dict__[name]
+            try:
+                array = values.to_value()
+                unit = values.unit.to_string()
+                return {name:array, f'_{name}_unit':unit}
+            except:
+                return {name:values}
+        data_dict = {}
+        for name in ['array','time','energy','flavor']:
+            data_dict.update(_save_quantity(name))
+        np.savez(fname,
+                 _class_name=self.__class__.__name__, 
+                 **data_dict,
+                 _integrable_axes=np.array([int(a) for a in self._integrable_axes])
+                )
+    
+    @staticmethod
+    def load(fname:str)->'Container':
+        """Load container from a given file"""
+        with np.load(fname) as f:
+            def _load_quantity(name):
+                array = f[name]
+                try:
+                    unit = str(f[f'_{name}_unit'])
+                    return array<<u.Unit(unit)
+                except KeyError:
+                    return array
+                    
+            class_name = str(f['_class_name'])
+            array = _load_quantity('array')
+            cls = ContainerClass(array.unit, name=class_name)
+            return cls(data=array,
+                       **{name:_load_quantity(name) for name in ['time','energy','flavor']},
+                       integrable_axes=f['_integrable_axes'])
+            
 #a dictionary holding classes for each unit
 _unit_classes = {}
 
