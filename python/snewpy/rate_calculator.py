@@ -1,9 +1,14 @@
+"""
+The module ``snewpy.rate_calculator`` contains a Python interface for calculating event rates using data from SNOwGLoBES v1.3.
+
+"""
 import numpy as np
-from snewpy.snowglobes_interface import SimpleRate
+from snewpy.snowglobes_interface import SnowglobesData, guess_material
 from snewpy.neutrino import Flavor
 from snewpy.flux import ContainerClass
 from astropy import units as u
 
+#various utility methods
 def center(a):
     return 0.5*(a[1:]+a[:-1])
 
@@ -32,7 +37,7 @@ def _load_xsec(self, channel, energies):
     return xsecs
     
 #--------------------------------------
-class RateCalculator(SimpleRate):
+class RateCalculator(SnowglobesData):
     def __init__(self, base_dir=''):
         super().__init__(base_dir=base_dir)
         
@@ -44,9 +49,9 @@ class RateCalculator(SimpleRate):
         rate = flux[flavor]*xsec*Ntargets
         return rate
     
-    def run(self, flux, material:str, detector:str):
+    def run(self, flux, detector:str, material:str=None, detector_effects:bool = True):
         TargetMass = float(self.detectors[detector].tgt_mass)<<(1e3*u.tonne)
-    
+        material = material or guess_material(detector)
         binning = self.binning[material]
         energies_t = binning['e_true']<<u.GeV
         energies_s = binning['e_smear']<<u.GeV
@@ -56,9 +61,10 @@ class RateCalculator(SimpleRate):
             rate = self.calc_rate(channel, TargetMass, flux)
             #apply channel weight 
             rate = rate*channel.weight
-            #integrate over given energy bins
-            rateI = rate.integrate('energy', energies_t)
-            if self.smearings and self.efficiencies:
+            
+            if detector_effects:
+                #integrate over given energy bins
+                rateI = rate.integrate('energy', energies_t)
                 smear = self.smearings[detector].get(channel.name, 
                                                      np.eye(*smearing_shape)
                                                     )
@@ -70,16 +76,18 @@ class RateCalculator(SimpleRate):
                 rateS = ContainerClass(rateS_array.unit,'EventRate')(rateS_array, rateI.flavor, rateI.time, energies_s)
                 rateI = rateS
                 
-            #result[(channel.name,'unsmeared','unweighted')] = rateI
-            result[channel.name] = rateI
+                #result[(channel.name,'unsmeared','unweighted')] = rateI
+                result[channel.name] = rateI
+            else:
+                result[channel.name] = rate
         return result
 
-    def run_simple(self, flux, material:str, detector:str):
+    def run_simple(self, flux, detector:str, material:str=None, detector_effects:bool = True):
         """This function tries to reproduce the calculations in generate_fluence/simulate
         Main difference: use bin centers to evaluate the cross-sections
         """
         TargetMass = float(self.detectors[detector].tgt_mass)<<(1e3*u.tonne)
-    
+        material = material or guess_material(detector)
         binning = self.binning[material]
         energies_t = binning['e_true']<<u.GeV
         energies_s = binning['e_smear']<<u.GeV
@@ -96,7 +104,7 @@ class RateCalculator(SimpleRate):
             rate = rate*channel.weight
             #"integrate" over energy bins
             rateI = rate*binwidth
-            if self.smearings and self.efficiencies:
+            if detector_effects:
                 smear = self.smearings[detector].get(channel.name, 
                                                      np.eye(*smearing_shape)
                                                     )
@@ -108,6 +116,8 @@ class RateCalculator(SimpleRate):
                 rateS = ContainerClass(rateS_array.unit,'EventRate')(rateS_array, rateI.flavor, rateI.time, energies_s)
                 rateI = rateS
                 
-            #result[(channel.name,'unsmeared','unweighted')] = rateI
-            result[channel.name] = rateI
+                #result[(channel.name,'unsmeared','unweighted')] = rateI
+                result[channel.name] = rateI
+            else:
+                result[channel.name] = rate
         return result
