@@ -11,11 +11,18 @@ from enum import IntEnum
 from copy import copy
 
 class Axes(IntEnum):
-        """Number of the array dimension for each axis""" 
-        flavor=0
-        time=1
-        energy=2
-            
+    """Number of the array dimension for each axis""" 
+    flavor=0
+    time=1
+    energy=2
+    @classmethod
+    def get(cls, value:Union['Axes',int,str])->'Axes':
+        "convert string,int or Axes value to Axes"
+        if isinstance(value,str):
+            return cls[value]
+        else:
+            return cls(value)
+
 class Container:
     def __init__(self, 
                  data: u.Quantity,
@@ -67,8 +74,7 @@ class Container:
     
     def sum(self, axis: Union[Axes,str])->'Container':
         """sum along given axis, producing a reduced array"""
-        if isinstance(axis, str):
-            axis = Axes[axis]
+        axis = Axes.get(axis)
         if axis not in self._sumable_axes:
             raise ValueError(f'Cannot sum over {axis.name}! Valid axes are {self._sumable_axes}')
         array = np.sum(self.array, axis = axis, keepdims=True)
@@ -78,8 +84,7 @@ class Container:
 
     def integrate(self, axis:Union[Axes,str], limits:np.ndarray=None)->'Container':
         """integrate along given axis, producing a reduced array"""
-        if isinstance(axis, str):
-            axis = Axes[axis]
+        axis = Axes.get(axis)
         if not axis in self._integrable_axes:
             raise ValueError(f'Cannot integrate over {axis.name}! Valid axes are {self._integrable_axes}')
         #set the limits
@@ -98,13 +103,18 @@ class Container:
         #choose the proper class
         return ContainerClass(array.unit)(array, *axes, integrable_axes=self._integrable_axes.difference({axis}))
         return result
+        
     def integrate_or_sum(self, axis:Union[Axes,str])->'Container':
-        if isinstance(axis, str):
-            axis = Axes[axis]
-        if axis in self._integrable_axes:
+        if self.can_integrate(axis):
             return self.integrate(axis)
         else:
             return self.sum(axis)
+            
+    def can_integrate(self, axis):
+         return Axes.get(axis) in self._integrable_axes
+    def can_sum(self, axis):
+         return Axes.get(axis) not in self._integrable_axes
+    
     def __rmul__(self, factor):
         "multiply array by givem factor or matrix"
         return self.__mul__(self, factor)
