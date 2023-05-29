@@ -1,5 +1,5 @@
 """
-The module ``snewpy.rate_calculator`` contains a Python interface for calculating event rates using data from SNOwGLoBES v1.3.
+The module ``snewpy.rate_calculator`` contains a Python interface for calculating event rates using data from SNOwGLoBES
 
 """
 import numpy as np
@@ -44,7 +44,14 @@ class RateCalculator(SnowglobesData):
     def calc_rate(self, channel, TargetMass, flux):
         """calculate interaction rate"""
         flavor = _get_flavor_index(channel)
-        xsec = _load_xsec(self, channel, flux.energy)
+        #check if we are provided with energy bins:
+        if not flux.can_integrate('energy'):
+            #we have bins, let's use central values for sampling
+            Evalues = center(flux.energy)
+        else:
+            #we have sample points, let's just use them
+            Evalues = flux.energy
+        xsec = _load_xsec(self, channel, Evalues)
         Ntargets = TargetMass.to_value(u.Dalton)
         rate = flux[flavor]*xsec*Ntargets
         return rate
@@ -63,21 +70,29 @@ class RateCalculator(SnowglobesData):
             rate = rate*channel.weight
             
             if detector_effects:
-                #integrate over given energy bins
-                rateI = rate.integrate('energy', energies_t)
-                smear = self.smearings[detector].get(channel.name, 
-                                                     np.eye(*smearing_shape)
-                                                    )
-                effic = self.efficiencies[detector].get(channel.name, 
-                                                        np.ones(len(energies_s)-1)
-                                                       )
+                if rate.can_integrate('energy'):
+                    #integrate over given energy bins
+                    rateI = rate.integrate('energy', energies_t)
+                else:
+                    if not np.all(rate.energy.shape==energies_s.shape) \
+                    or not np.allclose(rate.energy,energies_s):
+                        raise ValueError(f'Fluence energy values should be equal to smearing matrix binning. 
+ Check binning[{material}]["e_true"]!')
+                    rateI = rate
+                try:
+                    smear = self.smearings[detector][channel.name]
+                    effic = self.efficiencies[detector][channel.name]
+                except KeyError:
+                    warn(f'Detector effects not found for detector={detector}, channel={channel}. Using unsmeared and with 100% efficiency')
+                    smear = np.eye(*smearing_shape)
+                    effic = np.ones(len(energies_s)-1)
                 #apply smearing
                 rateS_array = np.dot(rateI.array, smear.T) * effic
                 rateS = ContainerClass(rateS_array.unit,'EventRate')(rateS_array, rateI.flavor, rateI.time, energies_s)
                 rateI = rateS
                 
                 #result[(channel.name,'unsmeared','unweighted')] = rateI
-                result[channel.name] = rateI
+                result[channel.name] = rateS
             else:
                 result[channel.name] = rate
         return result
