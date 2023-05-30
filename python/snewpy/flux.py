@@ -23,7 +23,7 @@ class Axes(IntEnum):
         else:
             return cls(value)
 
-class Container:
+class _ContainerBase:
     def __init__(self, 
                  data: u.Quantity,
                  flavor: np.array,
@@ -168,13 +168,14 @@ class Container:
 #a dictionary holding classes for each unit
 _unit_classes = {}
 
-def ContainerClass(Unit, name=None):
+def Container(unit="", name=None):
     """Choose appropriate container class for the given unit"""
-    if Unit in _unit_classes:
-        return _unit_classes[Unit]
+    if isinstance(unit,str):
+        unit = u.Unit(unit)
+    if unit in _unit_classes:
+        return _unit_classes[unit]
         
-    class _cls(Container):
-        unit = Unit
+    class _cls(_ContainerBase):
         def __init__(self, data: u.Quantity,
                            flavor: np.array,
                            time: u.Quantity[u.s], 
@@ -182,23 +183,23 @@ def ContainerClass(Unit, name=None):
                            *,
                            integrable_axes = None
                     ):
-            
             super().__init__(data.to(self.unit),flavor,time,energy)
-            
+
+    _cls.unit= unit
     if(name):
         _cls.__name__=name
     #register unit classes
-    _unit_classes[Unit] = _cls
+    _unit_classes[unit] = _cls
     #return the registered class
-    return _unit_classes[Unit]
+    return _unit_classes[unit]
 
 #some standard container classes that can be used for 
-Flux = ContainerClass(u.one/u.MeV/u.s/u.cm**2, "d2FdEdT")
-Fluence = ContainerClass(Flux.unit*u.s, "dFdE")
-Spectrum= ContainerClass(Flux.unit*u.MeV, "dFdT")
-IntegralFlux= ContainerClass(Flux.unit*u.s*u.MeV, "dF")
+Flux = Container('1/(MeV*s*cm**2)', "d2FdEdT")
+Fluence = Container(Flux.unit*u.s, "dFdE")
+Spectrum= Container(Flux.unit*u.MeV, "dFdT")
+IntegralFlux= Container(Flux.unit*u.s*u.MeV, "dF")
 
-DifferentialEventRate = ContainerClass(u.one/u.MeV/u.s, "d2NdEdT")
-EventRate = ContainerClass(u.one/u.s, "dNdT")
-EventSpectrum = ContainerClass(u.one/u.MeV, "dNdE")
-EventNumber = ContainerClass(u.one, "N")
+DifferentialEventRate = Container('1/(MeV*s)', "d2NdEdT")
+EventRate = Container('1/s', "dNdT")
+EventSpectrum = Container('1/MeV', "dNdE")
+EventNumber = Container('', "N")
