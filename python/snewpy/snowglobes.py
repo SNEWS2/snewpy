@@ -146,10 +146,11 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
     if tstart and tend:
         try:
             #in case we have arrays
-            times = np.sort(np.unique([*tstart,*tend]))
+            times = u.Quantity(np.unique([*tstart,*tend]))
         except:
             #in case we have single values
-            times = np.sort([tstart,tend])
+            times = u.Quantity([tstart,tend])
+        times.sort()
         
     energy = np.linspace(0, 100, 501) << u.MeV
 
@@ -187,14 +188,15 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False, *
     rc = RateCalculator(base_dir=SNOwGLoBESdir)#, detectors=detector_input, detector_effects=detector_effects)
     if detector_input == 'all':
         detector_input = list(sng.detectors)
-    if(isinstance(detector_input,str):
+    if(isinstance(detector_input,str)):
         detector_input=[detector_input]
     result = {}
     #read the fluence
     fluence = Container.load(tarball_path)
     for det in detector_input:
-        rate=rc.run(fluence, det)
-        result[det]=rate
+        rate_smeared=rc.run(fluence, det, detector_effects=True)
+        rate_unsmeared=rc.run(fluence, det, detector_effects=False)
+        result[det]={'smeared':rate_smeared, 'unsmeared':rate_unsmeared}
 
     # save result to file for re-use in collate()
     return result 
