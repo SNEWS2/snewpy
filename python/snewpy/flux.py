@@ -189,8 +189,8 @@ class Container(_ContainerBase):
             unit,name = args
         except:
             unit,name = args, None
-        if isinstance(unit,str):
-            unit = u.Unit(unit)
+        #convert units to astropy.Unit
+        unit = u.Unit(unit)
         if unit not in cls._unit_classes:
             #create subclass of this type with given unit
             name = name or f'{cls.__name__}[{unit}]'
