@@ -11,12 +11,19 @@ from enum import IntEnum
 from copy import copy
 
 class Axes(IntEnum):
-        """Number of the array dimension for each axis""" 
-        flavor=0
-        time=1
-        energy=2
-            
-class Container:
+    """Number of the array dimension for each axis""" 
+    flavor=0
+    time=1
+    energy=2
+    @classmethod
+    def get(cls, value:Union['Axes',int,str])->'Axes':
+        "convert string,int or Axes value to Axes"
+        if isinstance(value,str):
+            return cls[value]
+        else:
+            return cls(value)
+
+class _ContainerBase:
     def __init__(self, 
                  data: u.Quantity,
                  flavor: np.array,
@@ -67,8 +74,7 @@ class Container:
     
     def sum(self, axis: Union[Axes,str])->'Container':
         """sum along given axis, producing a reduced array"""
-        if isinstance(axis, str):
-            axis = Axes[axis]
+        axis = Axes.get(axis)
         if axis not in self._sumable_axes:
             raise ValueError(f'Cannot sum over {axis.name}! Valid axes are {self._sumable_axes}')
         array = np.sum(self.array, axis = axis, keepdims=True)
@@ -78,8 +84,7 @@ class Container:
 
     def integrate(self, axis:Union[Axes,str], limits:np.ndarray=None)->'Container':
         """integrate along given axis, producing a reduced array"""
-        if isinstance(axis, str):
-            axis = Axes[axis]
+        axis = Axes.get(axis)
         if not axis in self._integrable_axes:
             raise ValueError(f'Cannot integrate over {axis.name}! Valid axes are {self._integrable_axes}')
         #set the limits
@@ -98,13 +103,18 @@ class Container:
         #choose the proper class
         return ContainerClass(array.unit)(array, *axes, integrable_axes=self._integrable_axes.difference({axis}))
         return result
+        
     def integrate_or_sum(self, axis:Union[Axes,str])->'Container':
-        if isinstance(axis, str):
-            axis = Axes[axis]
-        if axis in self._integrable_axes:
+        if self.can_integrate(axis):
             return self.integrate(axis)
         else:
             return self.sum(axis)
+            
+    def can_integrate(self, axis):
+         return Axes.get(axis) in self._integrable_axes
+    def can_sum(self, axis):
+         return Axes.get(axis) not in self._integrable_axes
+    
     def __rmul__(self, factor):
         "multiply array by givem factor or matrix"
         return self.__mul__(self, factor)
@@ -158,13 +168,14 @@ class Container:
 #a dictionary holding classes for each unit
 _unit_classes = {}
 
-def ContainerClass(Unit, name=None):
+def Container(unit="", name=None):
     """Choose appropriate container class for the given unit"""
-    if Unit in _unit_classes:
-        return _unit_classes[Unit]
+    if isinstance(unit,str):
+        unit = u.Unit(unit)
+    if unit in _unit_classes:
+        return _unit_classes[unit]
         
-    class _cls(Container):
-        unit = Unit
+    class _cls(_ContainerBase):
         def __init__(self, data: u.Quantity,
                            flavor: np.array,
                            time: u.Quantity[u.s], 
@@ -172,23 +183,23 @@ def ContainerClass(Unit, name=None):
                            *,
                            integrable_axes = None
                     ):
-            
             super().__init__(data.to(self.unit),flavor,time,energy)
-            
+
+    _cls.unit= unit
     if(name):
         _cls.__name__=name
     #register unit classes
-    _unit_classes[Unit] = _cls
+    _unit_classes[unit] = _cls
     #return the registered class
-    return _unit_classes[Unit]
+    return _unit_classes[unit]
 
 #some standard container classes that can be used for 
-Flux = ContainerClass(u.one/u.MeV/u.s/u.cm**2, "d2FdEdT")
-Fluence = ContainerClass(Flux.unit*u.s, "dFdE")
-Spectrum= ContainerClass(Flux.unit*u.MeV, "dFdT")
-IntegralFlux= ContainerClass(Flux.unit*u.s*u.MeV, "dF")
+Flux = Container('1/(MeV*s*cm**2)', "d2FdEdT")
+Fluence = Container(Flux.unit*u.s, "dFdE")
+Spectrum= Container(Flux.unit*u.MeV, "dFdT")
+IntegralFlux= Container(Flux.unit*u.s*u.MeV, "dF")
 
-DifferentialEventRate = ContainerClass(u.one/u.MeV/u.s, "d2NdEdT")
-EventRate = ContainerClass(u.one/u.s, "dNdT")
-EventSpectrum = ContainerClass(u.one/u.MeV, "dNdE")
-EventNumber = ContainerClass(u.one, "N")
+DifferentialEventRate = Container('1/(MeV*s)', "d2NdEdT")
+EventRate = Container('1/s', "dNdT")
+EventSpectrum = Container('1/MeV', "dNdE")
+EventNumber = Container('', "N")
