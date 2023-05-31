@@ -46,7 +46,7 @@ Reference
 ---------
 
 .. autoclass:: Container
-:inherited-members:
+    :inherited-members:
 
 .. autoclass:: Axes
 
@@ -169,27 +169,36 @@ class _ContainerBase:
         Parameters
         -----------
             axis: :class:`Axes` or str
-                An axis to sum over. String should be one of ``"flavor"``, ``"time"`` or ``"energy"``
+                An axis to sum over. String should be one of ``"flavor"``, ``"time"`` or ``"energy"``  (check :meth:`Container.can_sum`)
         Returns
         --------
-            Container
-                The resulting data array will be 3D array, but the dimension, corresponding to `axis` parameter will be reduced to 1. For an examplar Container ``a`` of a given shape::
-                    >>> a.shape
-                    (4, 10, 20)
-                    >>> a.sum('flavor').shape
-                    (1, 10, 20)
+            Container with summed value
                 
-                The axis in the class will also be modified, keeping only the first and last points of the summation::
-                    >>> a.flavor
-                    array([0, 1, 2, 3])
-                    >>> a.sum('flavor').flavor
-                    array([0, 3])
-                    
-                All the other axes and dimensions will be kept the same
         Raises
         ------
-            ValueError if the given axis cannot be summed over (i.e. it must be integrated instead, see :meth:`Container.integrate`).
-            One can check summable axes with :meth:`Container._sumable_axes`
+            ValueError 
+                if the given axis cannot be summed over (i.e. it must be integrated instead, see :meth:`Container.integrate`).
+                One can check summable axes with :attr:`Container._sumable_axes`
+
+        Example
+        -------
+        The resulting data array will be 3D array, but the dimension, corresponding to `axis` parameter will be reduced to 1. 
+        
+        For an examplar Container ``a`` of a given shape::
+        
+            >>> a.shape
+            (4, 10, 20)
+            >>> a.sum('flavor').shape
+            (1, 10, 20)
+        
+        The axis in the class will also be modified, keeping only the first and last points of the summation::
+        
+            >>> a.flavor
+            array([0, 1, 2, 3])
+            >>> a.sum('flavor').flavor
+            array([0, 3])
+            
+        All the other axes and dimensions will be kept the same
         """
         axis = Axes.get(axis)
         if axis not in self._sumable_axes:
@@ -200,7 +209,50 @@ class _ContainerBase:
         return Container(array,*axes, integrable_axes = self._integrable_axes.difference({axis}))
 
     def integrate(self, axis:Union[Axes,str], limits:np.ndarray=None)->'Container':
-        """integrate along given axis, producing a reduced array"""
+        """Integrate along given axis, producing a Container with the integral quantity.
+        
+        Parameters
+        -----------
+            axis: :class:`Axes` or str
+                An axis to integrate over. String should be one of ``"time"`` or ``"energy"`` (check :meth:`Container.can_integrate`)
+
+            limits: np.ndarray or None
+                A sorted array (or `astropy.Quantity` consistent with the units of given axis) of integration limits
+                If limits are None (default), then integrate over the the whole range of this axis
+                Otherwise limits are treated as bin edges - the integration  happens within each bin limits
+                
+        Returns
+        --------
+            Container with integrated value
+
+        Raises
+        ------
+            ValueError 
+                if the given axis cannot be integrated over (i.e. it must be summed instead, see :meth:`Container.sum`).
+        Example
+        -------
+        The resulting data array will be 3D array, but the dimension, corresponding to `axis` parameter will be reduced to ``len(limits)-1``. 
+        
+        For an examplar Container ``a`` of a given shape::
+        
+            >>> a.shape
+            (4, 10, 20)
+            >>> a.integrate('time').shape
+            (4, 1, 20)
+            >>> a.integrate('time', limits=[0, 0.5, 1]<<u.s).shape
+            (4, 2, 20)
+
+        The axis in the class will also be modified, keeping only the integration limits::
+        
+            >>> a.time
+            [0. 1. 2. 3. 4. 5. 6. 7. 8. 9.] s
+            >>> a.integrate('time').time
+            [0., 9.] s
+            >>> a.integrate('time', limits=[0, 0.5, 1]<<u.s).time
+            [0., 0.5, 1.] s
+        
+        All the other axes and dimensions will be kept the same
+        """
         axis = Axes.get(axis)
         if not axis in self._integrable_axes:
             raise ValueError(f'Cannot integrate over {axis.name}! Valid axes are {self._integrable_axes}')
@@ -228,9 +280,11 @@ class _ContainerBase:
             return self.sum(axis)
             
     def can_integrate(self, axis):
-         return Axes.get(axis) in self._integrable_axes
+        "return true if can be integrated along given axis"
+        return Axes.get(axis) in self._integrable_axes
     def can_sum(self, axis):
-         return Axes.get(axis) not in self._integrable_axes
+        "return true if can be summed along given axis"
+        return Axes.get(axis) not in self._integrable_axes
     
     def __rmul__(self, factor):
         "multiply array by givem factor or matrix"
