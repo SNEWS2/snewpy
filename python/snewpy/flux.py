@@ -1,3 +1,56 @@
+"""
+This module defines the :class:`snewpy.flux.Container` - a container for the neutrino flux, fluence, event rates etc.
+
+This object wraps a 3D array, and its dimensions: `flavor`, `time` and `energy`.
+
+Usage
+-----
+The flux container will be produced by the :meth:`SupernovaModel.get_flux`, and consumed by the :meth:`RateCalculator.run`
+
+A example of usage:
+
+.. code-block:: python
+
+    import astropy.units as u
+    import numpy as np
+    from snewpy.models import ccsn
+    from snewpy.flavor_transformation import AdiabaticMSW
+    
+    #get the suernova model
+    model = ccsn.Bollig_2016(progenitor_mass=27<<u.Msun)
+    #define the sampling points
+    energy = np.linspace(0,100,51)<<u.MeV
+    time = np.linspace(0,10,1000)<<u.s
+    
+    #calculate the flux
+    flux = model.get_flux(time, energy, distance=10<<u.kpc, flavor_xform=AdiabaticMSW())
+
+    #optionally: integrate the flux over time bins to obtain the fluence
+    fluence = flux.integrate('time', limits=np.linspace(0,1,21)<<u.s)
+    
+    #calculate the event rates using the RateCalculator
+    from snewpy.rate_calculator import RateCalculator
+    rc = RateCalculator()
+    event_rates = rc.run(fluence, detector='icecube')
+    ibd_rate = event_rates['ibd'] #will be also a Container instance
+    #get the total values vs. time bin
+    N_ibd_vs_T = ibd_rate.sum('energy')
+    #or total values vs. energy bin
+    N_ibd_vs_E = ibd_rate.sum('time')
+    #or total number of interactions
+    N_ibd_tot = ibd_rate.sum('time').sum('energy')
+    #to retrieve the number we can access the `array` member
+    print(N_ibd_tot.array.squeeze()) #312249.3525844854
+
+Reference
+---------
+
+.. autoclass:: Container
+:inherited-members:
+
+.. autoclass:: Axes
+
+"""
 from typing import Union,Optional,Set
 from snewpy.neutrino import Flavor
 from astropy import units as u
@@ -13,9 +66,10 @@ from functools import wraps
 
 class Axes(IntEnum):
     """Enum to keep the number number of the array dimension for each axis""" 
-    flavor=0
-    time=1
-    energy=2
+    flavor=0, #Flavor dimension
+    time=1,   #Time dimension
+    energy=2, #Energy dimension
+    
     @classmethod
     def get(cls, value:Union['Axes',int,str])->'Axes':
         "convert string,int or Axes value to Axes"
@@ -25,6 +79,9 @@ class Axes(IntEnum):
             return cls(value)
 
 class _ContainerBase:
+    """base class for internal use
+    :noindex:
+    """
     unit = None
     def __init__(self, 
                  data: u.Quantity,
@@ -60,7 +117,7 @@ class _ContainerBase:
             #try to convert to the unit
             data = data.to(self.unit)
         self.array = data
-        self.flavor = np.sort(flavor, subok=True)
+        self.flavor = np.sort(flavor)
         self.time = time
         self.energy = energy
         
@@ -107,7 +164,33 @@ class _ContainerBase:
         return f"{self.__class__.__name__} {self.array.shape} [{self.array.unit}]: <{' x '.join(s)}>"
     
     def sum(self, axis: Union[Axes,str])->'Container':
-        """sum along given axis, producing a reduced array"""
+        """Sum along given axis, producing a Container with the summary quantity.
+        
+        Parameters
+        -----------
+            axis: :class:`Axes` or str
+                An axis to sum over. String should be one of ``"flavor"``, ``"time"`` or ``"energy"``
+        Returns
+        --------
+            Container
+                The resulting data array will be 3D array, but the dimension, corresponding to `axis` parameter will be reduced to 1. For an examplar Container ``a`` of a given shape::
+                    >>> a.shape
+                    (4, 10, 20)
+                    >>> a.sum('flavor').shape
+                    (1, 10, 20)
+                
+                The axis in the class will also be modified, keeping only the first and last points of the summation::
+                    >>> a.flavor
+                    array([0, 1, 2, 3])
+                    >>> a.sum('flavor').flavor
+                    array([0, 3])
+                    
+                All the other axes and dimensions will be kept the same
+        Raises
+        ------
+            ValueError if the given axis cannot be summed over (i.e. it must be integrated instead, see :meth:`Container.integrate`).
+            One can check summable axes with :meth:`Container._sumable_axes`
+        """
         axis = Axes.get(axis)
         if axis not in self._sumable_axes:
             raise ValueError(f'Cannot sum over {axis.name}! Valid axes are {self._sumable_axes}')
@@ -208,7 +291,6 @@ class _ContainerBase:
         return result
 
 class Container(_ContainerBase):
-    """Choose appropriate container class for the given unit"""
     #a dictionary holding classes for each unit
     _unit_classes = {}
 
