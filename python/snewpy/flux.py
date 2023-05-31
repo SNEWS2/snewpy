@@ -12,7 +12,7 @@ from copy import copy
 from functools import wraps
 
 class Axes(IntEnum):
-    """Number of the array dimension for each axis""" 
+    """Enum to keep the number number of the array dimension for each axis""" 
     flavor=0
     time=1
     energy=2
@@ -28,17 +28,39 @@ class _ContainerBase:
     unit = None
     def __init__(self, 
                  data: u.Quantity,
-                 flavor: np.array,
+                 flavor: list[Flavor],
                  time: u.Quantity[u.s], 
                  energy: u.Quantity[u.MeV],
                  *,
                  integrable_axes: Optional[Set[Axes]] = None
     ):
+        """A container class storing the physical quantity (flux, fluence, rate...), which depends on flavor, time and energy.
+
+        Parameters
+        ----------
+        data: :class:`astropy.Quantity`
+            3D array of the stored quantity, must have dimensions compatible with (flavor, time, energy)
+        
+        flavor: list of :class:`snewpy.neutrino.Flavor`
+            array of flavors (should be ``len(flavor)==data.shape[0]``
+        
+        time: array of :class:`astropy.Quantity`
+            sampling points in time (then ``len(time)==data.shape[1]``) 
+            or time bin edges (then ``len(time)==data.shape[1]+1``) 
+    
+        energy: array of :class:`astropy.Quantity`
+            sampling points in energy (then ``len(energy)=data.shape[2]``) 
+            or energy bin edges (then ``len(energy)=data.shape[2]+1``) 
+    
+        integrable_axes: set of :class:`Axes` or None
+            List of axes which can be integrated.
+            If None (default) this set will be derived from the axes shapes 
+        """
         if self.unit is not None:
             #try to convert to the unit
             data = data.to(self.unit)
         self.array = data
-        self.flavor = np.array(flavor, subok=True)
+        self.flavor = np.sort(flavor, subok=True)
         self.time = time
         self.energy = energy
         
@@ -139,8 +161,8 @@ class _ContainerBase:
         axes = list(self.axes)
         return Container(array, *axes)
 
-    def save(self, fname:str):
-        """Save container data to a NPZ file"""
+    def save(self, fname:str)->None:
+        """Save container data to a given file (using `numpy.savez`)"""
         def _save_quantity(name):
             values = self.__dict__[name]
             try:
