@@ -5,7 +5,7 @@ The module ``snewpy.rate_calculator`` contains a Python interface for calculatin
 import numpy as np
 from snewpy.snowglobes_interface import SnowglobesData, guess_material
 from snewpy.neutrino import Flavor
-from snewpy.flux import ContainerClass
+from snewpy.flux import Container
 from astropy import units as u
 
 #various utility methods
@@ -76,8 +76,7 @@ class RateCalculator(SnowglobesData):
                 else:
                     if not np.all(rate.energy.shape==energies_s.shape) \
                     or not np.allclose(rate.energy,energies_s):
-                        raise ValueError(f'Fluence energy values should be equal to smearing matrix binning. 
- Check binning[{material}]["e_true"]!')
+                        raise ValueError(f'Fluence energy values should be equal to smearing matrix binning. Check binning[{material}]["e_true"]!')
                     rateI = rate
                 try:
                     smear = self.smearings[detector][channel.name]
@@ -88,7 +87,7 @@ class RateCalculator(SnowglobesData):
                     effic = np.ones(len(energies_s)-1)
                 #apply smearing
                 rateS_array = np.dot(rateI.array, smear.T) * effic
-                rateS = ContainerClass(rateS_array.unit,'EventRate')(rateS_array, rateI.flavor, rateI.time, energies_s)
+                rateS = Container(rateS_array, rateI.flavor, rateI.time, energies_s)
                 rateI = rateS
                 
                 #result[(channel.name,'unsmeared','unweighted')] = rateI
@@ -128,7 +127,7 @@ class RateCalculator(SnowglobesData):
                                                        )
                 #apply smearing
                 rateS_array = np.dot(rateI.array, smear.T) * effic
-                rateS = ContainerClass(rateS_array.unit,'EventRate')(rateS_array, rateI.flavor, rateI.time, energies_s)
+                rateS = Container(rateS_array, rateI.flavor, rateI.time, energies_s)
                 rateI = rateS
                 
                 #result[(channel.name,'unsmeared','unweighted')] = rateI
