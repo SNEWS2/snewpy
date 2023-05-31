@@ -7,6 +7,7 @@ from snewpy.snowglobes_interface import SnowglobesData, guess_material
 from snewpy.neutrino import Flavor
 from snewpy.flux import Container
 from astropy import units as u
+from warnings import warn
 
 #various utility methods
 def center(a):
@@ -82,7 +83,7 @@ class RateCalculator(SnowglobesData):
                     smear = self.smearings[detector][channel.name]
                     effic = self.efficiencies[detector][channel.name]
                 except KeyError:
-                    warn(f'Detector effects not found for detector={detector}, channel={channel}. Using unsmeared and with 100% efficiency')
+                    warn(f'Detector effects not found for detector={detector}, channel={channel.name}. Using unsmeared and with 100% efficiency')
                     smear = np.eye(*smearing_shape)
                     effic = np.ones(len(energies_s)-1)
                 #apply smearing
