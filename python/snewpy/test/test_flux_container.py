@@ -102,3 +102,10 @@ def test_integration_over_axes(f:Container, axis):
             assert fI.shape[a] == 1
     #check the resulting array values
     assert fI.unit == f.unit*f.axes[axis].unit
+
+@given(f=random_flux_containers())
+def test_save_and_load(f):
+    fname = '/tmp/flux.npz'
+    f.save(fname)
+    f1 = Container.load(fname)
+    assert f1==f

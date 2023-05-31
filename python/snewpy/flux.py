@@ -34,7 +34,7 @@ class _ContainerBase:
                  *,
                  integrable_axes: Optional[Set[Axes]] = None
     ):
-        if self.unit:
+        if self.unit is not None:
             #try to convert to the unit
             data = data.to(self.unit)
         self.array = data
@@ -42,7 +42,7 @@ class _ContainerBase:
         self.time = time
         self.energy = energy
         
-        if(integrable_axes):
+        if integrable_axes is not None:
             #store which axes can be integrated
             self._integrable_axes = set(integrable_axes)
         else:
@@ -159,7 +159,7 @@ class _ContainerBase:
                 )
     
     @classmethod
-    def load(fname:str)->'Container':
+    def load(cls, fname:str)->'Container':
         """Load container from a given file"""
         with np.load(fname) as f:
             def _load_quantity(name):
@@ -176,7 +176,14 @@ class _ContainerBase:
             return cls(data=array,
                        **{name:_load_quantity(name) for name in ['time','energy','flavor']},
                        integrable_axes=f['_integrable_axes'])
-
+            
+    def __eq__(self, other:'Container')->bool:
+        "Check if two Containers are equal"
+        result = self.__class__==other.__class__ and \
+                 self.unit == other.unit and \
+                 np.allclose(self.array, other.array) and \
+                 all([np.allclose(self.axes[ax], other.axes[ax]) for ax in Axes])
+        return result
 
 class Container(_ContainerBase):
     """Choose appropriate container class for the given unit"""
