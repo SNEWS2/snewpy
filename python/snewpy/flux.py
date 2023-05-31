@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union,Optional,Set
 from snewpy.neutrino import Flavor
 from astropy import units as u
 
@@ -32,19 +32,21 @@ class _ContainerBase:
                  time: u.Quantity[u.s], 
                  energy: u.Quantity[u.MeV],
                  *,
-                 integrable_axes = None
+                 integrable_axes: Optional[Set[Axes]] = None
     ):
         if self.unit:
             #try to convert to the unit
             data = data.to(self.unit)
         self.array = data
-        self.flavor = flavor
+        self.flavor = np.array(flavor, subok=True)
         self.time = time
         self.energy = energy
-        #guess which axes can be integrated
+        
         if(integrable_axes):
-            self._integrable_axes = integrable_axes
+            #store which axes can be integrated
+            self._integrable_axes = set(integrable_axes)
         else:
+            #guess which axes can be integrated
             self._integrable_axes = {a for a in Axes if(self._axshape[a]==self.array.shape[a])}
             self._integrable_axes.discard(Axes.flavor)
             
@@ -52,13 +54,17 @@ class _ContainerBase:
     def _sumable_axes(self):
         return set(Axes).difference(self._integrable_axes)
     @property
-    def _axes(self):
+    def axes(self):
         return self.flavor, self.time, self.energy
 
     @property
     def _axshape(self):
-        return tuple(len(a) for a in self._axes)
+        return tuple(len(a) for a in self.axes)
 
+    @property
+    def shape(self):
+        return self.array.shape
+        
     def __getitem__(self, args)->'Container':
         """Slice the flux array and produce a new Flux object"""
         try: 
@@ -69,13 +75,13 @@ class _ContainerBase:
         #expand args to match axes
         args+=[slice(None)]*(len(Axes)-len(args))
         array = self.array.__getitem__(tuple(args))
-        newaxes = [ax.__getitem__(arg) for arg, ax in zip(args, self._axes)]
+        newaxes = [ax.__getitem__(arg) for arg, ax in zip(args, self.axes)]
         return self.__class__(array, *newaxes)
 
     def __repr__(self) -> str:
         """print information about the container"""
         s = [f"{len(values)} {label.name}({values.min()};{values.max()})"
-            for label, values in zip(Axes,self._axes)]
+            for label, values in zip(Axes,self.axes)]
         return f"{self.__class__.__name__} {self.array.shape} [{self.array.unit}]: <{' x '.join(s)}>"
     
     def sum(self, axis: Union[Axes,str])->'Container':
@@ -84,7 +90,7 @@ class _ContainerBase:
         if axis not in self._sumable_axes:
             raise ValueError(f'Cannot sum over {axis.name}! Valid axes are {self._sumable_axes}')
         array = np.sum(self.array, axis = axis, keepdims=True)
-        axes = list(self._axes)
+        axes = list(self.axes)
         axes[axis] = axes[axis].take([0,-1])
         return Container(array,*axes, integrable_axes = self._integrable_axes.difference({axis}))
 
@@ -94,7 +100,7 @@ class _ContainerBase:
         if not axis in self._integrable_axes:
             raise ValueError(f'Cannot integrate over {axis.name}! Valid axes are {self._integrable_axes}')
         #set the limits
-        ax = self._axes[axis]
+        ax = self.axes[axis]
         xmin, xmax = ax.min(), ax.max()
         if limits is None:
             limits = u.Quantity([xmin, xmax])
@@ -104,7 +110,7 @@ class _ContainerBase:
         yc = cumulative_trapezoid(self.array, x=ax, axis=axis, initial=0)
         _integral = interp1d(x=ax, y=yc, fill_value=0, axis=axis, bounds_error=False)
         array = np.diff(_integral(limits),axis=axis) << (self.array.unit*ax.unit)
-        axes = list(self._axes)
+        axes = list(self.axes)
         axes[axis] = limits
         #choose the proper class
         return Container(array, *axes, integrable_axes=self._integrable_axes.difference({axis}))
@@ -130,7 +136,7 @@ class _ContainerBase:
         #if not (np.isscalar(factor)):
         #    raise ValueError("Factor should be a scalar value")
         array = self.array*factor
-        axes = list(self._axes)
+        axes = list(self.axes)
         return Container(array, *axes)
 
     def save(self, fname:str):
@@ -152,7 +158,7 @@ class _ContainerBase:
                  _integrable_axes=np.array([int(a) for a in self._integrable_axes])
                 )
     
-    @staticmethod
+    @classmethod
     def load(fname:str)->'Container':
         """Load container from a given file"""
         with np.load(fname) as f:
@@ -166,7 +172,7 @@ class _ContainerBase:
                     
             class_name = str(f['_class_name'])
             array = _load_quantity('array')
-            cls = Container(array.unit, name=class_name)
+            cls = Container[array.unit, class_name]
             return cls(data=array,
                        **{name:_load_quantity(name) for name in ['time','energy','flavor']},
                        integrable_axes=f['_integrable_axes'])
