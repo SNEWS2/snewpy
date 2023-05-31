@@ -1,6 +1,10 @@
 """
-The module ``snewpy.rate_calculator`` contains a Python interface for calculating event rates using data from SNOwGLoBES
+The module :mod:`snewpy.rate_calculator` defines a Python interface for calculating event rates using data from SNOwGLoBES
 
+Reference
+---------
+.. autoclass:: RateCalculator
+    :members: run
 """
 import numpy as np
 from snewpy.snowglobes_interface import SnowglobesData, guess_material
@@ -8,6 +12,7 @@ from snewpy.neutrino import Flavor
 from snewpy.flux import Container
 from astropy import units as u
 from warnings import warn
+from typing import Dict
 
 #various utility methods
 def center(a):
@@ -55,7 +60,7 @@ class RateCalculator(SnowglobesData):
 
         .. math:: 
             
-            N_i = N_{tgt} \cdot \int\limits_{E_i}^{E_{i+1}} F_\\nu(E_i) \sigma(E_i) d E
+            N_i = N_{tgt} \cdot \int\limits_{E_i}^{E_{i+1}}~F_\\nu(E_i)~\sigma(E_i)~d E
 
         and this is convoluted with the detector smearing matrix :math:`M_{ij}` and efficiency :math:`\\varepsilon(E)`:
 
@@ -89,7 +94,7 @@ class RateCalculator(SnowglobesData):
         rate = flux[flavor]*xsec*Ntargets
         return rate
     
-    def run(self, flux:Container, detector:str, material:str=None, detector_effects:bool = True)->dict[str, Container]:
+    def run(self, flux:Container, detector:str, material:str=None, detector_effects:bool = True)->Dict[str, Container]:
         """Run the rate calculation for the given detector.    
         
         Parameters

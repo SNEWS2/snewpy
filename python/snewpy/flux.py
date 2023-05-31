@@ -1,5 +1,5 @@
 """
-This module defines the :class:`snewpy.flux.Container` - a container for the neutrino flux, fluence, event rates etc.
+The module :mod:`snewpy.flux` defines the class :class:`snewpy.flux.Container` - a container for the neutrino flux, fluence, event rates etc.
 
 This object wraps a 3D array, and its dimensions: `flavor`, `time` and `energy`.
 
