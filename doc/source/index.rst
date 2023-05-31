@@ -23,6 +23,7 @@ Table of Contents
    models
    transformations
    neutrino
+   flux
    contributing
    citing
 
