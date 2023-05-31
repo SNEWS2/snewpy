@@ -51,7 +51,7 @@ Reference
 .. autoclass:: Axes
 
 """
-from typing import Union,Optional,Set
+from typing import Union, Optional, Set, List
 from snewpy.neutrino import Flavor
 from astropy import units as u
 
@@ -85,7 +85,7 @@ class _ContainerBase:
     unit = None
     def __init__(self, 
                  data: u.Quantity,
-                 flavor: list[Flavor],
+                 flavor: List[Flavor],
                  time: u.Quantity[u.s], 
                  energy: u.Quantity[u.MeV],
                  *,
