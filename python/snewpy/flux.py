@@ -1,4 +1,57 @@
-from typing import Union,Optional,Set
+"""
+The module :mod:`snewpy.flux` defines the class :class:`snewpy.flux.Container` - a container for the neutrino flux, fluence, event rates etc.
+
+This object wraps a 3D array, and its dimensions: `flavor`, `time` and `energy`.
+
+Usage
+-----
+The flux container will be produced by the :meth:`SupernovaModel.get_flux`, and consumed by the :meth:`RateCalculator.run`
+
+A example of usage:
+
+.. code-block:: python
+
+    import astropy.units as u
+    import numpy as np
+    from snewpy.models import ccsn
+    from snewpy.flavor_transformation import AdiabaticMSW
+    
+    #get the suernova model
+    model = ccsn.Bollig_2016(progenitor_mass=27<<u.Msun)
+    #define the sampling points
+    energy = np.linspace(0,100,51)<<u.MeV
+    time = np.linspace(0,10,1000)<<u.s
+    
+    #calculate the flux
+    flux = model.get_flux(time, energy, distance=10<<u.kpc, flavor_xform=AdiabaticMSW())
+
+    #optionally: integrate the flux over time bins to obtain the fluence
+    fluence = flux.integrate('time', limits=np.linspace(0,1,21)<<u.s)
+    
+    #calculate the event rates using the RateCalculator
+    from snewpy.rate_calculator import RateCalculator
+    rc = RateCalculator()
+    event_rates = rc.run(fluence, detector='icecube')
+    ibd_rate = event_rates['ibd'] #will be also a Container instance
+    #get the total values vs. time bin
+    N_ibd_vs_T = ibd_rate.sum('energy')
+    #or total values vs. energy bin
+    N_ibd_vs_E = ibd_rate.sum('time')
+    #or total number of interactions
+    N_ibd_tot = ibd_rate.sum('time').sum('energy')
+    #to retrieve the number we can access the `array` member
+    print(N_ibd_tot.array.squeeze()) #312249.3525844854
+
+Reference
+---------
+
+.. autoclass:: Container
+    :inherited-members:
+
+.. autoclass:: Axes
+
+"""
+from typing import Union, Optional, Set, List
 from snewpy.neutrino import Flavor
 from astropy import units as u
 
@@ -12,10 +65,11 @@ from copy import copy
 from functools import wraps
 
 class Axes(IntEnum):
-    """Number of the array dimension for each axis""" 
-    flavor=0
-    time=1
-    energy=2
+    """Enum to keep the number number of the array dimension for each axis""" 
+    flavor=0, #Flavor dimension
+    time=1,   #Time dimension
+    energy=2, #Energy dimension
+    
     @classmethod
     def get(cls, value:Union['Axes',int,str])->'Axes':
         "convert string,int or Axes value to Axes"
@@ -25,24 +79,49 @@ class Axes(IntEnum):
             return cls(value)
 
 class _ContainerBase:
+    """base class for internal use
+    :noindex:
+    """
     unit = None
     def __init__(self, 
                  data: u.Quantity,
-                 flavor: np.array,
+                 flavor: List[Flavor],
                  time: u.Quantity[u.s], 
                  energy: u.Quantity[u.MeV],
                  *,
                  integrable_axes: Optional[Set[Axes]] = None
     ):
-        if self.unit:
+        """A container class storing the physical quantity (flux, fluence, rate...), which depends on flavor, time and energy.
+
+        Parameters
+        ----------
+        data: :class:`astropy.Quantity`
+            3D array of the stored quantity, must have dimensions compatible with (flavor, time, energy)
+        
+        flavor: list of :class:`snewpy.neutrino.Flavor`
+            array of flavors (should be ``len(flavor)==data.shape[0]``
+        
+        time: array of :class:`astropy.Quantity`
+            sampling points in time (then ``len(time)==data.shape[1]``) 
+            or time bin edges (then ``len(time)==data.shape[1]+1``) 
+    
+        energy: array of :class:`astropy.Quantity`
+            sampling points in energy (then ``len(energy)=data.shape[2]``) 
+            or energy bin edges (then ``len(energy)=data.shape[2]+1``) 
+    
+        integrable_axes: set of :class:`Axes` or None
+            List of axes which can be integrated.
+            If None (default) this set will be derived from the axes shapes 
+        """
+        if self.unit is not None:
             #try to convert to the unit
             data = data.to(self.unit)
         self.array = data
-        self.flavor = np.array(flavor, subok=True)
+        self.flavor = np.sort(flavor)
         self.time = time
         self.energy = energy
         
-        if(integrable_axes):
+        if integrable_axes is not None:
             #store which axes can be integrated
             self._integrable_axes = set(integrable_axes)
         else:
@@ -85,7 +164,42 @@ class _ContainerBase:
         return f"{self.__class__.__name__} {self.array.shape} [{self.array.unit}]: <{' x '.join(s)}>"
     
     def sum(self, axis: Union[Axes,str])->'Container':
-        """sum along given axis, producing a reduced array"""
+        """Sum along given axis, producing a Container with the summary quantity.
+        
+        Parameters
+        -----------
+            axis: :class:`Axes` or str
+                An axis to sum over. String should be one of ``"flavor"``, ``"time"`` or ``"energy"``  (check :meth:`Container.can_sum`)
+        Returns
+        --------
+            Container with summed value
+                
+        Raises
+        ------
+            ValueError 
+                if the given axis cannot be summed over (i.e. it must be integrated instead, see :meth:`Container.integrate`).
+                One can check summable axes with :attr:`Container._sumable_axes`
+
+        Example
+        -------
+        The resulting data array will be 3D array, but the dimension, corresponding to `axis` parameter will be reduced to 1. 
+        
+        For an examplar Container ``a`` of a given shape::
+        
+            >>> a.shape
+            (4, 10, 20)
+            >>> a.sum('flavor').shape
+            (1, 10, 20)
+        
+        The axis in the class will also be modified, keeping only the first and last points of the summation::
+        
+            >>> a.flavor
+            array([0, 1, 2, 3])
+            >>> a.sum('flavor').flavor
+            array([0, 3])
+            
+        All the other axes and dimensions will be kept the same
+        """
         axis = Axes.get(axis)
         if axis not in self._sumable_axes:
             raise ValueError(f'Cannot sum over {axis.name}! Valid axes are {self._sumable_axes}')
@@ -95,7 +209,50 @@ class _ContainerBase:
         return Container(array,*axes, integrable_axes = self._integrable_axes.difference({axis}))
 
     def integrate(self, axis:Union[Axes,str], limits:np.ndarray=None)->'Container':
-        """integrate along given axis, producing a reduced array"""
+        """Integrate along given axis, producing a Container with the integral quantity.
+        
+        Parameters
+        -----------
+            axis: :class:`Axes` or str
+                An axis to integrate over. String should be one of ``"time"`` or ``"energy"`` (check :meth:`Container.can_integrate`)
+
+            limits: np.ndarray or None
+                A sorted array (or `astropy.Quantity` consistent with the units of given axis) of integration limits
+                If limits are None (default), then integrate over the the whole range of this axis
+                Otherwise limits are treated as bin edges - the integration  happens within each bin limits
+                
+        Returns
+        --------
+            Container with integrated value
+
+        Raises
+        ------
+            ValueError 
+                if the given axis cannot be integrated over (i.e. it must be summed instead, see :meth:`Container.sum`).
+        Example
+        -------
+        The resulting data array will be 3D array, but the dimension, corresponding to `axis` parameter will be reduced to ``len(limits)-1``. 
+        
+        For an examplar Container ``a`` of a given shape::
+        
+            >>> a.shape
+            (4, 10, 20)
+            >>> a.integrate('time').shape
+            (4, 1, 20)
+            >>> a.integrate('time', limits=[0, 0.5, 1]<<u.s).shape
+            (4, 2, 20)
+
+        The axis in the class will also be modified, keeping only the integration limits::
+        
+            >>> a.time
+            [0. 1. 2. 3. 4. 5. 6. 7. 8. 9.] s
+            >>> a.integrate('time').time
+            [0., 9.] s
+            >>> a.integrate('time', limits=[0, 0.5, 1]<<u.s).time
+            [0., 0.5, 1.] s
+        
+        All the other axes and dimensions will be kept the same
+        """
         axis = Axes.get(axis)
         if not axis in self._integrable_axes:
             raise ValueError(f'Cannot integrate over {axis.name}! Valid axes are {self._integrable_axes}')
@@ -123,9 +280,11 @@ class _ContainerBase:
             return self.sum(axis)
             
     def can_integrate(self, axis):
-         return Axes.get(axis) in self._integrable_axes
+        "return true if can be integrated along given axis"
+        return Axes.get(axis) in self._integrable_axes
     def can_sum(self, axis):
-         return Axes.get(axis) not in self._integrable_axes
+        "return true if can be summed along given axis"
+        return Axes.get(axis) not in self._integrable_axes
     
     def __rmul__(self, factor):
         "multiply array by givem factor or matrix"
@@ -139,8 +298,8 @@ class _ContainerBase:
         axes = list(self.axes)
         return Container(array, *axes)
 
-    def save(self, fname:str):
-        """Save container data to a NPZ file"""
+    def save(self, fname:str)->None:
+        """Save container data to a given file (using `numpy.savez`)"""
         def _save_quantity(name):
             values = self.__dict__[name]
             try:
@@ -159,7 +318,7 @@ class _ContainerBase:
                 )
     
     @classmethod
-    def load(fname:str)->'Container':
+    def load(cls, fname:str)->'Container':
         """Load container from a given file"""
         with np.load(fname) as f:
             def _load_quantity(name):
@@ -176,10 +335,16 @@ class _ContainerBase:
             return cls(data=array,
                        **{name:_load_quantity(name) for name in ['time','energy','flavor']},
                        integrable_axes=f['_integrable_axes'])
-
+            
+    def __eq__(self, other:'Container')->bool:
+        "Check if two Containers are equal"
+        result = self.__class__==other.__class__ and \
+                 self.unit == other.unit and \
+                 np.allclose(self.array, other.array) and \
+                 all([np.allclose(self.axes[ax], other.axes[ax]) for ax in Axes])
+        return result
 
 class Container(_ContainerBase):
-    """Choose appropriate container class for the given unit"""
     #a dictionary holding classes for each unit
     _unit_classes = {}
 

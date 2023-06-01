@@ -1,12 +1,18 @@
 """
-The module ``snewpy.rate_calculator`` contains a Python interface for calculating event rates using data from SNOwGLoBES
+The module :mod:`snewpy.rate_calculator` defines a Python interface for calculating event rates using data from SNOwGLoBES
 
+Reference
+---------
+.. autoclass:: RateCalculator
+    :members: run
 """
 import numpy as np
 from snewpy.snowglobes_interface import SnowglobesData, guess_material
 from snewpy.neutrino import Flavor
 from snewpy.flux import Container
 from astropy import units as u
+from warnings import warn
+from typing import Dict
 
 #various utility methods
 def center(a):
@@ -38,11 +44,43 @@ def _load_xsec(self, channel, energies):
     
 #--------------------------------------
 class RateCalculator(SnowglobesData):
+    """Simple rate calculation interface.
+        Computes expected rate for a detector using SNOwGLoBES data. 
+       
+        Use :meth:`RateCalculator.run` method to run the simulation for specific detector and flux object.
+
+        Input flux can either be energy differential flux :math:`F_\\nu(E_i) = \\frac{d N}{d_E}(E_i)` or integral flux in the energy bins :math:`N_{\\nu}(E_i)`.
+        
+        If the `detector_effects=False` the result is the number of neutrino interactions :math:`N` - a product with with cross-section :math:`\sigma(E)` and the number of targets in the detector :math:`N_{tgt}`:
+
+        .. math:: N (E_i) = N_{tgt} \cdot F_\\nu(E_i)\cdot \sigma(E_i)
+
+
+        If the detector effects are included, it is integrated within the energy bins and multiplied by the smearing matrix and detection efficiency to get number of interactions in energy bin:
+
+        .. math:: 
+            
+            N_i = N_{tgt} \cdot \int\limits_{E_i}^{E_{i+1}}~F_\\nu(E_i)~\sigma(E_i)~d E
+
+        and this is convoluted with the detector smearing matrix :math:`M_{ij}` and efficiency :math:`\\varepsilon(E)`:
+
+        .. math::
+        
+            N^{rec}_i = \sum\limits_{j} M_{ij} \cdot N_j \cdot \\varepsilon(E_i)
+        
+    """
     def __init__(self, base_dir=''):
+        """
+        Parameters
+        ----------
+        base_dir:         Path or None
+            Path to the directory where the cross-section, detector, and channel files are located
+            If empty, try to get it from ``$SNOWGLOBES`` environment var
+        """
         super().__init__(base_dir=base_dir)
         
-    def calc_rate(self, channel, TargetMass, flux):
-        """calculate interaction rate"""
+    def _calc_rate(self, channel, TargetMass, flux):
+        """calculate interaction rate for given channel"""
         flavor = _get_flavor_index(channel)
         #check if we are provided with energy bins:
         if not flux.can_integrate('energy'):
@@ -56,7 +94,31 @@ class RateCalculator(SnowglobesData):
         rate = flux[flavor]*xsec*Ntargets
         return rate
     
-    def run(self, flux, detector:str, material:str=None, detector_effects:bool = True):
+    def run(self, flux:Container, detector:str, material:str=None, detector_effects:bool = True)->Dict[str, Container]:
+        """Run the rate calculation for the given detector.    
+        
+        Parameters
+        ----------
+        flux: Container
+            The incoming neutrino flux (or fluence).
+        
+        detector: str
+            Name of the detector to calculate the rate. 
+            Check `RateCalculator.detectors` for the list of options
+        
+        material: str or None
+            Name of the detector material. 
+            Check `RateCalculator.materials` for the list of options
+            If `None` (default) it will be guessed based on the name of the detector
+
+        detector_effects: bool
+            If true (default), account for efficiency and smearing. If false, consider a perfect detector.
+
+        Returns
+        -------
+            dict[str, Container]
+                A dictionary with interaction rates (as instances of :class:`snewpy.flux.Container`) for each channel.
+        """
         TargetMass = float(self.detectors[detector].tgt_mass)<<(1e3*u.tonne)
         material = material or guess_material(detector)
         binning = self.binning[material]
@@ -65,7 +127,7 @@ class RateCalculator(SnowglobesData):
         smearing_shape = (len(energies_t)-1, len(energies_s)-1)
         result = {}
         for channel in self.channels[material].itertuples():
-            rate = self.calc_rate(channel, TargetMass, flux)
+            rate = self._calc_rate(channel, TargetMass, flux)
             #apply channel weight 
             rate = rate*channel.weight
             
@@ -82,7 +144,7 @@ class RateCalculator(SnowglobesData):
                     smear = self.smearings[detector][channel.name]
                     effic = self.efficiencies[detector][channel.name]
                 except KeyError:
-                    warn(f'Detector effects not found for detector={detector}, channel={channel}. Using unsmeared and with 100% efficiency')
+                    warn(f'Detector effects not found for detector={detector}, channel={channel.name}. Using unsmeared and with 100% efficiency')
                     smear = np.eye(*smearing_shape)
                     effic = np.ones(len(energies_s)-1)
                 #apply smearing
@@ -92,46 +154,6 @@ class RateCalculator(SnowglobesData):
                 
                 #result[(channel.name,'unsmeared','unweighted')] = rateI
                 result[channel.name] = rateS
-            else:
-                result[channel.name] = rate
-        return result
-
-    def run_simple(self, flux, detector:str, material:str=None, detector_effects:bool = True):
-        """This function tries to reproduce the calculations in generate_fluence/simulate
-        Main difference: use bin centers to evaluate the cross-sections
-        """
-        TargetMass = float(self.detectors[detector].tgt_mass)<<(1e3*u.tonne)
-        material = material or guess_material(detector)
-        binning = self.binning[material]
-        energies_t = binning['e_true']<<u.GeV
-        energies_s = binning['e_smear']<<u.GeV
-        binwidth = np.diff(energies_t).to(flux.energy.unit)
-        
-        smearing_shape = (len(energies_t)-1, len(energies_s)-1)
-        #check that energy is the same
-        assert np.allclose(flux.energy,center(energies_t))
-        
-        result = {}
-        for channel in self.channels[material].itertuples():
-            rate = self.calc_rate(channel, TargetMass, flux)
-            #apply channel weight 
-            rate = rate*channel.weight
-            #"integrate" over energy bins
-            rateI = rate*binwidth
-            if detector_effects:
-                smear = self.smearings[detector].get(channel.name, 
-                                                     np.eye(*smearing_shape)
-                                                    )
-                effic = self.efficiencies[detector].get(channel.name, 
-                                                        np.ones(len(energies_s)-1)
-                                                       )
-                #apply smearing
-                rateS_array = np.dot(rateI.array, smear.T) * effic
-                rateS = Container(rateS_array, rateI.flavor, rateI.time, energies_s)
-                rateI = rateS
-                
-                #result[(channel.name,'unsmeared','unweighted')] = rateI
-                result[channel.name] = rateI
             else:
                 result[channel.name] = rate
         return result
