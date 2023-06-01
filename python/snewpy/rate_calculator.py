@@ -130,15 +130,20 @@ class RateCalculator(SnowglobesData):
             rate = self._calc_rate(channel, TargetMass, flux)
             #apply channel weight 
             rate = rate*channel.weight
+            #check the energy binning if needed
+            energy_bin_centers = center(rate.energy)
+            if detector_effects and not rate.can_integrate('energy'):
+                    if not np.allclose(energy_bin_centers<<u.GeV,energies_s<<u.GeV):
+                        print(f'{energy_bin_centers[:3]}...{energy_bin_centers[-3:]}')
+                        print(f'{energies_s[:3]}...{energies_s[-3:]}')
+                        #print(energy_bin_centers-energies_s)
+                        raise ValueError(f'Fluence energy values should be equal to smearing matrix binning. Check binning["{material}"]["e_true"]!')
             
             if detector_effects:
                 if rate.can_integrate('energy'):
                     #integrate over given energy bins
                     rateI = rate.integrate('energy', energies_t)
                 else:
-                    if not np.all(rate.energy.shape==energies_s.shape) \
-                    or not np.allclose(rate.energy,energies_s):
-                        raise ValueError(f'Fluence energy values should be equal to smearing matrix binning. Check binning[{material}]["e_true"]!')
                     rateI = rate
                 try:
                     smear = self.smearings[detector][channel.name]

@@ -152,10 +152,14 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
             times = u.Quantity([tstart,tend])
         times.sort()
         
-    energy = np.linspace(0, 100, 501) << u.MeV
-
+    energy   = np.arange(0, 101, 0.2) << u.MeV
+    #energy bins similar to SNOwGLoBES
+    energy_t = (np.linspace(0, 100, 201)+0.25) << u.MeV 
     flux = snmodel.get_flux(t=snmodel.get_time(), E=energy,  distance=d, flavor_xform=flavor_transformation)
-    fluence = flux.integrate('time', limits = times).integrate('energy', limits = energy)
+    fluence = flux.integrate('time', limits = times).integrate('energy', limits = energy_t)
+    #store the energy bin centers instead of the edges
+    #fluence.energy = energy_t[1:]
+    print(fluence)
     if output_filename is not None:
         tfname = output_filename+'.npz'
     else:
@@ -196,7 +200,7 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False, *
     for det in detector_input:
         rate_smeared=rc.run(fluence, det, detector_effects=True)
         rate_unsmeared=rc.run(fluence, det, detector_effects=False)
-        result[det]={'smeared':rate_smeared, 'unsmeared':rate_unsmeared}
+        result[det]={'weighted':{'smeared':rate_smeared, 'unsmeared':rate_unsmeared}}
 
     # save result to file for re-use in collate()
     return result 
