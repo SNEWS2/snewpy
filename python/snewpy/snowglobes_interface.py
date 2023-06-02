@@ -16,6 +16,13 @@ logger = logging.getLogger(__name__)
 
 from tqdm.auto import tqdm
 
+import snowglobes_data
+import sys
+if sys.version_info >= (3, 9):
+    from importlib.resources import files
+else:
+    from importlib_resources import files
+
 def guess_material(detector):
     if detector.startswith(('wc', 'ice', 'km3net')):
         mat = 'water'
@@ -68,12 +75,14 @@ class SimpleRate():
             If true, account for efficiency and smearing. If false, consider a perfect detector.
 
         base_dir:         Path or None
-            Path to the directory where the cross-section, detector, and channel files are located
-            If empty, try to get it from ``$SNOWGLOBES`` environment var
+            Path to the directory where the cross-section, detector, and channel files are located.
+            If empty, try to get it from ``$SNOWGLOBES`` environment var or the `snowglobes_data` module.
         """
-        if not base_dir:
-            base_dir = os.environ['SNOWGLOBES']
-        self.base_dir = Path(base_dir)
+        try:
+            self.base_dir = Path(base_dir if base_dir else os.environ['SNOWGLOBES'])
+        except KeyError:
+            print("Using snowglobes_data module ...")
+            self.base_dir = files(snowglobes_data)
         self._load_detectors(self.base_dir/'detector_configurations.dat', detectors)
         self._load_channels(self.base_dir/'channels')
         self.efficiencies = None

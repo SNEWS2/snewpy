@@ -2,7 +2,7 @@
 
 from snewpy import snowglobes
 
-SNOwGLoBES_path = "/path/to/snowglobes/"  # where snowglobes is located
+SNOwGLoBES_path = None  # change to SNOwGLoBES directory if using a custom detector configuration
 
 # arguments for generate_time_series
 model_file = "/path/to/snewpy/models/Nakazato_2013/nakazato-LS220-BH-z0.004-s30.0.fits"
