@@ -15,7 +15,7 @@ class MassHierarchy(IntEnum):
     
     @classmethod
     def derive_from_dm2(cls, dm12_2, dm32_2, dm31_2):
-        """derive the mass hierechy, based on the given mass square differences"""
+        """derive the mass hierarchy based on the given mass squared differences"""
         assert dm12_2>0,f'dm12_2(dm12_2) should be positive'
         assert (dm32_2*dm31_2>=0),f'dm32_2 ({dm32_2}) and dm31_2 ({dm31_2}) should be of the same sign'
         if(dm32_2>=0):
