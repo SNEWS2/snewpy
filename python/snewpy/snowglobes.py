@@ -158,9 +158,8 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
     energy_t = (np.linspace(0, 100, 201)+0.25) << u.MeV 
     flux = snmodel.get_flux(t=snmodel.get_time(), E=energy,  distance=d, flavor_xform=flavor_transformation)
     fluence = flux.integrate('time', limits = times).integrate('energy', limits = energy_t)
+    times = fluence.time
     #store the energy bin centers instead of the edges
-    #fluence.energy = energy_t[1:]
-    print(fluence)
     if output_filename is not None:
         tfname = output_filename+'.npz'
     else:
