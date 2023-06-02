@@ -29,6 +29,7 @@ from tempfile import TemporaryDirectory
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from astropy import units as u
 from tqdm.auto import tqdm
 from warnings import warn
@@ -36,7 +37,7 @@ from warnings import warn
 import snewpy.models
 from snewpy.flavor_transformation import *
 from snewpy.neutrino import Flavor, MassHierarchy
-from snewpy.rate_calculator import RateCalculator
+from snewpy.rate_calculator import RateCalculator, center
 from snewpy.flux import Container
 logger = logging.getLogger(__name__)
 
@@ -194,16 +195,48 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False, *
         detector_input = list(sng.detectors)
     if(isinstance(detector_input,str)):
         detector_input=[detector_input]
-    result = {}
+    rates_dict = {}
     #read the fluence
     fluence = Container.load(tarball_path)
     for det in detector_input:
-        rate_smeared=rc.run(fluence, det, detector_effects=True)
-        rate_unsmeared=rc.run(fluence, det, detector_effects=False)
-        result[det]={'weighted':{'smeared':rate_smeared, 'unsmeared':rate_unsmeared}}
+        rates_smeared=rc.run(fluence, det, detector_effects=True)
+        rates_unsmeared=rc.run(fluence, det, detector_effects=False)
+        #collect everything to pandas DataFrame, to make the output similar to previous
+        rates_dict[det]={'weighted':{'unsmeared':rates_unsmeared,
+                                 'smeared':rates_smeared,
+                                }}
+    # reorder results to produce the same format as before:
+    #    {detector: {time_bin:{'weighted':{smeared/unsmeared: [rate vs energy bins]}}}}
+    result = {}
+    for det in rates_dict:
+        #get the time bins
+        rates_smeared   = rates_dict[det]['weighted']['smeared']
+        rates_unsmeared = rates_dict[det]['weighted']['unsmeared']
 
+        #get the first rate from the dict to access the energy and time binning
+        some_rate = list(rates_smeared.values())[0]
+        tbins = center(some_rate.time)
+        ebins = some_rate.energy
+        result[det] = {}
+        for n_bin, t_bin in enumerate(tbins):
+            data = {**{(chan,'unsmeared','weighted'): rate.array[0,n_bin,:]
+                      for chan,rate in rates_unsmeared.items()},
+                    **{(chan,'smeared','weighted'): rate.array[0,n_bin,:] 
+                      for chan,rate in rates_smeared.items()}}
+            
+            df = pd.DataFrame(data, index = ebins)
+            df.index.rename('E', inplace=True)
+            df.columns.rename(['channel','is_smeared','is_weighted'], inplace=True)
+            df = df.reorder_levels([2,1,0], axis='columns')
+            result[det][f'rates.tbin{n_bin:01d}'] = df
+        
     # save result to file for re-use in collate()
-    return result 
+    # save result to file for re-use in collate()
+    cache_file = tarball_path[:tarball_path.rfind('.')] + 'rates.npy'
+    logging.info(f'Saving simulation results to {cache_file}')
+    np.save(cache_file, result)
+    return result
+
 
 re_chan_label = re.compile(r'nu(e|mu|tau)(bar|)_([A-Z][a-z]*)(\d*)_?(.*)')
 def get_channel_label(c):
@@ -294,7 +327,7 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="", skip_plots=False, ve
             plt.ylabel('Interaction Events')  
 
     #read the results from storage
-    cache_file = tarball_path[:tarball_path.rfind('.tar')] + '.npy'
+    cache_file = tarball_path[:tarball_path.rfind('.')] + 'rates.npy'
     logging.info(f'Reading tables from {cache_file}')
     tables = np.load(cache_file, allow_pickle=True).tolist()
     #This output is similar to what produced by:
