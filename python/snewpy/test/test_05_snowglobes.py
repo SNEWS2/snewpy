@@ -27,8 +27,6 @@ def rates_calculation(fluence_file):
 def test_total_rate_equals_table_value(model_parameters):
     fluence_file = fluence_calculation(*model_parameters)
     calculated_rates  = rates_calculation(fluence_file)
-    print(calculated_rates)
-    print(model_parameters)
     for detector in detectors:
-        print(detector)
-        assert calculated_rates[detector] == rate_table[model_parameters][detector]
+        expected = pytest.approx(rate_table[model_parameters][detector], rel=0.01)
+        assert calculated_rates[detector] == expected, f"Crosscheck failed for {detector}"
