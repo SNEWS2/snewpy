@@ -44,29 +44,29 @@ def _load_xsec(self, channel, energies):
     
 #--------------------------------------
 class RateCalculator(SnowglobesData):
-    """Simple rate calculation interface.
+    r"""Simple rate calculation interface.
         Computes expected rate for a detector using SNOwGLoBES data. 
        
         Use :meth:`RateCalculator.run` method to run the simulation for specific detector and flux object.
 
-        Input flux can either be energy differential flux :math:`F_\\nu(E_i) = \\frac{d N}{d_E}(E_i)` or integral flux in the energy bins :math:`N_{\\nu}(E_i)`.
+        Input flux can either be energy differential flux :math:`F_\nu(E_i) = \frac{d N}{d_E}(E_i)` or integral flux in the energy bins :math:`N_{\nu}(E_i)`.
         
         If the `detector_effects=False` the result is the number of neutrino interactions :math:`N` - a product with with cross-section :math:`\sigma(E)` and the number of targets in the detector :math:`N_{tgt}`:
 
-        .. math:: N (E_i) = N_{tgt} \cdot F_\\nu(E_i)\cdot \sigma(E_i)
+        .. math:: N (E_i) = N_{tgt} \cdot F_\nu(E_i)\cdot \sigma(E_i)
 
 
         If the detector effects are included, it is integrated within the energy bins and multiplied by the smearing matrix and detection efficiency to get number of interactions in energy bin:
 
         .. math:: 
             
-            N_i = N_{tgt} \cdot \int\limits_{E_i}^{E_{i+1}}~F_\\nu(E_i)~\sigma(E_i)~d E
+            N_i = N_{tgt} \cdot \int\limits_{E_i}^{E_{i+1}}~F_\nu(E_i)~\sigma(E_i)~d E
 
-        and this is convoluted with the detector smearing matrix :math:`M_{ij}` and efficiency :math:`\\varepsilon(E)`:
+        and this is convoluted with the detector smearing matrix :math:`M_{ij}` and efficiency :math:`\varepsilon(E)`:
 
         .. math::
         
-            N^{rec}_i = \sum\limits_{j} M_{ij} \cdot N_j \cdot \\varepsilon(E_i)
+            N^{rec}_i = \sum\limits_{j} M_{ij} \cdot N_j \cdot \varepsilon(E_i)
         
     """
     def __init__(self, base_dir=''):
@@ -124,7 +124,7 @@ class RateCalculator(SnowglobesData):
         binning = self.binning[material]
         energies_t = binning['e_true']<<u.GeV
         energies_s = binning['e_smear']<<u.GeV
-        smearing_shape = (len(energies_t)-1, len(energies_s)-1)
+        smearing_shape = (len(energies_t), len(energies_s))
         result = {}
         for channel in self.channels[material].itertuples():
             rate = self._calc_rate(channel, TargetMass, flux)
@@ -134,9 +134,6 @@ class RateCalculator(SnowglobesData):
             energy_bin_centers = center(rate.energy)
             if detector_effects and not rate.can_integrate('energy'):
                     if not np.allclose(energy_bin_centers<<u.GeV,energies_s<<u.GeV):
-                        print(f'{energy_bin_centers[:3]}...{energy_bin_centers[-3:]}')
-                        print(f'{energies_s[:3]}...{energies_s[-3:]}')
-                        #print(energy_bin_centers-energies_s)
                         raise ValueError(f'Fluence energy values should be equal to smearing matrix binning. Check binning["{material}"]["e_true"]!')
             
             if detector_effects:
@@ -151,7 +148,7 @@ class RateCalculator(SnowglobesData):
                 except KeyError:
                     warn(f'Detector effects not found for detector={detector}, channel={channel.name}. Using unsmeared and with 100% efficiency')
                     smear = np.eye(*smearing_shape)
-                    effic = np.ones(len(energies_s)-1)
+                    effic = np.ones(len(energies_s))
                 #apply smearing
                 rateS_array = np.dot(rateI.array, smear.T) * effic
                 rateS = Container(rateS_array, rateI.flavor, rateI.time, energies_s)
