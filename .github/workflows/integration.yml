@@ -34,16 +34,7 @@ jobs:
       - name: Install SNEWPY
         run: |
           pip install ".[dev]"
-      - name: Install SNOwGLoBES
-        run: |
-          mkdir opt
-          cd opt
-          git clone https://github.com/SNOwGLoBES/snowglobes.git
-          cd snowglobes
-          git checkout v1.3
-          export SNOWGLOBES=${PWD}
       - name: Run Integration Tests
         run: |
-          export SNOWGLOBES=${GITHUB_WORKSPACE}/opt/snowglobes
           python -m unittest python/snewpy/test/simplerate_integrationtest.py
           pytest -m 'snowglobes'

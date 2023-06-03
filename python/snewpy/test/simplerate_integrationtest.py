@@ -2,7 +2,6 @@
 """Integration test based on SNEWS2.0_rate_table_singleexample.py
 """
 import unittest
-import os
 from snewpy import snowglobes
 
 
@@ -12,7 +11,7 @@ class TestSimpleRate(unittest.TestCase):
         """Integration test based on SNEWS2.0_rate_table_singleexample.py
         """
         # Hardcoded paths on GitHub Action runner machines
-        SNOwGLoBES_path = os.environ['SNOWGLOBES']
+        SNOwGLoBES_path = None
         SNEWPY_model_dir = "models/"
 
         distance = 10  # Supernova distance in kpc
