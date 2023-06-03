@@ -5,53 +5,53 @@ models:
 
     Bollig_2016:
         repository: github
-        release_version: 1.2
+        release_version: 1.3
 
     Fornax_2019: 
         repository: github
-        release_version: 1.2
+        release_version: 1.3
 
     Fornax_2021: 
         repository: github
-        release_version: 1.2
+        release_version: 1.3
 
     Kuroda_2020: 
         repository: github
-        release_version: 1.2
+        release_version: 1.3
 
     Nakazato_2013: 
         repository: github
-        release_version: 1.2
+        release_version: 1.3
 
     OConnor_2013: 
         repository: github
-        release_version: 1.2
+        release_version: 1.3
 
     OConnor_2015: 
         repository: github
-        release_version: 1.2
+        release_version: 1.3
  
     Sukhbold_2015: 
         repository: github
-        release_version: 1.2
+        release_version: 1.3
  
     Tamborra_2014: 
         repository: github
-        release_version: 1.2
+        release_version: 1.4b1
  
     Walk_2018: 
         repository: github
-        release_version: 1.2
+        release_version: 1.4b1
  
     Walk_2019: 
         repository: github
-        release_version: 1.2
+        release_version: 1.4b1
 
     Warren_2020:
         repository: github
-        release_version: 1.2
+        release_version: 1.3
 
     Zha_2021: 
         repository: github
-        release_version: 1.2
+        release_version: 1.4b1
 
