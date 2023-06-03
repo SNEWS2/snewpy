@@ -109,18 +109,13 @@ def from_zenodo(zenodo_id:str, model:str, filename:str):
     zenodo_id : Zenodo record for model files.
     model : Name of the model class for this model file.
     filename : Expected filename storing simulation data.
-    path : Local installation path (defaults to astropy cache).
 
     Returns
     -------
     file_url, md5sum
     """
     zenodo_url = f'https://zenodo.org/api/records/{zenodo_id}'
-    path = Path(path)/str(model)
-    path.mkdir(exist_ok=True, parents=True)
-
     record = requests.get(zenodo_url).json()
-
     # Search for model file string in Zenodo request for this record.
     file = next((_file for _file in record['files'] if _file['key'] == filename), None)
 
@@ -129,23 +124,6 @@ def from_zenodo(zenodo_id:str, model:str, filename:str):
         return file['links']['self'], file['checksum'].split(':')[1]
     else:
         raise MissingFileError(filename)
-
-def from_github(release_version:str, model:str, filename:str):
-    """Access files on GitHub.
-
-    Parameters
-    ----------
-    release_version: SNEWPY release with corresponding model data.
-    model : Name of the model class for this model file.
-    filename : Expected filename storing simulation data.
-    path : Local installation path (defaults to astropy cache).
-
-    Returns
-    -------
-    file_url, md5sum
-    """
-    github_url = f'https://github.com/SNEWS2/snewpy/raw/v{release_version}/models/{model}/{filename}'
-    return github_url, None
 
 def get_model_data(model: str, filename: str, path: str = model_path) -> Path:
     """Access model data. Configuration for each model is in a YAML file
@@ -175,11 +153,7 @@ def get_model_data(model: str, filename: str, path: str = model_path) -> Path:
             # Get data from GitHub or Zenodo.
             modconf = models[model]
             repo = modconf.pop('repository')
-
-            if repo == 'github':
-                params['release_version'] = modconf['release_version']
-                url, md5 = from_github(**params)
-            elif repo == 'zenodo':
+            if repo == 'zenodo':
                 params['zenodo_id'] = modconf['zenodo_id']
                 url, md5 = from_zenodo(**params)
             else:
