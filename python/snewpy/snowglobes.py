@@ -152,7 +152,8 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
             #in case we have single values
             times = u.Quantity([tstart,tend])
         times.sort()
-        
+
+    #energy with 0.2 MeV binning
     energy   = np.arange(0, 101, 0.2) << u.MeV
     #energy bins similar to SNOwGLoBES
     energy_t = (np.linspace(0, 100, 201)+0.25) << u.MeV 
@@ -215,7 +216,7 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False, *
         #get the first rate from the dict to access the energy and time binning
         some_rate = list(rates_smeared.values())[0]
         tbins = center(some_rate.time)
-        ebins = some_rate.energy
+        ebins = center(some_rate.energy)
         result[det] = {}
         for n_bin, t_bin in enumerate(tbins):
             data = {**{(chan,'unsmeared','weighted'): rate.array[0,n_bin,:]
