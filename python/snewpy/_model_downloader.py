@@ -18,6 +18,7 @@ from tqdm.auto import tqdm
 from typing import Optional
 
 from snewpy import model_path
+from snewpy import __version__ as snewpy_version
 
 import logging
 logger = logging.getLogger('FileHandle')
@@ -142,7 +143,7 @@ def get_model_data(model: str, filename: str, path: str = model_path) -> Path:
     if os.path.isabs(filename):
         return Path(filename)
 
-    params = { 'model':model, 'filename':filename }
+    params = { 'model':model, 'filename':filename, 'snewpy_version':snewpy_version}
 
     # Parse YAML file with model repository configurations.
     with open_text('snewpy.models', 'model_files.yml') as f:
@@ -158,9 +159,11 @@ def get_model_data(model: str, filename: str, path: str = model_path) -> Path:
                 url, md5 = from_zenodo(**params)
             else:
                 #format the url directly
-                url, md5 = repo.format(**params, **modconf), None
+                params.update(modconf) #default parameters can be overriden in the model config
+                url, md5 = repo.format(**params), None
             localpath = Path(path)/str(model)
             localpath.mkdir(exist_ok=True, parents=True)
+            print(f'URL={url}')
             fh = FileHandle(path = localpath/filename,remote = url, md5=md5)
             return fh.load()
         else:

@@ -3,59 +3,46 @@
 #  2. Model data on Zenodo must provide the Zenodo record ID.
 
 config:
-    - &github "https://github.com/SNEWS2/snewpy/raw/v{release_version}/models/{model}/{filename}"
+    - &snewpy "https://github.com/SNEWS2/snewpy/raw/v{snewpy_version}/models/{model}/{filename}"
 
 models:
 
     Bollig_2016:
-        repository: *github
-        release_version: 1.2
+        repository: *snewpy
 
     Fornax_2019: 
-        repository: github
-        release_version: 1.2
+        repository: *snewpy
 
     Fornax_2021: 
-        repository: github
-        release_version: 1.2
+        repository: *snewpy
 
     Kuroda_2020: 
-        repository: github
-        release_version: 1.2
+        repository: *snewpy
 
     Nakazato_2013: 
-        repository: github
-        release_version: 1.2
+        repository: *snewpy
 
     OConnor_2013: 
-        repository: github
-        release_version: 1.2
+        repository: *snewpy
 
     OConnor_2015: 
-        repository: github
-        release_version: 1.2
+        repository: *snewpy
  
     Sukhbold_2015: 
-        repository: github
-        release_version: 1.2
+        repository: *snewpy
  
     Tamborra_2014: 
-        repository: github
-        release_version: 1.2
+        repository: *snewpy
  
     Walk_2018: 
-        repository: github
-        release_version: 1.2
+        repository: *snewpy
  
     Walk_2019: 
-        repository: github
-        release_version: 1.2
+        repository: *snewpy
 
     Warren_2020:
-        repository: github
-        release_version: 1.2
+        repository: *snewpy
 
     Zha_2021: 
-        repository: github
-        release_version: 1.2
+        repository: *snewpy
 
