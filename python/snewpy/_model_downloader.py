@@ -163,7 +163,6 @@ def get_model_data(model: str, filename: str, path: str = model_path) -> Path:
                 url, md5 = repo.format(**params), None
             localpath = Path(path)/str(model)
             localpath.mkdir(exist_ok=True, parents=True)
-            print(f'URL={url}')
             fh = FileHandle(path = localpath/filename,remote = url, md5=md5)
             return fh.load()
         else:
