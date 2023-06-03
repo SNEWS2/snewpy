@@ -41,7 +41,13 @@ def _load_xsec(self, channel, energies):
     yp = xsec[:, _get_xsec_column(channel)]
     xsecs = np.interp(np.log(E)/np.log(10), xp, yp, left=0, right=0)*E*1e-38 <<u.cm**2
     return xsecs
-    
+
+def _bin_edges_from_centers(centers:np.ndarray)->np.ndarray:
+    """calculate the bin edges based on the given central values"""
+    binw = np.diff(centers) #get the bin width
+    edges = centers-0.5*np.pad(binw,(0,1),mode='edge') #get lower edges
+    edges = np.append(edges,edges[-1]+binw[-1])
+    return edges
 #--------------------------------------
 class RateCalculator(SnowglobesData):
     r"""Simple rate calculation interface.
@@ -139,7 +145,8 @@ class RateCalculator(SnowglobesData):
             if detector_effects:
                 if rate.can_integrate('energy'):
                     #integrate over given energy bins
-                    rateI = rate.integrate('energy', energies_t)
+                    energy_bins = _bin_edges_from_centers(energies_t)
+                    rateI = rate.integrate('energy', energy_bins)
                 else:
                     rateI = rate
                 try:
@@ -151,7 +158,11 @@ class RateCalculator(SnowglobesData):
                     effic = np.ones(len(energies_s))
                 #apply smearing
                 rateS_array = np.dot(rateI.array, smear.T) * effic
-                rateS = Container(rateS_array, rateI.flavor, rateI.time, energies_s)
+                rateS = Container(rateS_array, 
+                                  flavor=rateI.flavor, 
+                                  time=rateI.time, 
+                                  energy=_bin_edges_from_centers(energies_s)<<u.MeV,
+                                  integrable_axes=rateI._integrable_axes)
                 rateI = rateS
                 
                 #result[(channel.name,'unsmeared','unweighted')] = rateI
