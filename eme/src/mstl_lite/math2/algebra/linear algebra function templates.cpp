@@ -1038,7 +1038,7 @@ template <typename Type,typename MType> Type Spur(MATRIXEXPRESSION<Type,MType> c
 
 template <typename Type,typename MType> 
 MATRIX<Type,0,0> Invert(MATRIXEXPRESSION<Type,MType> const &M)
-         { try{ return Inverse(M);} catch(SINGULAR &S){ throw S.ChangeFunction("Invert");} }
+         { try{ return Inverse(M);} catch(SINGULAR &S){ S.ChangeFunction("Invert"); throw S;} }
 
 
 template <typename Type,typename MType> MATRIX<Type,0,0> Inverse(MATRIXEXPRESSION<Type,MType> const &M)
@@ -1432,7 +1432,7 @@ std::vector<std::complex<double> > QREigenValues(MATRIXEXPRESSION<double,MType> 
                        eigenvalues[m]=eigenvaluepair[0];
                        eigenvalues[m+1]=eigenvaluepair[1];
                       }
-           if(n-m==1){ eigenvalues[m]=std::vector<std::complex<double> >(M[m][m]);}
+           if(n-m==1){ eigenvalues[m]=std::complex<double>(M[m][m]);}
            
            return eigenvalues;
           }
@@ -2162,16 +2162,17 @@ CVECTOR<std::complex<double> > BanddiagonalSolve(MATRIXEXPRESSION<std::complex<d
 
               int i,imax=static_cast<int>(M.N1())-1,j,jmax=static_cast<int>(M.N2())-2,k;
               double C;
+              std::complex<double> Cc;
               for(j=0;j<=jmax;j++) // go through the columns
                  { C=norm(M[j][j]); k=j;
                    for(i=j+1;i<=std::min(imax,j+p);i++){ if(norm(M[i][j])>C){ k=i; C=norm(M[i][j]);} }  // find largest element in column
                    if(k>j){ M.SwapRows(j,k); std::swap(Y[j],Y[k]); q+=k;}                                        // pivot the rows
 
                    for(i=j+1;i<=std::min(imax,j+p);i++)
-                      { C=M[i][j]/M[j][j];
-                        if(Equality(C,0.)==false)
-                          { for(k=std::min(jmax+1,j+p+q);k>=std::max(0,i-p);k--){ M[i][k]-=M[j][k]*C;}        // subtract rows
-                            Y[i]-=C*Y[j];
+                      { Cc=M[i][j]/M[j][j];
+                        if(Equality(Cc, (std::complex<double>)0.)==false)
+                          { for(k=std::min(jmax+1,j+p+q);k>=std::max(0,i-p);k--){ M[i][k]-=M[j][k]*Cc;}        // subtract rows
+                            Y[i]-=Cc*Y[j];
                            }
                        }
                   }
