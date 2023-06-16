@@ -144,23 +144,24 @@ class SupernovaModel(ABC):
             Dictionary of transformed spectra, keyed by neutrino flavor.
         """
         initialspectra = self.get_initial_spectra(t, E)
+        transformation_matrix = flavor_xform.get_probabilities(t,E)         
         transformed_spectra = {}
 
         transformed_spectra[Flavor.NU_E] = \
-            flavor_xform.prob_ee(t, E) * initialspectra[Flavor.NU_E] + \
-            flavor_xform.prob_ex(t, E) * initialspectra[Flavor.NU_X]
+            transformation_matrix[Flavor.NU_E, Flavor.NU_E] * initialspectra[Flavor.NU_E] + \
+            transformation_matrix[Flavor.NU_E, Flavor.NU_X] * initialspectra[Flavor.NU_X]
 
         transformed_spectra[Flavor.NU_X] = \
-            flavor_xform.prob_xe(t, E) * initialspectra[Flavor.NU_E] + \
-            flavor_xform.prob_xx(t, E) * initialspectra[Flavor.NU_X] 
+            transformation_matrix[Flavor.NU_X, Flavor.NU_E] * initialspectra[Flavor.NU_E] + \
+            transformation_matrix[Flavor.NU_X, Flavor.NU_X] * initialspectra[Flavor.NU_X] 
 
         transformed_spectra[Flavor.NU_E_BAR] = \
-            flavor_xform.prob_eebar(t, E) * initialspectra[Flavor.NU_E_BAR] + \
-            flavor_xform.prob_exbar(t, E) * initialspectra[Flavor.NU_X_BAR]
-
+            transformation_matrix[Flavor.NU_E_BAR, Flavor.NU_E_BAR] * initialspectra[Flavor.NU_E_BAR] + \
+            transformation_matrix[Flavor.NU_E_BAR, Flavor.NU_X_BAR] * initialspectra[Flavor.NU_X_BAR]
+        
         transformed_spectra[Flavor.NU_X_BAR] = \
-            flavor_xform.prob_xebar(t, E) * initialspectra[Flavor.NU_E_BAR] + \
-            flavor_xform.prob_xxbar(t, E) * initialspectra[Flavor.NU_X_BAR] 
+            transformation_matrix[Flavor.NU_X_BAR, Flavor.NU_E_BAR] * initialspectra[Flavor.NU_E_BAR] + \
+            transformation_matrix[Flavor.NU_X_BAR, Flavor.NU_X_BAR] * initialspectra[Flavor.NU_X_BAR] 
 
         return transformed_spectra   
 
@@ -189,7 +190,6 @@ class SupernovaModel(ABC):
         factor = 1/(4*np.pi*(distance.to('cm'))**2)
         flux = self.get_transformed_spectra(t, E, flavor_xform)
         return {flavor: f*factor for flavor,f in flux.items()}
-
 
 
     def get_oscillatedspectra(self, *args):
