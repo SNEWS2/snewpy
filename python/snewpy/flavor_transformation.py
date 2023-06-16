@@ -397,6 +397,9 @@ class NoTransformation(FlavorTransformation):
     def __init__(self):
         pass
 
+    def __str__(self):
+        return string("NoTransformation")   
+
     def get_probabilities(self, t, E):
         """neutrino and antineutrino transition probabilities.
 
@@ -434,6 +437,9 @@ class CompleteExchange(FlavorTransformation):
 
     def __init__(self):
         pass
+
+    def __str__(self):
+        return string("CompleteExchange")                    
 
     def get_probabilities(self, t, E):
         """neutrino and antineutrino transition probabilities.
@@ -480,7 +486,9 @@ class AdiabaticMSW(ThreeFlavorTransformation):
             If not None the Earth-matter effect calculation will be done
         """
         super().__init__(mix_params, AltAz)        
-        
+
+    def __str__(self):
+        return string("AdiabaticMSW")                    
 
     def get_probabilities(self, t, E): 
         """neutrino and antineutrino transition probabilities.
@@ -535,7 +543,10 @@ class NonAdiabaticMSWH(ThreeFlavorTransformation):
         AltAz : astropy AltAz object 
             If not None the Earth-matter effect calculation will be done
         """
-        super().__init__(mix_params, AltAz)        
+        super().__init__(mix_params, AltAz)   
+
+    def __str__(self):
+        return string("NonAdiabaticMSWH")                
 
     def get_probabilities(self, t, E): 
         """neutrino and antineutrino transition probabilities.
@@ -585,7 +596,10 @@ class TwoFlavorDecoherence(ThreeFlavorTransformation):
         AltAz : astropy AltAz object 
             If not None the Earth-matter effect calculation will be done
         """
-        super().__init__(mix_params, AltAz)        
+        super().__init__(mix_params, AltAz)       
+
+    def __str__(self):
+        return string("TwoFlavorDecoherence")                
 
     def get_probabilities(self, t, E): 
         """neutrino and antineutrino transition probabilities.
@@ -633,6 +647,9 @@ class ThreeFlavorDecoherence(FlavorTransformation):
 
     def __init__(self):
         pass
+
+    def __str__(self):
+        return string("ThreeFlavorDecoherence")            
 
     def get_probabilities(self, t, E): 
         """neutrino and antineutrino transition probabilities.
@@ -693,6 +710,9 @@ class NeutrinoDecay(ThreeFlavorTransformation):
         self.m = mass
         self.tau = tau
         self.d = dist
+
+    def __str__(self):
+        return string("NeutrinoDecay")            
 
     def gamma(self, E):
         """Decay width of the heaviest neutrino mass.
@@ -775,7 +795,10 @@ class AdiabaticMSWes(FourFlavorTransformation):
         ----------
         mix_params : MixingParameters3Flavor instance
         """
-        super().__init__(mix_params)        
+        super().__init__(mix_params)   
+
+    def __str__(self):
+        return string("AdiabaticMSWes")            
     
     def get_probabilities(self, t, E): 
         """neutrino and antineutrino transition probabilities.
@@ -847,7 +870,9 @@ class NonAdiabaticMSWes(FourFlavorTransformation):
         mix_params : MixingParameters3Flavor instance
         """
         super().__init__(mix_params)   
-        
+
+    def __str__(self):
+        return string("NonAdiabaticMSWes")        
     
     def get_probabilities(self, t, E): 
         """neutrino and antineutrino transition probabilities.
