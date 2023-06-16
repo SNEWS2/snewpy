@@ -40,7 +40,31 @@ from snewpy.snowglobes_interface import SimpleRate
 
 logger = logging.getLogger(__name__)
 
-def generate_time_series(model_path, model_type, transformation_type, d, output_filename=None, ntbins=30, deltat=None, snmodel_dict={}):
+def get_transformation(flavor_transformation_string):
+    """A function for idetifying the flavor transformation class from a string
+
+    Paramters
+    ---------
+    flavor_transformation_string : string
+
+    Returns
+    -------
+    flavor_transformation_class : a flavor_transformation class 
+    """
+
+    if flavor_transformation_string.find("IMO") is not -1:
+        mix_params = MixingParameters3Flavor(MassHierarchy.INVERTED)
+
+    # Choose flavor transformation. Use dict to associate the transformation name with its class.
+    # The default mixing paramaters are the normal hierarchy values
+    flavor_transformation_dict = {'NoTransformation': NoTransformation(), 'AdiabaticMSW_NMO': AdiabaticMSW(), 'AdiabaticMSW_IMO': AdiabaticMSW(mix_params), 'NonAdiabaticMSWH_NMO': NonAdiabaticMSWH(), 'NonAdiabaticMSWH_IMO': NonAdiabaticMSWH(mix_params), 'TwoFlavorDecoherence': TwoFlavorDecoherence(), 'TwoFlavorDecoherence_NMO': TwoFlavorDecoherence(), 'TwoFlavorDecoherence_IMO': TwoFlavorDecoherence(mix_params), 'ThreeFlavorDecoherence': ThreeFlavorDecoherence(), 'NeutrinoDecay_NMO': NeutrinoDecay(), 'NeutrinoDecay_IMO': NeutrinoDecay(mix_params)}
+
+    flavor_transformation_class = flavor_transformation_dict[flavor_transformation_string]
+
+    return flavor_transformation_class
+    
+
+def generate_time_series(model_path, model_type, flavor_transformation, d, output_filename=None, ntbins=30, deltat=None, snmodel_dict={}):
     """Generate time series files in SNOwGLoBES format.
 
     This version will subsample the times in a supernova model, produce energy
@@ -52,8 +76,9 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
         Input file containing neutrino flux information from supernova model.
     model_type : str
         Format of input file. Matches the name of the corresponding class in :py:mod:`snewpy.models`.
-    transformation_type : str
-        Name of flavor transformation. See snewpy.flavor_transformation documentation for possible values.
+    flavor_transformation : str or flavor transformation class  
+        If a string, the class if found using the get_transformation function.
+        See snewpy.flavor_transformation documentation for possible values of the string.
     d : int or float
         Distance to supernova in kpc.
     output_filename : str or None
@@ -73,8 +98,8 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
     model_class = getattr(snewpy.models.ccsn, model_type)
 
     # Choose flavor transformation. Use dict to associate the transformation name with its class.
-    flavor_transformation_dict = {'NoTransformation': NoTransformation(), 'AdiabaticMSW_NMO': AdiabaticMSW(mh=MassHierarchy.NORMAL), 'AdiabaticMSW_IMO': AdiabaticMSW(mh=MassHierarchy.INVERTED), 'NonAdiabaticMSWH_NMO': NonAdiabaticMSWH(mh=MassHierarchy.NORMAL), 'NonAdiabaticMSWH_IMO': NonAdiabaticMSWH(mh=MassHierarchy.INVERTED), 'TwoFlavorDecoherence': TwoFlavorDecoherence(), 'ThreeFlavorDecoherence': ThreeFlavorDecoherence(), 'NeutrinoDecay_NMO': NeutrinoDecay(mh=MassHierarchy.NORMAL), 'NeutrinoDecay_IMO': NeutrinoDecay(mh=MassHierarchy.INVERTED)}
-    flavor_transformation = flavor_transformation_dict[transformation_type]
+    if isinstance(flavor_transformation,str) == True:
+        flavor_transformation = get_transformation(flavor_transformation)
 
     model_dir, model_file = os.path.split(os.path.abspath(model_path))
     snmodel = model_class(model_path, **snmodel_dict)
@@ -96,11 +121,11 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
         tfname = output_filename + 'kpc.tar.bz2'
     else:
         model_file_root, _ = os.path.splitext(model_file)  # strip extension (if present)
-        tfname = model_file_root + '.' + transformation_type + '.{:.3f},{:.3f},{:d}-{:.1f}'.format(tmin, tmax, ntbins, d) + 'kpc.tar.bz2'
+        tfname = model_file_root + '.' + str(flavor_transformation) + '.{:.3f},{:.3f},{:d}-{:.1f}'.format(tmin, tmax, ntbins, d) + 'kpc.tar.bz2'
 
     with tarfile.open(os.path.join(model_dir, tfname), 'w:bz2') as tf:
         #creates file in tar archive that gives information on parameters
-        output = '\n'.join(map(str, transformation_type)).encode('ascii')
+        output = '\n'.join(map(str, flavor_transformation)).encode('ascii')
         tf.addfile(tarfile.TarInfo(name='parameterinfo'), io.BytesIO(output))
 
         MeV = 1.60218e-6 * u.erg
@@ -136,7 +161,7 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
 
             extension = ".dat"
             model_file_root, _ = os.path.splitext(model_file)
-            filename = model_file_root + '.tbin{:01d}.'.format(i+1) + transformation_type + \
+            filename = model_file_root + '.tbin{:01d}.'.format(i+1) + flavor_transformation + \
                 '.{:.3f},{:.3f},{:01d}-{:.1f}kpc{}'.format(tmin/u.s, tmax/u.s, ntbins, d, extension)
 
             info = tarfile.TarInfo(name=filename)
@@ -146,7 +171,7 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
     return os.path.join(model_dir, tfname)
 
 
-def generate_fluence(model_path, model_type, transformation_type, d, output_filename=None, tstart=None, tend=None, snmodel_dict={}):
+def generate_fluence(model_path, model_type, flavor_transformation, d, output_filename=None, tstart=None, tend=None, snmodel_dict={}):
     """Generate fluence files in SNOwGLoBES format.
 
     This version will subsample the times in a supernova model, produce energy
@@ -158,8 +183,9 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
         Input file containing neutrino flux information from supernova model.
     model_type : str
         Format of input file. Matches the name of the corresponding class in :py:mod:`snewpy.models`.
-    transformation_type : str
-        Name of flavor transformation. See snewpy.flavor_transformation documentation for possible values.
+    flavor_transformation : str or flavor transformation class  
+        If a string, the class if found using the get_transformation function.
+        See snewpy.flavor_transformation documentation for possible values of the string.
     d : int or float
         Distance to supernova in kpc.
     output_filename : str or None
@@ -179,8 +205,7 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
     model_class = getattr(snewpy.models.ccsn, model_type)
 
     # Choose flavor transformation. Use dict to associate the transformation name with its class.
-    flavor_transformation_dict = {'NoTransformation': NoTransformation(), 'AdiabaticMSW_NMO': AdiabaticMSW(mh=MassHierarchy.NORMAL), 'AdiabaticMSW_IMO': AdiabaticMSW(mh=MassHierarchy.INVERTED), 'NonAdiabaticMSWH_NMO': NonAdiabaticMSWH(mh=MassHierarchy.NORMAL), 'NonAdiabaticMSWH_IMO': NonAdiabaticMSWH(mh=MassHierarchy.INVERTED), 'TwoFlavorDecoherence': TwoFlavorDecoherence(), 'ThreeFlavorDecoherence': ThreeFlavorDecoherence(), 'NeutrinoDecay_NMO': NeutrinoDecay(mh=MassHierarchy.NORMAL), 'NeutrinoDecay_IMO': NeutrinoDecay(mh=MassHierarchy.INVERTED)}
-    flavor_transformation = flavor_transformation_dict[transformation_type]
+
 
     model_dir, model_file = os.path.split(os.path.abspath(model_path))
     snmodel = model_class(model_path, **snmodel_dict)
@@ -228,7 +253,7 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
         tfname = output_filename+'.tar.bz2'
     else:
         model_file_root, _ = os.path.splitext(model_file)  # strip extension (if present)
-        tfname = model_file_root + '.' + transformation_type + '.{:.3f},{:.3f},{:d}-{:.1f}'.format(t0, t1, nbin, d) + 'kpc.tar.bz2'
+        tfname = model_file_root + '.' + str(flavor_transformation) + '.{:.3f},{:.3f},{:d}-{:.1f}'.format(t0, t1, nbin, d) + 'kpc.tar.bz2'
 
     with tarfile.open(os.path.join(model_dir, tfname), 'w:bz2') as tf:
         #creates file in tar archive that gives information on parameters
@@ -267,7 +292,7 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
 
                 #last time bin of model in requested interval
                 temp_spectra = snmodel.get_transformed_spectra(
-                    model_times[ending_index[i]], energy, flavor_transformation)
+                    model_times[ending_index[i]], energy, transformation_type)
                 for flavor in Flavor:
                     osc_spectra[flavor] += temp_spectra[flavor]*(tb-model_tstart[ending_index[i]])
 
@@ -306,7 +331,7 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
                     filename = output_filename+extension
             else:
                 model_file_root, _ = os.path.splitext(model_file)  # strip extension (if present)
-                filename = model_file_root + '.tbin{:01d}.'.format(i+1) + transformation_type + \
+                filename = model_file_root + '.tbin{:01d}.'.format(i+1) + str(flavor_transformation) + \
                     '.{:.3f},{:.3f},{:01d}-{:.1f}kpc{}'.format(t0, t1, nbin, d, extension)
 
             info = tarfile.TarInfo(name=filename)
