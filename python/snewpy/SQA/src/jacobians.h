@@ -2,7 +2,7 @@
 #include "Sqa3.h"
 
 #ifndef jacobians_H
-#define jacobians_h
+#define jacobians_H
 
 MATRIX<double,10,8> J(std::array<double,NY> Y);
 void J(std::array<double,NY> Y,MATRIX<double,10,8> &j);
