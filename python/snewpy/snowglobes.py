@@ -24,6 +24,7 @@ import logging
 import os
 import re
 import tarfile
+import math
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -40,7 +41,7 @@ from snewpy.snowglobes_interface import SimpleRate
 
 logger = logging.getLogger(__name__)
 
-def generate_time_series(model_path, model_type, transformation_type, d, output_filename=None, ntbins=30, deltat=None, snmodel_dict={}):
+def generate_time_series(model_path, model_type, transformation_type, d, output_filename=None, ntbins=30, deltat=None, snmodel_dict={}, log_bins=False):
     """Generate time series files in SNOwGLoBES format.
 
     This version will subsample the times in a supernova model, produce energy
@@ -64,6 +65,8 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
         Length of time slices.
     snmodel_dict : dict
         Additional arguments for setting up the supernova model. See documentation of relevant ``SupernovaModel`` subclass for available options. (Optional)
+    log_bins : bool
+        Use logarithmically-spaced time bins
 
     Returns
     -------
@@ -90,6 +93,20 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
 
     tedges = np.arange(tmin/u.s, tmax/u.s, dt/u.s)*u.s
     times = 0.5*(tedges[1:] + tedges[:-1])
+
+    # now process log data
+    if log_bins:
+        log_edges = np.asarray([])
+
+        if tmax <= 0 or tmin <= 0:
+            raise ValueError("Cannot apply log to time windows that are less than or equal to 0. Consider adjusting model time window")
+        tstep = math.log10(abs(tmax/tmin))/len(times)
+
+        for i in range(0,len(times)):
+            t = (tmin/u.s)*(10**(i*tstep))
+            log_edges = np.append(log_edges,t)
+        log_edges = log_edges*u.s
+        times = 0.5*(log_edges[1:] + log_edges[:-1])
 
     # Generate output.
     if output_filename is not None:
