@@ -1719,6 +1719,8 @@ class QuantumDecoherence(FlavorTransformation):
         self.Gamma3 = (Gamma3 / (c.hbar.to('eV s') * c.c)).to('1/kpc')
         self.Gamma8 = (Gamma8 / (c.hbar.to('eV s') * c.c)).to('1/kpc')
         self.d = dist
+        self.n = n
+        self.E0 = E0
     
     def P11(self, E):
         """Survival probability of state nu1 in vacuum.
