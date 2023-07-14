@@ -1716,7 +1716,7 @@ class QuantumDecoherence(FlavorTransformation):
         self.d = dist
     
     def P11(self, E):
-        """Survival proability of state nu1 in vacuum.
+        """Survival probability of state nu1 in vacuum.
 
         Parameters
         ----------
@@ -1726,14 +1726,14 @@ class QuantumDecoherence(FlavorTransformation):
         Returns
         -------
         P11 : float
-            Survival proability of state nu1 in vacuum.
+            Survival probability of state nu1 in vacuum.
 
         :meta private:
         """
         return 1/3 + 1/2 * np.exp(-(self.Gamma3 + self.Gamma8/3) * self.d) + 1/6 * np.exp(-self.Gamma8 * self.d)
 
     def P21(self, E):
-        """Transition proability from the state nu2 to nu1 in vacuum.
+        """Transition probability from the state nu2 to nu1 in vacuum.
 
         Parameters
         ----------
@@ -1761,15 +1761,33 @@ class QuantumDecoherence(FlavorTransformation):
         Returns
         -------
         P31 : float
-            Transition proability from the state nu3 to nu1 in vacuum.
+            Transition probability from the state nu3 to nu1 in vacuum.
             Note that P31 = P13.
 
         :meta private:
         """
         return 1/3 - 1/3 * np.exp(-self.Gamma8 * self.d)
     
+    def P32(self, E):
+        """Transition probability from the state nu3 to nu2 in vacuum.
+
+        Parameters
+        ----------
+        E : float
+            Energy.
+
+        Returns
+        -------
+        P32 : float
+            Transition probability from the state nu3 to nu2 in vacuum.
+            Note that P32 = P23.
+
+        :meta private:
+        """
+        return self.P31(E)
+    
     def P33(self, E):
-        """Survival proability of state nu3 in vacuum.
+        """Survival probability of state nu3 in vacuum.
 
         Parameters
         ----------
@@ -1779,7 +1797,7 @@ class QuantumDecoherence(FlavorTransformation):
         Returns
         -------
         P33 : float
-            Survival proability of state nu3 in vacuum.
+            Survival probability of state nu3 in vacuum.
 
         :meta private:
         """
