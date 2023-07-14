@@ -1750,6 +1750,24 @@ class QuantumDecoherence(FlavorTransformation):
         """
         return 1/3 - 1/2 * np.exp(-(self.Gamma3 + self.Gamma8/3) * self.d) + 1/6 * np.exp(-self.Gamma8 * self.d)
 
+    def P22(self, E):
+        """Survival probability of state nu2 in vacuum.
+
+        Parameters
+        ----------
+        E : float
+            Energy.
+
+        Returns
+        -------
+        P21 : float
+            Survival probability of state nu2 in vacuum.
+
+        :meta private:
+        """
+        return self.P11(E)
+
+
     def P31(self, E):
         """Transition probability from the state nu3 to nu1 in vacuum.
 
@@ -1894,7 +1912,7 @@ class QuantumDecoherence(FlavorTransformation):
         """
         # NMO case.
         if self.mass_order == MassHierarchy.NORMAL:
-            pe_array = self.P11(E)*self.De1 + self.P12(E)*self.De2 + self.P31(E)*self.De3
+            pe_array = self.P11(E)*self.De1 + self.P21(E)*self.De2 + self.P31(E)*self.De3
         # IMO case.
         else:
             pe_array = self.P31(E)*self.De1 + self.P32(E)*self.De2 + self.P33(E)*self.De3
