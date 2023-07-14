@@ -1675,23 +1675,22 @@ class NonAdiabaticMSWes(FlavorTransformation):
             return ( 1 - self.De3 - self.Ds3 ) / 2        
     
 
-
-class NeutrinoDecay(FlavorTransformation):
-    """Decay effect, where the heaviest neutrino decays to the lightest
-    neutrino. For a description and typical parameters, see A. de Gouvêa et al.,
-    PRD 101:043013, 2020, arXiv:1910.01127.
+class QuantumDecoherence(FlavorTransformation):
+    """Quantum Decoherence, where propagation in vacuum leads to equipartition
+    of states. For a description and typical parameters, see M. V. dos Santos et al.,
+    2023, arXiv:2306.17591.
     """
-    def __init__(self, mix_angles=None, mass=1*u.eV/c.c**2, tau=1*u.day, dist=10*u.kpc, mh=MassHierarchy.NORMAL):
+    def __init__(self, mix_angles=None, Gamma3=1e-27*u.eV, Gamma8=1e-27*u.eV, dist=10*u.kpc, mh=MassHierarchy.NORMAL):
         """Initialize transformation matrix.
 
         Parameters
         ----------
         mix_angles : tuple or None
             If not None, override default mixing angles using tuple (theta12, theta13, theta23).
-        mass : astropy.units.quantity.Quantity
-            Mass of the heaviest neutrino; expect in eV/c^2.
-        tau : astropy.units.quantity.Quantity
-            Lifetime of the heaviest neutrino.
+        Gamma3 : astropy.units.quantity.Quantity
+            Quantum decoherence parameter; expect in eV.
+        Gamma8 : astropy.units.quantity.Quantity
+            Quantum decoherence parameter; expect in eV.
         dist : astropy.units.quantity.Quantity
             Distance to the supernova.
         mh : MassHierarchy
@@ -1712,26 +1711,79 @@ class NeutrinoDecay(FlavorTransformation):
         self.De2 = float((np.sin(theta12) * np.cos(theta13))**2)
         self.De3 = float(np.sin(theta13)**2)
 
-        self.m = mass
-        self.tau = tau
+        self.Gamma3 = (Gamma3 / (c.hbar.to('eV s') * c.c)).to('1/kpc')
+        self.Gamma8 = (Gamma8 / (c.hbar.to('eV s') * c.c)).to('1/kpc')
         self.d = dist
-
-    def gamma(self, E):
-        """Decay width of the heaviest neutrino mass.
+    
+    def P11(self, E):
+        """Survival proability of state nu1 in vacuum.
 
         Parameters
         ----------
         E : float
-            Energy of the nu3.
+            Energy.
 
         Returns
         -------
-        Gamma : float
-            Decay width of the neutrino mass, in units of 1/length.
+        P11 : float
+            Survival proability of state nu1 in vacuum.
 
         :meta private:
         """
-        return self.m*c.c / (E*self.tau)
+        return 1/3 + 1/2 * np.exp(-(self.Gamma3 + self.Gamma8/3) * self.d) + 1/6 * np.exp(-self.Gamma8 * self.d)
+
+    def P21(self, E):
+        """Transition proability from the state nu2 to nu1 in vacuum.
+
+        Parameters
+        ----------
+        E : float
+            Energy.
+
+        Returns
+        -------
+        P21 : float
+            Transition probability from the state nu2 to nu1 in vacuum.
+            Note that P21 = P12.
+
+        :meta private:
+        """
+        return 1/3 - 1/2 * np.exp(-(self.Gamma3 + self.Gamma8/3) * self.d) + 1/6 * np.exp(-self.Gamma8 * self.d)
+
+    def P31(self, E):
+        """Transition probability from the state nu3 to nu1 in vacuum.
+
+        Parameters
+        ----------
+        E : float
+            Energy.
+
+        Returns
+        -------
+        P31 : float
+            Transition proability from the state nu3 to nu1 in vacuum.
+            Note that P31 = P13.
+
+        :meta private:
+        """
+        return 1/3 - 1/3 * np.exp(-self.Gamma8 * self.d)
+    
+    def P33(self, E):
+        """Survival proability of state nu3 in vacuum.
+
+        Parameters
+        ----------
+        E : float
+            Energy.
+
+        Returns
+        -------
+        P33 : float
+            Survival proability of state nu3 in vacuum.
+
+        :meta private:
+        """
+        return 1/3 + 2/3 * np.exp(-self.Gamma8 * self.d)
 
     def prob_ee(self, t, E):
         """Electron neutrino survival probability.
@@ -1750,12 +1802,10 @@ class NeutrinoDecay(FlavorTransformation):
         """
         # NMO case.
         if self.mass_order == MassHierarchy.NORMAL:
-            pe_array = self.De1*(1-np.exp(-self.gamma(E)*self.d)) + \
-                       self.De3*np.exp(-self.gamma(E)*self.d)
+            pe_array = self.P31(E)*self.De1 + self.P32(E)*self.De2 + self.P33(E)*self.De3
         # IMO case.
         else:
-            pe_array = self.De2*np.exp(-self.gamma(E)*self.d) + \
-                       self.De3*(1-np.exp(-self.gamma(E)*self.d))
+            pe_array = self.P22(E)*self.De2 + self.P21(E)*self.De1 + self.P32(E)*self.De3
         return pe_array
 
     def prob_ex(self, t, E):
@@ -1773,12 +1823,7 @@ class NeutrinoDecay(FlavorTransformation):
         prob : float or ndarray
             Transition probability.
         """
-        # NMO case.
-        if self.mass_order == MassHierarchy.NORMAL:
-            return self.De1 + self.De3
-        # IMO case.
-        else:
-            return self.De1 + self.De2
+        return 1. - self.prob_ee(t,E)
 
     def prob_xx(self, t, E):
         """Flavor X neutrino survival probability.
@@ -1829,7 +1874,13 @@ class NeutrinoDecay(FlavorTransformation):
         prob : float or ndarray
             Transition probability.
         """
-        return self.De3  
+        # NMO case.
+        if self.mass_order == MassHierarchy.NORMAL:
+            pe_array = self.P11(E)*self.De1 + self.P12(E)*self.De2 + self.P31(E)*self.De3
+        # IMO case.
+        else:
+            pe_array = self.P31(E)*self.De1 + self.P32(E)*self.De2 + self.P33(E)*self.De3
+        return pe_array
 
     def prob_exbar(self, t, E):
         """X -> e antineutrino transition probability.
@@ -1846,15 +1897,7 @@ class NeutrinoDecay(FlavorTransformation):
         prob : float or ndarray
             Transition probability.
         """
-        # NMO case.
-        if self.mass_order == MassHierarchy.NORMAL:
-            pxbar_array = self.De1*(1-np.exp(-self.gamma(E)*self.d)) + \
-                          self.De2 + self.De3*np.exp(-self.gamma(E)*self.d)
-        # IMO case.
-        else:
-            pxbar_array = self.De1 + self.De2*np.exp(-self.gamma(E)*self.d) + \
-                          self.De3*(1-np.exp(-self.gamma(E)*self.d))
-        return pxbar_array
+        return 1. - self.prob_eebar(t,E)
 
     def prob_xxbar(self, t, E):
         """X -> X antineutrino survival probability.
@@ -1888,4 +1931,4 @@ class NeutrinoDecay(FlavorTransformation):
         prob : float or ndarray
             Transition probability.
         """
-        return (1. - self.prob_eebar(t,E)) / 2.       
+        return (1. - self.prob_eebar(t,E)) / 2.
