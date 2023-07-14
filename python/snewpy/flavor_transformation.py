@@ -1680,7 +1680,7 @@ class QuantumDecoherence(FlavorTransformation):
     of states. For a description and typical parameters, see M. V. dos Santos et al.,
     2023, arXiv:2306.17591.
     """
-    def __init__(self, mix_angles=None, Gamma3=1e-27*u.eV, Gamma8=1e-27*u.eV, dist=10*u.kpc, mh=MassHierarchy.NORMAL):
+    def __init__(self, mix_angles=None, Gamma3=1e-27*u.eV, Gamma8=1e-27*u.eV, dist=10*u.kpc, n=0, E0=10*u.MeV, mh=MassHierarchy.NORMAL):
         """Initialize transformation matrix.
 
         Parameters
@@ -1693,6 +1693,11 @@ class QuantumDecoherence(FlavorTransformation):
             Quantum decoherence parameter; expect in eV.
         dist : astropy.units.quantity.Quantity
             Distance to the supernova.
+        n : float
+            Exponent of power law for energy dependent quantum decoherence parameters,
+            i.e. Gamma = Gamma0*(E/E0)**n.
+        E0 : astropy.units.quantity.Quantity
+            Reference energy in the power law Gamma = Gamma0*(E/E0)**n. 
         mh : MassHierarchy
             MassHierarchy.NORMAL or MassHierarchy.INVERTED.
         """
@@ -1730,7 +1735,7 @@ class QuantumDecoherence(FlavorTransformation):
 
         :meta private:
         """
-        return 1/3 + 1/2 * np.exp(-(self.Gamma3 + self.Gamma8/3) * self.d) + 1/6 * np.exp(-self.Gamma8 * self.d)
+        return 1/3 + 1/2 * np.exp(-(self.Gamma3 * (E/self.E0)**self.n + self.Gamma8 * (E/self.E0)**self.n / 3) * self.d) + 1/6 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
 
     def P21(self, E):
         """Transition probability from the state nu2 to nu1 in vacuum.
@@ -1748,7 +1753,7 @@ class QuantumDecoherence(FlavorTransformation):
 
         :meta private:
         """
-        return 1/3 - 1/2 * np.exp(-(self.Gamma3 + self.Gamma8/3) * self.d) + 1/6 * np.exp(-self.Gamma8 * self.d)
+        return 1/3 - 1/2 * np.exp(-(self.Gamma3 * (E/self.E0)**self.n + self.Gamma8 * (E/self.E0)**self.n / 3) * self.d) + 1/6 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
 
     def P22(self, E):
         """Survival probability of state nu2 in vacuum.
@@ -1784,7 +1789,7 @@ class QuantumDecoherence(FlavorTransformation):
 
         :meta private:
         """
-        return 1/3 - 1/3 * np.exp(-self.Gamma8 * self.d)
+        return 1/3 - 1/3 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
     
     def P32(self, E):
         """Transition probability from the state nu3 to nu2 in vacuum.
@@ -1819,7 +1824,7 @@ class QuantumDecoherence(FlavorTransformation):
 
         :meta private:
         """
-        return 1/3 + 2/3 * np.exp(-self.Gamma8 * self.d)
+        return 1/3 + 2/3 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
 
     def prob_ee(self, t, E):
         """Electron neutrino survival probability.
