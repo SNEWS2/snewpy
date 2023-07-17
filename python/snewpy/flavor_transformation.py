@@ -1695,9 +1695,11 @@ class QuantumDecoherence(FlavorTransformation):
             Distance to the supernova.
         n : float
             Exponent of power law for energy dependent quantum decoherence parameters,
-            i.e. Gamma = Gamma0*(E/E0)**n.
+            i.e. Gamma = Gamma0*(E/E0)**n. If not specified, it is taken as zero.
         E0 : astropy.units.quantity.Quantity
-            Reference energy in the power law Gamma = Gamma0*(E/E0)**n. 
+            Reference energy in the power law Gamma = Gamma0*(E/E0)**n. If not specified, 
+            it is taken as 10 MeV. Note that if n = 0, quantum decoherence parameters are independent
+            of E0.
         mh : MassHierarchy
             MassHierarchy.NORMAL or MassHierarchy.INVERTED.
         """
