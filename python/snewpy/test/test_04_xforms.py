@@ -7,7 +7,7 @@ from snewpy.flavor_transformation import \
     AdiabaticMSW, NonAdiabaticMSWH, \
     AdiabaticMSWes, NonAdiabaticMSWes, \
     TwoFlavorDecoherence, ThreeFlavorDecoherence, \
-    NeutrinoDecay
+    NeutrinoDecay, QuantumDecoherence
 
 from astropy import units as u
 from astropy import constants as c
