@@ -231,7 +231,6 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False, *
             result[det][f'rates.tbin{n_bin:01d}'] = df
         
     # save result to file for re-use in collate()
-    # save result to file for re-use in collate()
     cache_file = tarball_path[:tarball_path.rfind('.')] + 'rates.npy'
     logging.info(f'Saving simulation results to {cache_file}')
     np.save(cache_file, result)
