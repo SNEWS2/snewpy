@@ -123,8 +123,8 @@ class SnowglobesData:
             self.channels[material] = df
 
             nsamples, smin, smax, nbins, emin, emax = [float(t) for t in tokens]
-            self.binning[material] = {'e_true': np.linspace(smin, smax, int(nsamples)),
-                                      'e_smear': np.linspace(emin, emax, int(nbins))
+            self.binning[material] = {'e_true': np.linspace(smin, smax, int(nsamples)+1),
+                                      'e_smear': np.linspace(emin, emax, int(nbins)+1)
                                       }
         self.materials = list(self.channels.keys())
         self.chan_dir = chan_dir
@@ -223,7 +223,7 @@ class SimpleRate(SnowglobesData):
         #load the binning for the smearing
         binning= self.binning[material]
         #calculate bin centers 
-        energies_t = 0.5*(binning['e_true'][1:]+ binning['e_true'][:-1])
+        energies_t = 0.5*(binning['e_true'][1:]+ binning['e_true'][:-1] )
         energies_s= 0.5*(binning['e_smear'][1:]+binning['e_smear'][:-1])
         binsize = np.diff(binning['e_true'])
 
