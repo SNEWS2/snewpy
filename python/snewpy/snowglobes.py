@@ -98,7 +98,7 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
         tfname = output_filename + '.npz'
     else:
         model_file_root, _ = os.path.splitext(model_file)  # strip extension (if present)
-        tfname = model_file_root + '.' + transformation_type + '.{:.3f},{:.3f},{:d}-{:.1f}'.format(tmin, tmax, ntbins, d) + '.npz'
+        tfname = f'{model_file_root}.{transformation_type}.{tmin:.3f},{tmax:.3f},{ntbins:d}-{d:.1f}.npz'
     fluence.save(tfname)
     return tfname
 
