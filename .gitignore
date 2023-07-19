@@ -19,3 +19,6 @@ fluence_Bollig_2016_s*
 # editor-specific
 .ipynb_checkpoints/
 .vscode/
+
+#hypothesis package cache
+.hypothesis/
