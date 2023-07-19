@@ -19,7 +19,6 @@ There are three basic steps to using SNOwGLoBES from SNEWPY:
     The output tables allow to build the detected neutrino energy spectrum and neutrino time distribution, for each reaction channel or the sum of them.
 """
 
-import io
 import logging
 import os
 import re
@@ -29,15 +28,15 @@ from tempfile import TemporaryDirectory
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from astropy import units as u
-from tqdm.auto import tqdm
 from warnings import warn
 
 import snewpy.models
 from snewpy.flavor_transformation import *
-from snewpy.neutrino import Flavor, MassHierarchy
-from snewpy.snowglobes_interface import SimpleRate
-
+from snewpy.neutrino import MassHierarchy
+from snewpy.rate_calculator import RateCalculator, center
+from snewpy.flux import Container
 logger = logging.getLogger(__name__)
 
 def generate_time_series(model_path, model_type, transformation_type, d, output_filename=None, ntbins=30, deltat=None, snmodel_dict={}):
@@ -68,7 +67,7 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
     Returns
     -------
     str
-        Path of compressed .tar file with neutrino flux data.
+        Path of NumPy archive file with neutrino fluence data.
     """
     model_class = getattr(snewpy.models.ccsn, model_type)
 
@@ -88,63 +87,18 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
     else:
         dt = (tmax - tmin) / (ntbins+1)
 
-    tedges = np.arange(tmin/u.s, tmax/u.s, dt/u.s)*u.s
-    times = 0.5*(tedges[1:] + tedges[:-1])
-
-    # Generate output.
+    times = np.arange(tmin/u.s, tmax/u.s, dt/u.s)*u.s
+    energy = np.linspace(0, 100, 501) * u.MeV
+    flux = snmodel.get_flux(t=times, E=energy,  distance=d, flavor_xform=flavor_transformation)
+    fluence = flux.integrate('time', limits = times).integrate('energy', limits = energy)
+    #save resulting fluence to file
     if output_filename is not None:
-        tfname = output_filename + 'kpc.tar.bz2'
+        tfname = output_filename + '.npz'
     else:
         model_file_root, _ = os.path.splitext(model_file)  # strip extension (if present)
-        tfname = model_file_root + '.' + transformation_type + '.{:.3f},{:.3f},{:d}-{:.1f}'.format(tmin, tmax, ntbins, d) + 'kpc.tar.bz2'
-
-    with tarfile.open(os.path.join(model_dir, tfname), 'w:bz2') as tf:
-        #creates file in tar archive that gives information on parameters
-        output = '\n'.join(map(str, transformation_type)).encode('ascii')
-        tf.addfile(tarfile.TarInfo(name='parameterinfo'), io.BytesIO(output))
-
-        MeV = 1.60218e-6 * u.erg
-        energy = np.linspace(0, 100, 501) * MeV  # 1MeV
-
-        # Loop over sampled times.
-        for i, t in enumerate(times):
-            osc_spectra = snmodel.get_transformed_spectra(t, energy, flavor_transformation)
-
-            osc_fluence = {}
-            table = []
-
-            table.append('# TBinMid={:g}sec TBinWidth={:g}s EBinWidth=0.2MeV Fluence at Earth for this timebin in neutrinos per cm^2'.format(t, dt))
-            table.append('# E(GeV)	NuE	NuMu	NuTau	aNuE	aNuMu	aNuTau')
-
-            # Generate energy + number flux table.
-            for j, E in enumerate(energy):
-                for flavor in Flavor:
-                    osc_fluence[flavor] = osc_spectra[flavor][j] * dt * 0.2 * MeV / (4.*np.pi*(d*1000*3.086e+18)**2)
-
-                s = '{:17.8E}'.format(E/(1e3 * MeV))
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_E])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_X])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_X])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_E_BAR])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_X_BAR])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_X_BAR])
-                table.append(s)
-                logging.debug(s)
-
-            # Encode energy/flux table and output to file in tar archive.
-            output = '\n'.join(table).encode('ascii')
-
-            extension = ".dat"
-            model_file_root, _ = os.path.splitext(model_file)
-            filename = model_file_root + '.tbin{:01d}.'.format(i+1) + transformation_type + \
-                '.{:.3f},{:.3f},{:01d}-{:.1f}kpc{}'.format(tmin/u.s, tmax/u.s, ntbins, d, extension)
-
-            info = tarfile.TarInfo(name=filename)
-            info.size = len(output)
-            tf.addfile(info, io.BytesIO(output))
-
-    return os.path.join(model_dir, tfname)
-
+        tfname = f'{model_file_root}.{transformation_type}.{tmin:.3f},{tmax:.3f},{ntbins:d}-{d:.1f}.npz'
+    fluence.save(tfname)
+    return tfname
 
 def generate_fluence(model_path, model_type, transformation_type, d, output_filename=None, tstart=None, tend=None, snmodel_dict={}):
     """Generate fluence files in SNOwGLoBES format.
@@ -174,7 +128,7 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
     Returns
     -------
     str
-        Path of compressed .tar file with neutrino flux data.
+        Path of NumPy archive file with neutrino fluence data.
     """
     model_class = getattr(snewpy.models.ccsn, model_type)
 
@@ -187,133 +141,34 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
 
     #set the timings up
     #default if inputs are None: full time window of the model
-    if tstart is None:
-        tstart = snmodel.get_time()[0]
-        tend = snmodel.get_time()[-1]
+    times = None
+    if tstart is not None and tend is not None:
+        try:
+            #in case we have arrays: join them together
+            times = np.append(tstart, tend)
+            #and get rid of the duplicates with 1e-10 tolerance
+            times = np.unique(times.round(decimals=10))
+        except:
+            #in case we have single values
+            times = u.Quantity([tstart,tend])
+        times.sort()
 
-    try:
-        if len(tstart/u.s) > 0:
-            t0 = tstart[0]
-            t1 = tend[-1]
-            nbin = len(tstart/u.s)
-    except:
-        t0 = tstart
-        t1 = tend
-        nbin = 1
-
-    times = 0.5*(tstart + tend)
-
-    model_times = snmodel.get_time()
-    model_tstart = model_times*1.0
-    model_tend = model_times*1.0
-
-    model_tstart[0] = model_times[0]
-    for i in range(1, len(model_times)):
-        model_tstart[i] = 0.5*(model_times[i]+model_times[i-1])
-        model_tend[i-1] = model_tstart[i]
-    model_tend[len(model_times)-1] = model_times[-1]
-
-    if nbin > 1:
-        starting_index = np.zeros(len(times), dtype=np.int64)
-        ending_index = np.zeros(len(times), dtype=np.int64)
-        for i in range(len(tstart)):
-            starting_index[i] = next(j for j, t in enumerate(model_tend) if t > tstart[i])
-            ending_index[i] = next(j for j, t in enumerate(model_tend) if t >= tend[i])
-    else:
-        starting_index = [next(j for j, t in enumerate(model_tend) if t > tstart)]
-        ending_index = [next(j for j, t in enumerate(model_tend) if t >= tend)]
-
-    # Generate output.
+    #energy with 0.2 MeV binning
+    energy   = np.arange(0, 101, 0.2) << u.MeV
+    #energy bins similar to SNOwGLoBES
+    energy_t = (np.linspace(0, 100, 201)+0.25) << u.MeV 
+    flux = snmodel.get_flux(t=snmodel.get_time(), E=energy,  distance=d, flavor_xform=flavor_transformation)
+    fluence = flux.integrate('time', limits = times).integrate('energy', limits = energy_t)
+    times = fluence.time
+    #store the energy bin centers instead of the edges
     if output_filename is not None:
-        tfname = output_filename+'.tar.bz2'
+        tfname = output_filename+'.npz'
     else:
         model_file_root, _ = os.path.splitext(model_file)  # strip extension (if present)
-        tfname = model_file_root + '.' + transformation_type + '.{:.3f},{:.3f},{:d}-{:.1f}'.format(t0, t1, nbin, d) + 'kpc.tar.bz2'
+        tfname = f'{model_file_root}.{transformation_type}.{times[0]:.3f},{times[1]:.3f},{len(times)-1:d}-{d:.1f}.npz'
 
-    with tarfile.open(os.path.join(model_dir, tfname), 'w:bz2') as tf:
-        #creates file in tar archive that gives information on parameters
-        output = '\n'.join(map(str, transformation_type)).encode('ascii')
-        tf.addfile(tarfile.TarInfo(name='parameterinfo'), io.BytesIO(output))
-
-        MeV = 1.60218e-6 * u.erg
-        energy = np.linspace(0, 100, 501) * MeV
-
-        # Loop over sampled times.
-        for i in range(nbin):
-
-            if nbin > 1:
-                ta = tstart[i]
-                tb = tend[i]
-                t = times[i]
-                dt = tb-ta
-            else:
-                ta = tstart
-                tb = tend
-                t = times
-                dt = tb-ta
-
-            #first time bin of model in requested interval
-            osc_spectra = snmodel.get_transformed_spectra(model_times[starting_index[i]], energy, flavor_transformation)
-
-            if dt >= model_tend[starting_index[i]]-ta:
-                for flavor in Flavor:
-                    osc_spectra[flavor] *= (model_tend[starting_index[i]]-ta)
-
-                #intermediate time bins of model in requested interval
-                for j in range(starting_index[i]+1, ending_index[i]):
-                    temp_spectra = snmodel.get_transformed_spectra(model_times[j], energy, flavor_transformation)
-                    for flavor in Flavor:
-                        osc_spectra[flavor] += temp_spectra[flavor]*(model_tend[j]-model_tstart[j])
-
-                #last time bin of model in requested interval
-                temp_spectra = snmodel.get_transformed_spectra(
-                    model_times[ending_index[i]], energy, flavor_transformation)
-                for flavor in Flavor:
-                    osc_spectra[flavor] += temp_spectra[flavor]*(tb-model_tstart[ending_index[i]])
-
-                for flavor in Flavor:
-                    osc_spectra[flavor] /= (tb-ta)
-
-            osc_fluence = {}
-            table = []
-
-            table.append('# TBinMid={:g}sec TBinWidth={:g}s EBinWidth=0.2MeV Fluence at Earth for this timebin in neutrinos per cm^2'.format(t, dt))
-            table.append('# E(GeV)	NuE	NuMu	NuTau	aNuE	aNuMu	aNuTau')
-
-            # Generate energy + number flux table.
-            for j, E in enumerate(energy):
-                for flavor in Flavor:
-                    osc_fluence[flavor] = osc_spectra[flavor][j] * dt * 0.2 * MeV / (4.*np.pi*(d*1000*3.086e+18)**2)
-
-                s = '{:17.8E}'.format(E/(1e3 * MeV))
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_E])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_X])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_X])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_E_BAR])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_X_BAR])
-                s = '{}{:17.8E}'.format(s, osc_fluence[Flavor.NU_X_BAR])
-                table.append(s)
-                logging.debug(s)
-
-            # Encode energy/flux table and output to file in tar archive.
-            output = '\n'.join(table).encode('ascii')
-
-            extension = ".dat"
-            if output_filename is not None:
-                if nbin > 1:
-                    filename = output_filename+"_"+str(i)+extension
-                else:
-                    filename = output_filename+extension
-            else:
-                model_file_root, _ = os.path.splitext(model_file)  # strip extension (if present)
-                filename = model_file_root + '.tbin{:01d}.'.format(i+1) + transformation_type + \
-                    '.{:.3f},{:.3f},{:01d}-{:.1f}kpc{}'.format(t0, t1, nbin, d, extension)
-
-            info = tarfile.TarInfo(name=filename)
-            info.size = len(output)
-            tf.addfile(info, io.BytesIO(output))
-
-    return os.path.join(model_dir, tfname)
+    fluence.save(tfname)
+    return tfname
 
 def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False, *, detector_effects=True):
     """Calculate expected event rates for the given neutrino flux files and the given (set of) SNOwGLoBES detector(s).
@@ -335,27 +190,53 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False, *
     if verbose:  # Deprecated since SNEWPY v1.2
         warn(f"The 'verbose' parameter to 'snewpy.snowglobes.simulate()' is deprecated and should not be used.", FutureWarning)
 
-    sng = SimpleRate(base_dir=SNOwGLoBESdir, detectors=detector_input, detector_effects=detector_effects)
-    detector_input = list(sng.detectors)
-
+    rc = RateCalculator(base_dir=SNOwGLoBESdir)
+    if detector_input == 'all':
+        detector_input = list(rc.detectors)
+    if(isinstance(detector_input,str)):
+        detector_input=[detector_input]
+    rates_dict = {}
+    #read the fluence
+    fluence = Container.load(tarball_path)
+    for det in detector_input:
+        rates_smeared=rc.run(fluence, det, detector_effects=True)
+        rates_unsmeared=rc.run(fluence, det, detector_effects=False)
+        #collect everything to pandas DataFrame, to make the output similar to previous
+        rates_dict[det]={'weighted':{'unsmeared':rates_unsmeared,
+                                 'smeared':rates_smeared,
+                                }}
+    # reorder results to produce the same format as before:
+    #    {detector: {time_bin:{'weighted':{smeared/unsmeared: [rate vs energy bins]}}}}
     result = {}
-    #Extracts data from tarfile and sets up lists of paths and fluxfilenames for later use
-    with TemporaryDirectory(prefix='snowglobes') as tempdir:
-        with tarfile.open(tarball_path) as tar:
-            tar.extractall(tempdir)
+    fname_base = tarball_path[:tarball_path.rfind('.')]
+    for det in rates_dict:
+        #get the time bins
+        rates_smeared   = rates_dict[det]['weighted']['smeared']
+        rates_unsmeared = rates_dict[det]['weighted']['unsmeared']
 
-        flux_files = list(Path(tempdir).glob('*.dat'))
-        if len(detector_input)>0:
-            detector_input = tqdm(detector_input, desc='Detectors', leave=False)
-        for det in detector_input:
-            res=sng.run(flux_files, det)
-            result[det]=dict(zip((f.stem for f in flux_files),res))
-
+        #get the first rate from the dict to access the energy and time binning
+        some_rate = list(rates_smeared.values())[0]
+        tbins = center(some_rate.time)
+        ebins = center(some_rate.energy)
+        result[det] = {}
+        for n_bin, t_bin in enumerate(tbins):
+            data = {**{(chan,'unsmeared','weighted'): rate.array[0,n_bin,:]
+                      for chan,rate in rates_unsmeared.items()},
+                    **{(chan,'smeared','weighted'): rate.array[0,n_bin,:] 
+                      for chan,rate in rates_smeared.items()}}
+            
+            df = pd.DataFrame(data, index = ebins)
+            df.index.rename('E', inplace=True)
+            df.columns.rename(['channel','is_smeared','is_weighted'], inplace=True)
+            df = df.reorder_levels([2,1,0], axis='columns')
+            result[det][f'{fname_base}_{n_bin:01d}'] = df
+        
     # save result to file for re-use in collate()
-    cache_file = tarball_path[:tarball_path.rfind('.tar')] + '.npy'
+    cache_file = f'{fname_base}.npy'
     logging.info(f'Saving simulation results to {cache_file}')
     np.save(cache_file, result)
-    return result 
+    return result
+
 
 re_chan_label = re.compile(r'nu(e|mu|tau)(bar|)_([A-Z][a-z]*)(\d*)_?(.*)')
 def get_channel_label(c):
@@ -446,7 +327,7 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="", skip_plots=False, ve
             plt.ylabel('Interaction Events')  
 
     #read the results from storage
-    cache_file = tarball_path[:tarball_path.rfind('.tar')] + '.npy'
+    cache_file = tarball_path[:tarball_path.rfind('.')] + '.npy'
     logging.info(f'Reading tables from {cache_file}')
     tables = np.load(cache_file, allow_pickle=True).tolist()
     #This output is similar to what produced by:
@@ -462,7 +343,7 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="", skip_plots=False, ve
             results[det] = {}
             for flux,t in tables[det].items():
                 t = aggregate_channels(t,nc='nc_',e='_e')
-                for w in ['weighted','unweighted']:
+                for w in ['weighted']:
                     for s in smearing_options:
                         table = t[w][s]
                         filename_base = f'{flux}_{det}_events_{s}_{w}'
