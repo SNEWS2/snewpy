@@ -171,12 +171,13 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
     return tfname
 
 def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False, *, detector_effects=True):
-    """Takes as input the neutrino flux files and configures and runs the supernova script inside SNOwGLoBES, which outputs calculated event rates expected for a given (set of) detector(s). These event rates are given as a function of the neutrino energy and time, for each interaction channel.
+    """Calculate expected event rates for the given neutrino flux files and the given (set of) SNOwGLoBES detector(s).
+    These event rates are given as a function of the neutrino energy and time, for each interaction channel.
 
     Parameters
     ----------
-    SNOwGLoBESdir : str
-        Path to directory where SNOwGLoBES is installed.
+    SNOwGLoBESdir : str or None
+        Path to SNOwGLoBES directory. Set to ``None`` to automatically use the latest supported SNOwGLoBES release.
     tarball_path : str
         Path of compressed .tar file produced e.g. by ``generate_time_series()`` or ``generate_fluence()``.
     detector_input : str
@@ -260,7 +261,7 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="", skip_plots=False, ve
 
     Parameters
     ----------
-    SNOwGLoBESdir : str
+    SNOwGLoBESdir : str or None
         [DEPRECATED, DO NOT USE.]
     tarball_path : str
         Path of compressed .tar file produced e.g. by ``generate_time_series()`` or ``generate_fluence()``.
