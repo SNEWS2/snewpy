@@ -68,8 +68,8 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
 
     Returns
     -------
-    Fluence
-        container object with neutrino fluence data.
+    str
+        Path of NumPy archive file with neutrino fluence data.
     """
     model_class = getattr(snewpy.models.ccsn, model_type)
 
@@ -129,8 +129,8 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
 
     Returns
     -------
-    Fluence
-        Container object with neutrino fluence data.
+    str
+        Path of NumPy archive file with neutrino fluence data.
     """
     model_class = getattr(snewpy.models.ccsn, model_type)
 
