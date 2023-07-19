@@ -165,8 +165,7 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
         tfname = output_filename+'.npz'
     else:
         model_file_root, _ = os.path.splitext(model_file)  # strip extension (if present)
-        tfname = model_file_root + '.' + transformation_type + '.{:.3f},{:.3f},{:d}-{:.1f}'.format(
-            times[0], times[1], len(times)-1, d) + '.npz'
+        tfname = f'{model_file_root}.{transformation_type}.{times[0]:.3f},{times[1]:.3f},{len(times)-1:d}-{d:.1f}.npz'
 
     fluence.save(tfname)
     return tfname
