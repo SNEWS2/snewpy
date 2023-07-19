@@ -188,9 +188,9 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False, *
     if verbose:  # Deprecated since SNEWPY v1.2
         warn(f"The 'verbose' parameter to 'snewpy.snowglobes.simulate()' is deprecated and should not be used.", FutureWarning)
 
-    rc = RateCalculator(base_dir=SNOwGLoBESdir)#, detectors=detector_input, detector_effects=detector_effects)
+    rc = RateCalculator(base_dir=SNOwGLoBESdir)
     if detector_input == 'all':
-        detector_input = list(sng.detectors)
+        detector_input = list(rc.detectors)
     if(isinstance(detector_input,str)):
         detector_input=[detector_input]
     rates_dict = {}
