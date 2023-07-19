@@ -142,10 +142,12 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
     #set the timings up
     #default if inputs are None: full time window of the model
     times = None
-    if tstart and tend:
+    if tstart is not None and tend is not None:
         try:
-            #in case we have arrays
-            times = u.Quantity(np.unique([*tstart,*tend]))
+            #in case we have arrays: join them together
+            times = np.append(tstart, tend)
+            #and get rid of the duplicates with 1e-10 tolerance
+            times = np.unique(times.round(decimals=10))
         except:
             #in case we have single values
             times = u.Quantity([tstart,tend])
