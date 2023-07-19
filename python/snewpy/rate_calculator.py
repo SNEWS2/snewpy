@@ -151,21 +151,22 @@ class RateCalculator(SnowglobesData):
                     rateI = rate
                 try:
                     smear = self.smearings[detector][channel.name]
+                except KeyError:
+                    warn(f'Smearing not found for detector={detector}, channel={channel.name}. Using unsmeared spectrum')
+                    smear = np.eye(*smearing_shape)
+                try:
                     effic = self.efficiencies[detector][channel.name]
                 except KeyError:
-                    warn(f'Detector effects not found for detector={detector}, channel={channel.name}. Using unsmeared and with 100% efficiency')
-                    smear = np.eye(*smearing_shape)
+                    warn(f'Efficiency not found for detector={detector}, channel={channel.name}. Using 100% efficiency')
                     effic = np.ones(len(energies_s))
-                #apply smearing
+                #apply smearing and efficiency
                 rateS_array = np.dot(rateI.array, smear.T) * effic
                 rateS = Container(rateS_array, 
                                   flavor=rateI.flavor, 
                                   time=rateI.time, 
                                   energy=_bin_edges_from_centers(energies_s)<<u.MeV,
                                   integrable_axes=rateI._integrable_axes)
-                rateI = rateS
-                
-                #result[(channel.name,'unsmeared','unweighted')] = rateI
+
                 result[channel.name] = rateS
             else:
                 result[channel.name] = rate
