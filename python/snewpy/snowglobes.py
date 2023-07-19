@@ -19,7 +19,6 @@ There are three basic steps to using SNOwGLoBES from SNEWPY:
     The output tables allow to build the detected neutrino energy spectrum and neutrino time distribution, for each reaction channel or the sum of them.
 """
 
-import io
 import logging
 import os
 import re
@@ -31,12 +30,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from astropy import units as u
-from tqdm.auto import tqdm
 from warnings import warn
 
 import snewpy.models
 from snewpy.flavor_transformation import *
-from snewpy.neutrino import Flavor, MassHierarchy
+from snewpy.neutrino import MassHierarchy
 from snewpy.rate_calculator import RateCalculator, center
 from snewpy.flux import Container
 logger = logging.getLogger(__name__)
