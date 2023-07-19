@@ -229,7 +229,10 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False, *
             df.index.rename('E', inplace=True)
             df.columns.rename(['channel','is_smeared','is_weighted'], inplace=True)
             df = df.reorder_levels([2,1,0], axis='columns')
-            result[det][f'{fname_base}_{n_bin:01d}'] = df
+            if len(tbins) > 1:
+                result[det][f'{fname_base}_{n_bin:01d}'] = df
+            else:
+                result[det][f'{fname_base}'] = df
         
     # save result to file for re-use in collate()
     cache_file = f'{fname_base}.npy'
