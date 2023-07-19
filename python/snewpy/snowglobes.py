@@ -208,6 +208,7 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False, *
     # reorder results to produce the same format as before:
     #    {detector: {time_bin:{'weighted':{smeared/unsmeared: [rate vs energy bins]}}}}
     result = {}
+    fname_base = tarball_path[:tarball_path.rfind('.')]
     for det in rates_dict:
         #get the time bins
         rates_smeared   = rates_dict[det]['weighted']['smeared']
@@ -228,10 +229,10 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False, *
             df.index.rename('E', inplace=True)
             df.columns.rename(['channel','is_smeared','is_weighted'], inplace=True)
             df = df.reorder_levels([2,1,0], axis='columns')
-            result[det][f'rates.tbin{n_bin:01d}'] = df
+            result[det][f'{fname_base}_{n_bin:01d}'] = df
         
     # save result to file for re-use in collate()
-    cache_file = tarball_path[:tarball_path.rfind('.')] + 'rates.npy'
+    cache_file = f'{fname_base}.npy'
     logging.info(f'Saving simulation results to {cache_file}')
     np.save(cache_file, result)
     return result
@@ -326,7 +327,7 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="", skip_plots=False, ve
             plt.ylabel('Interaction Events')  
 
     #read the results from storage
-    cache_file = tarball_path[:tarball_path.rfind('.')] + 'rates.npy'
+    cache_file = tarball_path[:tarball_path.rfind('.')] + '.npy'
     logging.info(f'Reading tables from {cache_file}')
     tables = np.load(cache_file, allow_pickle=True).tolist()
     #This output is similar to what produced by:
