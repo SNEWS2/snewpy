@@ -342,7 +342,7 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="", skip_plots=False, ve
             results[det] = {}
             for flux,t in tables[det].items():
                 t = aggregate_channels(t,nc='nc_',e='_e')
-                for w in ['weighted','unweighted']:
+                for w in ['weighted']:
                     for s in smearing_options:
                         table = t[w][s]
                         filename_base = f'{flux}_{det}_events_{s}_{w}'
