@@ -88,8 +88,8 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
         dt = (tmax - tmin) / (ntbins+1)
 
     times = np.arange(tmin/u.s, tmax/u.s, dt/u.s)*u.s
-    energy = np.linspace(0, 100, 501) * MeV  # 1MeV
-    flux = snmodel.get_flux(t=tedges, E=energy,  distance=d, flavor_xform=flavor_transformation)
+    energy = np.linspace(0, 100, 501) * u.MeV
+    flux = snmodel.get_flux(t=times, E=energy,  distance=d, flavor_xform=flavor_transformation)
     fluence = flux.integrate('time', limits = times).integrate('energy', limits = energy)
     #save resulting fluence to file
     if output_filename is not None:
