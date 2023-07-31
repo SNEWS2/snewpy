@@ -97,7 +97,7 @@ class Patton_2017(SupernovaModel):
         self.filename = Path(fname).stem
         self.progenitor_mass = float(self.filename.split('_')[-1].rstrip('SolarMass')) * u.Msun
         metadata = {'Progenitor Mass': self.progenitor_mass}
-        super().__init__(times << u.hour, metadata)
+        super().__init__(-times << u.hour, metadata)
 
     def get_initial_spectra(self, t, E, flavors=Flavor):
         t = np.array(-t.to_value("hour"), ndmin=1)

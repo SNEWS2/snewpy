@@ -69,7 +69,7 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
     str
         Path of NumPy archive file with neutrino fluence data.
     """
-    model_class = getattr(snewpy.models.ccsn, model_type)
+    model_class = getattr(snewpy.models.presn, model_type)
 
     # Choose flavor transformation. Use dict to associate the transformation name with its class.
     flavor_transformation_dict = {'NoTransformation': NoTransformation(), 'AdiabaticMSW_NMO': AdiabaticMSW(mh=MassHierarchy.NORMAL), 'AdiabaticMSW_IMO': AdiabaticMSW(mh=MassHierarchy.INVERTED), 'NonAdiabaticMSWH_NMO': NonAdiabaticMSWH(mh=MassHierarchy.NORMAL), 'NonAdiabaticMSWH_IMO': NonAdiabaticMSWH(mh=MassHierarchy.INVERTED), 'TwoFlavorDecoherence': TwoFlavorDecoherence(), 'ThreeFlavorDecoherence': ThreeFlavorDecoherence(), 'NeutrinoDecay_NMO': NeutrinoDecay(mh=MassHierarchy.NORMAL), 'NeutrinoDecay_IMO': NeutrinoDecay(mh=MassHierarchy.INVERTED)}
@@ -130,7 +130,7 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
     str
         Path of NumPy archive file with neutrino fluence data.
     """
-    model_class = getattr(snewpy.models.ccsn, model_type)
+    model_class = getattr(snewpy.models.presn, model_type)
 
     # Choose flavor transformation. Use dict to associate the transformation name with its class.
     flavor_transformation_dict = {'NoTransformation': NoTransformation(), 'AdiabaticMSW_NMO': AdiabaticMSW(mh=MassHierarchy.NORMAL), 'AdiabaticMSW_IMO': AdiabaticMSW(mh=MassHierarchy.INVERTED), 'NonAdiabaticMSWH_NMO': NonAdiabaticMSWH(mh=MassHierarchy.NORMAL), 'NonAdiabaticMSWH_IMO': NonAdiabaticMSWH(mh=MassHierarchy.INVERTED), 'TwoFlavorDecoherence': TwoFlavorDecoherence(), 'ThreeFlavorDecoherence': ThreeFlavorDecoherence(), 'NeutrinoDecay_NMO': NeutrinoDecay(mh=MassHierarchy.NORMAL), 'NeutrinoDecay_IMO': NeutrinoDecay(mh=MassHierarchy.INVERTED)}
@@ -220,9 +220,9 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False, *
         ebins = center(some_rate.energy)
         result[det] = {}
         for n_bin, t_bin in enumerate(tbins):
-            data = {**{(chan,'unsmeared','weighted'): rate.array[0,n_bin,:]
+            data = {**{(chan,'unsmeared','weighted'): rate.array[0,n_bin,:].to(1)
                       for chan,rate in rates_unsmeared.items()},
-                    **{(chan,'smeared','weighted'): rate.array[0,n_bin,:] 
+                    **{(chan,'smeared','weighted'): rate.array[0,n_bin,:].to(1)
                       for chan,rate in rates_smeared.items()}}
             
             df = pd.DataFrame(data, index = ebins)
