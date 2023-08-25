@@ -39,9 +39,6 @@ template <typename Type,typename MType1,typename MType2> inline MATRIXEXPRESSION
 template <typename Type,typename MType1,typename MType2> inline MATRIXEXPRESSION_MATRIXMULTIPLICATION<std::complex<Type>,MATRIXEXPRESSION<Type,MType1>,MATRIXEXPRESSION<std::complex<Type>,MType2> > operator*(MATRIXEXPRESSION<Type,MType1> const &M1,MATRIXEXPRESSION<std::complex<Type>,MType2> const &M2)
          { return MATRIXEXPRESSION_MATRIXMULTIPLICATION<std::complex<Type>,MATRIXEXPRESSION<Type,MType1>,MATRIXEXPRESSION<std::complex<Type>,MType2> >(M1,M2);}
 
-//template <typename Type,typename MType1,typename MType2> inline MATRIXEXPRESSION_MATRIXDIVISION<Type,MATRIXEXPRESSION<Type,MType1>,MATRIXEXPRESSION<Type,MType2> > operator/(MATRIXEXPRESSION<Type,MType1> const &M1,MATRIXEXPRESSION<Type,MType2> const &M2)
-//         { return MATRIXEXPRESSION_MATRIXDIVISION<Type,MATRIXEXPRESSION<Type,MType1>,MATRIXEXPRESSION<Type,MType2> >(M1,M2);}
-
 // *******************************************************************
 
 template <typename Type,typename MType> inline MATRIXEXPRESSION_SCALARMATRIXADDITION<Type,MATRIXEXPRESSION<Type,MType> > operator+(Type const &S,MATRIXEXPRESSION<Type,MType> const &M)
@@ -61,9 +58,6 @@ template <typename Type,typename MType> inline MATRIXEXPRESSION_SCALARMATRIXMULT
 
 template <typename Type,typename MType> inline MATRIXEXPRESSION_MATRIXSCALARMULTIPLICATION<Type,MATRIXEXPRESSION<Type,MType> > operator*(MATRIXEXPRESSION<Type,MType> const &M,Type const &S)
          { return MATRIXEXPRESSION_MATRIXSCALARMULTIPLICATION<Type,MATRIXEXPRESSION<Type,MType> >(M,S);}
-
-//template <typename Type,typename MType> inline MATRIXEXPRESSION_SCALARMATRIXDIVISION<Type,MATRIXEXPRESSION<Type,MType> > operator/(Type const &S,MATRIXEXPRESSION<Type,MType> const &M)
-//         { return MATRIXEXPRESSION_SCALARMATRIXDIVISION<Type,MATRIXEXPRESSION<Type,MType> >(S,M);}
 
 template <typename Type,typename MType> inline MATRIXEXPRESSION_MATRIXSCALARDIVISION<Type,MATRIXEXPRESSION<Type,MType> > operator/(MATRIXEXPRESSION<Type,MType> const &M,Type const &S)
          { return MATRIXEXPRESSION_MATRIXSCALARDIVISION<Type,MATRIXEXPRESSION<Type,MType> >(M,S);}
@@ -339,7 +333,7 @@ template <typename Type,std::size_t N> MATRIX<Type> ProjectionMatrix(int i)
            #ifdef _LAERRORS
            if(N==0){ throw ZERO_NUMBER("ProjectionMatrix");}
            #endif
-           MATRIX<Type,N,N> P();
+           MATRIX<Type,N,N> P;
            P(i,i)=One<Type>();
            return P;
           }
@@ -361,7 +355,7 @@ template <typename Type,std::size_t N> MATRIX<Type> RightShiftMatrix(void)
            #ifdef _LAERRORS
            if(N==0){ throw ZERO_NUMBER("RightShiftMatrix");}
            #endif
-           MATRIX<Type,N,N> RS();
+           MATRIX<Type,N,N> RS;
            int i,imax=static_cast<int>(N)-2;
            for(i=0;i<=imax;i++){ RS(i,i+1)=One<Type>();}
            return RS;
@@ -499,50 +493,6 @@ template <std::size_t N> MATRIX<double,N,N> FactorialMatrix(void) // a diagonal 
           return M;
          }
 
-template <std::size_t N> MATRIX<double,N,N> PascalLMatrix(void) // the Pascal L matrix
-        { 
-          #ifdef _LAERRORS
-          if(N==0){ throw ZERO_NUMBER("PascalLMatrix");}
-          #endif
-          MATRIX<double,N,N> L(UnitMatrix<double,N>());
-          int i,imax=static_cast<int>(N)-1,j;
-          for(i=1;i<=imax;i++){ for(j=0;j<=i-1;j++){ L[i][j]=BinomialCoefficient(i*1.,j*1.);} }
-          return L;
-         }
-
-template <std::size_t N> MATRIX<double,N,N> PascalUMatrix(void) // the Pascal U matrix
-        { 
-          #ifdef _LAERRORS
-          if(N==0){ throw ZERO_NUMBER("PascalUMatrix");}
-          #endif
-          MATRIX<double,N,N> U(UnitMatrix<double,N>());
-          int i,imax=static_cast<int>(N)-1,j,jmax=static_cast<int>(N)-1;
-          for(i=1;i<=imax;i++){ for(j=i+1;j<=jmax;j++){ U[i][j]=BinomialCoefficient(j*1.,i*1.);} }
-          return U;
-         }
-
-template <std::size_t N> MATRIX<double,N,N> PascalSMatrix(void)  // the Pascal S matrix
-        { 
-          #ifdef _LAERRORS
-          if(N==0){ throw ZERO_NUMBER("PascalSMatrix");}
-          #endif
-          MATRIX<double,N,N> S();
-          int i,imax=static_cast<int>(N)-1,j;
-          for(i=0;i<=imax;i++){ for(j=0;j<=i;j++){ S[i][j]=S[j][i]=BinomialCoefficient((i+j)*1.,i*1.);} }
-          return S;
-         }
-
-template <std::size_t N> MATRIX<double,N,N> DiscreteChebyshevMatrix(void)
-         { 
-           #ifdef _LAERRORS
-           if(N==0){ throw ZERO_NUMBER("DiscreteChebyshevMatrix");}
-           #endif
-           MATRIX<double,N,N> C;
-           int i,imax=static_cast<int>(N)-1,j,jmax=static_cast<int>(N)-1;
-           for(i=0;i<=imax;i++){ for(j=0;j<=jmax;j++){ C[i][j]=UnitNormalizedDiscreteChebyshev(N,j,i*1.);} }
-           return C;
-          }  
-
 // *******
 // *******
 // *******
@@ -588,7 +538,7 @@ template <typename Type> MATRIX<Type,0,0> TranslationMatrix(std::size_t N,Type c
 // *******
 
 template <typename Type,std::size_t M> CVECTOR<Type,M> BasisColumnVector(int N)
-         { CVECTOR<Type,M> E(); 
+         { CVECTOR<Type,M> E; 
            E[N]=One<Type>(); 
            return E;
           }
@@ -600,7 +550,7 @@ template <typename Type> CVECTOR<Type,0> BasisColumnVector(std::size_t M,int N)
           }
 
 template <typename Type,std::size_t M> RVECTOR<Type,M> BasisRowVector(int N)
-         { RVECTOR<Type,M> E();
+         { RVECTOR<Type,M> E;
            E[N]=One<Type>();
            return E;
           }
@@ -1080,9 +1030,6 @@ template <typename Type,typename MType> MATRIX<Type,0,0> LUInverse(MATRIXEXPRESS
 template <typename Type,typename MType> MATRIX<Type,0,0> MPInverse(MATRIXEXPRESSION<Type,MType> const &MM)
          { return MATRIX<Type,0,0>(MM).MPInvert();}
 
-//template <typename Type,typename MType> MATRIX<Type,0,0> QRInverse(MATRIXEXPRESSION<Type,MType> const &MM)
-//         { return MATRIX<Type,0,0>(MM).QRInvert();}
-
 // *************************************************************************
 // ****************** SPECIAL MATRIX INVERSIONS ****************************
 // *************************************************************************
@@ -1264,7 +1211,7 @@ std::vector<MATRIX<std::complex<double>,0,0> > SVDecomposition(MATRIXEXPRESSION<
                              if(q>0.){ cosphi=::sqrt(1.+q/v)/M_SQRT2; sinphi=-p/v/cosphi;} else{ sinphi=-sqrt(1.-q/v)/M_SQRT2; cosphi=p/v/sinphi;}
                              R=Givens(M.N2(),i,j,std::complex<double>(cosphi),std::complex<double>(sinphi));
 
-                             // these matrix multiplications could be speeded up given structure of R
+                             // these matrix multiplications could be sped up given structure of R
                              B*=R; V*=R; 
                             } 
                         }
@@ -2016,67 +1963,6 @@ MATRIX<std::complex<double>,0,0> SortDiagonalDescending(MATRIXEXPRESSION<std::co
 // *****************************************************************************************
 // *****************************************************************************************
 
-/*template <typename MType> MATRIX<double,0,0> 
-GaussEliminate(MATRIXEXPRESSION<double,MType> const &M1,int i0) 
-            { try{ return BanddiagonalSolve(M,Y,M.N1()-1,M.N1()-1,false);}
-              catch(EMPTY &E){ E.ChangeFunction("GaussElimination"); throw E;}
-              catch(NOT_SQUARE NS){ NS.ChangeFunction("GaussElimination"); throw NS;}
-              catch(SINGULAR S){ S.ChangeFunction("GaussElimination"); throw S;}
-              catch(DIFFERENT_SIZES DS){ DS.ChangeFunction("GaussElimination"); throw DS;}
-              catch(INCORRECT_FORM IF){ IF.ChangeFunction("GaussElimination"); throw IF;}
-             }
-
-         { 
-           #ifdef _LAERRORS
-           if(M1.N1()*M1.N2()==0){ throw EMPTY("GaussEliminate");}
-           #endif
-
-           MATRIX<double,0,0> M2(M1);
-
-           int i,j,k;
-           double C;
-           for(j=0;j<=static_cast<int>(M2.N2())-2;j++) // go through the columns
-              { C=fabs(M2[j][j]); k=j;
-                for(i=j+1;i<=static_cast<int>(M2.N1())-1;i++){ if(fabs(M2[i][j])>C){ k=i; C=fabs(M2[i][j]);} }  // find largest element in column
-                if(k>j){ M2.SwapRows(j,k);}                                                        // swap the rows
-
-                for(i=j+i0;i<=static_cast<int>(M2.N1())-1;i++) // sweep through the rows starting with row i0 below the diagonal
-                   { C=M2[i][j]/M2[j][j];
-                     M2[i][j]=0.;
-                     for(k=static_cast<int>(M2.N2())-1;k>=j+1;k--){ M2[i][k]-=M2[j][k]*C;}        // subtract rows
-                    }
-               }
-
-           return M2;
-          }
-
-template <typename MType> MATRIX<std::complex<double>,0,0> 
-GaussEliminate(MATRIXEXPRESSION<std::complex<double>,MType> const &M1,int i0) 
-         { 
-           #ifdef _LAERRORS
-           if(M1.N1()*M1.N2()==0){ throw EMPTY("GaussEliminate");}
-           #endif
-
-           MATRIX<std::complex<double>,0,0> M2(M1);
-
-           int i,j,k;
-           double C;
-           std::complex<double> Z; 
-           for(j=0;j<=static_cast<int>(M2.N2())-2;j++) // go through the columns
-              { C=abs(M2[j][j]); k=j;
-                for(i=j+1;i<=static_cast<int>(M2.N1())-1;i++){ if(abs(M2[i][j])>C){ k=i; C=abs(M2[i][j]);} }  // find largest element in column
-                if(k>j){ M2.SwapRows(j,k);}                                                      // swap the rows
-
-                for(i=j+i0;i<=static_cast<int>(M2.N1())-1;i++) // sweep through the rows starting with row i0 below the diagonal
-                   { Z=M2[i][j]/M2[j][j];
-                     M2[i][j]=0.;
-                     for(k=static_cast<int>(M2.N2())-1;k>=j+1;k--){ M2[i][k]-=M2[j][k]*Z;}        // subtract rows
-                    }
-               }
-
-           return M2;
-          }*/
-
 template <typename Type,typename MType,typename CVType> 
 CVECTOR<Type,0> GaussEliminate(MATRIXEXPRESSION<Type,MType> const &M,CVECTOREXPRESSION<Type,CVType> const &Y)
             { try{ return BanddiagonalSolve(M,Y,M.N1()-1,M.N1()-1,false);}
@@ -2187,7 +2073,7 @@ CVECTOR<std::complex<double> > BanddiagonalSolve(MATRIXEXPRESSION<std::complex<d
 //*************************************************************************
 
 template <std::size_t N> CVECTOR<double,N> TridiagonalSolve(MVECTOR<double,N> &L,MVECTOR<double,N> &D,MVECTOR<double,N> &U,CVECTOR<double,N> &Y)
-     { CVECTOR<double,N> X(), Y0(Y);
+     { CVECTOR<double,N> X, Y0(Y);
 
        try{ // effectively zero all the subdiagonal terms
             int i,imax=static_cast<int>(D.N())-2;

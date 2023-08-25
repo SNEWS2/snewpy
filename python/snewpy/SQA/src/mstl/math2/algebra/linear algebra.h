@@ -233,18 +233,6 @@ MATRIX<double,0,0> IntegerMatrix(std::size_t N);   // a diagonal matrix with ent
 template <std::size_t N> MATRIX<double,N,N> FactorialMatrix(void); // a diagonal matrix with entries equal to the factorial numbers
 MATRIX<double,0,0> FactorialMatrix(std::size_t N); // a diagonal matrix with entries equal to the factorial numbers
 
-template <std::size_t N> MATRIX<double,N,N> PascalLMatrix(void);   // the Pascal L matrix
-MATRIX<double,0,0> PascalLMatrix(std::size_t N);   // the Pascal L matrix
-
-template <std::size_t N> MATRIX<double,N,N> PascalUMatrix(void);   // the Pascal U matrix
-MATRIX<double,0,0> PascalUMatrix(std::size_t N);   // the Pascal U matrix
-
-template <std::size_t N> MATRIX<double,N,N> PascalSMatrix(void);   // the Pascal S matrix
-MATRIX<double,0,0> PascalSMatrix(std::size_t N);   // the Pascal S matrix
-
-template <std::size_t N> MATRIX<double,N,N> DiscreteChebyshevMatrix(void);
-MATRIX<double,0,0> DiscreteChebyshevMatrix(std::size_t N);
-
 template <typename Type> MATRIX<Type,0,0> DiagonalMatrix(std::vector<Type> const &X);
 
 template <typename Type> MATRIX<Type,0,0> VandermondeMatrix(std::vector<Type> const &X);
@@ -385,9 +373,6 @@ template <typename MType> MATRIX<std::complex<double>,0,0> SortDiagonalDescendin
 
 template <typename MType> MATRIX<double,0,0> Balance(MATRIXEXPRESSION<double,MType> const&);
 template <typename MType> MATRIX<std::complex<double>,0,0> Balance(MATRIXEXPRESSION<std::complex<double>,MType> const&);
-
-//template <typename MType> MATRIX<double,0,0> GaussEliminate(MATRIXEXPRESSION<double,MType> const&,int i0=1); // Zero the elements below the diagonal starting with the i0 below
-//template <typename MType> MATRIX<std::complex<double>,0,0> GaussEliminate(MATRIXEXPRESSION<std::complex<double>,MType> const&,int i0=1);
 
 template <typename Type,typename MType,typename CVType> CVECTOR<Type,0> GaussEliminate(MATRIXEXPRESSION<Type,MType> const &M,CVECTOREXPRESSION<Type,CVType> const &Y);
 template <typename Type,typename MType,typename CVType> CVECTOR<Type,0> DiagonalSolve(MATRIXEXPRESSION<Type,MType> const &M,CVECTOREXPRESSION<Type,CVType> const &Y,bool withtest=true);
