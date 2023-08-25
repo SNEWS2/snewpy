@@ -1,9 +1,9 @@
-1) You will need a c++ compiler, and the pybind11 and setuptools packages
+1) You will need a c++ compiler, and the pybind11, python-devel, and setuptools packages
    
-2) Three setup.Sqa3Earth.py scripts are provided, one for Linux, one for Macs and one for Windows
+2) Three setup.Sqa3Earth.OS.py scripts are provided, one for Linux, one for Macs and one for Windows
    They are starting points: you will probably have to edit them to get the module to compile the code on your machine
 
-3) Modify your chosen setup.Sqa3Earth.py script to use the correct libraries and paths. The path that
+3) Modify your chosen setup.Sqa3Earth.OS.py script to use the correct libraries and paths. The path that
    usually needs to be changes is the location of pybind11 in the include_dirs array
 
 4) To compile enter 
