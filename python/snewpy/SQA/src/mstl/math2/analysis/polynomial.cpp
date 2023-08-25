@@ -24,9 +24,9 @@ double POLYNOMIAL::Evaluate(double X)
 double POLYNOMIAL::Derivative(double X)
        { double dYdX=coefficients.back()*N(); for(int i=(int)N()-2;i>=1;i--){ dYdX*=X; dYdX+=i*coefficients[i];} return dYdX;}
 
-//*****************************************************************************************************
-//*****************************************************************************************************
-//*****************************************************************************************************
+// ****************************************************************************************************
+// ****************************************************************************************************
+// ****************************************************************************************************
 
 double PolynomialSum(int N,double *C,double X)
        { return PolynomialSum(vector<double>(C,C+N),X);}
@@ -37,9 +37,9 @@ double PolynomialSum(vector<double> C,double X)
          return Y;
         }
 
-//*****************************************************************************************************
-//*****************************************************************************************************
-//*****************************************************************************************************
+// ****************************************************************************************************
+// ****************************************************************************************************
+// ****************************************************************************************************
 
 // the Cs are the coefficients of the polynomial in increasing order, (X+A) is the root and R is the remainder
 POLYNOMIAL SyntheticDivision(vector<double> C,double A,double &R)
@@ -57,7 +57,7 @@ POLYNOMIAL SyntheticDivision(POLYNOMIAL P,double A,double &R)
          return Q;
         }
 
-//************************************************
+// ***********************************************
 
 POLYNOMIAL SyntheticDivision(vector<double> C,vector<double> A,vector<double> &R)
        { POLYNOMIAL RR(R);
@@ -86,7 +86,7 @@ POLYNOMIAL SyntheticDivision(POLYNOMIAL P,POLYNOMIAL A,POLYNOMIAL &R)
          return Q;
         }
 
-//*******************************************************************************************************************
+// ******************************************************************************************************************
 
 vector<double> PolynomialCoefficients(int N,double *Xpoints,double *Ypoints)
        { return PolynomialCoefficients(vector<double>(Xpoints,Xpoints+N),vector<double>(Ypoints,Ypoints+N));}
@@ -99,135 +99,9 @@ vector<double> PolynomialCoefficients(vector<double> Xpoints,vector<double> Ypoi
          return vector<double>(&C[0],&C[C.N()-1]);
         }
 
-//*******************************************************************************************************************
-//*******************************************************************************************************************
-//*******************************************************************************************************************
-
-double Hermite(int N,double X)
-//       { return std::hermite(N,X);}
-       { if(N==0){ return 1.;}
-         if(N==1){ return 2.*X;}
-
-         double Hnplus1, Hn=2.*X, Hnminus1=1.;
-         for(int n=1;n<=N-1;n++){ Hnplus1=2.*(X*Hn-n*Hnminus1); Hnminus1=Hn; Hn=Hnplus1;}
-
-         return Hn;
-        }
-
-double UnitNormalizedHermite(int N,double X)
-       { if(N==0){ return 1./pow(M_PI,0.25);}
-         if(N==1){ return M_SQRT2*X/pow(M_PI,0.25);}
-
-         double Hnplus1, Hn=M_SQRT2*X/pow(M_PI,0.25), Hnminus1=1./pow(M_PI,0.25);
-         for(int n=1;n<=N-1;n++){ Hnplus1=(M_SQRT2*X*Hn-sqrt(n)*Hnminus1)/sqrt(n+1.); Hnminus1=Hn; Hn=Hnplus1;}
-
-         return Hn;
-        }
-
-//*********************************
-
-double Laguerre(int N,double X)
-//       { return std::laguerre(N,X);}
-       { if(fabs(X)<0.){ throw NEGATIVE_NUMBER("Laguerre");}
-
-         if(N==0){ return 1.;}
-         if(N==1){ return 1.-X;}
-
-         double logplus1, log=1.-X, logminus1=1.;
-         for(int n=1;n<=N-1;n++){ logplus1=2.*log-logminus1-((1.+X)*log-logminus1)/(n+1.); logminus1=log; log=logplus1;}
-
-         return log;
-        }
-
-//*********************************
-
-double Legendre(int L,double X)
-//       { return std::legendre(N,X);}
-       { if(fabs(X)>1.){ throw OUT_OF_RANGE<double>(X,-1.,1.,"Legendre");}
-
-         if(L==0){ return 1.;}
-         if(L==1){ return X;}
-
-         double Plplus1, Pl=X, Plminus1=1.;
-         for(int l=1;l<=L-1;l++){ Plplus1=2.*X*Pl-Plminus1-(X*Pl-Plminus1)/(l+1.); Plminus1=Pl; Pl=Plplus1;}
-
-         return Pl;
-        }
-
-double UnitNormalizedLegendre(int L,double X)
-       { try{ return Legendre(L,X)*sqrt(L+0.5);}
-         catch(OUT_OF_RANGE<double> &OOR){ OOR.ChangeFunction("UnitNormalizedLegendre"); throw OOR;}
-        }
-
-double AssociatedLegendre(int L,int M,double X)
-//       { return std::assoc_legendre(L,M,X);}
-       { if(abs(M)>(int)L){ throw OUT_OF_RANGE<int>(M,-(int)L,L,"AssociatedLegendre");}
-         if(fabs(X)>1.){ throw OUT_OF_RANGE<double>(X,-1.,1.,"AssociatedLegendre");}
-
-         if(M<0){ return pow(-1.,M)*Factorial(L-M)/Factorial(L+M)*AssociatedLegendre(L,-M,X);}
-
-         if(L==0){ return 1.;}
-         double Plm,Pmm,Pmplus1m;
-
-         Pmm=pow(-1.,M)*pow(1.-X*X,M/2.); for(int i=1;i<=2*M-1;i+=2){ Pmm*=i;} if((int)L==M){ return Pmm;}
-         Pmplus1m=X*(2.*M+1.)*Pmm; if((int)L==M+1){ return Pmplus1m;}
-
-         for(int l=M+2;l<=L;l++){ Plm=( (2*l+1)*X*Pmplus1m-(l+M)*Pmm)/(l+1-M); Pmm=Pmplus1m; Pmplus1m=Plm;}
-
-         return Plm;
-        }
-
-//*********************************
-
-double ChebyshevI(int N,double X)
-       { if(fabs(X)>1.){ throw OUT_OF_RANGE<double>(X,-1.,1.,"ChebyshevI");}
-         if(N==0){ return 1.;}
-         if(N==1){ return X;}
-
-         double Tnplus1, Tn=X, Tnminus1=1.;
-         for(int n=1;n<=N-1;n++){ Tnplus1=2.*X*Tn-Tnminus1; Tnminus1=Tn; Tn=Tnplus1;}
-
-         return Tn;
-        }
-
-double UnitNormalizedChebyshevI(int N,double X)
-       { try{ if(N==0){ return ChebyshevI(N,X)*M_1_SQRTPI;} else{ return ChebyshevI(N,X)*M_SQRT2*M_1_SQRTPI;} }
-         catch(OUT_OF_RANGE<double> &OOR){ OOR.ChangeFunction("UnitNormalizedChebyshevI"); throw OOR;}
-        }
-
-double ChebyshevII(int N,double X)
-       { if(fabs(X)>1.){ throw OUT_OF_RANGE<double>(X,-1.,1.,"ChebyshevII");}
-         if(N==0){ return 1.;}
-         if(N==1){ return 2.*X;}
-
-         double Unplus1, Un=2.*X, Unminus1=1.;
-         for(int n=1;n<=N-1;n++){ Unplus1=2.*X*Un-Unminus1; Unminus1=Un; Un=Unplus1;}
-
-         return Un;
-        }
-
-double DiscreteChebyshev(int N,int n,double X)
-       { if(n>N-1){ throw OUT_OF_RANGE<int>(n,0,N-1,"DiscreteChebyshev");}
-         if(X<0. || X>N-1.){ throw OUT_OF_RANGE<double>(X,0.,N-1.,"DiscreteChebyshev");}
-         if(n==0){ return 1.;}
-         if(n==1){ return 2.*X-N+1.;}
-
-         double Tlplus1, Tl=2.*X-N+1., Tlminus1=1.;
-         for(int l=1;l<=n-1;l++)
-            { Tlplus1=(2.*X-N+1.)*Tl - (N-l)*(N+l)*Tlminus1 + ( l*(2.*X-N+1.)*Tl + (N-l)*(N+l)*Tlminus1 )/(l+1.);
-              Tlminus1=Tl;
-              Tl=Tlplus1;
-             }
-
-         return Tl;
-        }
-
-double UnitNormalizedDiscreteChebyshev(int N,int n,double X)
-       { return sqrt(2.*n+1.)*exp( 0.5*logGamma(N-n)-0.5*logGamma(N+n+1.) )*DiscreteChebyshev(N,n,X);}
-
-//************************************************************************************************
-//************************************************************************************************
-//************************************************************************************************
+// ******************************************************************************************************************
+// ******************************************************************************************************************
+// ******************************************************************************************************************
 
 // solutions of the equation Y=A3 X^3 + A2 X^2 + A1 X + A0
 vector<complex<double> > QuarticRoots(double A4,double A3,double A2,double A1,double A0,double Y)
@@ -260,9 +134,9 @@ vector<double> RealQuarticRoots(double A4,double A3,double A2,double A1,double A
         return X;
        }
 
-//************************************************************************************************
-//************************************************************************************************
-//************************************************************************************************
+// ***********************************************************************************************
+// ***********************************************************************************************
+// ***********************************************************************************************
 
 // solutions of the equation Y=A3 X^3 + A2 X^2 + A1 X + A0
 vector<complex<double> > CubicRoots(double A3,double A2,double A1,double A0,double Y)
@@ -334,6 +208,8 @@ double SingleRealCubicRoot(double A3,double A2,double A1,double A0,double Y)
           { Z=-A2/3.;}
         else{ q=pow(Q,3.)/R/R;
               r=cbrt(R);
+              A=0.;
+ 
               if(fabs(q)<1e-7){ p=BinomialSeries(q,0.5);
                                 A=r*( M_CBRT2*(1.+BinomialSeries(p/2.,1./3.)) + cbrt(-p) );
                                }
@@ -349,9 +225,9 @@ double SingleRealCubicRoot(double A3,double A2,double A1,double A0,double Y)
         return Z;
        }
 
-//************************************************************************************************
-//************************************************************************************************
-//************************************************************************************************
+// ***********************************************************************************************
+// ***********************************************************************************************
+// ***********************************************************************************************
 
 // solutions of the equation Y=A2 Z^2 + A1 Z + A0
 vector<complex<double> > QuadraticRoots(complex<double> A2,complex<double> A1,complex<double> A0,complex<double> Y)
@@ -401,7 +277,7 @@ vector<complex<double> > QuadraticRoots(double A2,double A1,double A0,double Y)
 vector<complex<double> > QuadraticRoots(POLYNOMIAL P,double Y)
       { return QuadraticRoots(P[2],P[1],P[0],Y);}
 
-//******************************
+// *****************************
 
 vector<double> RealQuadraticRoots(double A2,double A1,double A0,double Y)
       { if(Equality(A2,0.)==true){ return RealLinearRoots(A1,A0,Y);}
@@ -431,16 +307,16 @@ vector<double> RealQuadraticRoots(double A2,double A1,double A0,double Y)
 vector<double> RealQuadraticRoots(POLYNOMIAL P,double Y)
       { return RealQuadraticRoots(P[2],P[1],P[0],Y);}
 
-//************************************************************************************************
-//************************************************************************************************
-//************************************************************************************************
+// ***********************************************************************************************
+// ***********************************************************************************************
+// ***********************************************************************************************
 
 
 // solutions of the equation Y=A1 X + A0
 vector<complex<double> > LinearRoots(complex<double> A1,complex<double> A0,complex<double> Y)
       { return vector<complex<double> >(1,(Y-A0)/A1);}
 
-//******************************
+// *****************************
 
 vector<double> RealLinearRoots(double A1,double A0,double Y)
       { return vector<double>(1,(Y-A0)/A1);}
@@ -448,9 +324,9 @@ vector<double> RealLinearRoots(double A1,double A0,double Y)
 vector<double> RealLinearRoots(POLYNOMIAL P,double Y)
       { return vector<double>(1,(Y-P[0])/P[1]);}
 
-//************************************************************************************************
-//************************************************************************************************
-//************************************************************************************************
+// ***********************************************************************************************
+// ***********************************************************************************************
+// ***********************************************************************************************
 
 vector<double> RealPolynomialRoots(vector<double> A,double Y)
       { return RealPolynomialRoots(POLYNOMIAL(A),Y);}

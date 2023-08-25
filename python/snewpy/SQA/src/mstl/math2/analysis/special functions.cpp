@@ -193,12 +193,12 @@ complex<double> IncompleteGamma(double N,complex<double> Z)
 // *******************************************************
 
 double Factorial(int N)
-       { const int Nmax=32;
+       { const int Nmax=30;
          if(N<0){ throw NEGATIVE_INTEGER("Factorial(int)");}
-         if(N>32-1){ return N*Factorial(N-1);}         
-         static int Ntop=4;
+         if(N>30-1){ return N*Factorial(N-1);}         
+         static int Ntop=5;
          static double F[Nmax]={ 1., 1., 2., 6., 24.};
-         while(Ntop<N){ F[++Ntop]=Ntop*F[Ntop-1];};
+         while(Ntop<=N){ F[Ntop]=Ntop*F[Ntop-1]; Ntop++;};
          return F[N]; 
         }
 

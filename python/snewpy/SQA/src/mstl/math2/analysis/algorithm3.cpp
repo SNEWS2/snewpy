@@ -54,10 +54,12 @@ double LineSearch(vector<double> x0,vector<double> deltax,vector<double(*)(vecto
              // find value of lambda that minimizes deltaF
              A=inverselambda*deltaF;
 
+             lambda=0.;
              if(A[0]>0.){ lambda=-A[1]/2./A[0];}
              if(Equality(A[0],0.)==true && Equality(A[1],0.)==false){ if(deltaF[1]<0.){ lambda=lambda1/2.;} else{ lambda=lambda0/3.;} }
              if(Equality(A[0],0.)==true && Equality(A[1],0.)==true){ lambda=0.;}
              if(A[0]<0.){ if(deltaF[1]<deltaF[0]){ lambda=lambda1;} else{ lambda=lambda0;} }
+
              if(lambda>lambda1){ lambda=lambda1;}
              if(lambda<lambda0){ lambda=lambda0;}
 
@@ -142,10 +144,12 @@ double LineSearch(vector<double> x0,vector<double> deltax,vector<double>(*functi
              // find value of lambda that minimizes deltaF
              A=inverselambda*deltaF;
 
+             lambda=0.;
              if(A[0]>0.){ lambda=-A[1]/2./A[0];}
              if(Equality(A[0],0.)==true && Equality(A[1],0.)==false){ if(deltaF[1]<0.){ lambda=lambda1/2.;} else{ lambda=lambda0/3.;} }
              if(Equality(A[0],0.)==true && Equality(A[1],0.)==true){ lambda=0.;}
              if(A[0]<0.){ if(deltaF[1]<deltaF[0]){ lambda=lambda1;} else{ lambda=lambda0;} }
+
              if(lambda>lambda1){ lambda=lambda1;}
              if(lambda<lambda0){ lambda=lambda0;}
 

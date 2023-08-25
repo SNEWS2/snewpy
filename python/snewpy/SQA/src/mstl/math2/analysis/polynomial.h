@@ -42,7 +42,7 @@ std::vector<double> PolynomialCoefficients(std::vector<double> Xpoints,std::vect
 std::vector<double> PolynomialCoefficients(int N,double *Xpoints,double *Ypoints);
 
 // ***********************************************************
-
+/*
 double Hermite(int N,double X);
 double UnitNormalizedHermite(int N,double X);
 
@@ -57,7 +57,7 @@ double UnitNormalizedChebyshevI(int N,double X);
 double ChebyshevII(int N,double X);
 double DiscreteChebyshev(int N,int n,double X);
 double UnitNormalizedDiscreteChebyshev(int N,int n,double X);
-
+*/
 // ***********************************************************
 // ***********************************************************
 // ***********************************************************
