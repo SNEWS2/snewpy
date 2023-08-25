@@ -7,7 +7,7 @@ from setuptools.extension import Extension
 
 Sqa3Earth = Extension('Sqa3Earth',
                     define_macros = [('MAJOR_VERSION', '1'), ('MINOR_VERSION', '0')],
-                    include_dirs = ['.', './src', '/usr/local/lib/python3.6/site-packages/pybind11/include', './src/mstl_lite', './src/mstl_lite/math2', './src/mstl_lite/math2/algebra', './src/mstl_lite/math2/analysis', './src/mstl_lite/math2/spline', './src/mstl_lite/physics'],
+                    include_dirs = ['.', './src', '/usr/local/lib/python3.9/site-packages/pybind11/include', './src/mstl_lite', './src/mstl_lite/math2', './src/mstl_lite/math2/algebra', './src/mstl_lite/math2/analysis', './src/mstl_lite/math2/spline', './src/mstl_lite/physics'],
                     libraries = ['stdc++', 'm', 'gomp', 'python3'],
                     library_dirs = ['/usr/lib64'],
                     extra_compile_args = ['-std=c++17', '-fopenmp', '-fPIC', '-nostartfiles'],
