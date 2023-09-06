@@ -43,17 +43,10 @@ def guess_material(detector):
         mat = mat+'_he'
     return mat
 
-
-class SimpleRate():
-    def __init__(self, detectors:str="all", detector_effects=True, base_dir:Path=''):
-        """Simple rate calculation interface.
-        Computes expected rate for a detector without using GLOBES. The formula for the rate is
-
-                Rate = Sum_i ([cross-section in 10^-38 cm^2] x 10^-38 x [fluence in cm^-2])_i x [smearing matrix]_{ij}
-                       x [target mass in kton] x [Dalton per kton] x [energy bin size in GeV] x [efficiency]
-
-        with [target mass in kton] x [Dalton per kton] = number of reference targets in experiment.
-
+class SnowglobesData:
+    def __init__(self, base_dir:Path='', detectors:str="all", detector_effects=True):
+        """Interface to SNOwGLoBES data
+        
         On construction the code will read: 
 
         * detectors from `<base_dir>/detector_configurations.dat`,
@@ -64,19 +57,17 @@ class SimpleRate():
         * efficiencies from `<base_dir>/effic/effic_*.dat`,
         * smearing matrices from `<base_dir>/smear/smear_*.dat`
 
-        After that use :meth:`SimpleRate.run` method to run the simulation for specific detector and flux file.
-
         Parameters
         ----------
+        base_dir:         Path or None
+            Path to the directory where the cross-section, detector, and channel files are located
+            If empty, try to get it from ``$SNOWGLOBES`` environment var
+            
         detectors: str
             Name of detector. If ``"all"``, will use all detectors supported by SNOwGLoBES.
 
         detector_effects: bool
             If true, account for efficiency and smearing. If false, consider a perfect detector.
-
-        base_dir:         Path or None
-            Path to the directory where the cross-section, detector, and channel files are located.
-            If empty, try to get it from ``$SNOWGLOBES`` environment var or the `snowglobes_data` module.
         """
         try:
             self.base_dir = Path(base_dir if base_dir else os.environ['SNOWGLOBES'])
@@ -132,8 +123,8 @@ class SimpleRate():
             self.channels[material] = df
 
             nsamples, smin, smax, nbins, emin, emax = [float(t) for t in tokens]
-            self.binning[material] = {'e_true': np.linspace(smin, smax, int(nsamples)+1),
-                                      'e_smear': np.linspace(emin, emax, int(nbins)+1)
+            self.binning[material] = {'e_true': np.linspace(smin, smax, int(nsamples)),
+                                      'e_smear': np.linspace(emin, emax, int(nbins))
                                       }
         self.materials = list(self.channels.keys())
         self.chan_dir = chan_dir
@@ -175,6 +166,32 @@ class SimpleRate():
         logger.info(f'read smearing matrices for detectors: {list(self.smearings.keys())}')
         logger.debug(f'smearing matrices: {self.smearings}')
 
+class SimpleRate(SnowglobesData):
+    def __init__(self, detectors:str="all", detector_effects=True, base_dir:Path=''):
+        """Simple rate calculation interface.
+        Computes expected rate for a detector without using GLOBES. The formula for the rate is
+
+                Rate = Sum_i ([cross-section in 10^-38 cm^2] x 10^-38 x [fluence in cm^-2])_i x [smearing matrix]_{ij}
+                       x [target mass in kton] x [Dalton per kton] x [energy bin size in GeV] x [efficiency]
+
+        with [target mass in kton] x [Dalton per kton] = number of reference targets in experiment.
+
+        Use :meth:`SimpleRate.run` method to run the simulation for specific detector and flux file.
+
+        Parameters
+        ----------
+        detectors: str
+            Name of detector. If ``"all"``, will use all detectors supported by SNOwGLoBES.
+
+        detector_effects: bool
+            If true, account for efficiency and smearing. If false, consider a perfect detector.
+
+        base_dir:         Path or None
+            Path to the directory where the cross-section, detector, and channel files are located
+            If empty, try to get it from ``$SNOWGLOBES`` environment var
+        """    
+        super().__init__(base_dir, detectors=detectors, detector_effects = detector_effects)
+        
     def compute_rates(self, detector:str, material:str, fluxes:np.ndarray, flux_energies:np.ndarray):
         """ Calculate the rates for the given neutrino fluxes interacting in the given detector.
 
@@ -206,7 +223,7 @@ class SimpleRate():
         #load the binning for the smearing
         binning= self.binning[material]
         #calculate bin centers 
-        energies_t = 0.5*(binning['e_true'][1:]+ binning['e_true'][:-1] )
+        energies_t = 0.5*(binning['e_true'][1:]+ binning['e_true'][:-1])
         energies_s= 0.5*(binning['e_smear'][1:]+binning['e_smear'][:-1])
         binsize = np.diff(binning['e_true'])
 
