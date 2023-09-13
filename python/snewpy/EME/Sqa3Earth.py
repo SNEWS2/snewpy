@@ -56,5 +56,5 @@ if __name__ == "__main__":
     # index order is matter/antimatter, energy, i, alpha
     Pfm = Sqa3Earth.RunSqa3Earth(ID)
 
-    print(Pfm[0][0][0][0])
+    print("finished")
 
