@@ -875,7 +875,7 @@ CVECTOR<Type,n1> MATRIX<Type,n1,n2>::Column(int i) const
            #ifdef _LAERRORS
            if(i>static_cast<int>(N2())-1){ throw OUT_OF_RANGE<int>(i,0,static_cast<int>(N2())-1,"Column",CLASS_NAME);}
            #endif
-           CVECTOR<Type,n1> CV();
+           CVECTOR<Type,n1> CV;
            int a,amax=static_cast<int>(N1())-1;
            for(a=0;a<=amax;a++){ CV[a]=(*this)(a,i);}
 
@@ -888,7 +888,7 @@ CVECTOR<Type,n> MATRIX<Type,n,n>::Column(int i) const
            #ifdef _LAERRORS
            if(i>static_cast<int>(N2())-1){ throw OUT_OF_RANGE<int>(i,0,static_cast<int>(N2())-1,"Column",CLASS_NAME);}
            #endif
-           CVECTOR<Type,n> CV();
+           CVECTOR<Type,n> CV;
            int a,amax=static_cast<int>(N1())-1;
            for(a=0;a<=amax;a++){ CV[a]=(*this)(a,i);}
 
@@ -917,7 +917,7 @@ RVECTOR<Type,n2> MATRIX<Type,n1,n2>::Row(int i) const
            #ifdef _LAERRORS
            if(i>static_cast<int>(N1())-1){ throw OUT_OF_RANGE<int>(i,0,N1()-1,"Row",CLASS_NAME);}
            #endif
-           RVECTOR<Type,n2> RV();
+           RVECTOR<Type,n2> RV;
            int a, amax=static_cast<int>(N2())-1;
            for(a=0;a<=amax;a++){ RV[a]=(*this)(i,a);}
 
@@ -930,7 +930,7 @@ RVECTOR<Type,n> MATRIX<Type,n,n>::Row(int i) const
            #ifdef _LAERRORS
            if(i>static_cast<int>(N1())-1){ throw OUT_OF_RANGE<int>(i,0,N1()-1,"Row",CLASS_NAME);}
            #endif
-           RVECTOR<Type,n> RV();
+           RVECTOR<Type,n> RV;
            int a, amax=static_cast<int>(N2())-1;
            for(a=0;a<=amax;a++){ RV[a]=(*this)(i,a);}
 
