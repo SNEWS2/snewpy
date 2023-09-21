@@ -64,6 +64,9 @@ from enum import IntEnum
 from copy import copy
 from functools import wraps
 
+#list of units which will be used as units for decomposition inside the Container
+snewpy_unit_bases = [u.MeV, u.m, u.s, u.kg]
+
 class Axes(IntEnum):
     """Enum to keep the number number of the array dimension for each axis""" 
     flavor=0, #Flavor dimension
@@ -350,7 +353,7 @@ class Container(_ContainerBase):
 
     @wraps(_ContainerBase.__init__)
     def __new__(cls, data,*args, **kwargs):
-        data = data.decompose() #simplify the units, reducing to the bases
+        data = data.decompose(snewpy_unit_bases) #simplify the units, reducing to the bases
         if not cls.unit:
             data = u.Quantity(data)
             cls = cls[data.unit]
@@ -371,7 +374,7 @@ class Container(_ContainerBase):
         
 
 #some standard container classes that can be used for 
-Flux = Container['1/(MeV*s*cm**2)', "d2FdEdT"]
+Flux = Container['1/(MeV*s*m**2)', "d2FdEdT"]
 Fluence = Container[Flux.unit*u.s, "dFdE"]
 Spectrum= Container[Flux.unit*u.MeV, "dFdT"]
 IntegralFlux= Container[Flux.unit*u.s*u.MeV, "dF"]
