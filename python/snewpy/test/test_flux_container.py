@@ -31,7 +31,7 @@ def quantities(draw, values, unit):
 #how to generate axes values
 flavors = st.lists(elements=st.sampled_from(Flavor),
                    unique=True,min_size=1,max_size=len(Flavor)).map(sorted)
-units = st.sampled_from(['1/MeV','1/(MeV*s)','1/(MeV*s*cm**2)']).map(u.Unit)
+units = st.sampled_from(['1/MeV','1/(MeV*s)','1/(MeV*s*m**2)']).map(u.Unit)
 energies = quantities(sorted_floats(shape=array_shapes(max_dims=1)),u.MeV)
 times    = quantities(sorted_floats(shape=array_shapes(max_dims=1)),u.s)
 integrable_axess = st.lists(st.sampled_from(list(Axes)[1:]))
