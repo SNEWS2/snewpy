@@ -350,6 +350,7 @@ class Container(_ContainerBase):
 
     @wraps(_ContainerBase.__init__)
     def __new__(cls, data,*args, **kwargs):
+        data = data.decompose() #simplify the units, reducing to the bases
         if not cls.unit:
             data = u.Quantity(data)
             cls = cls[data.unit]
