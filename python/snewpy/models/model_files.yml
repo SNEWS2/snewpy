@@ -6,43 +6,43 @@ config:
     - &snewpy "https://github.com/SNEWS2/snewpy/raw/v{snewpy_version}/models/{model}/{filename}"
 
 models:
-
-    Bollig_2016:
-        repository: *snewpy
-
-    Fornax_2019: 
-        repository: *snewpy
-
-    Fornax_2021: 
-        repository: *snewpy
-
-    Kuroda_2020: 
-        repository: *snewpy
-
-    Nakazato_2013: 
-        repository: *snewpy
-
-    OConnor_2013: 
-        repository: *snewpy
-
-    OConnor_2015: 
-        repository: *snewpy
- 
-    Sukhbold_2015: 
-        repository: *snewpy
- 
-    Tamborra_2014: 
-        repository: *snewpy
- 
-    Walk_2018: 
-        repository: *snewpy
- 
-    Walk_2019: 
-        repository: *snewpy
-
-    Warren_2020:
-        repository: *snewpy
-
-    Zha_2021: 
-        repository: *snewpy
+    ccsn:
+        Bollig_2016:
+            repository: *snewpy
+    
+        Fornax_2019: 
+            repository: *snewpy
+    
+        Fornax_2021: 
+            repository: *snewpy
+    
+        Kuroda_2020: 
+            repository: *snewpy
+    
+        Nakazato_2013: 
+            repository: *snewpy
+    
+        OConnor_2013: 
+            repository: *snewpy
+    
+        OConnor_2015: 
+            repository: *snewpy
+     
+        Sukhbold_2015: 
+            repository: *snewpy
+     
+        Tamborra_2014: 
+            repository: *snewpy
+     
+        Walk_2018: 
+            repository: *snewpy
+     
+        Walk_2019: 
+            repository: *snewpy
+    
+        Warren_2020:
+            repository: *snewpy
+    
+        Zha_2021: 
+            repository: *snewpy
 
