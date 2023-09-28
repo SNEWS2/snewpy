@@ -102,13 +102,12 @@ local path.
         return self.path
 
 
-def from_zenodo(zenodo_id:str, model:str, filename:str):
+def _from_zenodo(zenodo_id:str, filename:str):
     """Access files on Zenodo.
 
     Parameters
     ----------
     zenodo_id : Zenodo record for model files.
-    model : Name of the model class for this model file.
     filename : Expected filename storing simulation data.
 
     Returns
@@ -117,7 +116,7 @@ def from_zenodo(zenodo_id:str, model:str, filename:str):
     """
     zenodo_url = f'https://zenodo.org/api/records/{zenodo_id}'
     record = requests.get(zenodo_url).json()
-    # Search for model file string in Zenodo request for this record.
+    # Search for file string in Zenodo request for this record.
     file = next((_file for _file in record['files'] if _file['key'] == filename), None)
 
     # If matched, return a tuple of URL and checksum.Otherwise raise an exception.
@@ -125,46 +124,58 @@ def from_zenodo(zenodo_id:str, model:str, filename:str):
         return file['links']['self'], file['checksum'].split(':')[1]
     else:
         raise MissingFileError(filename)
-
-def get_model_data(model: str, filename: str, path: str = model_path) -> Path:
+        
+class ModelRegistry:
     """Access model data. Configuration for each model is in a YAML file
-    distributed with SNEWPY.
-
-    Parameters
-    ----------
-    model : Name of the model class for this model file.
-    filename : Name of simulation datafile, or a relative path from the model sub-directory
-    path : Local installation path (defaults to astropy cache).
-
-    Returns
-    -------
-    Path of downloaded file.
+        distributed with SNEWPY.
     """
-    if os.path.isabs(filename):
-        return Path(filename)
-
-    params = { 'model':model, 'filename':filename, 'snewpy_version':snewpy_version}
-
-    # Parse YAML file with model repository configurations.
-    with open_text('snewpy.models', 'model_files.yml') as f:
-        config = yaml.safe_load(f)
-        models = config['models']
-        # Search for model in YAML configuration.
-        if model in models.keys():
-            # Get data from GitHub or Zenodo.
-            modconf = models[model]
-            repo = modconf.pop('repository')
-            if repo == 'zenodo':
-                params['zenodo_id'] = modconf['zenodo_id']
-                url, md5 = from_zenodo(**params)
-            else:
-                #format the url directly
-                params.update(modconf) #default parameters can be overriden in the model config
-                url, md5 = repo.format(**params), None
-            localpath = Path(path)/str(model)
-            localpath.mkdir(exist_ok=True, parents=True)
-            fh = FileHandle(path = localpath/filename,remote = url, md5=md5)
-            return fh.load()
+    def __init__(self, config_file:Path = None, local_path: str = model_path):
+        """
+        Parameters
+        ----------
+        config_file: YAML configuration file. If None (default) use the 'model_files.yml' from SNEWPY resources
+        local_path: local installation path (defaults to astropy cache).
+        """
+        if config_file is None:
+            context = open_text('snewpy.models', 'model_files.yml')
         else:
-            raise KeyError(f'No configuration for {model}')
+            context = open(config_file)
+        with context as f:
+            self.config = yaml.safe_load(f)
+        self.models = self.config['models']
+        self.local_path = local_path
 
+    def get_file(self, config_path:str, filename:str)->Path:
+        """Get the requested data file from the models file repository
+
+        Parameters
+        ----------
+        config_path : dot-separated path of the model in the YAML configuration (e.g. "ccsn.Bollig_2016")
+        filename : Name of simulation datafile, or a relative path from the model sub-directory
+    
+        Returns
+        -------
+        Path of downloaded file.
+        """
+        tokens = path.split('.')
+        config = self.models
+        for t in tokens:
+            config = config[t]
+        #store the model name
+        model = tokens[-1]
+        modconf = config
+        # Get data from GitHub or Zenodo.
+        repo = modconf['repository']
+        if repo == 'zenodo':
+            url, md5 = _from_zenodo(zenodo_id=config['zenodo_id'],filename=filename)
+        else:
+            #format the url directly
+            params = { 'model':model, 'filename':filename, 'snewpy_version':snewpy_version}
+            params.update(modconf) #default parameters can be overriden in the model config
+            url, md5 = repo.format(**params), None
+        localpath = Path(model_path)/str(model)
+        localpath.mkdir(exist_ok=True, parents=True)
+        fh = FileHandle(path = localpath/filename,remote = url, md5=md5)
+        return fh.load()
+
+registry = ModelRegistry()
