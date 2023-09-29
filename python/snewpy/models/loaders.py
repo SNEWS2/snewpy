@@ -22,11 +22,22 @@ try:
 except ImportError:
     pass
 
-from snewpy.models.base import PinchedModel, _GarchingArchiveModel, SupernovaModel
+from snewpy.models.base import PinchedModelBase, SupernovaModel
 from snewpy.neutrino import Flavor
-from snewpy import _model_downloader
+#from snewpy import _model_downloader
 
-class Nakazato_2013(PinchedModel):
+from pathlib import Path
+
+class _BasicLoader:
+    @classmethod
+    def get_file(cls, file_path:str) -> Path:
+        path = Path(file_path)
+        if not path.exists():
+            raise FileNotFoundError(f'File requested from "{__name__}.{cls.__name__}" not found: {file_path}')
+        return path
+
+
+class PinchedModel(PinchedModelBase, _BasicLoader):
     def __init__(self, filename, metadata={}):
         """Model initialization.
 
@@ -41,35 +52,98 @@ class Nakazato_2013(PinchedModel):
             If a file for the chosen model parameters cannot be found
         """
         # Open the requested filename using the model downloader.
-        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
+        datafile = self.get_file(filename)
         # Read FITS table using the astropy reader.
         simtab = Table.read(datafile)
 
         self.filename = os.path.basename(filename)
         super().__init__(simtab, metadata)
 
+class GarchingArchiveModel(PinchedModelBase, _BasicLoader):
+    """Subclass that reads models in the format used in the
+    `Garching Supernova Archive <https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/>`_."""
+    def __init__(self, filename, eos='LS220', metadata={}):
+        """Model Initialization.
 
-class Sukhbold_2015(Nakazato_2013):
+        Parameters
+        ----------
+        filename : str
+            Absolute or relative path to file with model data, we add nue/nuebar/nux.  This argument will be deprecated.
+        eos: str
+            Equation of state. Valid value is 'LS220'. This argument will be deprecated.
+
+        Other Parameters
+        ----------------
+        progenitor_mass: astropy.units.Quantity
+            Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
+        Raises
+        ------
+        FileNotFoundError
+            If a file for the chosen model parameters cannot be found
+        ValueError
+            If a combination of parameters is invalid when loading from parameters
+        """
+        if not metadata:
+            metadata = {
+                'Progenitor mass': float(os.path.basename(filename).split('s')[1].split('c')[0]) * u.Msun,
+                'EOS': eos,
+            }
+
+        # Read through the several ASCII files for the chosen simulation and
+        # merge the data into one giant table.
+        mergtab = None
+        for flavor in Flavor:
+            _flav = Flavor.NU_X if flavor == Flavor.NU_X_BAR else flavor
+            _sfx = _flav.name.replace('_', '').lower()
+            _filename = '{}_{}_{}'.format(filename, eos, _sfx)
+            _lname = 'L_{}'.format(flavor.name)
+            _ename = 'E_{}'.format(flavor.name)
+            _e2name = 'E2_{}'.format(flavor.name)
+            _aname = 'ALPHA_{}'.format(flavor.name)
+
+            # Open the requested filename using the model downloader.
+            datafile = datafile = self.get_file(_filename)
+
+            simtab = Table.read(datafile,
+                                names=['TIME', _lname, _ename, _e2name],
+                                format='ascii')
+            simtab['TIME'].unit = 's'
+            simtab[_lname].unit = '1e51 erg/s'
+            simtab[_aname] = (2*simtab[_ename]**2 - simtab[_e2name]) / (simtab[_e2name] - simtab[_ename]**2)
+            simtab[_ename].unit = 'MeV'
+            del simtab[_e2name]
+
+            if mergtab is None:
+                mergtab = simtab
+            else:
+                mergtab = join(mergtab, simtab, keys='TIME', join_type='left')
+                mergtab[_lname].fill_value = 0.
+                mergtab[_ename].fill_value = 0.
+                mergtab[_aname].fill_value = 0.
+        simtab = mergtab.filled()
+        super().__init__(simtab, metadata)
+        
+class Sukhbold_2015(PinchedModel):
     pass
 
 
-class Tamborra_2014(_GarchingArchiveModel):
+class Tamborra_2014(GarchingArchiveModel):
     pass
 
 
-class Bollig_2016(_GarchingArchiveModel):
+class Bollig_2016(GarchingArchiveModel):
     pass
 
 
-class Walk_2018(_GarchingArchiveModel):
+class Walk_2018(GarchingArchiveModel):
     pass
 
 
-class Walk_2019(_GarchingArchiveModel):
+class Walk_2019(GarchingArchiveModel):
     pass
 
 
-class OConnor_2013(PinchedModel):
+class OConnor_2013(PinchedModelBase, _BasicLoader):
     """Model based on the black hole formation simulation in `O'Connor & Ott (2013) <https://arxiv.org/abs/1207.1100>`_.
     """
 
@@ -80,7 +154,7 @@ class OConnor_2013(PinchedModel):
         filename : str
             Absolute or relative path to FITS file with model data.
         """
-        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
+        datafile = self.get_file(filename)
         # Open luminosity file.
         with tarfile.open(datafile) as tf:
             # Extract luminosity data.
@@ -101,7 +175,7 @@ class OConnor_2013(PinchedModel):
         super().__init__(simtab, metadata)
 
 
-class OConnor_2015(PinchedModel):
+class OConnor_2015(PinchedModelBase, _BasicLoader):
     """Model based on the black hole formation simulation in `O'Connor (2015) <https://arxiv.org/abs/1411.7058>`_.
     """
 
@@ -113,7 +187,7 @@ class OConnor_2015(PinchedModel):
             Absolute or relative path to FITS file with model data.
         """
 
-        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
+        datafile = self.get_file(filename)
         simtab = Table.read(datafile,
                             names=['TIME', 'L_NU_E', 'L_NU_E_BAR', 'L_NU_X',
                                     'E_NU_E', 'E_NU_E_BAR', 'E_NU_X',
@@ -148,7 +222,7 @@ class Zha_2021(OConnor_2015):
     pass
 
 
-class Warren_2020(PinchedModel):
+class Warren_2020(PinchedModelBase, _BasicLoader):
     def __init__(self, filename, metadata={}):
         """
         Parameters
@@ -157,7 +231,7 @@ class Warren_2020(PinchedModel):
             Absolute or relative path to file prefix, we add nue/nuebar/nux
         """
         # Open the requested filename using the model downloader.
-        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
+        datafile = self.get_file(filename)
 
         # Open luminosity file.
         # Read data from HDF5 files, then store.
@@ -194,7 +268,7 @@ class Warren_2020(PinchedModel):
         super().__init__(simtab, metadata)
 
 
-class Kuroda_2020(PinchedModel):
+class Kuroda_2020(PinchedModelBase, _BasicLoader):
     def __init__(self, filename, metadata={}):
         """
         Parameters
@@ -204,7 +278,7 @@ class Kuroda_2020(PinchedModel):
         """
 
         # Open the requested filename using the model downloader.
-        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
+        datafile = self.get_file(filename)
         # Read ASCII data.
         simtab = Table.read(datafile, format='ascii')
 
@@ -222,7 +296,7 @@ class Kuroda_2020(PinchedModel):
         super().__init__(simtab, metadata)
 
 
-class Fornax_2019(SupernovaModel):
+class Fornax_2019(SupernovaModel, _BasicLoader):
     def __init__(self, filename, metadata={}, cache_flux=False):
         """
         Parameters
@@ -335,7 +409,7 @@ class Fornax_2019(SupernovaModel):
                                 Flavor.NU_X_BAR: 'nu2'}
 
             # Open the requested filename using the model downloader.
-            datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
+            datafile = self.get_file(filename)
             # Open HDF5 data file.
             self._h5file = h5py.File(datafile, 'r')
 
@@ -602,7 +676,7 @@ class Fornax_2021(SupernovaModel):
         self.metadata = metadata
 
         # Open the requested filename using the model downloader.
-        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
+        datafile = self.get_file(filename)
         # Open HDF5 data file.
         _h5file = h5py.File(datafile, 'r')
 

@@ -4,20 +4,20 @@
 
 config:
     - &snewpy "https://github.com/SNEWS2/snewpy/raw/v{snewpy_version}/models/{model}/{filename}"
-
+    - &models_ccsn "https://github.com/SNEWS2/snewpy-models-ccsn/raw/v0.1a/models/{model}/{filename}"
 models:
     ccsn:
         Bollig_2016:
-            repository: *snewpy
+            repository: *models_ccsn
     
         Fornax_2019: 
-            repository: *snewpy
+            repository: *models_ccsn
     
         Fornax_2021: 
-            repository: *snewpy
+            repository: *models_ccsn
     
         Kuroda_2020: 
-            repository: *snewpy
+            repository: *models_ccsn
     
         Nakazato_2013: 
             repository: *snewpy

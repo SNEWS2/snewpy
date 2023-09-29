@@ -36,7 +36,7 @@ from astropy import units as u
 from astropy.table import Table
 
 from snewpy.models import loaders
-from .base import PinchedModel, _RegistryModel
+from .base import PinchedModelBase, _RegistryModel
 
 from warnings import warn
 from functools import wraps
@@ -59,7 +59,7 @@ def _warn_deprecated_filename_argument(func):
     return decorator
 
 
-class Analytic3Species(PinchedModel):
+class Analytic3Species(PinchedModelBase):
     """An analytical model calculating spectra given total luminosity,
     average energy, and rms or pinch, for each species.
     """
