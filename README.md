@@ -14,22 +14,13 @@ SNEWPY is a Python package for working with supernova neutrinos. It offers …
 
 ## Installation
 
-### For Users
 Run `pip install snewpy` to install SNEWPY.
 
-SNEWPY includes a large number of supernova models from different simulation groups. Since these models have a size of several 100 MB, they are not included in the initial install. Instead, after installing, run the following command to download models you want to use:
+SNEWPY includes a large number of supernova models from different simulation groups. Since these models have a size of several 100 MB, they are not included in the initial install but will be downloaded automatically when needed.
+Alternatively, you can run the following command to explicitly download models you want to use to a subdirectory named `SNEWPY-models/<model_name>/` in the current directory:
 
 `python -c 'import snewpy; snewpy.get_models()'`
 
-By default, they will be downloaded to a subdirectory named `SNEWPY-models/<model_name>/` in the current directory.
-
-### For Developers
-
-**Your contributions to SNEWPY are welcome!** For minor changes, simply submit a pull request. If you plan larger changes, it’s probably a good idea to open an issue first to coordinate our work.
-
-To contribute, first clone the repository (`git clone https://github.com/SNEWS2/snewpy.git`), then make changes and install your modified version locally using `pip install .` from the base directory of the repository.
-Once you’re happy with your changes, please submit a pull request.
-Unit tests will run automatically for every pull request or you can run them locally using `python -m unittest python/snewpy/test/test_*.py`.
 
 ## Usage and Documentation
 Example scripts which show how SNEWPY can be used are available in the
@@ -39,3 +30,10 @@ Most downloadable models also include a Jupyter notebook with simple usage examp
 A paper describing SNEWPY and the underlying physics is available at [arXiv:2109.08188](https://arxiv.org/abs/2109.08188).
 
 For more, see the [full documentation on Read the Docs](https://snewpy.rtfd.io/).
+
+## Contributing
+
+**Your contributions to SNEWPY are welcome!** For minor changes, simply submit a pull request. If you plan larger changes, it’s probably a good idea to open an issue first to coordinate our work.
+
+We use a [Fork & Pull Request](https://docs.github.com/en/get-started/quickstart/fork-a-repo) workflow, which is common on GitHub.
+Please see the [Contributing page](https://snewpy.readthedocs.io/en/stable/contributing.html) in our full documentation for details.
