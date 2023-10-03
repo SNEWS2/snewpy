@@ -1,6 +1,10 @@
 Welcome to SNEWPY!
 ==================
 
+.. image:: snewpy-logo.png
+  :alt: snewpy logo: The word 'snewpy' in a monospace font, with an explosion emoji inside the letter 'p'.
+  :width: 600px
+
 SNEWPY is a Python package for working with supernova neutrinos. It offers …
 
 * … a simple and unified interface to hundreds of supernova simulations.
