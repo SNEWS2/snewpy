@@ -27,7 +27,7 @@ Example scripts which show how SNEWPY can be used are available in the
 `python/snewpy/scripts/` subfolder as well as notebooks in `doc/nb/`.
 Most downloadable models also include a Jupyter notebook with simple usage examples.
 
-A paper describing SNEWPY and the underlying physics is available at [arXiv:2109.08188](https://arxiv.org/abs/2109.08188).
+Papers describing SNEWPY and the underlying physics are published in the Astrophysical Journal ([DOI:10.3847/1538-4357/ac350f](https://dx.doi.org/10.3847/1538-4357/ac350f), [arXiv:2109.08188](https://arxiv.org/abs/2109.08188)) and the Journal of Open Source Software ([DOI:10.21105/joss.03772](https://dx.doi.org/10.21105/joss.03772)).
 
 For more, see the [full documentation on Read the Docs](https://snewpy.rtfd.io/).
 
