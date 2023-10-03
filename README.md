@@ -23,6 +23,34 @@ Alternatively, you can run the following command to explicitly download models y
 
 
 ## Usage and Documentation
+
+SNEWPY gives you easy access to hundreds of included SN simulations …
+```Python
+import astropy.units as u
+from snewpy.models.ccsn import Nakazato_2013, Bollig_2016
+
+# Initialise two SN models. This automatically downloads the required data files if necessary.
+nakazato = Nakazato_2013(progenitor_mass=20*u.solMass, revival_time=100*u.ms, metallicity=0.004, eos='shen')
+bollig = Bollig_2016(progenitor_mass=27*u.solMass)
+```
+
+… and many flavor transformations that neutrinos could experience on the way to Earth …
+```Python
+from snewpy.flavor_transformations import AdiabaticMSW
+from snewpy.neutrino import MassHierarchy
+
+# Adiabatic MSW flavor transformation with normal mass ordering
+msw_nmo = AdiabaticMSW(mh=MassHierarchy.NORMAL)
+```
+
+… letting you quickly calculate the neutrino flux reaching Earth:
+```Python
+# Assume a SN at the fiducial distance of 10 kpc and normal mass ordering.
+flux = bollig.get_flux(distance=10*u.kpc, transformation=msw_nmo)
+```
+
+You can also calculate the observed event rate in all neutrino detectors supported by SNOwGLoBES, use the included SN models and flavor transformations in event generators like sntools, and much more.
+
 Example scripts which show how SNEWPY can be used are available in the
 `python/snewpy/scripts/` subfolder as well as notebooks in `doc/nb/`.
 Most downloadable models also include a Jupyter notebook with simple usage examples.
