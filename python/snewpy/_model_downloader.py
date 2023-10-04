@@ -179,3 +179,6 @@ class ModelRegistry:
         return fh.load()
 
 registry = ModelRegistry()
+
+def get_model_data(model: str, filename: str) -> Path:
+    return registry.get_file(filename, model)
