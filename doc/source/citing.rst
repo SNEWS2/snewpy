@@ -5,12 +5,12 @@ If you use SNEWPY for your own research, please cite the following two papers:
 
 * \A. L. Baxter `et al.` (SNEWS Collaboration):
   “SNEWPY: A Data Pipeline from Supernova Simulations to Neutrino Signals”.
-  Journal of Open Source Software 6 (2021) 67, 3772.
+  Journal of Open Source Software 6 (2021) 67, 03772.
   [`DOI:10.21105/joss.03772 <https://dx.doi.org/10.21105/joss.03772>`_]
 
 * \A. L. Baxter `et al.` (SNEWS Collaboration):
   “SNEWPY: A Data Pipeline from Supernova Simulations to Neutrino Signals”.
-  Astrophysical Journal (2022), in print.
+  Astrophysical Journal 925 (2022) 107.
   [`arXiv:2109.08188 <https://arxiv.org/abs/2109.08188>`_, `DOI:10.3847/1538-4357/ac350f <https://dx.doi.org/10.3847/1538-4357/ac350f>`_]
 
 
