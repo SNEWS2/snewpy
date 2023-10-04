@@ -157,7 +157,7 @@ class ModelRegistry:
         -------
         Path of downloaded file.
         """
-        tokens = path.split('.')
+        tokens = config_path.split('.')
         config = self.models
         for t in tokens:
             config = config[t]
@@ -181,4 +181,4 @@ class ModelRegistry:
 registry = ModelRegistry()
 
 def get_model_data(model: str, filename: str) -> Path:
-    return registry.get_file(filename, model)
+    return registry.get_file(model, filename)
