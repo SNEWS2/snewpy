@@ -1,6 +1,6 @@
 # SNEWPY: Supernova Neutrino Early Warning Models for Python
 
-![SNEWPY logo](/doc/source/snewpy-logo.png)
+<img src="/doc/source/snewpy-logo.png" alt="snewpy logo: The word 'snewpy' in a monospace font, with an explosion emoji inside the letter 'p'." style="width: 300px; max-width: 100%;" />
 
 [![DOI](https://zenodo.org/badge/221705586.svg)](https://zenodo.org/badge/latestdoi/221705586)
 [![PyPI](https://img.shields.io/pypi/v/snewpy)](https://pypi.org/project/snewpy/)
