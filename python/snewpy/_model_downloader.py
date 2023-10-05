@@ -186,10 +186,14 @@ def get_model_data(model: str, filename: str) -> Path:
     Parameters
     ----------
     model : dot-separated path of the model in the YAML configuration (e.g. "ccsn.Bollig_2016")
-    filename : Name of simulation datafile, or a relative path from the model sub-directory
+    filename : Absolute path to simulation datafile, or a relative path from the model sub-directory
 
     Returns
     -------
     Path of downloaded file.
     """
-    return registry.get_file(model, filename)
+    if os.path.isabs(filename):
+        return Path(filename)
+    else:
+        return registry.get_file(model, filename)
+    
