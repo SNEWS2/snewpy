@@ -50,7 +50,7 @@ with open('requirements.txt', 'r') as f:
             requires.append(line.strip())
 setup_keywords['install_requires'] = requires
 setup_keywords['extras_require'] = {  # Optional
-    'dev': ['pytest'],
+    'dev': ['pytest','hypothesis'],
     'docs':['numpydoc']
 }
 #
