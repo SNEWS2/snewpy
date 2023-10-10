@@ -17,7 +17,7 @@ models:
         repository: *snewpy
 
     Fornax_2022: 
-        repository: "https://github.com/SNEWS2/snewpy-models-ccsn/tree/fornax-2022-data/models/Fornax_2022"
+        repository: "https://github.com/SNEWS2/snewpy-models-ccsn/raw/fornax-2022-data/models/Fornax_2022/{filename}"
 
     Kuroda_2020: 
         repository: *snewpy
