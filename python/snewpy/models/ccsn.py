@@ -800,8 +800,8 @@ class Fornax_2022(_RegistryModel):
         cls.check_valid_params(cls, progenitor=progenitor, progenitor_mass=progenitor_mass * u.Msun)
         filename = f'lum_spec_{progenitor}_dat.h5'
 
-        metadata = {'Progenitor': progenitor}
-        metadata = {'Progenitor mass': progenitor_mass * u.Msun}
+        metadata = {'Progenitor': progenitor,
+                    'Progenitor mass': progenitor_mass * u.Msun}
 
         return loaders.Fornax_2022(filename, metadata)
 
