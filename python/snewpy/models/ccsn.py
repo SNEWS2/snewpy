@@ -799,7 +799,7 @@ class Fornax_2022(_RegistryModel):
 
         # Load from Parameters
         if progenitor_mass is None:
-            progenitor_mass = float(progenitor[:-3]) if progenitor.endswith('bh') else float(progenitor) * u.Msun
+            progenitor_mass = (float(progenitor[:-3]) if progenitor.endswith('bh') else float(progenitor)) * u.Msun
         cls.check_valid_params(cls, progenitor=progenitor, progenitor_mass=progenitor_mass)
         filename = f'lum_spec_{progenitor}_dat.h5'
 
