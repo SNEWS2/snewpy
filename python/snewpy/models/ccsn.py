@@ -777,7 +777,7 @@ class Fornax_2022(_RegistryModel):
         'progenitor_mass': '[9.0..26.99] solMass'}
 
     @_warn_deprecated_filename_argument
-    def __new__(cls, filename=None, *, progenitor=None):
+    def __new__(cls, filename=None, *, progenitor=None, progenitor_mass=None):
         """Model Initialization.
 
         Parameters
@@ -798,12 +798,13 @@ class Fornax_2022(_RegistryModel):
             return loaders.Fornax_2022(os.path.abspath(filename), metadata)
 
         # Load from Parameters
-        progenitor_mass = float(progenitor[:-3]) if progenitor.endswith('bh') else float(progenitor)
-        cls.check_valid_params(cls, progenitor=progenitor, progenitor_mass=progenitor_mass * u.Msun)
+        if progenitor_mass is None:
+            progenitor_mass = float(progenitor[:-3]) if progenitor.endswith('bh') else float(progenitor) * u.Msun
+        cls.check_valid_params(cls, progenitor=progenitor, progenitor_mass=progenitor_mass)
         filename = f'lum_spec_{progenitor}_dat.h5'
 
         metadata = {'Progenitor': progenitor,
-                    'Progenitor mass': progenitor_mass * u.Msun}
+                    'Progenitor mass': progenitor_mass}
 
         return loaders.Fornax_2022(filename, metadata)
 
