@@ -770,6 +770,8 @@ class Fornax_2022(_RegistryModel):
             }
     param['progenitor_mass'] = [float(x[:-3]) if x.endswith('bh') else float(x) for x in param['progenitor']] * u.Msun
 
+    _param_validator = lambda p: float(p['progenitor'][:-3] if 'bh' in p['progenitor'] else p['progenitor'])*u.Msun == p['progenitor_mass']
+
     _param_abbrv = {
         'progenitor': '["9.0".."26.99"]',
         'progenitor_mass': '[9.0..26.99] solMass'}
