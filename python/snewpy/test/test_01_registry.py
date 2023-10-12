@@ -32,7 +32,7 @@ class TestModels(unittest.TestCase):
                   Kuroda_2020,
                   Fornax_2021,
                   Zha_2021,
-                  #Fornax_2022,
+                  Fornax_2022,
                   ]
 
         for model in models:
@@ -357,9 +357,9 @@ class TestModels(unittest.TestCase):
         for progenitor in progenitors:
             model = Fornax_2022(progenitor=progenitor)
 
-            mass = float(progenitor[:-3] if 'bh' in progenitor else progenitor)
+            mass = float(progenitor[:-3] if 'bh' in progenitor else progenitor) * u.Msun
             self.assertEqual(model.metadata['Progenitor'], progenitor)
-            self.assertEqual(model.metadata['Progenitor mass'], float(mass)*u.Msun)
+            self.assertEqual(model.metadata['Progenitor mass'], mass)
 
             # Check that times are in proper units.
             t = model.get_time()
