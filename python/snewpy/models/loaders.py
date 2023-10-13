@@ -723,6 +723,7 @@ class Fornax_2022(Fornax_2021):
         # Open HDF5 data file.
         _h5file = h5py.File(datafile, 'r')
 
+        self.metadata['PNS mass'] = _h5file.attrs['Mpns'] * u.Msun
         self.time = _h5file['nu0'].attrs['time'] * u.s
 
         self.luminosity = {}
