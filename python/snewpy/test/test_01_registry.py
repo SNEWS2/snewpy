@@ -354,12 +354,35 @@ class TestModels(unittest.TestCase):
             '22.00',    '22.30',    '22.82',    '23.00',    '23.04',
             '23.43',    '24.00',    '25.00',    '26.00',    '26.99' ]
 
-        for progenitor in progenitors:
+        # PNS masses for each simulation, D. Vartanyan, private comm.
+        pns_masses = [  1.35 , 1.38 , 1.4  , 1.45 , 1.5  ,
+                        1.52 , 1.54 , 1.57 , 1.55 , 1.54 ,
+                        1.55 , 1.57 , 1.69 , 1.73 , 1.72 ,
+                        1.87 , 1.67 , 1.67 , 1.73 , 1.69 ,
+                        1.68 , 1.73 , 1.75 , 1.75 , 1.73 ,
+                        1.75 , 1.78 , 1.83 , 1.81 , 1.75 ,
+                        1.84 , 1.74 , 1.8  , 1.74 , 1.86 ,
+                        1.77 , 1.83 , 1.84 , 1.78 , 1.85 ,
+                        1.79 , 1.87 , 1.87 , 1.84 , 1.75 ,
+                        1.85 , 1.9  , 1.85 , 1.77 , 1.84 ,
+                        1.87 , 1.79 , 1.77 , 1.87 , 1.82 ,
+                        1.76 , 1.86 , 1.89 , 1.95 , 1.94 ,
+                        1.69 , 1.94 , 1.74 , 1.99 , 1.97 ,
+                        2.05 , 2.08 , 2.07 , 2.02 , 2.03 ,
+                        1.72 , 1.68 , 2.12 , 1.81 , 1.83 ,
+                        2.16 , 1.84 , 1.68 , 2.12 , 2.23 ,
+                        1.85 , 2.39 , 2.34 , 2.31 , 1.99 ,
+                        2.37 , 2.25 , 2.25 , 2.36 , 2.23 ,
+                        2.1  , 2.16 , 1.98 , 2.01 , 2.1  ,
+                        1.98 , 2.11 , 2.18 , 2.14 , 2.2 ]
+
+        for progenitor, m_pns in zip(progenitors, pns_masses):
             model = Fornax_2022(progenitor=progenitor)
 
             mass = float(progenitor[:-3] if 'bh' in progenitor else progenitor) * u.Msun
             self.assertEqual(model.metadata['Progenitor'], progenitor)
             self.assertEqual(model.metadata['Progenitor mass'], mass)
+            self.assertEqual(model.metadata['PNS mass'], m_pns*u.Msun)
 
             # Check that times are in proper units.
             t = model.get_time()
