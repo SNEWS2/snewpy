@@ -330,7 +330,7 @@ class TestModels(unittest.TestCase):
 
     def test_Fornax_2022(self):
         """
-        Instantiate a set of 'Fornax 2021' models
+        Instantiate a set of 'Fornax 2022' models
         """
         progenitors = [
             '9.0',     '9.25',     '9.5',      '9.75',     '10.0',
