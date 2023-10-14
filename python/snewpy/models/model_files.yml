@@ -47,5 +47,5 @@ models:
         repository: *snewpy
 
     Mori_2023: 
-        repository: repository: "https://github.com/SNEWS2/snewpy-models-ccsn/raw/mori-axion-models-2023/models/Mori_2023/{filename}"
+        repository: "https://github.com/SNEWS2/snewpy-models-ccsn/raw/mori-axion-models-2023/models/Mori_2023/{filename}"
 
