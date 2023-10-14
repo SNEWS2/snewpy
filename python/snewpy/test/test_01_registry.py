@@ -327,3 +327,31 @@ class TestModels(unittest.TestCase):
             self.assertEqual(len(f), len(Flavor))
             self.assertEqual(f[Flavor.NU_E].unit, 1./(u.erg * u.s))
 
+    def test_Mori_2023(self):
+        """
+        Instantiate a set of 'Mori 2023' models
+        """
+        axion_mass_coupling = [ (0,0),
+            (100,2), (100,4), (100,10), (100,12), (100,14), (100,16), (100,20),
+            (200,2), (200,4), (200,6), (200,8), (200,10), (200,20)]
+
+        pns_mass = [1.78, 1.77, 1.76, 1.77, 1.77, 1.77, 1.77, 1.74, 1.77, 1.76, 1.75, 1.74, 1.73, 1.62] * u.Msun
+
+        for ((am, ac), mpns) in zip(axion_mass_coupling, pns_mass):
+            model = Mori_2023(axion_mass=am, axion_coupling=ac)
+
+            self.assertEqual(model.metadata['Axion mass'], float(am)*u.MeV)
+            self.assertEqual(model.metadata['Axion coupling'], float(ac)*1e-10/u.GeV)
+            self.assertEqual(model.metadata['Progenitor mass'], 20*u.Msun)
+            self.assertEqual(model.metadata['PNS mass'], mpns)
+
+            # Check that times are in proper units.
+            t = model.get_time()
+            self.assertTrue(t.unit, u.s)
+
+            # Check that we can compute flux dictionaries.
+            f = model.get_initial_spectra(0*u.s, 10*u.MeV)
+            self.assertEqual(type(f), dict)
+            self.assertEqual(len(f), len(Flavor))
+            self.assertEqual(f[Flavor.NU_E].unit, 1./(u.erg * u.s))
+
