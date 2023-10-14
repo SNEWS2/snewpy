@@ -702,3 +702,30 @@ class Fornax_2021(SupernovaModel):
                 raise ValueError('Unrecognized interpolation type "{}"'.format(interpolation))
 
         return initialspectra
+
+
+class Mori_2023(PinchedModel):
+    def __init__(self, filename, metadata={}):
+        """
+        Parameters
+        ----------
+        filename : str
+            Absolute or relative path to file prefix.
+        """
+        # Open the requested filename using the model downloader.
+        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
+        # Read ASCII data.
+        simtab = Table.read(datafile, format='ascii')
+
+        # Get grid of model times.
+        simtab['TIME'] = simtab['2:t_pb[s]'] << u.s
+        for j, (f, fkey) in enumerate(zip([Flavor.NU_E, Flavor.NU_E_BAR, Flavor.NU_X], 'ebx')):
+            simtab[f'L_{f.name}'] = simtab[f'{6+j}:Le{fkey}[e/s]'] << u.erg / u.s
+            simtab[f'E_{f.name}'] = simtab[f'{9+j}:Em{fkey}[MeV]'] << u.MeV
+            simtab[f'E2_{f.name}'] = simtab[f'{12+j}:Er{fkey}[MeV]'] << u.MeV
+            simtab[f'ALPHA_{f.name}'] = np.full_like(simtab[f'E_{f.name}'].value, 2.)
+
+        self.filename = os.path.basename(filename)
+
+        super().__init__(simtab, metadata)
+

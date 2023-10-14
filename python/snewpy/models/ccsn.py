@@ -742,6 +742,51 @@ class Fornax_2021(_RegistryModel):
     # Populate Docstring with abbreviated param values
     __new__.__doc__ = __new__.__doc__.format(**_param_abbrv)
 
+
+class Mori_2023(_RegistryModel):
+    """Model based on 2D simulations with axionlike particles, K. Mori, T.  Takiwaki, K. Kotake and S. Horiuchi, Phys. Rev. D 108:063027, 2023. All models are based on the non-rotating 20 M_sun solar metallicity progenitor model from S.E. Woolsey and A. Heger, Phys. Rep. 442:269, 2007. Data from private communication.
+        """
+    param = {'axion_mass' : [0, 100, 200]}
+    param = {'axion_coupling' : [0, 2, 4, 6, 8, 10, 12, 14, 16, 20]}
+    param = {'progenitor_mass': 20 * u.Msun }
+
+    #_param_validator = lambda p: True
+
+    _param_abbrv = {
+        'axion_mass': '[0, 100, 200] MeV',
+        'axion_coupling' : '[0..20] 1e-10/GeV', 
+        'progenitor_mass': '20 solMass'}
+
+    def __new__(cls, axion_mass, axion_coupling, *, progenitor_mass=None):
+        """Model Initialization.
+
+        Parameters
+        ----------
+        axion_mass: int
+            Axion mass in units of MeV. Valid values are {axion_mass}.
+        axion_coupling: int
+            Axion-photon coupling, in units of 1e-10/GeV. Valid values are {axion_coupling}.
+        """
+        # Load from Parameters
+        #cls.check_valid_params(cls, axion_mass=axion_mass, axion_coupling=axion_coupling)
+
+        axmass = axion_mass#f'{axion_mass.to_value("MeV"):d}'
+        if axion_mass == 0:
+            filename = 't-prof_std.dat'
+        else:
+            filename = f't-prof_{axion_mass}_{axion_coupling}.dat'
+
+        metadata = {
+            'Axion mass': axion_mass,
+            'Axion coupling': axion_coupling,
+            'Progenitor mass': progenitor_mass if progenitor_mass else cls.param['progenitor_mass'] }
+
+        return loaders.Mori_2023(filename, metadata)
+
+    # Populate Docstring with abbreviated param values
+    __new__.__doc__ = __new__.__doc__.format(**_param_abbrv)
+
+
 class SNOwGLoBES:
     """A model that does not inherit from SupernovaModel (yet) and imports a group of SNOwGLoBES files."""
 
