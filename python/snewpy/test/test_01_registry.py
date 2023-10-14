@@ -8,7 +8,8 @@ from snewpy.flavor_transformation import NoTransformation
 from snewpy.models.ccsn import Nakazato_2013, Tamborra_2014, OConnor_2013, OConnor_2015, \
                           Sukhbold_2015, Bollig_2016, Walk_2018, \
                           Walk_2019, Fornax_2019, Warren_2020, \
-                          Kuroda_2020, Fornax_2021, Zha_2021
+                          Kuroda_2020, Fornax_2021, Zha_2021, \
+                          Mori_2023
 
 from astropy import units as u
 
@@ -30,7 +31,8 @@ class TestModels(unittest.TestCase):
                   Warren_2020,
                   Kuroda_2020,
                   Fornax_2021,
-                  Zha_2021]
+                  Zha_2021,
+                  Mori_2023]
 
         for model in models:
             for pc in model.get_param_combinations():

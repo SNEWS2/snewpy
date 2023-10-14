@@ -768,21 +768,6 @@ class Mori_2023(_RegistryModel):
         axion_coupling: int
             Axion-photon coupling, in units of 1e-10/GeV. Valid values are {axion_coupling}.
         """
-        # PNS mass table, from Mori+ 2023.
-        mpns = { (100, 2):  1.77,
-                 (100, 4):  1.76,
-                 (100, 10): 1.77,
-                 (100, 12): 1.77,
-                 (100, 14): 1.77,
-                 (100, 16): 1.77,
-                 (100, 20): 1.74,
-                 (200, 2):  1.77,
-                 (200, 4):  1.76,
-                 (200, 6):  1.75,
-                 (200, 8):  1.74,
-                 (200, 10): 1.73,
-                 (200, 20): 1.62 }
-
         # Load from Parameters
         cls.check_valid_params(cls, axion_mass=axion_mass, axion_coupling=axion_coupling)
 
@@ -790,13 +775,11 @@ class Mori_2023(_RegistryModel):
             filename = 't-prof_std.dat'
         else:
             filename = f't-prof_{axion_mass}_{axion_coupling}.dat'
-            pns_mass = mpns[(axion_mass, axion_coupling)]
 
         metadata = {
             'Axion mass': axion_mass * u.MeV,
             'Axion coupling': axion_coupling * 1e-10/u.GeV,
-            'Progenitor mass': 20*u.Msun,
-            'PNS mass': pns_mass*u.Msun }
+            'Progenitor mass': 20*u.Msun }
 
         return loaders.Mori_2023(filename, metadata)
 
