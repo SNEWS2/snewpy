@@ -754,9 +754,26 @@ class Mori_2023(PinchedModel):
         simtab['TIME'] = simtab['2:t_pb[s]'] << u.s
         for j, (f, fkey) in enumerate(zip([Flavor.NU_E, Flavor.NU_E_BAR, Flavor.NU_X], 'ebx')):
             simtab[f'L_{f.name}'] = simtab[f'{6+j}:Le{fkey}[e/s]'] << u.erg / u.s
-            simtab[f'E_{f.name}'] = simtab[f'{9+j}:Em{fkey}[MeV]'] << u.MeV
-            simtab[f'E2_{f.name}'] = simtab[f'{12+j}:Er{fkey}[MeV]'] << u.MeV
-            simtab[f'ALPHA_{f.name}'] = np.full_like(simtab[f'E_{f.name}'].value, 2.)
+            # Compute the pinch parameter from E_rms and E_avg
+            # <E^2> / <E>^2 = (2+a)/(1+a), where
+            # E_rms^2 = <E^2> - <E>^2.
+            Eavg = simtab[f'{9+j}:Em{fkey}[MeV]']
+            Erms = simtab[f'{12+j}:Er{fkey}[MeV]']
+            E2 = Erms**2 + Eavg**2
+            x = E2 / Eavg**2
+            alpha = (2-x) / (x-1)
+
+            simtab[f'E_{f.name}'] = Eavg << u.MeV
+            simtab[f'E2_{f.name}'] = E2 << u.MeV**2
+            simtab[f'ALPHA_{f.name}'] = alpha
+
+#            simtab[f'E_{f.name}'] = simtab[f'{9+j}:Em{fkey}[MeV]'] << u.MeV
+#            Erms = simtab[f'{12+j}:Er{fkey}[MeV]'] * u.MeV
+#
+#            # Compute the pinch parameter from E_rms and E_avg
+#            simtab[f'E2_{f.name}'] = Erms**2 + simtab[f'E_{f.name}']**2
+#            x = simtab[f'E2_{f.name}'] / simtab[f'E_{f.name}']**2
+#            simtab[f'ALPHA_{f.name}'] = (2-x) / (x-1)
 
         self.filename = os.path.basename(filename)
 
