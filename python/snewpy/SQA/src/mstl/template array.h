@@ -5,6 +5,7 @@
 #include<iostream>
 #include<typeinfo>
 #include<vector>
+#include<cassert>
 
 #include "mstl.h"
 
@@ -15,44 +16,44 @@
 // ************************* TEMPLATE ARRAY **************************
 // *******************************************************************
 
-template <class Type,int rank> class TARRAY;
+template <class Type,size_t rank> class TARRAY;
 
 // ******************
 
 // Outer product
-template <class Type,int rank1,int rank2>
+template <class Type,size_t rank1,size_t rank2>
 TARRAY<Type,rank1+rank2> operator*(const TARRAY<Type,rank1>&,const TARRAY<Type,rank2>&);
 
-template <class Type,int rank>
+template <class Type,size_t rank>
 TARRAY<Type,rank> operator*(const TARRAY<Type,rank>&,const Type&);
-template <class Type,int rank>
+template <class Type,size_t rank>
 TARRAY<Type,rank> operator*(const Type&,const TARRAY<Type,rank>&);
 
 // ******************
 
 //Addition and Subtraction
-template <class Type,int rank>
+template <class Type,size_t rank>
 TARRAY<Type,rank> operator+(const TARRAY<Type,rank>&,const TARRAY<Type,rank>&);
 
-template <class Type,int rank>
+template <class Type,size_t rank>
 TARRAY<Type,rank> operator-(const TARRAY<Type,rank>&,const TARRAY<Type,rank>&);
 
 // ******************
 
-template <class Type,int rank>
+template <class Type,size_t rank>
 TARRAY<Type,rank> SwapAdjacentIndices(const TARRAY<Type,rank>&,int);
 
 // *******************************
 
 // Contraction of indicii on one tensor
-template <class Type,int rank> TARRAY<Type,rank-2> Contract(const TARRAY<Type,rank>&,int,int);
+template <class Type,size_t rank> TARRAY<Type,rank-2> Contract(const TARRAY<Type,rank>&,int,int);
 
 // Contraction of indicii on two tensors
-template <class Type,int rank1,int rank2> TARRAY<Type,rank1+rank2-2> Contract(const TARRAY<Type,rank1>&,const TARRAY<Type,rank2>&,int,int);
+template <class Type,size_t rank1,size_t rank2> TARRAY<Type,rank1+rank2-2> Contract(const TARRAY<Type,rank1>&,const TARRAY<Type,rank2>&,int,int);
 //partial specializations
 template <class Type> TARRAY<Type,0> Contract(const TARRAY<Type,1> &MT1,const TARRAY<Type,1> &MT2,int,int);
-template <class Type,int rank2> TARRAY<Type,1+rank2-2> Contract(const TARRAY<Type,1> &MT1,const TARRAY<Type,rank2> &MT2,int,int j);
-template <class Type,int rank1> TARRAY<Type,rank1+1-2> Contract(const TARRAY<Type,rank1> &MT1,const TARRAY<Type,1> &MT2,int i,int);
+template <class Type,size_t rank2> TARRAY<Type,1+rank2-2> Contract(const TARRAY<Type,1> &MT1,const TARRAY<Type,rank2> &MT2,int,int j);
+template <class Type,size_t rank1> TARRAY<Type,rank1+1-2> Contract(const TARRAY<Type,rank1> &MT1,const TARRAY<Type,1> &MT2,int i,int);
 template <class Type> TARRAY<Type,2> Contract(const TARRAY<Type,2> &MT1,const TARRAY<Type,2> &MT2,int i,int j);
 template <class Type> TARRAY<Type,3> Contract(const TARRAY<Type,2> &MT1,const TARRAY<Type,3> &MT2,int i,int j);
 template <class Type> TARRAY<Type,3> Contract(const TARRAY<Type,3> &MT1,const TARRAY<Type,2> &MT2,int i,int j);
@@ -61,8 +62,8 @@ template <class Type> TARRAY<Type,4> Contract(const TARRAY<Type,4> &MT1,const TA
 
 // These three allow contraction of a tensor with a first rank tensor without specifying
 // the index for the first rank (its 1 after all)
-template <class Type,int rank1> TARRAY<Type,rank1+1-2> Contract(const TARRAY<Type,rank1>&,const TARRAY<Type,1>&,int);
-template <class Type,int rank2> TARRAY<Type,1+rank2-2> Contract(const TARRAY<Type,1>&,const TARRAY<Type,rank2>&,int);
+template <class Type,size_t rank1> TARRAY<Type,rank1+1-2> Contract(const TARRAY<Type,rank1>&,const TARRAY<Type,1>&,int);
+template <class Type,size_t rank2> TARRAY<Type,1+rank2-2> Contract(const TARRAY<Type,1>&,const TARRAY<Type,rank2>&,int);
 template <class Type> TARRAY<Type,0> Contract(const TARRAY<Type,1>&,const TARRAY<Type,1>&);
 
 // *************** Functions for specific tensors ********************
@@ -80,47 +81,47 @@ template <class Type> std::ostream& operator<<(std::ostream&,const TARRAY<Type,0
 // *******************************************************************
 // *******************************************************************
 
-template <class Type,int rank> class TARRAY
+template <class Type,size_t rank> class TARRAY
       	{ private :
            bool empty;
-           std::vector<int> dimensions;
+           std::vector<size_t> dimensions;
            TARRAY<Type,rank-1> *mt;
 
-           void Create(void){ empty=true; mt=NULL; dimensions=std::vector<int>(rank);}
-           template <int rank2> void Create(TARRAY<Type,rank2>*,std::vector<int> DIMENSIONS); // create from a list of dimensions
-           void Create(TARRAY<Type,2>*,std::vector<int> DIMENSIONS);
+           void Create(void){ empty=true; mt=NULL; dimensions=std::vector<size_t>(rank);}
+           template <size_t rank2> void Create(TARRAY<Type,rank2>*,std::vector<size_t> DIMENSIONS); // create from a list of dimensions
+           void Create(TARRAY<Type,2>*,std::vector<size_t> DIMENSIONS);
 
            void Copy(Type *T);
            void Copy(const TARRAY<Type,rank>&);
 
            void Fill(const Type &T);
 
-           template <int rank2> void Destroy(TARRAY<Type,rank2>*);
+           template <size_t rank2> void Destroy(TARRAY<Type,rank2>*);
            void Destroy(TARRAY<Type,2>*);
 
            // Swap index i with index i+1
-           template <int rank2> TARRAY<Type,rank>& SwapAdjacentIndices(TARRAY<Type,rank2>*,int);
+           template <size_t rank2> TARRAY<Type,rank>& SwapAdjacentIndices(TARRAY<Type,rank2>*,int);
            TARRAY<Type,2>& SwapAdjacentIndices(TARRAY<Type,2>*,int);
 
            TARRAY<Type,rank-1>& Reference(int i) { return mt[i];}
            TARRAY<Type,rank-1> Value(int i) const { return mt[i];}
 
-           template <int rank2> Type& Reference(TARRAY<Type,rank2>*,const std::vector<int> &i,int i0) { return Reference(&mt[i[i0]],i,i0+1);}
-           template <int rank2> Type Value(TARRAY<Type,rank2>*,const std::vector<int> &i,int i0) const { return Value(&mt[i[i0]],i,i0+1);}
+           template <size_t rank2> Type& Reference(TARRAY<Type,rank2>*,const std::vector<int> &i,int i0) { return Reference(&mt[i[i0]],i,i0+1);}
+           template <size_t rank2> Type Value(TARRAY<Type,rank2>*,const std::vector<int> &i,int i0) const { return Value(&mt[i[i0]],i,i0+1);}
 
            public :
            TARRAY(void){ Create();}
            TARRAY(const TARRAY<Type,rank> &MT);
-           explicit TARRAY(std::vector<int> DIMENSIONS);
-           explicit TARRAY(std::vector<int> DIMENSIONS,const Type &T);
+           explicit TARRAY(std::vector<size_t> DIMENSIONS);
+           explicit TARRAY(std::vector<size_t> DIMENSIONS,const Type &T);
 
            ~TARRAY(void){ Destroy(this);}
 
            bool Empty(void) const { return empty;}
-           int Rank(void) const { return rank;}
-           int Dimension(int i) const;
-           std::vector<int> Dimensions(void) const { return dimensions;}
-           std::vector<int> size(void) const { return dimensions;}
+           size_t Rank(void) const { return rank;}
+           size_t Dimension(int i) const;
+           std::vector<size_t> Dimensions(void) const { return dimensions;}
+           std::vector<size_t> size(void) const { return dimensions;}
 
            // iterators
            typedef Type*       iterator;
@@ -155,11 +156,11 @@ template <class Type,int rank> class TARRAY
 
 template <class Type> class TARRAY<Type,1>
       	{ private : bool empty;
-                    int dimension;
+                    size_t dimension;
                     Type *mt;
 
            void Create(void){ empty=true; dimension=0; mt=NULL;}
-           void Create(const int &);
+           void Create(const size_t &);
 
            void Copy(Type*);
            void Copy(const std::vector<Type>&);
@@ -177,17 +178,18 @@ template <class Type> class TARRAY<Type,1>
 
            public:
            TARRAY(void){ Create();}
-           explicit TARRAY(int DIMENSION){ Create(DIMENSION);}
-           explicit TARRAY(int DIMENSION,const Type &T){ Create(DIMENSION); Fill(T);}
-           explicit TARRAY(int DIMENSION,Type *T){ Create(DIMENSION); Copy(T);}
+           explicit TARRAY(size_t DIMENSION){ Create(DIMENSION);}
+           explicit TARRAY(size_t DIMENSION,const Type &T){ Create(DIMENSION); Fill(T);}
+           explicit TARRAY(size_t DIMENSION,Type *T){ Create(DIMENSION); Copy(T);}
            explicit TARRAY(std::vector<int> DIMENSIONS);
            TARRAY(const TARRAY<Type,1> &MT);
 
            ~TARRAY(void){ Destroy();}
 
            bool Empty(void) const { return empty;}
-           int Rank(void) const { return 1;}
-           int Dimension(void) const;
+           size_t Rank(void) const { return 1;}
+           size_t Dimension(void) const;
+           size_t Dimension(int) const { return Dimension();}
            std::vector<int> Dimensions(void) const { return std::vector<int>(1,dimension);}
 
            TARRAY<Type,1>& operator=(const TARRAY<Type,1> &MT);
@@ -222,8 +224,8 @@ template <class Type> class TARRAY<Type,0>
            TARRAY(Type T){ t=T;}
            TARRAY(const TARRAY<Type,0> &MT){ Copy(MT);}
 
-           int Rank(void) const { return 0;}
-           int Dimension(void) const { return 1;}
+           size_t Rank(void) const { return 0;}
+           size_t Dimension(void) const { return 1;}
 
            operator Type() const { return t;}
 

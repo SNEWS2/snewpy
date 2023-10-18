@@ -45,7 +45,7 @@
 // *****
 
 #include "interpolation data.h"
-#include "interpolation base.h"
+//#include "interpolation base.h"
 #include "discontinuous.h"
 
 // *****
@@ -66,7 +66,7 @@
 #include "mvector member templates.cpp"
 
 #include "interpolation data member templates.cpp"
-#include "discontinuous member templates.cpp"
+//#include "discontinuous member templates.cpp"
 
 // ********************************
 // Function Templates
@@ -88,8 +88,8 @@
 #include "roots templates.cpp"
 #include "runge kutta templates.cpp"
 
-#include "interpolation base function templates.cpp"
-#include "discontinuous function templates.cpp" 
+//#include "interpolation base function templates.cpp"
+//#include "discontinuous function templates.cpp" 
 
 // ********************************
 
