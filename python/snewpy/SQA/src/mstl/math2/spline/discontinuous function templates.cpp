@@ -6,18 +6,18 @@
 #define _DISCONTINUOUS_FUNCTIONS
 
 namespace interpolation{
-
+/*
 template <class Operator> 
 std::pair<std::vector<double>,std::vector<double> > OverlapXModifyY(DISCONTINUOUS const &C,const double &A,Operator O)
      { std::vector<double> xpoints, ypoints;  
-       for(int i=1;i<=C.N();i++){ xpoints.push_back(C.X(i)); ypoints.push_back(O(C.Y(i),A));}
+       for(int i=1;i<=static_cast<int>(C.N());i++){ xpoints.push_back(C.X(i)); ypoints.push_back(O(C.Y(i),A));}
        return std::pair<std::vector<double>,std::vector<double> >(xpoints,ypoints);
       }
 
 template <class Operator> 
 std::pair<std::vector<double>,std::vector<double> > OverlapXModifyY(const double &A,DISCONTINUOUS const &C,Operator O)
      { std::vector<double> xpoints, ypoints;  
-       for(int i=1;i<=C.N();i++){ xpoints.push_back(C.X(i)); ypoints.push_back(O(A,C.Y(i)));}
+       for(int i=1;i<=static_cast<int>(C.N());i++){ xpoints.push_back(C.X(i)); ypoints.push_back(O(A,C.Y(i)));}
        return std::pair<std::vector<double>,std::vector<double> >(xpoints,ypoints);
       }
 
@@ -27,7 +27,7 @@ template <typename IType,class Operator>
 std::pair<std::vector<double>,std::vector<double> > OverlapXCombineY(DISCONTINUOUS const &C1,EXPRESSION<IType> const &C2,Operator O)
      { double xmin=std::max(C1.XMin(),C2.XMin()), xmax=std::min(C1.XMax(),C2.XMax()); 
        if(xmin>xmax){ throw NO_OVERLAP("OverlapXCombineY");}
-       int a1min=C1.XInterval(xmin),a2min=C2.XInterval(xmin);
+       int a1min=C1.XInterval(xmin), a2min=C2.XInterval(xmin);
 
        std::vector<double> xpoints(1,xmin);
        std::vector<double> ypoints(1,O(C1(xmin),C2(xmin)));  
@@ -52,7 +52,7 @@ template <typename IType,class Operator>
 std::pair<std::vector<double>,std::vector<double> > OverlapXCombineY(EXPRESSION<IType> const &C1,DISCONTINUOUS const &C2,Operator O)
      { double xmin=std::max(C1.XMin(),C2.XMin()), xmax=std::min(C1.XMax(),C2.XMax()); 
        if(xmin>xmax){ throw NO_OVERLAP("OverlapXCombineY");}
-       int a1min=C1.XInterval(xmin),a2min=C2.XInterval(xmin);
+       int a1min=C1.XInterval(xmin), a2min=C2.XInterval(xmin);
 
        std::vector<double> xpoints(1,xmin);
        std::vector<double> ypoints(1,O(C1(xmin),C2(xmin)));  
@@ -76,7 +76,7 @@ template <class Operator>
 std::pair<std::vector<double>,std::vector<double> > OverlapXCombineY(DISCONTINUOUS const &C1,DISCONTINUOUS const &C2,Operator O)
      { double xmin=std::max(C1.XMin(),C2.XMin()), xmax=std::min(C1.XMax(),C2.XMax()); 
        if(xmin>xmax){ throw NO_OVERLAP("OverlapXCombineY");}
-       int a1min=C1.XInterval(xmin),a2min=C2.XInterval(xmin);
+       int a1min=C1.XInterval(xmin), a2min=C2.XInterval(xmin);
 
        std::vector<double> xpoints(1,xmin);
        std::vector<double> ypoints(1,O(C1(xmin),C2(xmin)));  
@@ -128,7 +128,7 @@ template <typename IType> DISCONTINUOUS operator/(DISCONTINUOUS const &D,EXPRESS
 
 template <typename IType> DISCONTINUOUS operator/(EXPRESSION<IType> const &E,DISCONTINUOUS const &D) 
          { return DISCONTINUOUS(OverlapXCombineY(E,D,std::divides<double>()));}
-
+*/
 } //end of namespace interpolation
 
 #endif

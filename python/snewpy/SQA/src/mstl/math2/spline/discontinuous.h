@@ -16,51 +16,7 @@
 namespace interpolation{
 
 class DISCONTINUOUS;
-
-// *************************************************************************************************
-// *************************************************************************************************
-// *************************************************************************************************
-
-template <class Operator> 
-std::pair<std::vector<double>,std::vector<double> > OverlapXModifyY(DISCONTINUOUS const &C,const double &A,Operator O);
-template <class Operator> 
-std::pair<std::vector<double>,std::vector<double> > OverlapXModifyY(const double &A,DISCONTINUOUS const &C,Operator O);
-
-// *************************************
-
-DISCONTINUOUS operator+(const DISCONTINUOUS&,const double&);
-DISCONTINUOUS operator-(const DISCONTINUOUS&,const double&);
-DISCONTINUOUS operator*(const DISCONTINUOUS&,const double&);
-DISCONTINUOUS operator/(const DISCONTINUOUS&,const double&);
-
-DISCONTINUOUS operator+(const double&,const DISCONTINUOUS&);
-DISCONTINUOUS operator-(const double&,const DISCONTINUOUS&);
-DISCONTINUOUS operator*(const double&,const DISCONTINUOUS&);
-
-// *************************************
-
-template <typename IType,class Operator> 
-std::pair<std::vector<double>,std::vector<double> > OverlapXCombineY(DISCONTINUOUS const &C1,EXPRESSION<IType> const &C2,Operator O);
-template <typename IType,class Operator> 
-std::pair<std::vector<double>,std::vector<double> > OverlapXCombineY(EXPRESSION<IType> const &C1,DISCONTINUOUS const &C2,Operator O);
-template <class Operator> 
-std::pair<std::vector<double>,std::vector<double> > OverlapXCombineY(DISCONTINUOUS const &C1,DISCONTINUOUS const &C2,Operator O);
-
-template <typename IType> DISCONTINUOUS operator+(DISCONTINUOUS const&,EXPRESSION<IType> const&);  // C1(x) + C2(x)
-template <typename IType> DISCONTINUOUS operator+(EXPRESSION<IType> const&,DISCONTINUOUS const&);  // C1(x) + C2(x)
-DISCONTINUOUS operator+(DISCONTINUOUS const&,DISCONTINUOUS const&);      // C1(x) + C2(x)
-
-template <typename IType> DISCONTINUOUS operator-(DISCONTINUOUS const&,EXPRESSION<IType> const&);  // C1(x) - C2(x)
-template <typename IType> DISCONTINUOUS operator-(EXPRESSION<IType> const&,DISCONTINUOUS const&);  // C1(x) - C2(x)
-DISCONTINUOUS operator-(DISCONTINUOUS const&,DISCONTINUOUS const&);      // C1(x) - C2(x)
-
-template <typename IType> DISCONTINUOUS operator*(DISCONTINUOUS const&,EXPRESSION<IType> const&);  // C1(x) * C2(x)
-template <typename IType> DISCONTINUOUS operator*(EXPRESSION<IType> const&,DISCONTINUOUS const&);  // C1(x) * C2(x)
-DISCONTINUOUS operator*(DISCONTINUOUS const&,DISCONTINUOUS const&);      // C1(x) * C2(x)
-
-template <typename IType> DISCONTINUOUS operator/(DISCONTINUOUS const&,EXPRESSION<IType> const&);  // C1(x) / C2(x)
-template <typename IType> DISCONTINUOUS operator/(EXPRESSION<IType> const&,DISCONTINUOUS const&);  // C1(x) / C2(x)
-DISCONTINUOUS operator/(DISCONTINUOUS const&,DISCONTINUOUS const&);      // C1(x) / C2(x)
+class DISCONTINUOUS_MULTIPLESETS;
 
 // *********************************************************************************
 // *********************************************************************************
@@ -78,9 +34,7 @@ class DISCONTINUOUS
         virtual protected GRADEBASE_SINGLEXSET_SINGLEYSET,
         virtual public SPLINE_SINGLEXSET_SINGLEYSET,
         virtual public SORT_SINGLEXSET_SINGLEYSET, 
-        virtual public OPENWRITE_SINGLEXSET_SINGLEYSET,
-        public EXPRESSION<DISCONTINUOUS>,
-        virtual public OPERATOR
+        virtual public READWRITE_SINGLEXSET_SINGLEYSET
       { private :
 
         mutable bool founddomains;
@@ -93,19 +47,18 @@ class DISCONTINUOUS
 
         public : 
         explicit DISCONTINUOUS(void) { SetFoundDomains(false);}
-        explicit DISCONTINUOUS(int N) : XDATA_SINGLESET(N), YDATA_SINGLESET<1>(N), DELTAX_SINGLESET(N-1), DELTAY_SINGLESET(N-1), GRADEBASE_SINGLEXSET_SINGLEYSET(N), SPLINE_SINGLEXSET_SINGLEYSET(N-1) { SetFoundDomains(false);}
-        explicit DISCONTINUOUS(std::string filename){ Open(filename); SetFoundDomains(false);}
-        explicit DISCONTINUOUS(std::string filename,char ignore){ Open(filename,ignore); SetFoundDomains(false);}
+        explicit DISCONTINUOUS(size_t N) : XDATA_SINGLESET(N), YDATA_SINGLESET<1>(N), DELTAX_SINGLESET(N-1), DELTAY_SINGLESET(N-1), GRADEBASE_SINGLEXSET_SINGLEYSET(N), SPLINE_SINGLEXSET_SINGLEYSET(N-1) { SetFoundDomains(false);}
+        explicit DISCONTINUOUS(std::string filename,size_t Nignore=0){ Read(filename,Nignore);}
+        explicit DISCONTINUOUS(std::string filename,char ignore){ Read(filename,ignore);}
         explicit DISCONTINUOUS(std::pair<std::vector<double>,std::vector<double> > XY) : XDATA_SINGLESET(XY.first), YDATA_SINGLESET<1>(XY.second) { SetFoundDomains(false);}
         explicit DISCONTINUOUS(std::vector<double> X,std::vector<double> Y) : XDATA_SINGLESET(X), YDATA_SINGLESET<1>(Y) { SetFoundDomains(false);} 
-        explicit DISCONTINUOUS(int N,const double* X,const double* Y) : XDATA_SINGLESET(N,X), YDATA_SINGLESET<1>(N,Y) { SetFoundDomains(false);}
-        template <typename IType> DISCONTINUOUS(EXPRESSION<IType> const&);
+        explicit DISCONTINUOUS(size_t N,const double* X,const double* Y) : XDATA_SINGLESET(N,X), YDATA_SINGLESET<1>(N,Y) { SetFoundDomains(false);}
 
         ~DISCONTINUOUS(void) { SetFoundDomains(false); domains.clear();}
 
         // *********************
         
-        int N(void) const { return NX();}
+        size_t N(void) const { return NX();}
 
         double X(int i) const { return XDATA_SINGLESET::X(i);}
         double Y(int i) const { return YDATA_SINGLESET<1>::Y(i);}
@@ -115,6 +68,12 @@ class DISCONTINUOUS
 
         double XMin(void) const { return XLIMITS_SINGLESET::XMin();}
         double XMax(void) const { return XLIMITS_SINGLESET::XMax();}
+
+        double YMin(void) const { return YLIMITS_SINGLESET::YMin();}
+        double YMax(void) const { return YLIMITS_SINGLESET::YMax();}
+
+        double XAtYMin(void) const { return XYLIMITS_SINGLEXSET_SINGLEYSET::XAtYMin();}
+        double XAtYMax(void) const { return XYLIMITS_SINGLEXSET_SINGLEYSET::XAtYMax();}
 
         int XInterval(double X) const { return XINTERVAL_SINGLESET::XInterval(X);}
 
@@ -136,20 +95,28 @@ class DISCONTINUOUS
         void AbsX(void){ XDATA_SINGLESET::AbsX(); SetXDifferenced(false); SetGraded(false); SetFitted(false); SetSorted(false); SetXLimited(false); SetXYLimited(false); SetFoundDomains(false);}
         void AbsY(void){ YDATA_SINGLESET<1>::AbsY(); SetYDifferenced(false); SetGraded(false); SetFitted(false); SetYLimited(false); SetXYLimited(false);}
 
-        void Open(std::string filename){ OPENWRITE_SINGLEXSET_SINGLEYSET::Open(filename); SetXDifferenced(false); SetYDifferenced(false); SetGraded(false); SetFitted(false); SetSorted(false); SetXLimited(false); SetYLimited(false); SetXYLimited(false); SetFoundDomains(false);}
-        void Open(std::string filename,char ignore){ OPENWRITE_SINGLEXSET_SINGLEYSET::Open(filename,ignore); SetXDifferenced(false); SetYDifferenced(false); SetGraded(false); SetFitted(false); SetSorted(false); SetXLimited(false); SetYLimited(false); SetXYLimited(false); SetFoundDomains(false);}
+        void Read(std::string filename,size_t Nignore=0){ READWRITE_SINGLEXSET_SINGLEYSET::Read(filename,Nignore); SetXDifferenced(false); SetYDifferenced(false); SetGraded(false); SetFitted(false); SetSorted(false); SetXLimited(false); SetYLimited(false); SetXYLimited(false); SetFoundDomains(false);}
+        void Read(std::string filename,char ignore){ READWRITE_SINGLEXSET_SINGLEYSET::Read(filename,ignore); SetXDifferenced(false); SetYDifferenced(false); SetGraded(false); SetFitted(false); SetSorted(false); SetXLimited(false); SetYLimited(false); SetXYLimited(false); SetFoundDomains(false);}
+
+        // these are deprecated in favour of Read
+        void Open(std::string filename,size_t Nignore=0){ Read(filename,Nignore);}
+        void Open(std::string filename,char ignore){ Read(filename,ignore);}
+
+        void Write(std::string filename){ READWRITE_SINGLEXSET_SINGLEYSET::Write(filename);}
 
         // *********************
 
         void FindDomains(void) const;
 
-        int NDomains(void) const { if(FoundDomains()==false){ FindDomains();} return domains.size();}
+        size_t NDomains(void) const { if(FoundDomains()==false){ FindDomains();} return domains.size();}
         std::pair<double,double> Domain(int i) const { if(FoundDomains()==false){ FindDomains();} return std::pair<double,double>(_pX(domains[i-1].first),_pX(domains[i-1].second));}
 
-        int NDiscontinuities(void) const { if(FoundDomains()==false){ FindDomains();} return domains.size()-1;}
+        size_t NDiscontinuities(void) const { if(FoundDomains()==false){ FindDomains();} return domains.size()-1;}
         double Discontinuity(int i) const { if(FoundDomains()==false){ FindDomains();} return _pX(domains[i-1].second);}
 
         void Grade(void) const; 
+        //void AkimaGrade(void) const; 
+        //void CatmullRomGrade(void) const; 
 
         double Interpolate(double X) const;
         double Derivative(double X) const;
@@ -159,7 +126,109 @@ class DISCONTINUOUS
         void Fit(void) const;
         void LineFit(void) const;
 
-        template <typename IType> DISCONTINUOUS& operator=(const EXPRESSION<IType> &I);
+        DISCONTINUOUS Derivative(void) const;
+       };
+
+// *********************************************************************************
+// *********************************************************************************
+// *********************************************************************************
+
+class DISCONTINUOUS_MULTIPLESETS
+      : virtual public XDATA_SINGLESET, 
+        virtual public YDATA_MULTIPLESETS,
+        virtual public XLIMITS_SINGLESET, 
+        virtual public YLIMITS_MULTIPLESETS, 
+        virtual public XYLIMITS_SINGLEXSET_MULTIPLEYSETS,
+        virtual public XINTERVAL_SINGLESET, 
+        virtual protected DELTAX_SINGLESET, 
+        virtual protected DELTAY_MULTIPLESETS,
+        virtual protected GRADEBASE_SINGLEXSET_MULTIPLEYSETS,
+        virtual public SPLINE_SINGLEXSET_MULTIPLEYSETS,
+        virtual public SORT_SINGLEXSET_MULTIPLEYSETS, 
+        virtual public READWRITE_SINGLEXSET_MULTIPLEYSETS
+      { private :
+
+        mutable bool founddomains;
+        mutable std::vector<std::pair<int,int> > domains;
+
+        protected :
+
+        bool FoundDomains(void) const { return founddomains;}
+        void SetFoundDomains(bool FOUNDDOMAINS) const { founddomains=FOUNDDOMAINS;}
+
+        public : 
+        explicit DISCONTINUOUS_MULTIPLESETS(void) { SetFoundDomains(false);}
+        explicit DISCONTINUOUS_MULTIPLESETS(size_t NSets,size_t N) : XDATA_SINGLESET(N), YDATA_MULTIPLESETS(NSets,N), XYLIMITS_SINGLEXSET_MULTIPLEYSETS(NSets), DELTAX_SINGLESET(N-1), DELTAY_MULTIPLESETS(NSets,N-1), GRADEBASE_SINGLEXSET_MULTIPLEYSETS(NSets,N), SPLINE_SINGLEXSET_MULTIPLEYSETS(NSets,N-1) 
+                        { SetFoundDomains(false);}
+        explicit DISCONTINUOUS_MULTIPLESETS(std::string filename){ Read(filename); SetFoundDomains(false);}
+        explicit DISCONTINUOUS_MULTIPLESETS(std::string filename,char ignore){ Read(filename,ignore); SetFoundDomains(false);}
+        explicit DISCONTINUOUS_MULTIPLESETS(std::vector<std::vector<double> > XY);
+        explicit DISCONTINUOUS_MULTIPLESETS(std::vector<double> X, std::vector<std::vector<double> > Y);
+
+        ~DISCONTINUOUS_MULTIPLESETS(void) { SetFoundDomains(false); domains.clear();}
+
+        // *********************
+        
+        size_t N(void) const { return NX();}
+        size_t NSets(void) const { return NYSets();}
+
+        double X(int i) const { return XDATA_SINGLESET::X(i);}
+        double Y(int i,int j) const { return YDATA_MULTIPLESETS::Y(i,j);}
+
+        std::vector<double> X(void) const { return XDATA_SINGLESET::X();}
+        std::vector<double> Y(int i) const { return YDATA_MULTIPLESETS::Y(i);}
+
+        double XMin(void) const { return XLIMITS_SINGLESET::XMin();}
+        double XMax(void) const { return XLIMITS_SINGLESET::XMax();}
+
+        int XInterval(double X) const { return XINTERVAL_SINGLESET::XInterval(X);}
+
+        void SetX(int i,double X){ XDATA_SINGLESET::SetX(i,X); SetXDifferenced(false); SetSorted(false); SetXLimited(false); SetXYLimited(false); SetGraded(false); SetFitted(false); SetFoundDomains(false);}
+        void SetX(const std::vector<double> &X){ XDATA_SINGLESET::SetX(X); SetXDifferenced(false); SetGraded(false); SetFitted(false); SetSorted(false); SetXLimited(false); SetXYLimited(false); SetFoundDomains(false);}
+
+        void SetY(int i,int j,double Y){ YDATA_MULTIPLESETS::SetY(i,j,Y); SetYDifferenced(false); SetGraded(false); SetFitted(false); SetYLimited(false); SetXYLimited(false);}
+        void SetY(int i,const std::vector<double> &Y){ YDATA_MULTIPLESETS::SetY(i,Y); SetYDifferenced(false); SetGraded(false); SetFitted(false); SetYLimited(false); SetXYLimited(false);}
+
+        template<typename UNARYFUNCTION> void TransformX(const UNARYFUNCTION &UF){ XDATA_SINGLESET::TransformX(UF); SetXDifferenced(false); SetGraded(false); SetFitted(false); SetSorted(false); SetXLimited(false); SetXYLimited(false); SetFoundDomains(false);}
+        template<typename UNARYFUNCTION> void TransformY(const UNARYFUNCTION &UF){ YDATA_MULTIPLESETS::TransformY(UF); SetYDifferenced(false); SetGraded(false); SetFitted(false); SetYLimited(false); SetXYLimited(false);}
+
+        void ShiftX(const double &D){ XDATA_SINGLESET::ShiftX(D); SetXDifferenced(false); SetGraded(false); SetFitted(false); SetSorted(false); SetXLimited(false); SetXYLimited(false); SetFoundDomains(false);}
+        void ShiftY(const double &D){ YDATA_MULTIPLESETS::ShiftY(D); SetYDifferenced(false); SetGraded(false); SetFitted(false); SetYLimited(false); SetXYLimited(false);}
+
+        void RescaleX(const double &D){ XDATA_SINGLESET::RescaleX(D); SetXDifferenced(false); SetGraded(false); SetFitted(false); SetSorted(false); SetXLimited(false); SetXYLimited(false); SetFoundDomains(false);}
+        void RescaleY(const double &D){ YDATA_MULTIPLESETS::RescaleY(D); SetYDifferenced(false); SetGraded(false); SetFitted(false); SetYLimited(false); SetXYLimited(false);}
+
+        void AbsX(void){ XDATA_SINGLESET::AbsX(); SetXDifferenced(false); SetGraded(false); SetFitted(false); SetSorted(false); SetXLimited(false); SetXYLimited(false); SetFoundDomains(false);}
+        void AbsY(void){ YDATA_MULTIPLESETS::AbsY(); SetYDifferenced(false); SetGraded(false); SetFitted(false); SetYLimited(false); SetXYLimited(false);}
+
+        void Read(std::string filename){ READWRITE_SINGLEXSET_MULTIPLEYSETS::Read(filename); SetXDifferenced(false); SetYDifferenced(false); SetGraded(false); SetFitted(false); SetSorted(false); SetXLimited(false); SetYLimited(false); SetXYLimited(false); SetFoundDomains(false);}
+        void Read(std::string filename,char ignore){ READWRITE_SINGLEXSET_MULTIPLEYSETS::Read(filename,ignore); SetXDifferenced(false); SetYDifferenced(false); SetGraded(false); SetFitted(false); SetSorted(false); SetXLimited(false); SetYLimited(false); SetXYLimited(false); SetFoundDomains(false);}
+
+        // *********************
+
+        void FindDomains(void) const;
+
+        size_t NDomains(void) const { if(FoundDomains()==false){ FindDomains();} return domains.size();}
+        std::pair<double,double> Domain(int i) const { if(FoundDomains()==false){ FindDomains();} return std::pair<double,double>(_pX(domains[i-1].first),_pX(domains[i-1].second));}
+
+        size_t NDiscontinuities(void) const { if(FoundDomains()==false){ FindDomains();} return domains.size()-1;}
+        double Discontinuity(int i) const { if(FoundDomains()==false){ FindDomains();} return _pX(domains[i-1].second);}
+
+        void Grade(void) const; 
+        //void AkimaGrade(void) const; 
+        //void CatmullRomGrade(void) const; 
+
+        double Interpolate(int j,double X) const;
+        std::vector<double> Interpolate(double X) const;
+
+        double Derivative(int j,double X) const;
+        std::vector<double> Derivative(double X) const;
+
+        double operator()(int j,double X) const { return Interpolate(j,X);}
+        std::vector<double> operator()(double X) const { return Interpolate(X);}
+ 
+        void Fit(void) const;
+        void LineFit(void) const;
        };
 
 } //end of namespace interpolation
