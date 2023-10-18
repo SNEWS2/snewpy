@@ -11,12 +11,12 @@ if __name__ == "__main__":
     Betelgeuse = SkyCoord.from_name('Betelgeuse') 
     
     # neutrino detector
-    SuperK = EarthLocation(lat=36.425722*u.deg, lon=137.310306*u.deg, height=389*u.m)
-    #SuperK = EarthLocation.of_site('Super-Kamiokande')
-    utcoffset = +9*u.hour  
+    SuperK = EarthLocation.of_site('SuperK')
 
-    # when the supernova occured
-    time = Time('2021-5-26 23:14:00') - utcoffset
+    # time when the supernova occured 
+    # the first time option means the neutrinos traveled through the Earth, the second means they did not
+    time = Time('2021-5-26 14:14:00')
+    #time = Time('2021-5-26 14:14:00') - 12*u.hour    
 
     # altaz of supernovae at detector
     SNaltaz = Betelgeuse.transform_to(AltAz(obstime=time,location=SuperK)) 
