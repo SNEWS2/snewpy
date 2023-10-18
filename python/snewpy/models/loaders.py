@@ -750,6 +750,9 @@ class Mori_2023(PinchedModel):
         # Read ASCII data.
         simtab = Table.read(datafile, format='ascii')
 
+        # Remove the first table row, which appears to have zero input.
+        simtab = simtab[simtab['1:t_sim[s]'] > 0]
+
         # Get grid of model times.
         simtab['TIME'] = simtab['2:t_pb[s]'] << u.s
         for j, (f, fkey) in enumerate(zip([Flavor.NU_E, Flavor.NU_E_BAR, Flavor.NU_X], 'ebx')):
