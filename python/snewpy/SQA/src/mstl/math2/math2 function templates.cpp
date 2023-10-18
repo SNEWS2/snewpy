@@ -9,8 +9,8 @@ template <class Type> Type Theta(const Type &T){ if(T<=Zero<Type>()){ return Zer
 
 template<class Type> typename std::enable_if<!std::numeric_limits<Type>::is_integer, bool>::type Equality(Type A,Type B,unsigned int N)
         { int i=0; 
-          if(A>B){ while(i<N){ B=nextafter(B,+INFINITY); i++;}; return B >= A;}
-          else{ while(i<N){ A=nextafter(A,+INFINITY); i++;}; return A >= B;}
+          if(A>B){ while(i<static_cast<int>(N)){ B=nextafter(B,+INFINITY); i++;}; return B >= A;}
+          else{ while(i<static_cast<int>(N)){ A=nextafter(A,+INFINITY); i++;}; return A >= B;}
          }
 
 template<class Type> typename std::enable_if<!std::numeric_limits<Type>::is_integer, bool>::type Equality(Type A,std::complex<Type> B,unsigned int N)
