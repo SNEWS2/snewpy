@@ -9,18 +9,18 @@ from snewpy.flavor_transformation import *
 from snewpy.neutrino import *
 
 SNOwGLoBES_path = None  # change to SNOwGLoBES directory if using a custom detector configuration
-SNEWPY_model_dir = "/nucastro2/jpknelle/Research/SNEWS2/snewpy 1.4jpk/models"  # directory containing model input files
+SNEWPY_model_dir = "/path/to/snewpy/models/"  # directory containing model input files
 
 # skycoordinates of neutrino source
 Betelgeuse = SkyCoord.from_name('Betelgeuse') 
     
 # neutrino detector
 SuperK = EarthLocation.of_site('SuperK')
-utcoffset = +9*u.hour  
 
-# when the supernova occured
-time = Time('2021-5-26 23:14:00') - utcoffset
-#time = Time('2021-5-26 23:14:00') - utcoffset - 12*u.hour    
+# time when the supernova occured 
+# the first time option means the neutrinos traveled through the Earth, the second means they did not
+time = Time('2021-5-26 14:14:00')
+#time = Time('2021-5-26 14:14:00') - 12*u.hour    
 
 # altaz of supernovae at detector
 SNaltaz = Betelgeuse.transform_to(AltAz(obstime=time,location=SuperK)) 
