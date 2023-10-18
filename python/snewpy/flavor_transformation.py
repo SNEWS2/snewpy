@@ -303,7 +303,7 @@ class ThreeFlavorTransformation(FlavorTransformation):
 
         ID.accuracy = 1.01E-007       # controls accuracy of integrtaor: smaller is more accurate
         ID.stepcounterlimit = 10    # output frequency if outputflag = True: larger is less frequent
-        ID.outputflag = True         # set to True if output is desired
+        ID.outputflag = False         # set to True if output is desired
  
         #matrix from Sqa3Earth needs to be rearranged to match SNEWPY indici
         Pfm = Sqa3Earth.RunSqa3Earth(ID)
