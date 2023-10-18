@@ -48,9 +48,13 @@ if __name__ == "__main__":
     ID.deltaCP = 0	
 
     ID.accuracy = 1.01E-009
-    ID.stepcounterlimit = 1000
 
-    ID.outputflag = False
+    # if set to True the Sqa3Earth module will output files in the 'out' directory
+    # The stepcounterlimit controls how often output is written. The larger the number, the less often it happens. 
+    ID.outputflag = False 
+    ID.stepcounterlimit = 1
+
+
 
     # do the calculation. The return is a four dimensional array of transition probabilities nu_alpha -> nu_i: 
     # index order is matter/antimatter, energy, i, alpha
