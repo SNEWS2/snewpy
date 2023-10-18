@@ -137,7 +137,7 @@ vector<vector<vector<vector<double> > > > RunSqa3Earth(InputDataSqa3Earth ID)
            rho.FindDomains();
 
            lambdas.push_back(lambdamin+0.0*cgs::units::cm); 
-           for(int d=1;d<=rho.NDiscontinuities();d++)
+           for(int d=1;d<=static_cast<int>(rho.NDiscontinuities());d++)
                { r=rho.Discontinuity(d); 
                  if(r>RE*cos(altitude))
                    { lambdas.push_back( -RE*sin(altitude)-sqrt(r-RE*cos(altitude))*sqrt(r+RE*cos(altitude)) );
@@ -208,8 +208,8 @@ vector<vector<vector<vector<double> > > > RunSqa3Earth(InputDataSqa3Earth ID)
            // quantities evaluated at inital point
 
            // MSW potential matrix
-           double rrho = rho(lambdamin);
-           double YYe=Ye(lambdamin);
+           double rrho = rho(lambdas.front());
+           double YYe=Ye(lambdas.front());
 
            MATRIX<complex<double>,NF,NF> VfMSW0, VfMSWbar0, Hf0,Hfbar0;
            array<double,NF> k0, kbar0, deltak0, deltakbar0;
