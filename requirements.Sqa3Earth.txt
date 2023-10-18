@@ -1,5 +1,0 @@
-numpy >= 1.16
-scipy
-astropy >=4.3
-
-
