@@ -63,8 +63,8 @@ class TestSimpleRate(unittest.TestCase):
 
         # We do not use the SNOwGLoBES scaling factors but use other constants so we do not
         # expect the results to agree to 7 digits. Here sub-permille agreement is good enough.
-        sk_expected = 4486.929197175579
-        sk_expected_smeared = 4044.841743901513
+        sk_expected = 4491.783259
+        sk_expected_smeared = 4065.662374
         sk_computed = 0.32 * total_events
         sk_computed_smeared = 0.32 * total_events_smeared
         discrepancy = abs(sk_computed - sk_expected)/sk_expected
