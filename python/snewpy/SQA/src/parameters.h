@@ -29,9 +29,9 @@ extern std::vector<double> E;
 // mass of mass state1, delta m^2 differences
 extern double m1,dm21,dm32;
 
-extern double theta12V, theta13V, theta23V, epsilonV;
-extern std::array<double,NF> alphaV, betaV;
-extern double c12V,s12V, c13V,s13V, c23V,s23V, cepsilonV,sepsilonV;
+extern double theta12V, theta13V, theta23V, deltaV;
+extern std::array<double,NF-1> etaV;
+extern double c12V,s12V, c13V,s13V, c23V,s23V, cdeltaV,sdeltaV;
 
 // vacuum eigenvalues
 extern std::vector<std::array<double,NF> > kV;

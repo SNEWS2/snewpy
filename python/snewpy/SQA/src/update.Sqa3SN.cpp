@@ -39,13 +39,13 @@ vector<vector<MATRIX<complex<double>,NF,NF> > > UpdateSm(double rminus,double rp
                { Hf=HfV[nu][i]+VfMSW[nu];
                  kk=k(Hf);
                  dkk=deltak(kk);
-                 UU=U(dkk,C0[nu][i],A0[nu][i]);
+                 UU=MixingMatrix(dkk,C0[nu][i],A0[nu][i]);
             	 Sm[nu][i]=UU * W(Y[nu][i]) * B(Y[nu][i]) * Smprior[nu][i];
 
             	 Hfbar=HfV[antinu][i]+VfMSW[antinu];
             	 kkbar=kbar(Hfbar);
             	 dkkbar=deltakbar(kkbar);
-                 UUbar=Conjugate(U(dkkbar,C0[antinu][i],A0[antinu][i]));
+                 UUbar=MixingMatrix(dkkbar,C0[antinu][i],A0[antinu][i]);
             	 Sm[antinu][i]=UUbar * W(Y[antinu][i]) * B(Y[antinu][i]) * Smprior[antinu][i];
 		}
 
@@ -66,7 +66,7 @@ vector<vector<MATRIX<complex<double>,NF,NF> > > UpdateSm(double rminus,double rp
              	 dkk=deltak(kk);
                  CofactorMatrices(Hf,kk,CC);
                  AA=MixingMatrixFactors(CC,C0[nu][i],A0[nu][i]);
-                 UU=U(dkk,CC,AA);  
+                 UU=MixingMatrix(dkk,CC,AA);  
             	 Sm[nu][i]=Adjoint(UU)*MATRIX<complex<double>,NF,NF>(Sm[nu][i]); 
 
             	 Hfbar=HfV[antinu][i]+VfMSW[antinu];
@@ -74,7 +74,7 @@ vector<vector<MATRIX<complex<double>,NF,NF> > > UpdateSm(double rminus,double rp
             	 dkkbar=deltakbar(kkbar);
                  CofactorMatrices(Hfbar,kkbar,CC);
                  AA=MixingMatrixFactors(CC,C0[antinu][i],A0[antinu][i]);
-                 UUbar=Conjugate(U(dkkbar,CC,AA));
+                 UUbar=MixingMatrix(dkkbar,CC,AA);
             	 Sm[antinu][i]=Adjoint(UUbar)*MATRIX<complex<double>,NF,NF>(Sm[antinu][i]);
 	        }
 

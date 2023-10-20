@@ -39,23 +39,25 @@ void Pfm(double lambda,vector<vector<array<double,NY> > > &Y,vector<vector<array
            { Hf[nu][i]=HfV[nu][i] + VfMSW[nu];
              kk[nu][i]=k(Hf[nu][i]);
 	     dkk[nu][i]=deltak(kk[nu][i]);
-             UU[nu][i] = U(dkk[nu][i],C0[nu][i],A0[nu][i]);
+             UU[nu][i] = MixingMatrix(dkk[nu][i],C0[nu][i],A0[nu][i]);
 
 	     Sa[nu][i] = W(Y[nu][i]) * B(Y[nu][i]);
 
-	     Sm[nu][i] = Sa[nu][i] * Scumulative[nu][i];
-             Sfm[nu][i]= UU[nu][i] * Sm[nu][i];
+             // take into account the density jump from Earth matter back to vacuum
+	     Sm[nu][i] = Adjoint(UV[nu])*UU[nu][i] * Sa[nu][i] * Scumulative[nu][i];
+             Sfm[nu][i]= UV[nu] * Sm[nu][i];
 
 	     // *********
 	     Hf[antinu][i]=HfV[antinu][i] + VfMSW[antinu];
 	     kk[antinu][i]=kbar(Hf[antinu][i]);
 	     dkk[antinu][i]=deltakbar(kk[antinu][i]);
-	     UU[antinu][i]=Conjugate(U(dkk[antinu][i],C0[antinu][i],A0[antinu][i]));
+	     UU[antinu][i]=MixingMatrix(dkk[antinu][i],C0[antinu][i],A0[antinu][i]);
        
 	     Sa[antinu][i] = W(Y[antinu][i]) * B(Y[antinu][i]);
 
-	     Sm[antinu][i] = Sa[antinu][i] * Scumulative[antinu][i];
-             Sfm[antinu][i]= UU[antinu][i] * Sm[antinu][i];
+             // take into account the density jump from Earth matter back to vacuum
+	     Sm[antinu][i] = Adjoint(UV[antinu])*UU[antinu][i] * Sa[antinu][i] * Scumulative[antinu][i];
+             Sfm[antinu][i]= UV[antinu] * Sm[antinu][i];
 	    }
 
         // *******

@@ -22,9 +22,9 @@ vector<double> E;
 // mass of mass state1, delta m^2 differences
 double m1,dm21,dm32;
 
-double theta12V, theta13V, theta23V, epsilonV;
-array<double,NF> alphaV, betaV;
-double c12V,s12V, c13V,s13V, c23V,s23V, cepsilonV,sepsilonV;
+double theta12V, theta13V, theta23V, deltaV;
+array<double,NF-1> etaV;
+double c12V,s12V, c13V,s13V, c23V,s23V, cdeltaV,sdeltaV;
 
 // vacuum eigenvalues
 vector<array<double,NF> > kV;

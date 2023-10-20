@@ -231,7 +231,7 @@ vector<vector<vector<vector<double> > > > RunSqa3SN(InputDataSqa3SN ID)
                      A0[nu][i][j][mu]=AV[nu][i][j][mu];
                      if( real(C0[nu][i][j][mu][tau]*CV[nu][i][j][mu][tau])<0. ){ A0[nu][i][j][tau]=-AV[nu][i][j][tau];} else{ A0[nu][i][j][tau]=AV[nu][i][j][tau];}
                     }
-                U0[nu][i]=U(deltak0,C0[nu][i],A0[nu][i]);
+                U0[nu][i]=MixingMatrix(deltak0,C0[nu][i],A0[nu][i]);
 
                 Hfbar0=HfV[antinu][i]-VfMSW0;
                 kbar0=kbar(Hfbar0);
@@ -242,7 +242,7 @@ vector<vector<vector<vector<double> > > > RunSqa3SN(InputDataSqa3SN ID)
                      A0[antinu][i][j][mu]=AV[antinu][i][j][mu];
                      if( real(C0[antinu][i][j][mu][tau]*CV[antinu][i][j][mu][tau])<0. ){ A0[antinu][i][j][tau]=-AV[antinu][i][j][tau];} else{ A0[antinu][i][j][tau]=AV[antinu][i][j][tau];}
                     }
-                U0[antinu][i]=Conjugate(U(deltakbar0,C0[antinu][i],A0[antinu][i]));
+                U0[antinu][i]=MixingMatrix(deltakbar0,C0[antinu][i],A0[antinu][i]);
                }
 
            // ******************************************************

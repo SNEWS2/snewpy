@@ -83,22 +83,15 @@ void Neutrino_loader(InputDataSqa3Earth ID,std::string &outputfilenamestem)
        theta13V = ID.theta13;
        theta23V = ID.theta23; 
 
-       alphaV[0] = 0.;
-       alphaV[1] = 0.;
-       alphaV[2] = 0.;
+       etaV[0] = 0.;
+       etaV[1] = 0.;
 
-       betaV[0] = 0.;
-       betaV[1] = 0.;
-       betaV[2] = 0.;
-
-       epsilonV = ID.deltaCP;
+       deltaV = ID.deltaCP;
 
        // *********************
 
        cout << "\n\nm1\t" << m1 << "\tdm21^2\t" << dm21 << "\tdm32\t" << dm32;
-       cout << "\ntheta12V\t" << theta12V << "\ttheta13V\t" << theta13V << "\ttheta23V\t" << theta23V;
-       cout << "\nalpha1V\t" << alphaV[0] << "\talpha2V\t" << alphaV[1] << "\talpha3V\t" << alphaV[2];
-       cout << "\nbeta1V\t" << betaV[0] << "\tbeta2V\t" << betaV[1] << "\tbeta3V\t" << betaV[2];
+       cout << "\ntheta12V\t" << theta12V << "\ttheta13V\t" << theta13V << "\ttheta23V\t" << theta23V<< "\tdeltaCP\t" << deltaV;
 
        cout<<"\n\nNE\t"<<NE<<"\tEmin\t"<<EminMeV<<"\tEmax\t"<<EmaxMeV;
        cout.flush();
@@ -109,7 +102,7 @@ void Neutrino_loader(InputDataSqa3Earth ID,std::string &outputfilenamestem)
        string comma(","), colon(":");
 
        filename<<outputfilenamestem;
-       filename<<colon<<dm21<<comma<<dm32<<comma<<theta12V<<comma<<theta13V<<comma<<theta23V<<comma<<epsilonV;
+       filename<<colon<<dm21<<comma<<dm32<<comma<<theta12V<<comma<<theta13V<<comma<<theta23V<<comma<<deltaV;
        filename<<colon<<NE<<comma<<EminMeV<<comma<<EmaxMeV;
 
        outputfilenamestem=filename.str();
@@ -128,7 +121,7 @@ void Neutrino_loader(InputDataSqa3Earth ID,std::string &outputfilenamestem)
        theta13V*=M_PI/180.; c13V=cos(theta13V); s13V=sin(theta13V);
        theta23V*=M_PI/180.; c23V=cos(theta23V); s23V=sin(theta23V);
 
-       epsilonV*=M_PI/180.; cepsilonV=cos(epsilonV); sepsilonV=sin(epsilonV);
+       deltaV*=M_PI/180.; cdeltaV=cos(deltaV); sdeltaV=sin(deltaV);
       }
 
        

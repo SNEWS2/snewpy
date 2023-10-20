@@ -82,7 +82,7 @@ void Output_Pvsr(ofstream &fPvsr,double r,vector<vector<array<double,NY> > > &Y,
 	     Hf[antinu][i]=HfV[antinu][i] + VfMSW[antinu];
 	     kk[antinu][i]=kbar(Hf[antinu][i]);
 	     dkk[antinu][i]=deltakbar(kk[antinu][i]);
-	     UU[antinu][i]=Conjugate(U(dkk[antinu][i],C0[antinu][i],A0[antinu][i]));
+	     UU[antinu][i]=MixingMatrix(dkk[antinu][i],C0[antinu][i],A0[antinu][i]);
       
 	     Sa[antinu][i] = W(Y[antinu][i]) * B(Y[antinu][i]);
 
@@ -175,7 +175,7 @@ void Output_PvsE(ofstream &fPvsE,string outputfilenamestem,double r,vector<vecto
 	     Hf[antinu][i]=HfV[antinu][i] + VfMSW[antinu];
 	     kk[antinu][i]=kbar(Hf[antinu][i]);
 	     dkk[antinu][i]=deltakbar(kk[antinu][i]);
-	     UU[antinu][i]=Conjugate(U(dkk[antinu][i],C0[antinu][i],A0[antinu][i]));
+	     UU[antinu][i]=MixingMatrix(dkk[antinu][i],C0[antinu][i],A0[antinu][i]);
        
 	     Sa[antinu][i] = W(Y[antinu][i]) * B(Y[antinu][i]);
 
@@ -256,7 +256,7 @@ void Output_Hvsr(ofstream &fHvsr,double r,vector<vector<array<double,NY> > > &Y,
                { Hf=HfV[nu][i]+VfMSW;     
                  kk=k(Hf);
                  dkk=deltak(kk);
-	  	 UU[i]=U(dkk,C0[nu][i],A0[nu][i]);
+	  	 UU[i]=MixingMatrix(dkk,C0[nu][i],A0[nu][i]);
 
                  BB[i]=B(Y[nu][i]);
                  WW[i]=W(Y[nu][i]);
@@ -270,7 +270,7 @@ void Output_Hvsr(ofstream &fHvsr,double r,vector<vector<array<double,NY> > > &Y,
                  Hfbar=HfV[antinu][i]+VfMSWbar;
 	         kkbar=kbar(Hfbar);
                  dkkbar=deltakbar(kkbar);
-	     	 UUbar[i]=Conjugate(U(dkkbar,C0[antinu][i],A0[antinu][i]));
+	     	 UUbar[i]=MixingMatrix(dkkbar,C0[antinu][i],A0[antinu][i]);
 
                  BBbar[i]=B(Y[antinu][i]);
                  WWbar[i]=W(Y[antinu][i]);

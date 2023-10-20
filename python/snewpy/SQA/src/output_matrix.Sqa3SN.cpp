@@ -50,7 +50,7 @@ void Pmf(double r,vector<vector<array<double,NY> > > &Y,vector<vector<array<MATR
 	     Hf[antinu][i]=HfV[antinu][i] + VfMSW[antinu];
 	     kk[antinu][i]=kbar(Hf[antinu][i]);
 	     dkk[antinu][i]=deltakbar(kk[antinu][i]);
-	     UU[antinu][i]=Conjugate(U(dkk[antinu][i],C0[antinu][i],A0[antinu][i]));
+	     UU[antinu][i]=MixingMatrix(dkk[antinu][i],C0[antinu][i],A0[antinu][i]);
        
 	     Sa[antinu][i] = W(Y[antinu][i]) * B(Y[antinu][i]);
 

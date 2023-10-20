@@ -99,7 +99,7 @@ void K(double lambda,double dlambda,vector<vector<array<double,NY> > > &Y,vector
 
                  CofactorMatrices(Hf,kk,CC);
                  AA=MixingMatrixFactors(CC,C0[nu][i],A0[nu][i]);
-	  	 UU=U(dkk,CC,AA);
+	  	 UU=MixingMatrix(dkk,CC,AA);
 
                  BB=B(Y[nu][i]);
                  WW=W(Y[nu][i]);
@@ -159,7 +159,7 @@ void K(double lambda,double dlambda,vector<vector<array<double,NY> > > &Y,vector
 
                  CofactorMatrices(Hfbar,kkbar,CC);
                  AA=MixingMatrixFactors(CC,C0[antinu][i],A0[antinu][i]);
-		 UUbar=Conjugate(U(dkkbar,CC,AA));
+		 UUbar=MixingMatrix(dkkbar,CC,AA);
 
                  BB=B(Y[antinu][i]);
                  WW=W(Y[antinu][i]);

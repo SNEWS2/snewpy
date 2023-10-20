@@ -6,8 +6,8 @@
 
 // ****************************************************************************************
 
-MATRIX<std::complex<double>,NF,NF> U(MATRIX<std::complex<double>,NF,NF> Hf,std::array<double,NF> k,std::array<double,NF> dk,std::array<std::array<double,NF>,NF> A);
-MATRIX<std::complex<double>,NF,NF> U(std::array<double,NF> dk,std::array<MATRIX<std::complex<double>,NF,NF>,NF> &C,std::array<std::array<double,NF>,NF> A);
+MATRIX<std::complex<double>,NF,NF> MixingMatrix(MATRIX<std::complex<double>,NF,NF> Hf,std::array<double,NF> k,std::array<double,NF> dk,std::array<std::array<double,NF>,NF> A);
+MATRIX<std::complex<double>,NF,NF> MixingMatrix(std::array<double,NF> dk,std::array<MATRIX<std::complex<double>,NF,NF>,NF> &C,std::array<std::array<double,NF>,NF> A);
 void Evaluate_UV(void);
 
 void Evaluate_CV(void);

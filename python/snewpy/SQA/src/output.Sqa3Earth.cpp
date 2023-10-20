@@ -31,7 +31,7 @@ void Initialize_Output(string outputfilenamestem,ofstream &fPvslambda,ofstream &
                }
 
            filename.str("");
-           filename << outputfilenamestem <<string(":Ye.dat");
+           filename << outputfilenamestem <<string(":H.dat");
            fHvslambda.open((filename.str()).c_str());
            fHvslambda.precision(12);
           }
@@ -68,12 +68,12 @@ void Output_Pvslambda(ofstream &fPvslambda,double lambda,vector<vector<array<dou
            { Hf[nu][i]=HfV[nu][i] + VfMSW[nu];
              kk[nu][i]=k(Hf[nu][i]);
 	     dkk[nu][i]=deltak(kk[nu][i]);
-             UU[nu][i] = U(dkk[nu][i],C0[nu][i],A0[nu][i]);
+             UU[nu][i] = MixingMatrix(dkk[nu][i],C0[nu][i],A0[nu][i]);
 
 	     Sa[nu][i] = W(Y[nu][i]) * B(Y[nu][i]);		
 
 	     Sm[nu][i] = Sa[nu][i] * Scumulative[nu][i];
-             Smf[nu][i]= Sm[nu][i] * Adjoint(U0[nu][i]);
+             Smf[nu][i]= Sm[nu][i] * Adjoint(UV[nu]);
 	     Sfm[nu][i] = UU[nu][i] * Sm[nu][i];
 	     Sf[nu][i] = UU[nu][i] * Smf[nu][i];
 
@@ -82,12 +82,12 @@ void Output_Pvslambda(ofstream &fPvslambda,double lambda,vector<vector<array<dou
 	     Hf[antinu][i]=HfV[antinu][i] + VfMSW[antinu];
 	     kk[antinu][i]=kbar(Hf[antinu][i]);
 	     dkk[antinu][i]=deltakbar(kk[antinu][i]);
-	     UU[antinu][i]=Conjugate(U(dkk[antinu][i],C0[antinu][i],A0[antinu][i]));
+	     UU[antinu][i]=MixingMatrix(dkk[antinu][i],C0[antinu][i],A0[antinu][i]);
       
 	     Sa[antinu][i] = W(Y[antinu][i]) * B(Y[antinu][i]);
 
 	     Sm[antinu][i] = Sa[antinu][i] * Scumulative[antinu][i];
-             Smf[antinu][i]= Sm[antinu][i] * Adjoint(U0[antinu][i]);
+             Smf[antinu][i]= Sm[antinu][i] * Adjoint(UV[antinu]);
 	     Sfm[antinu][i] = UU[antinu][i] * Sm[antinu][i];
 	     Sf[antinu][i] = UU[antinu][i] * Smf[antinu][i];
 	    }
@@ -163,12 +163,12 @@ void Output_PvsE(ofstream &fPvsE,string outputfilenamestem,double lambda,vector<
            { Hf[nu][i]=HfV[nu][i] + VfMSW[nu];
              kk[nu][i]=k(Hf[nu][i]);
 	     dkk[nu][i]=deltak(kk[nu][i]);
-             UU[nu][i] = U(dkk[nu][i],C0[nu][i],A0[nu][i]);
+             UU[nu][i] = MixingMatrix(dkk[nu][i],C0[nu][i],A0[nu][i]);
 
 	     Sa[nu][i] = W(Y[nu][i]) * B(Y[nu][i]);
 
 	     Sm[nu][i] = Sa[nu][i] * Scumulative[nu][i];
-             Smf[nu][i]= Sm[nu][i] * Adjoint(U0[nu][i]);
+             Smf[nu][i]= Sm[nu][i] * Adjoint(UV[nu]);
 	     Sfm[nu][i] = UU[nu][i] * Sm[nu][i];
 	     Sf[nu][i] = UU[nu][i] * Smf[nu][i];
 
@@ -176,12 +176,12 @@ void Output_PvsE(ofstream &fPvsE,string outputfilenamestem,double lambda,vector<
 	     Hf[antinu][i]=HfV[antinu][i] + VfMSW[antinu];
 	     kk[antinu][i]=kbar(Hf[antinu][i]);
 	     dkk[antinu][i]=deltakbar(kk[antinu][i]);
-	     UU[antinu][i]=Conjugate(U(dkk[antinu][i],C0[antinu][i],A0[antinu][i]));
+	     UU[antinu][i]=MixingMatrix(dkk[antinu][i],C0[antinu][i],A0[antinu][i]);
        
 	     Sa[antinu][i] = W(Y[antinu][i]) * B(Y[antinu][i]);
 
 	     Sm[antinu][i] = Sa[antinu][i] * Scumulative[antinu][i];
-             Smf[antinu][i]= Sm[antinu][i] * Adjoint(U0[antinu][i]);
+             Smf[antinu][i]= Sm[antinu][i] * Adjoint(UV[antinu]);
 	     Sfm[antinu][i] = UU[antinu][i] * Sm[antinu][i];
 	     Sf[antinu][i] = UU[antinu][i] * Smf[antinu][i];
 	    }
@@ -258,28 +258,28 @@ void Output_Hvslambda(ofstream &fHvslambda,double lambda,vector<vector<array<dou
                { Hf=HfV[nu][i]+VfMSW;     
                  kk=k(Hf);
                  dkk=deltak(kk);
-	  	 UU[i]=U(dkk,C0[nu][i],A0[nu][i]);
+	  	 UU[i]=MixingMatrix(dkk,C0[nu][i],A0[nu][i]);
 
                  BB[i]=B(Y[nu][i]);
                  WW[i]=W(Y[nu][i]);
 
                  Sm[i]=WW[i]*BB[i] *Scumulative[nu][i];
-                 Smf[i]=Sm[i]*Adjoint(U0[nu][i]);
-                 Sf[i]=UU[i]*Sm[i]*Adjoint(U0[nu][i]);
+                 Smf[i]=Sm[i]*Adjoint(UV[nu]);
+                 Sf[i]=UU[i]*Sm[i]*Adjoint(UV[nu]);
 
                  // ***********
 
                  Hfbar=HfV[antinu][i]+VfMSWbar;
 	         kkbar=kbar(Hfbar);
                  dkkbar=deltakbar(kkbar);
-	     	 UUbar[i]=Conjugate(U(dkkbar,C0[antinu][i],A0[antinu][i]));
+	     	 UUbar[i]=MixingMatrix(dkkbar,C0[antinu][i],A0[antinu][i]);
 
                  BBbar[i]=B(Y[antinu][i]);
                  WWbar[i]=W(Y[antinu][i]);
 
                  Smbar[i]=WWbar[i]*BBbar[i] *Scumulative[antinu][i];
-                 Smfbar[i]=Smbar[i]*Adjoint(U0[antinu][i]);
-                 Sfbar[i]=UUbar[i]*Smbar[i]*Adjoint(U0[antinu][i]);
+                 Smfbar[i]=Smbar[i]*Adjoint(UV[antinu]);
+                 Sfbar[i]=UUbar[i]*Smbar[i]*Adjoint(UV[antinu]);
 	        }
 
          // **************

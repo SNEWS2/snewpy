@@ -8,13 +8,13 @@ using std::array;
 
 // ********************************************************************************************************
 
-MATRIX<complex<double>,NF,NF> U(MATRIX<complex<double>,NF,NF> Hf,array<double,NF> k,array<double,NF> dk,array<array<double,NF>,NF> A);
+MATRIX<complex<double>,NF,NF> MixingMatrix(MATRIX<complex<double>,NF,NF> Hf,array<double,NF> k,array<double,NF> dk,array<array<double,NF>,NF> A);
 
 // *********************************************************************
 // *********************************************************************
 // *********************************************************************
 
-MATRIX<complex<double>,NF,NF> U(MATRIX<complex<double>,NF,NF> Hf,array<double,NF> k,array<double,NF> dk,array<array<double,NF>,NF> A)
+MATRIX<complex<double>,NF,NF> MixingMatrix(MATRIX<complex<double>,NF,NF> Hf,array<double,NF> k,array<double,NF> dk,array<array<double,NF>,NF> A)
        { MATRIX<complex<double>,NF,NF> u;
 
          double d;
@@ -32,12 +32,16 @@ MATRIX<complex<double>,NF,NF> U(MATRIX<complex<double>,NF,NF> Hf,array<double,NF
               if(r2[e]>=r2[mu] && r2[e]>=r2[tau]){ u[e][j]=A[j][e]*C<e,e>(Hf,k[j])/sqrt(r2[e]);         u[mu][j]=A[j][e]*C<e,mu>(Hf,k[j])/sqrt(r2[e]);       u[tau][j]=A[j][e]*C<e,tau>(Hf,k[j])/sqrt(r2[e]);}
               if(r2[mu]>=r2[e] && r2[mu]>=r2[tau]){ u[e][j]=A[j][mu]*C<mu,e>(Hf,k[j])/sqrt(r2[mu]);     u[mu][j]=A[j][mu]*C<mu,mu>(Hf,k[j])/sqrt(r2[mu]);    u[tau][j]=A[j][mu]*C<mu,tau>(Hf,k[j])/sqrt(r2[mu]);}
               if(r2[tau]>=r2[e] && r2[tau]>=r2[mu]){ u[e][j]=A[j][tau]*C<tau,e>(Hf,k[j])/sqrt(r2[tau]); u[mu][j]=A[j][tau]*C<tau,mu>(Hf,k[j])/sqrt(r2[tau]); u[tau][j]=A[j][tau]*C<tau,tau>(Hf,k[j])/sqrt(r2[tau]);}
+              // set the element in the e (top) row to be pure real for the first two columns
+              //if(j==0 || j==1){ u[e][j]=A[j][e]*C<e,e>(Hf,k[j])/sqrt(r2[e]); u[mu][j]=A[j][e]*C<e,mu>(Hf,k[j])/sqrt(r2[e]); u[tau][j]=A[j][e]*C<e,tau>(Hf,k[j])/sqrt(r2[e]);}
+              // set the element in the tau (bottom) row to be pure real for the 3rd column
+              //if(j==2){ u[e][j]=A[j][tau]*C<tau,e>(Hf,k[j])/sqrt(r2[tau]); u[mu][j]=A[j][tau]*C<tau,mu>(Hf,k[j])/sqrt(r2[tau]); u[tau][j]=A[j][tau]*C<tau,tau>(Hf,k[j])/sqrt(r2[tau]);}
             }
        
         return u;
        }
 
-MATRIX<complex<double>,NF,NF> U(array<double,NF> dk,array<MATRIX<complex<double>,NF,NF>,NF> &C,array<array<double,NF>,NF> A)
+MATRIX<complex<double>,NF,NF> MixingMatrix(array<double,NF> dk,array<MATRIX<complex<double>,NF,NF>,NF> &C,array<array<double,NF>,NF> A)
        { MATRIX<complex<double>,NF,NF> u;
 
          double d;
@@ -56,23 +60,27 @@ MATRIX<complex<double>,NF,NF> U(array<double,NF> dk,array<MATRIX<complex<double>
               if(r2[e]>=r2[mu] && r2[e]>=r2[tau]){ u[e][j]=A[j][e]*C[j][e][e]/sqrt(r2[e]);         u[mu][j]=A[j][e]*C[j][e][mu]/sqrt(r2[e]);       u[tau][j]=A[j][e]*C[j][e][tau]/sqrt(r2[e]);}
               if(r2[mu]>=r2[e] && r2[mu]>=r2[tau]){ u[e][j]=A[j][mu]*C[j][mu][e]/sqrt(r2[mu]);     u[mu][j]=A[j][mu]*C[j][mu][mu]/sqrt(r2[mu]);    u[tau][j]=A[j][mu]*C[j][mu][tau]/sqrt(r2[mu]);}
               if(r2[tau]>=r2[e] && r2[tau]>=r2[mu]){ u[e][j]=A[j][tau]*C[j][tau][e]/sqrt(r2[tau]); u[mu][j]=A[j][tau]*C[j][tau][mu]/sqrt(r2[tau]); u[tau][j]=A[j][tau]*C[j][tau][tau]/sqrt(r2[tau]);}
+              // set the element in the e (top) row to be pure real for the first two columns
+              //if(j==0 || j==1){ u[e][j]=A[j][e]*C[j][e][e]/sqrt(r2[e]); u[mu][j]=A[j][e]*C[j][e][mu]/sqrt(r2[e]); u[tau][j]=A[j][e]*C[j][e][tau]/sqrt(r2[e]);}
+              // set the element in the tau (bottom) row to be pure real for the 3rd column
+              //if(j==2){ u[e][j]=A[j][tau]*C[j][tau][e]/sqrt(r2[tau]); u[mu][j]=A[j][tau]*C[j][tau][mu]/sqrt(r2[tau]); u[tau][j]=A[j][tau]*C[j][tau][tau]/sqrt(r2[tau]);}
             }
        
         return u;
        }
 
 void Evaluate_UV(void) 
-       { UV[nu][0][0]=c12V*c13V*exp(-I*alphaV[0]);
-         UV[nu][0][1]=s12V*c13V*exp(-I*alphaV[1]);
-         UV[nu][0][2]=s13V*exp(-I*alphaV[2]);
+       { UV[nu][0][0] = c12V*c13V*exp(I*etaV[0]);
+         UV[nu][0][1] = s12V*c13V*exp(I*etaV[1]);
+         UV[nu][0][2] = s13V*exp(-I*deltaV);
 
-         UV[nu][1][0]=-exp(I*betaV[0])*(c12V*s13V*s23V+exp(I*epsilonV)*s12V*c23V)*exp(-I*alphaV[0]);
-         UV[nu][1][1]=-exp(I*betaV[0])*(s12V*s13V*s23V-exp(I*epsilonV)*c12V*c23V)*exp(-I*alphaV[1]);
-         UV[nu][1][2]=exp(I*betaV[0])*c13V*s23V*exp(-I*alphaV[2]);
+         UV[nu][1][0] = -(s12V*c23V + c12V*s13V*s23V*exp(I*deltaV)) * exp(I*etaV[0]);
+         UV[nu][1][1] =  (c12V*c23V - s12V*s13V*s23V*exp(I*deltaV)) * exp(I*etaV[1]);
+         UV[nu][1][2] =  c13V*s23V;
 
-         UV[nu][2][0]=-exp(I*betaV[1])*(c12V*s13V*c23V-exp(I*epsilonV)*s12V*s23V)*exp(-I*alphaV[0]);
-         UV[nu][2][1]=-exp(I*betaV[1])*(s12V*s13V*c23V+exp(I*epsilonV)*c12V*s23V)*exp(-I*alphaV[1]);
-         UV[nu][2][2]=exp(I*betaV[1])*c13V*c23V*exp(-I*alphaV[2]);
+         UV[nu][2][0] =  (s12V*s23V - c12V*s13V*c23V*exp(I*deltaV)) * exp(I*etaV[0]);
+         UV[nu][2][1] = -(c12V*s23V + s12V*s13V*c23V*exp(I*deltaV)) * exp(I*etaV[1]);
+         UV[nu][2][2] =  c13V*c23V;
 
          UV[antinu]=Conjugate(UV[nu]);
         }
@@ -178,12 +186,12 @@ array<MATRIX<complex<double>,NF,NF>,NF> CofactorMatrices(MATRIX<complex<double>,
              CC[j][e][mu] = H[mu][tau]*H[tau][e]-H[mu][e]*(H[tau][tau]-k[j]);
              CC[j][e][tau] = H[tau][mu]*H[mu][e]-H[tau][e]*(H[mu][mu]-k[j]);
 
-             CC[j][mu][e] = conj(CC[j][e][mu]);   
+             CC[j][mu][e] = H[e][tau]*H[tau][mu]-H[e][mu]*(H[tau][tau]-k[j]);
              CC[j][mu][mu] = (H[e][e]-k[j])*(H[tau][tau]-k[j]) - norm(H[e][tau]);
              CC[j][mu][tau] = H[tau][e]*H[e][mu]-H[tau][mu]*(H[e][e]-k[j]);
 
-             CC[j][tau][e] = conj(CC[j][e][tau]); 
-             CC[j][tau][mu] = conj(CC[j][mu][tau]); 
+             CC[j][tau][e] = H[e][mu]*H[mu][tau]-H[e][tau]*(H[mu][mu]-k[j]);
+             CC[j][tau][mu] = H[mu][e]*H[e][tau]-H[mu][tau]*(H[e][e]-k[j]);
              CC[j][tau][tau] = (H[e][e]-k[j])*(H[mu][mu]-k[j]) - norm(H[e][mu]);
             }
 
@@ -196,12 +204,12 @@ void CofactorMatrices(MATRIX<complex<double>,NF,NF> H,array<double,NF> k,array<M
              CC[j][e][mu] = H[mu][tau]*H[tau][e]-H[mu][e]*(H[tau][tau]-k[j]);
              CC[j][e][tau] = H[tau][mu]*H[mu][e]-H[tau][e]*(H[mu][mu]-k[j]);
 
-             CC[j][mu][e] = conj(CC[j][e][mu]);   
+             CC[j][mu][e] = H[e][tau]*H[tau][mu]-H[e][mu]*(H[tau][tau]-k[j]);
              CC[j][mu][mu] = (H[e][e]-k[j])*(H[tau][tau]-k[j]) - norm(H[e][tau]);
              CC[j][mu][tau] = H[tau][e]*H[e][mu]-H[tau][mu]*(H[e][e]-k[j]);
 
-             CC[j][tau][e] = conj(CC[j][e][tau]); 
-             CC[j][tau][mu] = conj(CC[j][mu][tau]); 
+             CC[j][tau][e] = H[e][mu]*H[mu][tau]-H[e][tau]*(H[mu][mu]-k[j]);
+             CC[j][tau][mu] = H[mu][e]*H[e][tau]-H[mu][tau]*(H[e][e]-k[j]);
              CC[j][tau][tau] = (H[e][e]-k[j])*(H[mu][mu]-k[j]) - norm(H[e][mu]);
             }
        }

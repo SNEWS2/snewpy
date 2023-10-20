@@ -208,8 +208,8 @@ vector<vector<vector<vector<double> > > > RunSqa3Earth(InputDataSqa3Earth ID)
            // quantities evaluated at inital point
 
            // MSW potential matrix
-           double rrho = rho(lambdas.front());
-           double YYe=Ye(lambdas.front());
+           double rrho = rho(RE);
+           double YYe=Ye(RE);
 
            MATRIX<complex<double>,NF,NF> VfMSW0, VfMSWbar0, Hf0,Hfbar0;
            array<double,NF> k0, kbar0, deltak0, deltakbar0;
@@ -228,7 +228,7 @@ vector<vector<vector<vector<double> > > > RunSqa3Earth(InputDataSqa3Earth ID)
 
            // mixing angles to MSW basis at initial point and assign A0
 	   for(i=0;i<=NE-1;i++)
-              { Hf0=HfV[nu][i]+VfMSW0;
+              { Hf0=HfV[nu][i];//+VfMSW0;
                 k0=k(Hf0);
                 deltak0=deltak(k0);
                 C0[nu][i]=CofactorMatrices(Hf0,k0);
@@ -237,9 +237,9 @@ vector<vector<vector<vector<double> > > > RunSqa3Earth(InputDataSqa3Earth ID)
                      A0[nu][i][j][mu]=AV[nu][i][j][mu];
                      if( real(C0[nu][i][j][mu][tau]*CV[nu][i][j][mu][tau])<0. ){ A0[nu][i][j][tau]=-AV[nu][i][j][tau];} else{ A0[nu][i][j][tau]=AV[nu][i][j][tau];}
                     }
-                U0[nu][i]=U(deltak0,C0[nu][i],A0[nu][i]);
+                U0[nu][i]=MixingMatrix(deltak0,C0[nu][i],A0[nu][i]);
 
-                Hfbar0=HfV[antinu][i]-VfMSW0;
+                Hfbar0=HfV[antinu][i];//-VfMSW0;
                 kbar0=kbar(Hfbar0);
                 deltakbar0=deltakbar(kbar0);
                 C0[antinu][i]=CofactorMatrices(Hfbar0,kbar0);
@@ -248,9 +248,9 @@ vector<vector<vector<vector<double> > > > RunSqa3Earth(InputDataSqa3Earth ID)
                      A0[antinu][i][j][mu]=AV[antinu][i][j][mu];
                      if( real(C0[antinu][i][j][mu][tau]*CV[antinu][i][j][mu][tau])<0. ){ A0[antinu][i][j][tau]=-AV[antinu][i][j][tau];} else{ A0[antinu][i][j][tau]=AV[antinu][i][j][tau];}
                     }
-                U0[antinu][i]=Conjugate(U(deltakbar0,C0[antinu][i],A0[antinu][i]));
+                U0[antinu][i]=MixingMatrix(deltakbar0,C0[antinu][i],A0[antinu][i]);
                }
- 
+
            // ******************************************************
            // ******************************************************
            // ******************************************************
@@ -280,7 +280,7 @@ vector<vector<vector<vector<double> > > > RunSqa3Earth(InputDataSqa3Earth ID)
            vector<vector<array<array<double,NF>,NF> > > A=A0;
 
            // accumulated S matrices from prior integration domains
-           vector<vector<MATRIX<complex<double>,NF,NF> > > Scumulative(NM,vector<MATRIX<complex<double>,NF,NF> >(NE,UnitMatrix<complex<double> >(NF)));
+           vector<vector<MATRIX<complex<double>,NF,NF> > > Scumulative(NM,vector<MATRIX<complex<double>,NF,NF> >(NE));
            PPfm=vector<vector<vector<vector<double> > > >(NM,vector<vector<vector<double> > >(NE,vector<vector<double> >(NF,vector<double>(NF,0.))));
 
            // *************
@@ -317,6 +317,9 @@ vector<vector<vector<vector<double> > > > RunSqa3Earth(InputDataSqa3Earth ID)
 		#pragma omp parallel for schedule(static)
                 for(i=0;i<=NE-1;i++){
                     for(state m=nu;m<=antinu;m++){ 
+                        // take into account the density jump from vacuum into Earth
+                        Scumulative[m][i] = Adjoint(U0[m][i])*UV[m];
+
                         Y[m][i][0]=M_PI/2.;
 	                Y[m][i][1]=M_PI/2.;
 		        Y[m][i][2]=M_PI/2.;
