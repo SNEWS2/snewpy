@@ -11,24 +11,28 @@ sudo python3 setup.Sqa3Earth.YourOS.py install
 
 --install-lib=destination/directory/
 
-5) The file Sqa3Earth.py uses the module to compute the Earth matter effects 
+5) The file Sqa3Earth.py in the EME folder uses the module to compute the Earth matter effects 
    upon a neutrino signal from Betelgeuse in SuperK. It doesn't do anything 
    with the results yet. It will generate a lot of files in the whichever folder
    is picked in the script. The output can be switched off by changing the outputflag to False
 
+6) The file SNEWS2.0_rate_table_singleexample+EME.py in the scripts folder shows how the module
+   works with the rest of SNEWPY. 
+   
+
 TROUBLESHOOTING:
 
-6) When running Sqa3Earth.py you may have to set the PYTHONPATH environment variable to your PWD
-   and/or wherever the Sqa3Earth module was installed
+7) When running a script that uses the module you may have to set the PYTHONPATH environment
+   variable to wherever the Sqa3Earth module was installed
 
-7) If the script cannot find the module you may need to put the *.so library in the same directory
-   as the Sqa3Earth.py file. The *.so library is in one of the subfolders in the build directory. 
+8) If the script still cannot find the module you may need to put the *.so library in the same directory
+   as the script. The *.so library is in one of the subfolders in the build directory of SQA. 
 
 9) You may want to set the OMP_NUM_THREADS environment variable to a reasonable number
 
 BONUS: 
 
-10) The other setup script is for the shock wave effects module which is 
+10) The other setup script in SQA is for the shock wave effects module which is 
    included here because it reuses a lot of the same code. It too can 
-   be compiled and there is a python code which runs the module. 
+   be compiled but nothing uses it yet. 
 
