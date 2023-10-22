@@ -88,9 +88,9 @@ class DetectionChannel:
 class Detector:
     name: str
     mass: u.Quantity
-    channels: dict[str,DetectionChannel]
+    channels: Dict[str,DetectionChannel]
 
-    def run(self, flux:Container, detector_effects:bool=True)->dict[str, Container]:
+    def run(self, flux:Container, detector_effects:bool=True)->Dict[str, Container]:
         result = {}
         for name,channel in self.channels.items():
             rate = channel.calc_rate(flux, apply_efficiency=detector_effects, apply_smearing=detector_effects)
