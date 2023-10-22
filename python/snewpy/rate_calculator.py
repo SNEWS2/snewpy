@@ -22,7 +22,7 @@ def center(a):
 u.kt = u.def_unit('kt',represents=1e6<<u.kg, doc='kilotonne')
 
 class SmearingMatrix:
-    def __init__(self, bins_true:u.Quantity['MeV'], bins_smeared:u.Quantity['MeV'], matrix:np.ndarray):
+    def __init__(self, bins_true:u.Quantity, bins_smeared:u.Quantity, matrix:np.ndarray):
         self.bins_true = bins_true
         self.bins_smeared = bins_smeared
         self.matrix = matrix
@@ -87,14 +87,14 @@ class DetectionChannel:
 @dataclass
 class Detector:
     name: str
-    mass: u.Quantity['mass']
-    channels: list[DetectionChannel]
+    mass: u.Quantity
+    channels: dict[str,DetectionChannel]
 
     def run(self, flux:Container, detector_effects:bool=True)->dict[str, Container]:
         result = {}
-        for channel in self.channels:
+        for name,channel in self.channels.items():
             rate = channel.calc_rate(flux, apply_efficiency=detector_effects, apply_smearing=detector_effects)
-            result[channel.name] = rate*(self.mass/(1<<u.kt))
+            result[name] = rate*(self.mass/(1<<u.kt))
         return result
 
 def _get_flavor_index(channel):
@@ -168,7 +168,7 @@ class RateCalculator(SnowglobesData):
         
     def read_detector(self, name:str, material:str=None)->Detector:
         material = material or guess_material(name)
-        channels = []
+        channels = {}
         bins = self.binning[material]
         bins_t = _bin_edges_from_centers(bins['e_true'])<<u.GeV
         bins_s = _bin_edges_from_centers(bins['e_smear'])<<u.GeV
@@ -191,7 +191,7 @@ class RateCalculator(SnowglobesData):
                     xsec=self._load_xsec(ch),
                     smearing=smearing,
                     efficiency=efficiency)
-            channels+=[channel]
+            channels[ch.name]=channel
         
         return Detector(name=name,
                         mass=self.detectors[name].mass<<u.kt,
