@@ -19,6 +19,8 @@ from dataclasses import dataclass
 def center(a):
     return 0.5*(a[1:]+a[:-1])
 
+u.kt = u.def_unit('kt',repr=1e6<<u.kg)
+
 class SmearingMatrix:
     def __init__(self, bins_true:u.Quantity['MeV'], bins_smeared:u.Quantity['MeV'], matrix:np.ndarray):
         self.bins_true = bins_true
@@ -77,7 +79,7 @@ class DetectionChannel:
         
     def calc_interaction_rate(self, flux):
         """calculate interaction rate for given channel"""
-        tgt_mass = 1e3<<u.tonne
+        tgt_mass = 1<<u.kt
         Ntargets = tgt_mass.to_value(u.Dalton)
         rate = self.xsec*flux[self.flavor]*self.weight*Ntargets
         return rate
@@ -92,9 +94,9 @@ class Detector:
         result = {}
         for channel in self.channels:
             rate = channel.calc_rate(flux, apply_efficiency=detector_effects, apply_smearing=detector_effects)
-            result[channel.name] = rate*self.target_mass
+            result[channel.name] = rate*(self.target_mass/(1<<u.kt))
         return result
-        
+
 def _get_flavor_index(channel):
     _map = {'+e':Flavor.NU_E,
             '-e':Flavor.NU_E_BAR,
@@ -109,15 +111,6 @@ def _get_xsec_column(channel):
     _map = {'+e':1, '+m':2, '+t':3, '-e':4, '-m':5, '-t':6 }
     return _map[channel.parity+channel.flavor]
     
-def _load_xsec(self, channel, energies):
-    """Load cross-section for a given channel, interpolated in the energies"""
-    xsec = np.loadtxt(self.base_dir/f"xscns/xs_{channel.name}.dat")
-    # Cross-section in 10^-38 cm^2
-    E = energies.to_value('GeV')
-    xp = xsec[:,0]
-    yp = xsec[:, _get_xsec_column(channel)]
-    xsecs = np.interp(np.log(E)/np.log(10), xp, yp, left=0, right=0)*E*1e-38 <<u.cm**2
-    return xsecs
 
 def _bin_edges_from_centers(centers:np.ndarray)->np.ndarray:
     """calculate the bin edges based on the given central values"""
@@ -173,7 +166,7 @@ class RateCalculator(SnowglobesData):
             return np.interp(np.log(E)/np.log(10), xp, yp, left=0, right=0)*E*1e-38 <<u.cm**2
         return FunctionOfEnergy(xsec)
         
-    def read_detector(self, name:str, material:str)->Detector:
+    def read_detector(self, name:str, material:str=None)->Detector:
         material = material or guess_material(name)
         channels = []
         bins = self.binning[material]
@@ -201,7 +194,7 @@ class RateCalculator(SnowglobesData):
             channels+=[channel]
         
         return Detector(name=name,
-                        target_mass=self.detectors[name].tgt_mass,
+                        target_mass=self.detectors[name].tgt_mass*1e3<<u.tonne,
                         channels=channels
                        )
     def run(self, flux:Container, detector:str, material:str=None, detector_effects:bool = True)->Dict[str, Container]:
