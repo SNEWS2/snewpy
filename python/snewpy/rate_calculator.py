@@ -13,11 +13,88 @@ from snewpy.flux import Container
 from astropy import units as u
 from warnings import warn
 from typing import Dict
+from dataclasses import dataclass
 
 #various utility methods
 def center(a):
     return 0.5*(a[1:]+a[:-1])
 
+class SmearingMatrix:
+    def __init__(self, bins_true:u.Quantity['MeV'], bins_smeared:u.Quantity['MeV'], matrix:np.ndarray):
+        self.bins_true = bins_true
+        self.bins_smeared = bins_smeared
+        self.matrix = matrix
+        assert matrix.shape==(len(bins_true)-1,len(bins_smeared)-1), \
+        f"Matrix shape {matrix.shape} is inconsistent with (bins_true-1, bins_smeared-1)={len(bins_true)-1,len(bins_smeared)-1}"
+        
+    def apply(self, rate:Container)-> Container:
+        if rate.can_integrate('energy'):
+            rate = rate.integrate('energy', self.bins_true)
+        assert np.allclose(rate.energy<<u.GeV, self.bins_true<<u.GeV), \
+        f"rate.energy: {rate.energy<<u.GeV}!={self.bins_true<<u.GeV}"
+        rateS_array = np.dot(rate.array, self.matrix)
+        rateS = Container(rateS_array,
+                          flavor=rate.flavor, 
+                          time=rate.time, 
+                          energy=self.bins_smeared,
+                          integrable_axes=rate._integrable_axes)
+        return rateS
+
+class FunctionOfEnergy:
+    def __init__(self, callable):
+        self.value = callable
+    def __mul__(self, f:Container)->Container:
+        e = f.energy #Define sample points
+        if not f.can_integrate('energy'): #we have bins, let's use central values for sampling
+            e = center(f.energy)
+        return f*self.value(e)
+    def __call__(self, energy):
+        return self.value(energy)
+    @classmethod
+    def from_threshold(cls, e_min=1<<u.MeV):
+        return cls(lambda e: 1*(e>e_min))
+
+@dataclass
+class DetectionChannel:
+    name:str
+    flavor:Flavor
+    xsec:FunctionOfEnergy
+    smearing:SmearingMatrix
+    efficiency:FunctionOfEnergy=1.
+    weight:float=1.
+
+    def calc_rate(self, flux, apply_smearing=True, apply_efficiency=True):
+        rate = self.calc_interaction_rate(flux)
+        if apply_smearing:
+            if self.smearing is not None:
+                rate = self.smearing.apply(rate)
+        if apply_efficiency:
+            if isinstance(self.efficiency, FunctionOfEnergy):
+                rate = self.efficiency * rate
+            else:
+                rate = rate*self.efficiency
+        return rate
+        
+    def calc_interaction_rate(self, flux):
+        """calculate interaction rate for given channel"""
+        tgt_mass = 1e3<<u.tonne
+        Ntargets = tgt_mass.to_value(u.Dalton)
+        rate = self.xsec*flux[self.flavor]*self.weight*Ntargets
+        return rate
+
+@dataclass
+class Detector:
+    name:str
+    target_mass:u.Quantity['kg']
+    channels:list[DetectionChannel]
+
+    def run(self, flux:Container, detector_effects:bool=True)->dict[str, Container]:
+        result = {}
+        for channel in self.channels:
+            rate = channel.calc_rate(flux, apply_efficiency=detector_effects, apply_smearing=detector_effects)
+            result[channel.name] = rate*self.target_mass
+        return result
+        
 def _get_flavor_index(channel):
     _map = {'+e':Flavor.NU_E,
             '-e':Flavor.NU_E_BAR,
@@ -84,22 +161,49 @@ class RateCalculator(SnowglobesData):
             If empty, try to get it from ``$SNOWGLOBES`` environment var
         """
         super().__init__(base_dir=base_dir)
+
+    def _load_xsec(self, channel)->FunctionOfEnergy:
+        """Load cross-section for a given channel, interpolated in the energies"""
+        xsec = np.loadtxt(self.base_dir/f"xscns/xs_{channel.name}.dat")
+        # Cross-section in 10^-38 cm^2
+        xp = xsec[:,0]
+        yp = xsec[:, _get_xsec_column(channel)]
+        def xsec(energies):
+            E = energies.to_value('GeV')
+            return np.interp(np.log(E)/np.log(10), xp, yp, left=0, right=0)*E*1e-38 <<u.cm**2
+        return FunctionOfEnergy(xsec)
         
-    def _calc_rate(self, channel, TargetMass, flux):
-        """calculate interaction rate for given channel"""
-        flavor = _get_flavor_index(channel)
-        #check if we are provided with energy bins:
-        if not flux.can_integrate('energy'):
-            #we have bins, let's use central values for sampling
-            Evalues = center(flux.energy)
-        else:
-            #we have sample points, let's just use them
-            Evalues = flux.energy
-        xsec = _load_xsec(self, channel, Evalues)
-        Ntargets = TargetMass.to_value(u.Dalton)
-        rate = flux[flavor]*xsec*Ntargets
-        return rate
-    
+    def read_detector(self, name:str, material:str)->Detector:
+        material = material or guess_material(name)
+        channels = []
+        bins = self.binning[material]
+        bins_t = _bin_edges_from_centers(bins['e_true'])<<u.GeV
+        bins_s = _bin_edges_from_centers(bins['e_smear'])<<u.GeV
+        for ch in self.channels[material].itertuples():
+            try:
+                smearing = SmearingMatrix(bins_true=bins_t, 
+                                          bins_smeared=bins_s,
+                                          matrix=self.smearings[name][ch.name].T)
+            except KeyError:
+                warn(f'Smearing not found for detector={name}, channel={ch.name}. Using unsmeared spectrum')
+                smearing = None
+            try:            
+                efficiency= self.efficiencies[name][ch.name]
+            except KeyError:
+                warn(f'Efficiency not found for detector={name}, channel={ch.name}. Using 100% efficiency')
+                efficiency = 1
+            channel = DetectionChannel(name=ch.name,
+                    flavor=_get_flavor_index(ch),
+                    weight=ch.weight,
+                    xsec=self._load_xsec(ch),
+                    smearing=smearing,
+                    efficiency=efficiency)
+            channels+=[channel]
+        
+        return Detector(name=name,
+                        target_mass=self.detectors[name].tgt_mass,
+                        channels=channels
+                       )
     def run(self, flux:Container, detector:str, material:str=None, detector_effects:bool = True)->Dict[str, Container]:
         """Run the rate calculation for the given detector.    
         
@@ -125,49 +229,4 @@ class RateCalculator(SnowglobesData):
             dict[str, Container]
                 A dictionary with interaction rates (as instances of :class:`snewpy.flux.Container`) for each channel.
         """
-        TargetMass = float(self.detectors[detector].tgt_mass)<<(1e3*u.tonne)
-        material = material or guess_material(detector)
-        binning = self.binning[material]
-        energies_t = binning['e_true']<<u.GeV
-        energies_s = binning['e_smear']<<u.GeV
-        smearing_shape = (len(energies_t), len(energies_s))
-        result = {}
-        for channel in self.channels[material].itertuples():
-            rate = self._calc_rate(channel, TargetMass, flux)
-            #apply channel weight 
-            rate = rate*channel.weight
-            #check the energy binning if needed
-            energy_bin_centers = center(rate.energy)
-            if detector_effects and not rate.can_integrate('energy'):
-                    if not np.allclose(energy_bin_centers<<u.GeV,energies_s<<u.GeV):
-                        raise ValueError(f'Fluence energy values should be equal to smearing matrix binning. Check binning["{material}"]["e_true"]!')
-            
-            if detector_effects:
-                if rate.can_integrate('energy'):
-                    #integrate over given energy bins
-                    energy_bins = _bin_edges_from_centers(energies_t)
-                    rateI = rate.integrate('energy', energy_bins)
-                else:
-                    rateI = rate
-                try:
-                    smear = self.smearings[detector][channel.name]
-                except KeyError:
-                    warn(f'Smearing not found for detector={detector}, channel={channel.name}. Using unsmeared spectrum')
-                    smear = np.eye(*smearing_shape)
-                try:
-                    effic = self.efficiencies[detector][channel.name]
-                except KeyError:
-                    warn(f'Efficiency not found for detector={detector}, channel={channel.name}. Using 100% efficiency')
-                    effic = np.ones(len(energies_s))
-                #apply smearing and efficiency
-                rateS_array = np.dot(rateI.array, smear.T) * effic
-                rateS = Container(rateS_array, 
-                                  flavor=rateI.flavor, 
-                                  time=rateI.time, 
-                                  energy=_bin_edges_from_centers(energies_s)<<u.MeV,
-                                  integrable_axes=rateI._integrable_axes)
-
-                result[channel.name] = rateS
-            else:
-                result[channel.name] = rate
-        return result
+        return self.read_detector(detector,material).run(flux, detector_effects=detector_effects)
