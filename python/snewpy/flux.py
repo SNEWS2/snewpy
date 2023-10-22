@@ -265,10 +265,10 @@ class _ContainerBase:
         if limits is None:
             limits = u.Quantity([xmin, xmax])
         limits = limits.to(ax.unit)
-        limits = limits.clip(xmin, xmax)
+        #limits = limits.clip(xmin,xmax)
         #compute the integral
         yc = cumulative_trapezoid(self.array, x=ax, axis=axis, initial=0)
-        _integral = interp1d(x=ax, y=yc, fill_value=0, axis=axis, bounds_error=False)
+        _integral = interp1d(x=ax, y=yc, fill_value='extrapolate', axis=axis, bounds_error=False)
         array = np.diff(_integral(limits),axis=axis) << (self.array.unit*ax.unit)
         axes = list(self.axes)
         axes[axis] = limits
@@ -291,7 +291,7 @@ class _ContainerBase:
     
     def __rmul__(self, factor):
         "multiply array by givem factor or matrix"
-        return self.__mul__(self, factor)
+        return self.__mul__(factor)
 
     def __mul__(self, factor) -> 'Container':
         "multiply array by givem factor or matrix"
