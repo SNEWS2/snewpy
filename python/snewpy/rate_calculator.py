@@ -19,7 +19,7 @@ from dataclasses import dataclass
 def center(a):
     return 0.5*(a[1:]+a[:-1])
 
-u.kt = u.def_unit('kt',repr=1e6<<u.kg)
+u.kt = u.def_unit('kt',represents=1e6<<u.kg, doc='kilotonne')
 
 class SmearingMatrix:
     def __init__(self, bins_true:u.Quantity['MeV'], bins_smeared:u.Quantity['MeV'], matrix:np.ndarray):
@@ -86,15 +86,15 @@ class DetectionChannel:
 
 @dataclass
 class Detector:
-    name:str
-    target_mass:u.Quantity['kg']
-    channels:list[DetectionChannel]
+    name: str
+    mass: u.Quantity['mass']
+    channels: list[DetectionChannel]
 
     def run(self, flux:Container, detector_effects:bool=True)->dict[str, Container]:
         result = {}
         for channel in self.channels:
             rate = channel.calc_rate(flux, apply_efficiency=detector_effects, apply_smearing=detector_effects)
-            result[channel.name] = rate*(self.target_mass/(1<<u.kt))
+            result[channel.name] = rate*(self.mass/(1<<u.kt))
         return result
 
 def _get_flavor_index(channel):
@@ -187,14 +187,14 @@ class RateCalculator(SnowglobesData):
                 efficiency = 1
             channel = DetectionChannel(name=ch.name,
                     flavor=_get_flavor_index(ch),
-                    weight=ch.weight,
+                    weight=ch.weight*self.detectors[name].factor,
                     xsec=self._load_xsec(ch),
                     smearing=smearing,
                     efficiency=efficiency)
             channels+=[channel]
         
         return Detector(name=name,
-                        target_mass=self.detectors[name].tgt_mass*1e3<<u.tonne,
+                        mass=self.detectors[name].mass<<u.kt,
                         channels=channels
                        )
     def run(self, flux:Container, detector:str, material:str=None, detector_effects:bool = True)->Dict[str, Container]:
