@@ -23,6 +23,10 @@ SNEWPY includes a large number of supernova models from different simulation gro
 
 By default, they will be downloaded to a subdirectory named `SNEWPY-models/<model_name>/` in the current directory.
 
+
+### Earth-Matter Effect
+Navigate to python/snewpy/SQA and run: `python setup.Linux.py install' preferably as root. You may need to modify the setup file depenidng upon your particular machine. A version that works on Mac's is provided. Whenever you use the module you need to provide a density and an electron fraction profile of the Earth. The PREM is provided. The script SNEWS2.0_rate_table_singleexample+EME.py found in python/snewpy/scripts uses the module. 
+
 ### For Developers
 
 **Your contributions to SNEWPY are welcome!** For minor changes, simply submit a pull request. If you plan larger changes, it’s probably a good idea to open an issue first to coordinate our work.
