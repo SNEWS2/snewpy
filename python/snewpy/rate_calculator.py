@@ -30,7 +30,7 @@ class SmearingMatrix:
         self.matrix = matrix
         assert matrix.shape==(len(bins_true)-1,len(bins_smeared)-1), \
         f"Matrix shape {matrix.shape} is inconsistent with (bins_true-1, bins_smeared-1)={len(bins_true)-1,len(bins_smeared)-1}"
-        
+
     def apply(self, rate:Container)-> Container:
         if rate.can_integrate('energy'):
             rate = rate.integrate('energy', self.bins_true)
@@ -43,6 +43,7 @@ class SmearingMatrix:
                           energy=self.bins_smeared,
                           integrable_axes=rate._integrable_axes)
         return rateS
+
     @classmethod
     def from_Gaussian_blur(cls, bins_true, bins_smeared, loc:Callable, scale:Callable=1<<u.keV):
         e_t = center(bins_true)<<u.MeV
@@ -52,11 +53,14 @@ class SmearingMatrix:
             loc = loc(e_t)
         if callable(scale):
             scale = scale(center(bins_true))
+        #expand the scalar to required size
+        loc = np.ones(e_t.shape)*loc
+        scale = np.ones(e_t.shape)*scale
         #true energy will be axis=0    
-        loc = u.Quantity(loc,ndmin=2).T<<u.MeV
-        scale = u.Quantity(scale,ndmin=2).T<<u.MeV
+        loc = np.atleast_2d(loc).T<<u.MeV
+        scale = np.atleast_2d(scale).T<<u.MeV
         #smeared energy will be axis=1
-        e_s = np.array(e_s,ndmin=2)
+        e_s = np.atleast_2d(e_s)
         distr =  st.norm(loc=loc, scale=scale)
         #calculate integral in each bin
         cdf = distr.cdf(e_s)
