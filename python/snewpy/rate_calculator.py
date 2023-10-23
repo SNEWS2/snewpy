@@ -86,7 +86,7 @@ class DetectionChannel:
     name:str
     flavor:Flavor
     xsec:FunctionOfEnergy
-    smearing:SmearingMatrix
+    smearing:SmearingMatrix=None
     efficiency:FunctionOfEnergy=1.
     weight:float=1.
 
