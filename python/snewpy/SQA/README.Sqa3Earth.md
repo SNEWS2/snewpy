@@ -1,7 +1,7 @@
 
 1) You will need the python-devel, pybind11 and setuptools packages
 
-2) Modify setup.Sqa3Earth.YourOS.py to use the correct libraries and paths. 
+2) Modify setup.Sqa3Earth.py to use the correct libraries and paths. 
 
 3) To compile enter 
 
@@ -12,11 +12,11 @@ sudo python3 setup.Sqa3Earth.YourOS.py install
 --install-lib=destination/directory/
 
 5) The file Sqa3Earth.py in the EME folder uses the module to compute the Earth matter effects 
-   upon a neutrino signal from Betelgeuse in SuperK. It doesn't do anything 
-   with the results yet. It will generate a lot of files in the whichever folder
-   is picked in the script. The output can be switched off by changing the outputflag to False
+   upon a neutrino signal from Betelgeuse in SuperK. It will generate a lot of files in the
+   whichever folder is picked in the script. The output can be switched off by changing the
+   outputflag to False
 
-6) The file SNEWS2.0_rate_table_singleexample+EME.py in the scripts folder shows how the module
+7) The file SNEWS2.0_rate_table_singleexample+EME.py in the scripts folder shows how the module
    works with the rest of SNEWPY. 
    
 
@@ -30,9 +30,4 @@ TROUBLESHOOTING:
 
 9) You may want to set the OMP_NUM_THREADS environment variable to a reasonable number
 
-BONUS: 
-
-10) The other setup script in SQA is for the shock wave effects module which is 
-   included here because it reuses a lot of the same code. It too can 
-   be compiled but nothing uses it yet. 
 
