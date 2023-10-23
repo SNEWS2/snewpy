@@ -132,11 +132,6 @@ def _get_flavor_index(channel):
             }
     return _map[channel.parity+channel.flavor]
 
-def _get_xsec_column(channel):
-    _map = {'+e':1, '+m':2, '+t':3, '-e':4, '-m':5, '-t':6 }
-    return _map[channel.parity+channel.flavor]
-    
-
 def _bin_edges_from_centers(centers:np.ndarray)->np.ndarray:
     """calculate the bin edges based on the given central values"""
     binw = np.diff(centers) #get the bin width
@@ -180,12 +175,14 @@ class RateCalculator(SnowglobesData):
         """
         super().__init__(base_dir=base_dir)
 
-    def _load_xsec(self, channel)->FunctionOfEnergy:
+    def load_xsec(self, channel_name:str, flavor:Flavor)->FunctionOfEnergy:
         """Load cross-section for a given channel, interpolated in the energies"""
-        xsec = np.loadtxt(self.base_dir/f"xscns/xs_{channel.name}.dat")
+        xsec = np.loadtxt(self.base_dir/f"xscns/xs_{channel_name}.dat")
         # Cross-section in 10^-38 cm^2
         xp = xsec[:,0]
-        yp = xsec[:, _get_xsec_column(channel)]
+        #get the column to read from the file
+        column = {Flavor.NU_E:1, Flavor.NU_X:2, Flavor.NU_E_BAR:4, Flavor.NU_X_BAR:5}[flavor]
+        yp = xsec[:, column]
         def xsec(energies):
             E = energies.to_value('GeV')
             return np.interp(np.log(E)/np.log(10), xp, yp, left=0, right=0)*E*1e-38 <<u.cm**2
@@ -210,10 +207,11 @@ class RateCalculator(SnowglobesData):
             except KeyError:
                 warn(f'Efficiency not found for detector={name}, channel={ch.name}. Using 100% efficiency')
                 efficiency = 1
+            flavor=_get_flavor_index(ch)
             channel = DetectionChannel(name=ch.name,
-                    flavor=_get_flavor_index(ch),
+                    flavor=flavor,
                     weight=ch.weight*self.detectors[name].factor,
-                    xsec=self._load_xsec(ch),
+                    xsec=self.load_xsec(ch.name,flavor),
                     smearing=smearing,
                     efficiency=efficiency)
             channels[ch.name]=channel
