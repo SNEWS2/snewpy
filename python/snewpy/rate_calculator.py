@@ -14,6 +14,8 @@ from astropy import units as u
 from warnings import warn
 from typing import Dict
 from dataclasses import dataclass
+from typing import Callable
+import scipy.stats as st
 
 #various utility methods
 def center(a):
@@ -41,6 +43,25 @@ class SmearingMatrix:
                           energy=self.bins_smeared,
                           integrable_axes=rate._integrable_axes)
         return rateS
+    @classmethod
+    def from_Gaussian_blur(cls, bins_true, bins_smeared, loc:Callable, scale:Callable=1<<u.keV):
+        e_t = center(bins_true)<<u.MeV
+        e_s = bins_smeared<<u.MeV
+        
+        if callable(loc):
+            loc = loc(e_t)
+        if callable(scale):
+            scale = scale(center(bins_true))
+        #true energy will be axis=0    
+        loc = u.Quantity(loc,ndmin=2).T<<u.MeV
+        scale = u.Quantity(scale,ndmin=2).T<<u.MeV
+        #smeared energy will be axis=1
+        e_s = np.array(e_s,ndmin=2)
+        distr =  st.norm(loc=loc, scale=scale)
+        #calculate integral in each bin
+        cdf = distr.cdf(e_s)
+        pdf = np.diff(cdf, axis=1)
+        return cls(bins_true, bins_smeared, pdf)
 
 class FunctionOfEnergy:
     def __init__(self, callable):
