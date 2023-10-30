@@ -13,7 +13,7 @@ _default_descriptions={'eos':'Equation of state',
                        'magnetic_field_exponent':'Exponent of magnetic field'
                       }
 class Parameter(list):
-    def __init__(self, values, *, name:str='parameter', label=None, description=None, desc_values=None):
+    def __init__(self, values, *, name:str='parameter', label=None, description:str=None, desc_values:str=None):
         super().__init__(values)
         self.name = name
         self.label = label or _default_labels.get(name, name.replace('_',' ').capitalize())
@@ -78,7 +78,22 @@ class ParameterSet:
             s+=[f'{name}: {type_name}\n    {p.description}. Valid values are: {p.desc_values}.']
         return '\n'.join(s)
 
-
+def set_defaults(**parameters):
+    def _wrap(func):
+        S = inspect.signature(func)
+        defaults = {}
+        defaults = {name:p.default for name,p in S.parameters.items()}
+        defaults.update(**{name:p.default for name,p in S.parameters.items()})
+        for name,val in defaults.items():
+            if val==inspect.Parameter.empty:
+                val = None
+            if name in pset.params:
+                if (len(pset[name])==1): #this means we have only one option, use it as default value
+                    #print(f'{pset[name]}: (len={len(pset[name])})')
+                    val = pset[name][0]
+            defaults[name]=val
+    return _wrap
+    
 def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
     pset:ParameterSet = ParameterSet(param_validator=_param_validator, **params)
     def _wrap(base_class):
@@ -137,11 +152,15 @@ filename: str
         #update the call signature
         S = inspect.signature(c)
         S1 = inspect.signature(c1.__init__)
-        params = [S1.parameters['self'],S1.parameters['filename'],
-                  *(p.replace(kind=inspect.Parameter.KEYWORD_ONLY, default=None) for name,p in S.parameters.items())
-                 ]
+        #set default values to None if they are not set
+        
+        kw_params = [p.replace(kind=inspect.Parameter.KEYWORD_ONLY) for name,p in S.parameters.items()]
+        params = [S1.parameters['self'],S1.parameters['filename'],*kw_params]
         c1.__init__.__signature__ = S.replace(parameters=params)
+        c1.__init__ = set_defaults(**defaults)(c1.__init__)
+        #print(c1.__init__.__signature__)
         c1.__name__ = base_class.__name__
+        #print(help(c1))
         return c1
         
     return _wrap    
