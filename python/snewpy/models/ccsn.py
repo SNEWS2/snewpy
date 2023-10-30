@@ -38,6 +38,7 @@ from astropy.table import Table
 from snewpy.models import loaders
 from .base import PinchedModel, _RegistryModel
 
+from snewpy.models.registry_model import RegistryModel, Parameter
 from warnings import warn
 from functools import wraps
 
@@ -82,60 +83,23 @@ class Analytic3Species(PinchedModel):
         self.filename = filename
         super().__init__(simtab, metadata={})
 
-
-class Nakazato_2013(_RegistryModel):
-    """Model based on simulations from Nakazato et al., ApJ S 205:2
-    (2013), ApJ 804:75 (2015), PASJ 73:639 (2021). See also http://asphwww.ph.noda.tus.ac.jp/snn/.
-    """
-
-    param = {'progenitor_mass': [13, 20, 30, 50] * u.Msun,
-             'revival_time': [0, 100, 200, 300] * u.ms,
-             'metallicity': [0.02, 0.004],
-             'eos': ['LS220', 'shen', 'togashi']}
-
+@RegistryModel(
+    progenitor_mass = [13, 20, 30, 50] * u.Msun,
+    revival_time = [0, 100, 200, 300] * u.ms,
+    metallicity = [0.02, 0.004],
+    eos = ['LS220', 'shen', 'togashi'],
+    
     _param_validator = lambda p: (p['revival_time'] == 0 * u.ms and p['progenitor_mass'] == 30 * u.Msun
                                   and p['metallicity'] == 0.004) or \
                                  (p['revival_time'] != 0 * u.ms and p['eos'] == 'shen'
                                   and not (p['progenitor_mass'] == 30 * u.Msun and p['metallicity'] == 0.004))
+)
+class Nakazato_2013(loaders.Nakazato_2013):
+    """Model based on simulations from Nakazato et al., ApJ S 205:2
+    (2013), ApJ 804:75 (2015), PASJ 73:639 (2021). See also http://asphwww.ph.noda.tus.ac.jp/snn/.
+    """
 
-    @_warn_deprecated_filename_argument
-    def __new__(cls, filename=None, *, progenitor_mass=None, revival_time=None, metallicity=None, eos=None):
-        """Model initialization.
-
-        Parameters
-        ----------
-        filename : str
-            Absolute or relative path to FITS file with model data. This argument is deprecated.
-
-        Other Parameters
-        ----------------
-        progenitor_mass: astropy.units.Quantity
-            Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
-        revival_time: astropy.units.Quantity
-            Time of shock revival in model in units ms. Valid values are {revival_time}.
-            Selecting 0 ms will load a black hole formation model
-        metallicity: float
-            Progenitor metallicity. Valid values are {metallicity}.
-        eos: str
-            Equation of state. Valid values are {eos}.
-
-        Raises
-        ------
-        ValueError
-            If a combination of parameters is invalid when loading from parameters
-
-        Examples
-        --------
-        >>> from snewpy.models.ccsn import Nakazato_2013; import astropy.units as u
-        >>> Nakazato_2013(progenitor_mass=30*u.Msun, metallicity=0.004, revival_time=0*u.s, eos='togashi')
-        Nakazato_2013 Model: nakazato-togashi-BH-z0.004-s30.0.fits
-        Progenitor mass  : 30.0 solMass
-        EOS              : togashi
-        Metallicity      : 0.004
-        Revival time     : 0.0 ms
-        """
-        # Attempt to load model from parameters
-        if filename is not None:
+    def _metadata_from_filename(self, filename:str)->dict:
             metadata = {'Progenitor mass': float(filename.split('-')[-1].strip('s%.fits')) * u.Msun}
             if 't_rev' in filename:
                 metadata.update({
@@ -150,20 +114,9 @@ class Nakazato_2013(_RegistryModel):
                     'Metallicity': float(filename.split('-')[-2].strip('z%')),
                     'Revival time': 0 * u.ms
                 })
-            return loaders.Nakazato_2013(os.path.abspath(filename), metadata)
-
-        # Load from model parameters
-        user_params = dict(zip(cls.param.keys(), (progenitor_mass, revival_time, metallicity, eos)))
-        cls.check_valid_params(cls, **user_params)
-
-        # Store model metadata.
-        metadata = {
-            'Progenitor mass': progenitor_mass,
-            'EOS': eos,
-            'Metallicity': metallicity,
-            'Revival time': revival_time
-        }
-
+            return metadata
+        
+    def __init__(self, progenitor_mass:u.Quantity, revival_time:u.Quantity, metallicity:float, eos:str):
         # Strip units for filename construction
         progenitor_mass = progenitor_mass.to(u.Msun).value
         revival_time = revival_time.to(u.ms).value
@@ -172,198 +125,115 @@ class Nakazato_2013(_RegistryModel):
             filename = f"nakazato-{eos}-z{metallicity}-t_rev{int(revival_time)}ms-s{progenitor_mass:3.1f}.fits"
         else:
             filename = f"nakazato-{eos}-BH-z{metallicity}-s{progenitor_mass:3.1f}.fits"
-
-        return loaders.Nakazato_2013(filename, metadata)
-
-    # Populate Docstring with param values
-    __new__.__doc__ = __new__.__doc__.format(**param)
+        #modify metadata if needed...
+        #self.metadata['name']=value
+        return super().__init__(filename, self.metadata)
 
 
-class Sukhbold_2015(_RegistryModel):
+
+@RegistryModel(
+    progenitor_mass = [27., 9.6] * u.Msun,
+    eos = ['LS220', 'SFHo']
+)
+class Sukhbold_2015(loaders.Sukhbold_2015):
     """Model based on simulations from Sukhbold et al., ApJ 821:38,2016. Models were shared privately by email.
     """
-    param = {'progenitor_mass': [27., 9.6] * u.Msun,
-             'eos': ['LS220', 'SFHo']}
-
-    @_warn_deprecated_filename_argument
-    def __new__(cls, filename=None, *, progenitor_mass=None, eos=None):
-        """Model Initialization
-
-        Parameters
-        ----------
-        filename : str
-            Absolute or relative path to FITS file with model data. This argument is deprecated.
-
-        Other Parameters
-        ----------------
-        progenitor_mass: astropy.units.Quantity
-            Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
-        eos: str
-            Equation of state. Valid values are {eos}.
-
-        Raises
-        ------
-        FileNotFoundError
-            If a file for the chosen model parameters cannot be found
-        ValueError
-            If a combination of parameters is invalid when loading from parameters
-        """
-        if filename is not None:
-            metadata = {
-                'Progenitor mass': float(filename.split('-')[-1].strip('z%.fits')) * u.Msun,
-                'EOS': filename.split('-')[-2]
-            }
-            return loaders.Sukhbold_2015(os.path.abspath(filename), metadata)
-
-        user_params = dict(zip(cls.param.keys(), (progenitor_mass, eos)))
-        cls.check_valid_params(cls, **user_params)
-
+    def _metadata_from_filename(self, filename:str):
+        metadata = {
+            'Progenitor mass': float(filename.split('-')[-1].strip('z%.fits')) * u.Msun,
+            'EOS': filename.split('-')[-2]
+        }
+        return metadata
+         
+    def __init__(self, progenitor_mass:u.Quantity, eos:str):
         if progenitor_mass.value == 9.6:
             filename = f'sukhbold-{eos}-z{progenitor_mass.value:3.1f}.fits'
         else:
             filename = f'sukhbold-{eos}-s{progenitor_mass.value:3.1f}.fits'
-
-        metadata = {
-            'Progenitor mass': progenitor_mass,
-            'EOS': eos
-        }
-        return loaders.Sukhbold_2015(filename, metadata)
-
-    # Populate Docstring with param values
-    __new__.__doc__ = __new__.__doc__.format(**param)
+        return super().__init__(filename, self.metadata)
 
 
-class Tamborra_2014(_RegistryModel):
-    """Model based on 3D simulations from `Tamborra et al., PRD 90:045032, 2014 <https://arxiv.org/abs/1406.0006>`_.
-    Data files are from the `Garching Supernova Archive`_.
-    """
 
-    param = {'progenitor_mass': [11.2, 20., 27.] * u.Msun,
-             'direction': [1,2,3]}
+@RegistryModel(
+    progenitor_mass = [11.2, 20., 27.] * u.Msun,
+    direction = [1,2,3],
     _param_validator = lambda p: (p['progenitor_mass'] == 11.2 * u.Msun and p['direction'] in (1,)) or \
         (p['progenitor_mass'] == 20. * u.Msun and p['direction'] in (1,)) or \
         (p['progenitor_mass'] == 27. * u.Msun and p['direction'] in (1,2,3))
-    
-    @_warn_deprecated_filename_argument
-    def __new__(cls, filename=None, eos='LS220', *, progenitor_mass=None, direction=None):
-        if filename is not None:
-            # Metadata creation is implemented in snewpy.models.base._GarchingArchiveModel
-            return loaders.Tamborra_2014(os.path.abspath(filename))
-
-        cls.check_valid_params(cls, progenitor_mass=progenitor_mass, direction=direction)
+)   
+class Tamborra_2014(loaders.Tamborra_2014):
+    """Model based on 3D simulations from `Tamborra et al., PRD 90:045032, 2014 <https://arxiv.org/abs/1406.0006>`_.
+    Data files are from the `Garching Supernova Archive`_.
+    """
+    def __init__(self, progenitor_mass:u.Quantity, direction:int):
         filename = f's{progenitor_mass.value:3.1f}c_3D_dir{direction}'
-
-        metadata = {
-            'Progenitor mass': progenitor_mass,
-            'EOS': 'LS220'
-        }
-
+        #update metadata
+        self.metadata['EOS']='LS220'
         # Metadata is handled by __init__ in _GarchingArchiveModel
-        return loaders.Tamborra_2014(filename=filename, metadata=metadata)
-
-    # Populate Docstring with param values
-    __new__.__doc__ = loaders.Tamborra_2014.__init__.__doc__.format(**param)
+        return super().__init__(filename=filename, metadata=self.metadata)
 
 
-class Bollig_2016(_RegistryModel):
+@RegistryModel(
+    progenitor_mass= [11.2, 27.] * u.Msun
+)
+class Bollig_2016(loaders.Bollig_2016):
     """Model based on simulations from `Bollig et al. (2016) <https://arxiv.org/abs/1508.00785>`_.
     Models were taken, with permission, from the `Garching Supernova Archive`_.
     """
-
-    param = {'progenitor_mass': [11.2, 27.] * u.Msun}
-
-    def __new__(cls, filename=None,  eos='LS220', *, progenitor_mass=None):
-        if filename is not None:
-            # Metadata creation is implemented in snewpy.models.base._GarchingArchiveModel
-            return loaders.Bollig_2016(os.path.abspath(filename))
-
-        cls.check_valid_params(cls, progenitor_mass=progenitor_mass)
+    def __init__(self, progenitor_mass:u.Quantity):
         filename = f's{progenitor_mass.value:3.1f}c'
+        self.metadata['EOS'] = 'LS220'
+        return super().__init__(filename=filename, metadata=self.metadata)
 
-        metadata = {
-            'Progenitor mass': progenitor_mass,
-            'EOS': 'LS220'
-        }
-
-        return loaders.Bollig_2016(filename=filename, metadata=metadata)
-
-    # Populate Docstring with param values (Docstring is inherited from base._GarchingArchiveModel.__init__)
-    __new__.__doc__ = loaders.Bollig_2016.__init__.__doc__.format(**param)
-
-
-class Walk_2018(_RegistryModel):
+@RegistryModel(
+    progenitor_mass = [15.] * u.Msun,
+    rotation = ['fast','slow','non'],
+    direction = [1,2,3],
+    eos=['LS220']
+)
+class Walk_2018(loaders.Walk_2018):
     """Model based on SASI-dominated simulations from `Walk et al.,
     PRD 98:123001, 2018 <https://arxiv.org/abs/1807.02366>`_. Data files are from
     the `Garching Supernova Archive`_.
     """
 
-    param = {'progenitor_mass': 15. * u.Msun, 'rotation': ['fast','slow','non'], 'direction': [1,2,3]}
-
-    @_warn_deprecated_filename_argument
-    def __new__(cls, filename=None, eos='LS220', *, progenitor_mass=None, rotation=None, direction=None):
-        if filename is not None:
-            # Metadata creation is implemented in snewpy.models.base._GarchingArchiveModel
-            return loaders.Walk_2018(os.path.abspath(filename))
-
-        cls.check_valid_params(cls, progenitor_mass=progenitor_mass, rotation=rotation, direction=direction)
+    def __init__(self, *, progenitor_mass:u.Quantity=15<<u.Msun, rotation:str, direction:int, 
+                 eos:str='LS220'):
+        
         filename = f's{progenitor_mass.value:3.1f}c_3D_{rotation}rot_dir{direction}'
-
-        metadata = {
-            'Progenitor mass': progenitor_mass,
-            'EOS': 'LS220'
-        }
-
-        return loaders.Walk_2018(filename=filename, metadata=metadata)
-
-    # Populate Docstring with param values (Docstring is inherited from base._GarchingArchiveModel.__init__)
-    __new__.__doc__ = loaders.Walk_2018.__init__.__doc__.format(**param)
+        return super().__init__(filename=filename, metadata=self.metadata)
 
 
-class Walk_2019(_RegistryModel):
+@RegistryModel(
+    progenitor_mass = [40., 75.] * u.Msun,
+    direction = [1,2,3],
+    eos=['LS220'],
+    
+    _param_validator = lambda p: (p['progenitor_mass'] == 75. * u.Msun and p['direction'] in (1,2)) or \
+        (p['progenitor_mass'] == 40. * u.Msun and p['direction'] in (1,2,3))
+)
+class Walk_2019(loaders.Walk_2019):
     """Model based on SASI-dominated simulations from `Walk et al.,
     PRD 101:123013, 2019 <https://arxiv.org/abs/1910.12971>`_. Data files are
     from the `Garching Supernova Archive`_.
     """
-
-    param = {'progenitor_mass': [40., 75.] * u.Msun,
-             'direction': [1,2,3]}
-    _param_validator = lambda p: (p['progenitor_mass'] == 75. * u.Msun and p['direction'] in (1,2)) or \
-        (p['progenitor_mass'] == 40. * u.Msun and p['direction'] in (1,2,3))
-    
-    @_warn_deprecated_filename_argument
-    def __new__(cls, filename=None, eos='LS220', *, progenitor_mass=None, direction=None):
-        if filename is not None:
-            # Metadata creation is implemented in snewpy.models.base._GarchingArchiveModel
-            return loaders.Walk_2019(os.path.abspath(filename))
-
-        cls.check_valid_params(cls, progenitor_mass=progenitor_mass, direction=direction)
+    def __init__(self, progenitor_mass:u.Quantity, direction:int, eos='LS220'):
         filename = f's{progenitor_mass.value:3.1f}c_3DBH_dir{direction}'
+        return super().__init__(filename=filename, metadata=self.metadata)
 
-        metadata = {
-            'Progenitor mass': progenitor_mass,
-            'EOS': 'LS220'
-        }
-
-        return loaders.Walk_2019(filename=filename, metadata=metadata)
-
-    # Populate Docstring with param values (Docstring is inherited from base._GarchingArchiveModel.__init__)
-    __new__.__doc__ = loaders.Walk_2019.__init__.__doc__.format(**param)
-
-
-class OConnor_2013(_RegistryModel):
+@RegistryModel(
+    progenitor_mass = Parameter(values=(list(range(12, 34)) +
+                                 list(range(35, 61, 5)) +
+                                 [70, 80, 100, 120]) * u.Msun, 
+                                name='progenitor_mass',
+                                desc_values='[12..33, 35..5..60, 70, 80, 100, 120] solMass'
+                               ),
+    eos = ['HShen', 'LS220']
+)
+class OConnor_2013(loaders.OConnor_2013):
     """Model based on the black hole formation simulation in `O'Connor & Ott (2013) <https://arxiv.org/abs/1207.1100>`_.
     """
-
-    param = {'progenitor_mass': (list(range(12, 34)) +
-                                 list(range(35, 61, 5)) +
-                                 [70, 80, 100, 120]) * u.Msun,
-             'eos': ['HShen', 'LS220']}
-
-    _param_abbrv = {'progenitor_mass': '[12..33, 35..5..60, 70, 80, 100, 120] solMass',
-                    'eos': ['HShen', 'LS220']}
-
-    @_warn_deprecated_filename_argument
-    def __new__(cls, base=None, mass=None, eos='LS220', *, progenitor_mass=None):
+    def __init__(self, base=None, mass=None, eos='LS220', *, progenitor_mass=None):
         """Model Initialization.
 
         Parameters
@@ -390,136 +260,48 @@ class OConnor_2013(_RegistryModel):
         """
         # TODO: (For v2.0) Change `base` to filename, move compressed model files to OConnor_2013 model folder
         if mass is not None:
-            warn(f'Argument `mass` of type int is deprecated. To initialize this model, use keyword arguments '
-                 f'{list(cls.param.keys())}. See {cls.__name__}.param, {cls.__name__}.get_param_combinations() for more info',
-                 category=DeprecationWarning, stacklevel=2)
+            warn(f'Argument `mass` of type int is deprecated. To initialize this model, use keyword arguments', category=DeprecationWarning, stacklevel=2)
         else:
             mass = 15  # Default Value, this is handled this way for backwards compatibility -- TODO (For V2.0) Remove
-
+        self.metadata.setdefault('Progenitor mass', mass*u.Msun)
         if base is not None:
-            # If base is provided, do not attempt to load from param.
-            if mass * u.Msun not in cls.param['progenitor_mass']:
-                raise ValueError(f'Invalid value for argument `progenitor mass` or `mass`, see {cls.__name__}.param'
-                                 f' for allowed values')
-            metadata = {'Progenitor mass': progenitor_mass if progenitor_mass is not None else mass * u.Msun,
-                        'EOS': eos}
-
             filename = os.path.join(base, f"{eos}_timeseries.tar.gz")
-            return loaders.OConnor_2013(os.path.abspath(filename), metadata)
-
+            return super().__init__(os.path.abspath(filename), self.metadata)
         # Load from Parameters
-        cls.check_valid_params(cls, progenitor_mass=progenitor_mass, eos=eos)
         filename = f'{eos}_timeseries.tar.gz'
+        return super().__init__(filename=filename, metadata=self.metadata)
 
-        metadata = {
-            'Progenitor mass': progenitor_mass,
-            'EOS': eos,
-        }
-
-        return loaders.OConnor_2013(filename=filename, metadata=metadata)
-
-    # Populate Docstring with param values
-    __new__.__doc__ = __new__.__doc__.format(**_param_abbrv)
-
-
-class OConnor_2015(_RegistryModel):
+@RegistryModel(
+    progenitor_mass = [40 * u.Msun]
+)
+class OConnor_2015(loaders.OConnor_2015):
     """Model based on the black hole formation simulation in `O'Connor (2015) <https://arxiv.org/abs/1411.7058>`_.
     """
-
-    param = {'progenitor_mass': 40 * u.Msun}
-
-    @_warn_deprecated_filename_argument
-    def __new__(cls, filename=None, eos='LS220', *, progenitor_mass=None):
-        """Model Initialization.
-
-        Parameters
-        ----------
-        filename : str
-            Absolute or relative path to tar.gz file with model data. This argument is deprecated.
-        eos: str
-            Equation of state. Valid value is 'LS220'. This argument is deprecated.
-
-        Other Parameters
-        ----------------
-        progenitor_mass: astropy.units.Quantity
-            Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
-
-        Raises
-        ------
-        FileNotFoundError
-            If a file for the chosen model parameters cannot be found
-        ValueError
-            If a combination of parameters is invalid when loading from parameters
-        """
-        metadata = {
-            'Progenitor mass': 40*u.Msun,
-            'EOS': 'LS220',
-        }
-
-        if filename is not None:
-            return loaders.OConnor_2015(os.path.abspath(filename), metadata)
-
-        # Load from Parameters
-        cls.check_valid_params(cls, progenitor_mass=progenitor_mass)
+    def __init__(self, eos='LS220', *, progenitor_mass=None):        
         # Filename is currently the same regardless of parameters
         filename = 'M1_neutrinos.dat'
+        return super().__init__(filename, self.metadata)
 
-        return loaders.OConnor_2015(filename, metadata)
-
-    # Populate Docstring with param values
-    __new__.__doc__ = __new__.__doc__.format(**param)
-
-
-class Zha_2021(_RegistryModel):
+@RegistryModel(
+    progenitor_mass = Parameter(name='progenitor_mass',
+                                values=(list(range(16, 27)) + [19.89, 22.39, 30, 33]) * u.Msun,
+                                desc_values = '[16..26, 19.89, 22.39, 30, 33] solMass'
+                               ),
+    eos = ['STOS_B145']
+)
+class Zha_2021(loaders.Zha_2021):
     """Model based on the hadron-quark phse transition models from `Zha et al. 2021 <https://arxiv.org/abs/2103.02268>`_.
     """
-
-    param = {'progenitor_mass': (list(range(16, 27)) + [19.89, 22.39, 30, 33]) * u.Msun}
-
-    _param_abbrv = {'progenitor_mass': '[16..26, 19.89, 22.39, 30, 33] solMass'}
-
-    @_warn_deprecated_filename_argument
-    def __new__(cls, filename=None, eos='ST0S_B145', *, progenitor_mass=None):
-        """Model Initialization.
-
-        Parameters
-        ----------
-        filename : str
-            Absolute or relative path to file with model data. This argument is deprecated.
-        eos : str
-            Equation of state. Valid value is 'ST0S_B145'. This argument is deprecated.
-
-        Other Parameters
-        ----------------
-        progenitor_mass: astropy.units.Quantity
-            Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
-
-        Raises
-        ------
-        FileNotFoundError
-            If a file for the chosen model parameters cannot be found
-        ValueError
-            If a combination of parameters is invalid when loading from parameters
-        """
-        if filename is not None:
-            metadata = {'Progenitor mass': float(os.path.splitext(os.path.basename(filename))[0][1:]) * u.Msun,
-                        'EOS': 'STOS_B145'}
-            return loaders.Zha_2021(os.path.abspath(filename), metadata)
-
-        # Load from Parameters
-        cls.check_valid_params(cls, progenitor_mass=progenitor_mass)
-
-        metadata = {
-            'Progenitor mass': progenitor_mass,
-            'EOS': 'STOS_B145',
-        }
+    def _metadata_from_filename(self, filename:str)->dict:
+        metadata = {'Progenitor mass': float(os.path.splitext(os.path.basename(filename))[0][1:]) * u.Msun}
+        return metadata 
+        
+    def __init__(self, eos='ST0S_B145', *, progenitor_mass):
+        
 
         filename = f's{progenitor_mass.value:g}.dat'
 
         return loaders.Zha_2021(filename, metadata)
-
-    # Populate Docstring with abbreviated param values
-    __new__.__doc__ = __new__.__doc__.format(**_param_abbrv)
 
 
 class Warren_2020(_RegistryModel):
