@@ -21,8 +21,8 @@ using interpolation::DISCONTINUOUS;
 // **********************************************************
 // **********************************************************
 
-void Profile_loader(InputDataSqa3Earth ID,string &outputfilenamestem)
-     { string rhofilename, Yefilename, vfilename, Mfilename;
+void Profile_loader(InputDataEMEWS ID,string &outputfilenamestem)
+     { string rhofilename, Yefilename;
        
        rhofilename = ID.densityprofile;
        Yefilename = ID.electronfraction;
@@ -70,7 +70,7 @@ void Profile_loader(InputDataSqa3Earth ID,string &outputfilenamestem)
 // **********************************************************
 // **********************************************************
 
-void Neutrino_loader(InputDataSqa3Earth ID,std::string &outputfilenamestem)
+void Neutrino_loader(InputDataEMEWS ID,std::string &outputfilenamestem)
      { NE = ID.NE;
        EminMeV = ID.Emin;
        EmaxMeV = ID.Emax; // in MeV
