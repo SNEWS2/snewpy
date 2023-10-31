@@ -1,5 +1,5 @@
 
-#include "Sqa3.h"
+#include "EMEWS.h"
 
 #ifndef potentials_H
 #define potentials_H
