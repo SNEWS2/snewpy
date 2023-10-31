@@ -15,7 +15,7 @@ from setuptools.extension import Extension
 #
 setup_keywords = dict()
 #
-setup_keywords['name'] = 'Sqa3Earth'
+setup_keywords['name'] = 'EMEWS'
 setup_keywords['description'] = 'A Python module for computing the Earth-matter effect upon neutrinos. Works alone or with snewpy.'
 setup_keywords['author'] = 'Jim Kneller and Anne Graf'
 setup_keywords['author_email'] = 'jpknelle@ncsu.edu'
