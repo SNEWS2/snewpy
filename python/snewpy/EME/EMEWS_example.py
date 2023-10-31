@@ -22,16 +22,16 @@ if __name__ == "__main__":
     SNaltaz = Betelgeuse.transform_to(AltAz(obstime=time,location=SuperK)) 
 
     # load the mdule that does the Earth-matter effect calculation 
-    import Sqa3Earth
+    import EMEWS
 
     # class to accumulate input data for calcultion
-    ID = Sqa3Earth.InputDataSqa3Earth()
+    ID = EMEWS.InputDataSqa3Earth()
 
     # assign data fields
     ID.altitude = SNaltaz.alt.deg
     ID.azimuth = SNaltaz.az.deg
 
-    ID.outputfilenamestem = "out/Sqa3Earth:PREM"
+    ID.outputfilenamestem = "out/EMEWS"
 
     ID.densityprofile = "PREM.rho.dat"
     ID.electronfraction = "PREM.Ye.dat"
@@ -58,7 +58,7 @@ if __name__ == "__main__":
 
     # do the calculation. The return is a four dimensional array of transition probabilities nu_alpha -> nu_i: 
     # index order is matter/antimatter, energy, i, alpha
-    Pfm = Sqa3Earth.RunSqa3Earth(ID)
+    Pfm = EMEWS.Run(ID)
 
     print("finished")
 
