@@ -14,7 +14,7 @@ from astropy.coordinates import AltAz
 
 from .neutrino import MassHierarchy, Flavor
 
-import Sqa3Earth
+import EMEWS
 
 class FlavorTransformation(ABC):
     """Generic interface to compute neutrino and antineutrino survival probability."""
@@ -280,7 +280,7 @@ class ThreeFlavorTransformation(FlavorTransformation):
         E = E.to_value('MeV')
 
         #input data object for Sqa
-        ID = Sqa3Earth.InputDataSqa3Earth()
+        ID = EMEWS.InputDataSqa3Earth()
 
         ID.altitude = self.AltAz.alt.deg
         ID.azimuth = self.AltAz.az.deg
@@ -306,7 +306,7 @@ class ThreeFlavorTransformation(FlavorTransformation):
         ID.outputflag = False         # set to True if output is desired
  
         #matrix from Sqa3Earth needs to be rearranged to match SNEWPY indici
-        Pfm = Sqa3Earth.RunSqa3Earth(ID)
+        Pfm = EMEWS.Run(ID)
 
         m = 0
         while m<len(E):
