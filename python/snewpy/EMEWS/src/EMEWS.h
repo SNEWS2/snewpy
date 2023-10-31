@@ -1,6 +1,6 @@
 
-#ifndef Sqa3MSW_H
-#define Sqa3MSW_H
+#ifndef EMEWS_H
+#define EMEWS_H
 
 // *****************************************************************
 
@@ -65,9 +65,6 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-//#include <boost/python.hpp>
-//#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
-
 // ************************
 
 #include "mstl.h"
@@ -96,8 +93,7 @@
 
 // ********************************************************************** 
 
-std::vector<std::vector<std::vector<std::vector<double> > > > RunSqa3Earth(InputDataSqa3Earth ID);
-std::vector<std::vector<std::vector<std::vector<double> > > > RunSqa3SN(InputDataSqa3SN ID);
+std::vector<std::vector<std::vector<std::vector<double> > > > Run(InputDataEMEWS ID);
 
 // ************************ Neutrino Potentials **************************
 
