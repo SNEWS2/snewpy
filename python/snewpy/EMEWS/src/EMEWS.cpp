@@ -73,44 +73,34 @@ interpolation::DISCONTINUOUS rho, Ye;
 
 // ********************************************************************** 
 
-PYBIND11_MODULE(Sqa3Earth, m)
-{   class_<InputDataSqa3Earth>(m, "InputDataSqa3Earth")
+PYBIND11_MODULE(EMEWS, m)
+{   class_<InputDataEMEWS>(m, "InputDataEMEWS")
         .def(init<>())
-        .def_readwrite("altitude", &InputDataSqa3Earth::altitude)
-        .def_readwrite("azimuth", &InputDataSqa3Earth::azimuth)
-        .def_readwrite("outputfilenamestem", &InputDataSqa3Earth::outputfilenamestem)
-        .def_readwrite("densityprofile", &InputDataSqa3Earth::densityprofile)
-        .def_readwrite("electronfraction", &InputDataSqa3Earth::electronfraction)
-        .def_readwrite("Emin", &InputDataSqa3Earth::Emin)
-        .def_readwrite("Emax", &InputDataSqa3Earth::Emax)
-        .def_readwrite("deltam_21", &InputDataSqa3Earth::deltam_21)
-        .def_readwrite("deltam_32", &InputDataSqa3Earth::deltam_32)
-        .def_readwrite("theta12", &InputDataSqa3Earth::theta12)
-        .def_readwrite("theta13", &InputDataSqa3Earth::theta13)
-        .def_readwrite("theta23", &InputDataSqa3Earth::theta23)
-        .def_readwrite("deltaCP", &InputDataSqa3Earth::deltaCP)
-        .def_readwrite("accuracy", &InputDataSqa3Earth::accuracy)
-        .def_readwrite("stepcounterlimit", &InputDataSqa3Earth::stepcounterlimit)
-        .def_readwrite("NE", &InputDataSqa3Earth::NE)
-        .def_readwrite("outputflag", &InputDataSqa3Earth::outputflag)
+        .def_readwrite("altitude", &InputDataEMEWS::altitude)
+        .def_readwrite("azimuth", &InputDataEMEWS::azimuth)
+        .def_readwrite("outputfilenamestem", &InputDataEMEWS::outputfilenamestem)
+        .def_readwrite("densityprofile", &InputDataEMEWS::densityprofile)
+        .def_readwrite("electronfraction", &InputDataEMEWSh::electronfraction)
+        .def_readwrite("Emin", &InputDataEMEWS::Emin)
+        .def_readwrite("Emax", &InputDataEMEWS::Emax)
+        .def_readwrite("deltam_21", &InputDataEMEWS::deltam_21)
+        .def_readwrite("deltam_32", &InputDataEMEWS::deltam_32)
+        .def_readwrite("theta12", &InputDataEMEWS::theta12)
+        .def_readwrite("theta13", &InputDataEMEWS::theta13)
+        .def_readwrite("theta23", &InputDataEMEWS::theta23)
+        .def_readwrite("deltaCP", &InputDataEMEWS::deltaCP)
+        .def_readwrite("accuracy", &InputDataEMEWS::accuracy)
+        .def_readwrite("stepcounterlimit", &InputDataEMEWS::stepcounterlimit)
+        .def_readwrite("NE", &InputDataEMEWS::NE)
+        .def_readwrite("outputflag", &InputDataEMEWS::outputflag)
         ;
 
-    /*class_<vector<vector<vector<vector<double> > > > >("stl_vectorx4")
-        .def(vector_indexing_suite<vector<vector<vector<vector<double> > > > >());
-    class_<vector<vector<vector<double> > > >("stl_vectorx3")
-        .def(vector_indexing_suite<vector<vector<vector<double> > > >());
-    class_<vector<vector<double> > >("stl_vectorx2")
-        .def(vector_indexing_suite<vector<vector<double> > >());
-    class_<vector<double> >("stl_vector_double")
-        .def(vector_indexing_suite<vector<double> >());*/
-
-
-    m.def("RunSqa3Earth", &RunSqa3Earth);
+    m.def("Run", &Run);
 }
 
 // ********************************* MAIN ****************
 
-vector<vector<vector<vector<double> > > > RunSqa3Earth(InputDataSqa3Earth ID)
+vector<vector<vector<vector<double> > > > Run(InputDataEMEWS ID)
     { vector<vector<vector<vector<double> > > > PPfm;
 
       try{ string outputfilenamestem; 
