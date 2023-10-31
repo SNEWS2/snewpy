@@ -25,7 +25,7 @@ if __name__ == "__main__":
     import EMEWS
 
     # class to accumulate input data for calcultion
-    ID = EMEWS.InputDataSqa3Earth()
+    ID = EMEWS.InputDataEMEWS()
 
     # assign data fields
     ID.altitude = SNaltaz.alt.deg
