@@ -30,7 +30,6 @@ import logging
 import os
 import re
 import tarfile
-from warnings import warn
 
 import numpy as np
 from astropy import units as u
@@ -207,12 +206,13 @@ class Walk_2019(loaders.Walk_2019):
                                 name='progenitor_mass',
                                 desc_values='[12..33, 35..5..60, 70, 80, 100, 120] solMass'
                                ),
-    eos = ['HShen', 'LS220']
+    eos = ['HShen', 'LS220'],
+    _init_from_filename=False
 )
 class OConnor_2013(loaders.OConnor_2013):
     """Model based on the black hole formation simulation in `O'Connor & Ott (2013) <https://arxiv.org/abs/1207.1100>`_.
     """
-    @deprecated('eos','base','mass')
+    @deprecated('eos','base','mass', message="Argument {name} is deprecated. To initialize this model, use keyword arguments")
     def __init__(self, base=None, mass=15, *, eos:str='LS220', progenitor_mass:u.Quantity=None):
         """
         Model Initialization.
@@ -225,10 +225,7 @@ class OConnor_2013(loaders.OConnor_2013):
             Mass of model progenitor in units Msun. This argument is deprecated.
         """
         # TODO: (For v2.0) Change `base` to filename, move compressed model files to OConnor_2013 model folder
-        if mass is not None:
-            warn(f'Argument `mass` of type int is deprecated. To initialize this model, use keyword arguments', category=DeprecationWarning, stacklevel=2)
-        else:
-            mass = 15  # Default Value, this is handled this way for backwards compatibility -- TODO (For V2.0) Remove
+        # TODO (For V2.0) Remove `mass`
         self.metadata.setdefault('Progenitor mass', mass*u.Msun)
         if base is not None:
             filename = os.path.join(base, f"{eos}_timeseries.tar.gz")
