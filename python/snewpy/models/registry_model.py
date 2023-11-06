@@ -1,3 +1,12 @@
+"""
+Defining a new supernova model
+------------------------------
+
+.. autoclass:: Parameter
+
+.. autodecorator:: RegistryModel
+
+"""
 from functools import wraps
 import itertools as it
 import inspect
@@ -7,8 +16,10 @@ from warnings import warn
 
 def deprecated(*names, message='Agrument `{name}` is deprecated'):
     """A function decorator to issue a deprecation warning if a given argument is provided in the wrapped function call.
+    
     Parameters
     ----------
+    
     names: list of str
         argument names which are deprecated
     message: str
@@ -16,12 +27,13 @@ def deprecated(*names, message='Agrument `{name}` is deprecated'):
 
     Example:
     --------
-    @deprecated('foo','bar', message='Argument `{name}` is deprecated and will be removed in SNEWPYv2.0!')
-    def test_function(*, foo=1, bar=2, baz=3):
-        pass
-        
-    #calling test_function(foo=1, baz=3) will issue a deprecation warning:
-    #    DeprecationWarning: Argument `foo` is deprecated and will be removed in SNEWPYv2.0!
+    
+        @deprecated('foo','bar', message='Argument `{name}` is deprecated and will be removed in SNEWPYv2.0!')
+        def test_function(*, foo=1, bar=2, baz=3):
+            pass
+            
+        #calling test_function(foo=1, baz=3) will issue a deprecation warning:
+        #    DeprecationWarning: Argument `foo` is deprecated and will be removed in SNEWPYv2.0!
     """
     def _f(func):
         #get function signature
@@ -49,7 +61,7 @@ _default_descriptions={'eos':'Equation of state',
                       }
 class Parameter(list):
     """A class to describe the model parameter: it's range of allowed values, name, description etc. """
-    def __init__(self, values, *, 
+    def __init__(self, values, *,
                  name:str='parameter', 
                  label:str=None, 
                  description:str=None, 
@@ -57,31 +69,33 @@ class Parameter(list):
         """
         Parameters
         ----------
-        values: iterable
-            list of allowed parameter values. If len(values)==1 the parameter is considered fixed (this can be used to add default metadata to the model).
+        values : iterable
+            List of allowed parameter values. If len(values)==1 the parameter is considered fixed (this can be used to add default metadata to the model).
             
-        Keyword parameters
+        Keyword Parameters
         ------------------
-        name:str
-            a variable name for the parameter (used to set the `label` and `description` if they are `None`)
-        label:str
-            A key to be used for this parameter in the metadata dictionary (i.e. 'EOS` for name=`eos` etc)
+        name : str
+            a variable name for the parameter (used to set the ``label`` and ``description`` if they are `None`)
+        label : str
+            A key to be used for this parameter in the metadata dictionary (i.e. 'EOS' for name='eos' etc)
             If `None`(default), label will be derived from name
-        description:str
+        description : str
             A long description of the parameter, to be used in the docstring generation
-            If `None`(default), description will be derived from name
+            If ``None``(default), description will be derived from name
         desc_values:str
             A string representation of the given values range, to be used in the docstring generation
-            If `None`(default), desc_values will be just `str(values)`
+            If ``None``(default), desc_values will be just `str(values)`
 
+            
         If label or description is `None` they are derived from the name, 
         by capitalizing and replacing underscores with spaces.
         
         Example
         -------
-        Parameter(range(0,100,1),name='supernova_parameter', desc_values='[0,1,...99]')
-        # creates a parameter object:
-        # Parameter(name="supernova_parameter", label="Supernova parameter", description="Supernova parameter", values='[0,1,...99]')
+        
+            Parameter(range(0,100,1),name='supernova_parameter', desc_values='[0,1,...99]')
+            # creates a parameter object:
+            # Parameter(name="supernova_parameter", label="Supernova parameter", description="Supernova parameter", values='[0,1,...99]')
         """
         super().__init__(values)
         self.name = name
@@ -98,7 +112,17 @@ class Parameter(list):
 
 
 class ParameterSet:
+    """A class to describe all possible combinations of parameter values"""
     def __init__(self, param_validator=None, **params):
+        """
+        Parameters
+        ----------
+        params:dict
+            Keyword arguments, passing each parameter as iterable or instance of :class:`Parameter`
+        param_validator:callable or None
+            A function of user parameters (dict), returning true if the passed user parameters are valid.
+            If ``None`` (default) - all the combinations are allowed
+        """
         #construct Parameter classes from given arrays
         self.params = {}
         for name,val in params.items():
@@ -163,6 +187,27 @@ class ParameterSet:
         return '\n'.join(s)
     
 def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
+    """A class decorator for defining the supernova model, that initializes from physics parameters.
+    This decorator helps to construct the daughter of the given class, which implements the constructor with 
+    
+        * Validation of the input user parameters (see :meth:`RegistryModel.validate`)
+        * Generated constructor docstring based on allowed parameters
+        * Optional (deprecated) "filename" argument
+        * Populates the `self.metadata` from the given user parameters
+        
+    The decorated class:
+        * **must** inherit from the loader class, and implement the __init__ method with parameters
+    
+    Parameters
+    -----------
+    params:dict
+            Keyword arguments, passing each parameter as iterable or instance of :class:`Parameter`
+    _param_validator:callable or None
+        A function of user parameters (dict), returning true if the passed user parameters are valid.
+        If `None` (default) - all the combinations are allowed
+    _init_from_filename:bool
+        If true, the model 
+    """
     pset:ParameterSet = ParameterSet(param_validator=_param_validator, **params)
     def _wrap(base_class):
         class c(base_class):
