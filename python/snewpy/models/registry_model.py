@@ -2,8 +2,25 @@ from functools import wraps
 import itertools as it
 import inspect
 import os
+from textwrap import dedent
+from warnings import warn
 
-_default_labels={'eos':'EOS'}
+def deprecated(*names, message='Agrument `{name}` is deprecated'):
+    def _f(func):
+        #get function signature
+        S = inspect.signature(func)
+        @wraps(func)
+        def _wrapper(*args, **kwargs):
+            #bind signature to find all the parameters
+            params = S.bind(*args,**kwargs)
+            for name in names:
+                if name in params.arguments:
+                    warn(message.format(name=name))
+            return func(*args,**kwargs)
+        return _wrapper
+    return _f
+
+_default_labels={'eos':'EOS', 'magnetic_field_exponent':'B_0 Exponent'}
 _default_descriptions={'eos':'Equation of state',
                        'progenitor_mass':'Mass of model progenitor in units Msun',
                        'revival_time':'Time of shock revival in model in units ms',
@@ -22,6 +39,10 @@ class Parameter(list):
         
     def __repr__(self):
         return f"{self.__class__.__name__}(name=\"{self.name}\", label=\"{self.label}\", description=\"{self.description}\", values='{self.desc_values}')"
+    @property
+    def fixed(self):
+        """True if this parameter has only one option"""
+        return len(self)==1
 
 
 class ParameterSet:
@@ -44,7 +65,14 @@ class ParameterSet:
         else:
             self.valid_combinations = self.combinations
         self.valid_combinations_dict = [dict(zip(self.params,p)) for p in self.valid_combinations]
-        
+
+    def fill_default_parameters(self, **user_params)->dict:
+        """Set the parameter values if they are missing in 'user_params' and fixed (i.e. have a single option"""
+        for name,p in self.params.items():
+            if(p.fixed):
+                user_params.setdefault(name,p[0])
+        return user_params
+                
     def validate(self, **user_params):
         #check that we have all correct parameters
         for name in user_params:
@@ -69,50 +97,54 @@ class ParameterSet:
         s+='\n'.join([f' * \t{name}={ps}' for name,ps in self.params.items()])
         return s
 
-    def generate_docstring(self, **type_annotations)->str:
+    def generate_docstring(self, func, **type_annotations)->str:
         #generate docstring
         s = []
-        for name,p in self.params.items():
+        S = inspect.signature(func)
+        params = [name for name in self.params.keys() if name in S.parameters]
+        for name in params:
+            p = self.params[name]
             p_type = type_annotations.get(name,None)
             type_name = p_type.__name__ if p_type else ''
             s+=[f'{name}: {type_name}\n    {p.description}. Valid values are: {p.desc_values}.']
         return '\n'.join(s)
-
-def set_defaults(**parameters):
-    def _wrap(func):
-        S = inspect.signature(func)
-        defaults = {}
-        defaults = {name:p.default for name,p in S.parameters.items()}
-        defaults.update(**{name:p.default for name,p in S.parameters.items()})
-        for name,val in defaults.items():
-            if val==inspect.Parameter.empty:
-                val = None
-            if name in pset.params:
-                if (len(pset[name])==1): #this means we have only one option, use it as default value
-                    #print(f'{pset[name]}: (len={len(pset[name])})')
-                    val = pset[name][0]
-            defaults[name]=val
-    return _wrap
     
 def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
     pset:ParameterSet = ParameterSet(param_validator=_param_validator, **params)
     def _wrap(base_class):
         class c(base_class):
+            _doc_params_ = {
+                'Keyword parameters': pset.generate_docstring(base_class.__init__, **base_class.__init__.__annotations__),
+                'Raises':"""ValueError:
+                    If a combination of parameters is invalid when loading from parameters"""
+            }
+            @classmethod
+            def _generate_docstring(cls)->str:
+                docstring = ""
+                for section, desc in cls._doc_params_.items():
+                    s = f'{section}\n'+'-'*len(section)+'\n'+dedent(desc)
+                    docstring+='\n'+s+'\n'
+                return docstring
+                
             def __init__(self, **kwargs):
-                """
-Keyword parameters
-------------------
-{PARAMETERS} 
-
-Raises
-------
-ValueError
-    If a combination of parameters is invalid when loading from parameters"""
-                # validate the input parameters                  
-                pset.validate(**kwargs)
-                # Store model metadata.
-                self.metadata = {pset[name].label: value for name,value in kwargs.items()}
-                return super().__init__(**kwargs)
+                # enforce the default parameters
+                S = inspect.signature(self.__init__)
+                params = S.bind(**kwargs)
+                params.apply_defaults()
+                #print(f"Calling init with params={params}")
+                kwargs = params.kwargs
+                #select the parameters which correspond to metadata
+                param_kwargs = {name:val for name,val in kwargs.items() if name in pset.params}
+                param_kwargs = pset.fill_default_parameters(**param_kwargs)
+                # validate the input parameters
+                pset.validate(**param_kwargs)
+                #Store model metadata
+                self.metadata = {pset[name].label: value for name,value in param_kwargs.items()}
+                #call the constructor with only the needed arguments (the rest are only for metadata)
+                S = inspect.signature(super().__init__)
+                init_params = {name:val for name,val in kwargs.items() if name in S.parameters}
+                print(init_params)
+                return super().__init__(**init_params)
                 
             @classmethod
             def get_param_combinations(cls)->tuple:
@@ -122,24 +154,16 @@ ValueError
                 valid_combinations: tuple[dict]
                     A tuple of all valid parameter combinations stored as Dictionaries"""
                 return pset.valid_combinations_dict
-        c.__init__.__doc__ = c.__init__.__doc__.format(
-            PARAMETERS=pset.generate_docstring(**base_class.__init__.__annotations__)
-        )
+        #generate the docstring
+        c.__init__.__doc__ = c._generate_docstring()
         c.__init__.__signature__ = inspect.signature(base_class.__init__)
         if not _init_from_filename:
             c.__name__ = base_class.__name__
             return c
 
         class c1(c):
+            @deprecated('filename')
             def __init__(self, filename:str=None, **kwargs):
-                """
-Parameters
-----------
-filename: str
-    Absolute or relative path to the file with model data. This argument is deprecated.
-    """
-                #deprecated initialization from the 
-                print(base_class)
                 if filename is not None:
                     self.metadata = {}
                     if hasattr(self,'_metadata_from_filename'):
@@ -148,7 +172,10 @@ filename: str
                 else:
                     super().__init__(**kwargs)
                     
-        c1.__init__.__doc__+=c.__init__.__doc__   
+        c1._doc_params_ = {'Parameters':"""filename: str
+            Absolute or relative path to the file with model data. This argument is deprecated.""", **c._doc_params_}
+        c1.__init__.__doc__ = c1._generate_docstring()
+        
         #update the call signature
         S = inspect.signature(c)
         S1 = inspect.signature(c1.__init__)
@@ -157,7 +184,7 @@ filename: str
         kw_params = [p.replace(kind=inspect.Parameter.KEYWORD_ONLY) for name,p in S.parameters.items()]
         params = [S1.parameters['self'],S1.parameters['filename'],*kw_params]
         c1.__init__.__signature__ = S.replace(parameters=params)
-        c1.__init__ = set_defaults(**defaults)(c1.__init__)
+        #c1.__init__ = set_defaults(**defaults)(c1.__init__)
         #print(c1.__init__.__signature__)
         c1.__name__ = base_class.__name__
         #print(help(c1))

@@ -38,27 +38,7 @@ from astropy.table import Table
 from snewpy.models import loaders
 from .base import PinchedModel, _RegistryModel
 
-from snewpy.models.registry_model import RegistryModel, Parameter
-from warnings import warn
-from functools import wraps
-
-
-def _warn_deprecated_filename_argument(func):
-    """Decorator for model.__new__ methods, causing them to issue a deprecation warning
-     if argument `filename` is used. Initialization by filename will be moved to
-     snewpy.models.init_model, and model classes are initialized from physical parameters.
-    """
-    @wraps(func)  # Ensures docstrings are preserved
-    def decorator(cls, *args, **kwargs):
-        filename = args[0] if len(args) > 0 else None  # Assumes filename is first pos. arg if provided
-        if filename is not None:
-            msg = ''.join(['Initializing this model with a filename is deprecated. ',
-                           f'Instead, use keyword arguments {list(cls.param.keys())}. ',
-                           f'See `{cls.__name__}.param`, `{cls.__name__}.get_param_combinations()` for more info.'])
-            warn(FutureWarning(msg), stacklevel=2)
-        return func(cls, *args, **kwargs)
-    return decorator
-
+from snewpy.models.registry_model import RegistryModel, Parameter, deprecated
 
 class Analytic3Species(PinchedModel):
     """An analytical model calculating spectra given total luminosity,
@@ -157,6 +137,7 @@ class Sukhbold_2015(loaders.Sukhbold_2015):
 @RegistryModel(
     progenitor_mass = [11.2, 20., 27.] * u.Msun,
     direction = [1,2,3],
+    eos=['LS220'],
     _param_validator = lambda p: (p['progenitor_mass'] == 11.2 * u.Msun and p['direction'] in (1,)) or \
         (p['progenitor_mass'] == 20. * u.Msun and p['direction'] in (1,)) or \
         (p['progenitor_mass'] == 27. * u.Msun and p['direction'] in (1,2,3))
@@ -165,24 +146,22 @@ class Tamborra_2014(loaders.Tamborra_2014):
     """Model based on 3D simulations from `Tamborra et al., PRD 90:045032, 2014 <https://arxiv.org/abs/1406.0006>`_.
     Data files are from the `Garching Supernova Archive`_.
     """
-    def __init__(self, progenitor_mass:u.Quantity, direction:int):
+    def __init__(self, eos:str='LS220', *, progenitor_mass:u.Quantity, direction:int):
         filename = f's{progenitor_mass.value:3.1f}c_3D_dir{direction}'
-        #update metadata
-        self.metadata['EOS']='LS220'
         # Metadata is handled by __init__ in _GarchingArchiveModel
         return super().__init__(filename=filename, metadata=self.metadata)
 
 
 @RegistryModel(
-    progenitor_mass= [11.2, 27.] * u.Msun
+    progenitor_mass= [11.2, 27.] * u.Msun,
+    eos = ['LS220']
 )
 class Bollig_2016(loaders.Bollig_2016):
     """Model based on simulations from `Bollig et al. (2016) <https://arxiv.org/abs/1508.00785>`_.
     Models were taken, with permission, from the `Garching Supernova Archive`_.
     """
-    def __init__(self, progenitor_mass:u.Quantity):
+    def __init__(self, progenitor_mass:u.Quantity, eos:str='LS220'):
         filename = f's{progenitor_mass.value:3.1f}c'
-        self.metadata['EOS'] = 'LS220'
         return super().__init__(filename=filename, metadata=self.metadata)
 
 @RegistryModel(
@@ -196,8 +175,8 @@ class Walk_2018(loaders.Walk_2018):
     PRD 98:123001, 2018 <https://arxiv.org/abs/1807.02366>`_. Data files are from
     the `Garching Supernova Archive`_.
     """
-
-    def __init__(self, *, progenitor_mass:u.Quantity=15<<u.Msun, rotation:str, direction:int, 
+    @deprecated('eos')
+    def __init__(self, *, progenitor_mass:u.Quantity, rotation:str, direction:int, 
                  eos:str='LS220'):
         
         filename = f's{progenitor_mass.value:3.1f}c_3D_{rotation}rot_dir{direction}'
@@ -208,7 +187,6 @@ class Walk_2018(loaders.Walk_2018):
     progenitor_mass = [40., 75.] * u.Msun,
     direction = [1,2,3],
     eos=['LS220'],
-    
     _param_validator = lambda p: (p['progenitor_mass'] == 75. * u.Msun and p['direction'] in (1,2)) or \
         (p['progenitor_mass'] == 40. * u.Msun and p['direction'] in (1,2,3))
 )
@@ -217,7 +195,7 @@ class Walk_2019(loaders.Walk_2019):
     PRD 101:123013, 2019 <https://arxiv.org/abs/1910.12971>`_. Data files are
     from the `Garching Supernova Archive`_.
     """
-    def __init__(self, progenitor_mass:u.Quantity, direction:int, eos='LS220'):
+    def __init__(self, eos:str='LS220',* ,progenitor_mass:u.Quantity, direction:int):
         filename = f's{progenitor_mass.value:3.1f}c_3DBH_dir{direction}'
         return super().__init__(filename=filename, metadata=self.metadata)
 
@@ -233,7 +211,8 @@ class Walk_2019(loaders.Walk_2019):
 class OConnor_2013(loaders.OConnor_2013):
     """Model based on the black hole formation simulation in `O'Connor & Ott (2013) <https://arxiv.org/abs/1207.1100>`_.
     """
-    def __init__(self, base=None, mass=None, eos='LS220', *, progenitor_mass=None):
+    @deprecated('eos','base','mass')
+    def __init__(self, base=None, mass=None, *, eos:str='LS220', progenitor_mass:u.Quantity=None):
         """Model Initialization.
 
         Parameters
@@ -272,12 +251,13 @@ class OConnor_2013(loaders.OConnor_2013):
         return super().__init__(filename=filename, metadata=self.metadata)
 
 @RegistryModel(
-    progenitor_mass = [40 * u.Msun]
+    progenitor_mass = [40 * u.Msun],
+    eos=['LS220']
 )
 class OConnor_2015(loaders.OConnor_2015):
     """Model based on the black hole formation simulation in `O'Connor (2015) <https://arxiv.org/abs/1411.7058>`_.
     """
-    def __init__(self, eos='LS220', *, progenitor_mass=None):        
+    def __init__(self, progenitor_mass:u.Quantity, eos='LS220'):
         # Filename is currently the same regardless of parameters
         filename = 'M1_neutrinos.dat'
         return super().__init__(filename, self.metadata)
@@ -296,159 +276,91 @@ class Zha_2021(loaders.Zha_2021):
         metadata = {'Progenitor mass': float(os.path.splitext(os.path.basename(filename))[0][1:]) * u.Msun}
         return metadata 
         
-    def __init__(self, eos='ST0S_B145', *, progenitor_mass):
-        
-
+    def __init__(self, *, eos:str='STOS_B145', progenitor_mass:u.Quantity):
         filename = f's{progenitor_mass.value:g}.dat'
+        return super().__init__(filename, self.metadata)
 
-        return loaders.Zha_2021(filename, metadata)
-
-
-class Warren_2020(_RegistryModel):
+@RegistryModel(
+    progenitor_mass=Parameter(np.concatenate((np.linspace(9.0, 12.75, 16),
+                                              np.linspace(13, 30., 171),
+                                              np.linspace(31., 33., 3),
+                                              np.linspace(35, 55, 5),
+                                              np.linspace(60, 80, 3),
+                                              np.linspace(100, 120, 2))) << u.Msun,
+                              name='progenitor_mass',
+                              desc_values='[9..0.25..13, 13..0.1..30, 31..35, 35..5..60, 70..10..90, 100, 120] solMass'),
+    turbmixing_param= Parameter([1.23, 1.25, 1.27],
+                              name='turbmixing_param',
+                              label='Turb. mixing param.',
+                              description='Turbulent mixing parameter alpha_lambda',
+                              ),
+    eos=['SFHo']   
+)
+class Warren_2020(loaders.Warren_2020):
     """Model based on simulations from Warren et al., ApJ 898:139, 2020.
     Neutrino fluxes available at https://doi.org/10.5281/zenodo.3667908."""
     # TODO: (For v2.0) Resolve Zenodo issues (Missing files)
     # np.arange with decimal increments can produce floating point errors
     # Though it may be more intuitive to use np.arange, these fp-errors quickly become troublesome
-    param = {'progenitor_mass': np.concatenate((np.linspace(9.0, 12.75, 16),
-                                                np.linspace(13, 30., 171),
-                                                np.linspace(31., 33., 3),
-                                                np.linspace(35, 55, 5),
-                                                np.linspace(60, 80, 3),
-                                                np.linspace(100, 120, 2))) * u.Msun,
-             'turbmixing_param': [1.23, 1.25, 1.27]}
+    def _metadata_from_filename(self, filename:str)->dict:
+        _, _, turbmixing_param, progenitor_mass = os.path.splitext(os.path.basename(filename))[0].split('_')
+        metadata = {'Progenitor mass': float(progenitor_mass[1:]) * u.Msun,
+                    'Turb. mixing param.': float(turbmixing_param[1:]),
+                    'EOS': 'SFHo'}
+        return metadata
 
-    _param_abbrv = {'progenitor_mass': '[9..0.25..13, 13..0.1..30, 31..35, 35..5..60, 70..10..90, 100, 120] solMass',
-                    'turbmixing_param': [1.23, 1.25, 1.27]}
-
-
-    @_warn_deprecated_filename_argument
-    def __new__(cls, filename=None, eos='SFHo', *, progenitor_mass=None, turbmixing_param=None):
-        """
-        Parameters
-        ----------
-        filename : str
-            Absolute or relative path to file with model data. This argument is deprecated.
-        eos : str
-            Equation of state. Valid value is 'SFHo'. This argument is deprecated.
-
-        Other Parameters
-        ----------------
-        progenitor_mass: astropy.units.Quantity
-            Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
-        turbmixing_param: float
-            Turbulent mixing parameter alpha_lambda. Valid Values are {turbmixing_param}
-
-        Raises
-        ------
-        FileNotFoundError
-            If a file for the chosen model parameters cannot be found
-        ValueError
-            If a combination of parameters is invalid when loading from parameters
-        """
-        if filename is not None:
-            _, _, turbmixing_param, progenitor_mass = os.path.splitext(os.path.basename(filename))[0].split('_')
-            metadata = {'Progenitor mass': float(progenitor_mass[1:]) * u.Msun,
-                        'Turb. mixing param.': float(turbmixing_param[1:]),
-                        'EOS': 'SFHo'}
-
-            return loaders.Warren_2020(os.path.abspath(filename), metadata)
-
-        # Load from Parameters
-        user_params = dict(zip(cls.param.keys(), (progenitor_mass, turbmixing_param)))
-        cls.check_valid_params(cls, **user_params)
-
+    def __init__(self, eos='SFHo', *, progenitor_mass, turbmixing_param):
         if progenitor_mass.value.is_integer() and progenitor_mass.value <= 30.:
             fname = os.path.join(f'stir_a{turbmixing_param:3.2f}',
                                  f'stir_multimessenger_a{turbmixing_param:3.2f}_m{progenitor_mass.value:.1f}.h5')
         else:
             fname = os.path.join(f'stir_a{turbmixing_param:3.2f}',
                                  f'stir_multimessenger_a{turbmixing_param:3.2f}_m{progenitor_mass.value:g}.h5')
+        return super().__init__(fname, self.metadata)
 
-        # Set model metadata.
-        metadata = {
-            'Progenitor mass': progenitor_mass,
-            'Turb. mixing param.': turbmixing_param,
-            'EOS': 'SFHo',
-        }
-
-        return loaders.Warren_2020(fname, metadata)
-
-    # Populate Docstring with abbreviated param values
-    __new__.__doc__ = __new__.__doc__.format(**_param_abbrv)
-
-
-class Kuroda_2020(_RegistryModel):
-    """Model based on simulations from `Kuroda et al. (2020) <https://arxiv.org/abs/2009.07733>`_."""
-
-    param = {'rotational_velocity': [0, 1] * u.rad / u.s,
-             'magnetic_field_exponent': [0, 12, 13]}
+@RegistryModel(
+    rotational_velocity= [0, 1] * u.rad / u.s,
+    magnetic_field_exponent= Parameter([0, 12, 13],
+                                      name='magnetic_field_exponent',
+                                      label='B_0 Exponent',
+                                      description='Exponent of magnetic field (See Eq. 46)'),
+    eos=['LS220'], 
+    progenitor_mass=[20*u.Msun],
     _param_validator = lambda p: (p['rotational_velocity'].value == 1 and p['magnetic_field_exponent'] in (12, 13)) or \
                                (p['rotational_velocity'].value == 0 and p['magnetic_field_exponent'] == 0)
-
-    @_warn_deprecated_filename_argument
-    def __new__(cls, filename=None, eos='LS220', mass=20*u.Msun, *, rotational_velocity=None,
-                magnetic_field_exponent=None):
-        """
-        Parameters
-        ----------
-        filename : str
-            Absolute or relative path to file with model data. This argument is deprecated.
-        eos : str
-            Equation of state. Valid value is 'LS220'. This argument is deprecated.
-        mass: astropy.units.Quantity
-            Mass of model progenitor in units Msun. Valid value is 20 * u.Msun. This argument is deprecated.
-
-        Other Parameters
-        ----------------
-        rotational_velocity: astropy.units.Quantity
-            Rotational velocity of progenitor. Valid values are {rotational_velocity}
-        magnetic_field_exponent: int
-            Exponent of magnetic field (See Eq. 46). Valid Values are {magnetic_field_exponent}
-
-        Raises
-        ------
-        FileNotFoundError
-            If a file for the chosen model parameters cannot be found
-        ValueError
-            If a combination of parameters is invalid when loading from parameters
-        """
-        if filename is not None:
-            _, rotational_velocity, magnetic_field_exponent = re.split('R|B',
-                                                                       os.path.splitext(os.path.basename(filename))[0])
-            metadata = {
-                'Progenitor mass': 20 * u.Msun,
-                'Rotational Velocity': int(rotational_velocity[0]),
-                'B_0 Exponent': int(magnetic_field_exponent),
-                'EOS': 'LS220'
-            }
-            return loaders.Kuroda_2020(os.path.abspath(filename), metadata)
-
-        # Load from Parameters
-        cls.check_valid_params(cls, rotational_velocity=rotational_velocity,
-                               magnetic_field_exponent=magnetic_field_exponent)
-        filename = f'LnuR{int(rotational_velocity.value):1d}0B{int(magnetic_field_exponent):02d}.dat'
-
+)
+class Kuroda_2020(loaders.Kuroda_2020):
+    """Model based on simulations from `Kuroda et al. (2020) <https://arxiv.org/abs/2009.07733>`_."""
+    
+    def _metadata_from_filename(self, filename:str)->dict:
+        _, rotational_velocity, magnetic_field_exponent = re.split('R|B', os.path.splitext(os.path.basename(filename))[0])
         metadata = {
             'Progenitor mass': 20 * u.Msun,
-            'Rotational Velocity': rotational_velocity,
-            'B_0 Exponent': magnetic_field_exponent,
-            'EOS': 'LS220',
-            }
+            'Rotational Velocity': int(rotational_velocity[0]),
+            'B_0 Exponent': int(magnetic_field_exponent),
+            'EOS': 'LS220'
+        }
+        return metadata
 
-        return loaders.Kuroda_2020(filename, metadata)
+    @deprecated('eos','mass')
+    def __init__(self, eos='LS220', mass=None, *, progenitor_mass=20*u.Msun, rotational_velocity, magnetic_field_exponent):
+        filename = f'LnuR{int(rotational_velocity.value):1d}0B{int(magnetic_field_exponent):02d}.dat'
+        return super().__init__(filename, self.metadata)
 
-    __new__.__doc__ = __new__.__doc__.format(**param)
 
-
-class Fornax_2019(_RegistryModel):
+@RegistryModel(
+    progenitor_mass=[9, 10, 12, 13, 14, 15, 16, 19, 25, 60] * u.Msun,
+)
+class Fornax_2019(loaders.Fornax_2019):
     """Model based on 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019. 
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/
     """
-    param = {'progenitor_mass': [9, 10, 12, 13, 14, 15, 16, 19, 25, 60] * u.Msun}
-
-    @_warn_deprecated_filename_argument
-    def __new__(cls, filename=None, cache_flux=False, *, progenitor_mass=None, ):
+    def _metadata_from_filename(self, filename:str)->dict:
+        progenitor_mass = os.path.splitext(os.path.basename(filename))[0].split('_')[2]
+        metadata = {'Progenitor mass': int(progenitor_mass[:-1]) * u.Msun}
+        return metadata
+        
+    def __init__(self, cache_flux=False, *, progenitor_mass):
         """Model Initialization.
 
         Parameters
@@ -463,66 +375,34 @@ class Fornax_2019(_RegistryModel):
         progenitor_mass: astropy.units.Quantity
             Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
         """
-        if filename is not None:
-            progenitor_mass = os.path.splitext(os.path.basename(filename))[0].split('_')[2]
-            metadata = {'Progenitor mass': int(progenitor_mass[:-1]) * u.Msun}
-            return loaders.Fornax_2019(os.path.abspath(filename), metadata, cache_flux=cache_flux)
-
-        # Load from Parameters
-        metadata = {'Progenitor mass': progenitor_mass}
-
-        cls.check_valid_params(cls, progenitor_mass=progenitor_mass)
         if progenitor_mass.value == 16:
             filename = f'lum_spec_{int(progenitor_mass.value):d}M_r250.h5'
         else:
             filename = f'lum_spec_{int(progenitor_mass.value):d}M.h5'
+        return super().__init__(filename, self.metadata, cache_flux=cache_flux)
 
-        return loaders.Fornax_2019(filename, metadata, cache_flux=cache_flux)
-
-    # Populate Docstring with abbreviated param values
-    __new__.__doc__ = __new__.__doc__.format(**param)
-
-
-class Fornax_2021(_RegistryModel):
+@RegistryModel(
+    progenitor_mass = Parameter((list(range(12, 24)) + [25, 26, 26.99]) * u.Msun, 
+                                name='progenitor_mass', 
+                                desc_values='[12..26, 26.99] solMass')
+)
+class Fornax_2021(loaders.Fornax_2021):
     """Model based on 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019. 
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/
         """
-    param = {'progenitor_mass': (list(range(12, 24)) + [25, 26, 26.99]) * u.Msun}
-
-    _param_abbrv = {'progenitor_mass': '[12..26, 26.99] solMass'}
-
-    @_warn_deprecated_filename_argument
-    def __new__(cls, filename=None, *, progenitor_mass=None):
-        """Model Initialization.
-
-        Parameters
-        ----------
-        filename : str
-            Absolute or relative path to file with model data. This argument is deprecated.
-
-        Other Parameters
-        ----------------
-        progenitor_mass: astropy.units.Quantity
-            Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
-        """
-        if filename is not None:
-            progenitor_mass = os.path.splitext(os.path.basename(filename))[0].split('_')[2]
-            metadata = {'Progenitor mass': float(progenitor_mass[:-1]) * u.Msun}
-            return loaders.Fornax_2021(os.path.abspath(filename), metadata)
-
+    def _metadata_from_filename(self, filename:str)->dict:
+        progenitor_mass = os.path.splitext(os.path.basename(filename))[0].split('_')[2]
+        metadata = {'Progenitor mass': float(progenitor_mass[:-1]) * u.Msun}
+        return metadata
+        
+    def __init__(self, progenitor_mass:u.Quantity):
         # Load from Parameters
-        cls.check_valid_params(cls, progenitor_mass=progenitor_mass)
         if progenitor_mass.value.is_integer():
             filename = f'lum_spec_{int(progenitor_mass.value):2d}M_r10000_dat.h5'
         else:
             filename = f'lum_spec_{progenitor_mass.value:.2f}M_r10000_dat.h5'
+        return super().__init__(filename, self.metadata)
 
-        metadata = {'Progenitor mass': progenitor_mass}
-
-        return loaders.Fornax_2021(filename, metadata)
-
-    # Populate Docstring with abbreviated param values
-    __new__.__doc__ = __new__.__doc__.format(**_param_abbrv)
 
 class SNOwGLoBES:
     """A model that does not inherit from SupernovaModel (yet) and imports a group of SNOwGLoBES files."""
