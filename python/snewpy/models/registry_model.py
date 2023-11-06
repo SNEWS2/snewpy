@@ -6,6 +6,23 @@ from textwrap import dedent
 from warnings import warn
 
 def deprecated(*names, message='Agrument `{name}` is deprecated'):
+    """A function decorator to issue a deprecation warning if a given argument is provided in the wrapped function call.
+    Parameters
+    ----------
+    names: list of str
+        argument names which are deprecated
+    message: str
+        a template with {name} parameter, to make the message for each argument.
+
+    Example:
+    --------
+    @deprecated('foo','bar', message='Argument `{name}` is deprecated and will be removed in SNEWPYv2.0!')
+    def test_function(*, foo=1, bar=2, baz=3):
+        pass
+        
+    #calling test_function(foo=1, baz=3) will issue a deprecation warning:
+    #    DeprecationWarning: Argument `foo` is deprecated and will be removed in SNEWPYv2.0!
+    """
     def _f(func):
         #get function signature
         S = inspect.signature(func)
@@ -20,6 +37,7 @@ def deprecated(*names, message='Agrument `{name}` is deprecated'):
         return _wrapper
     return _f
 
+
 _default_labels={'eos':'EOS', 'magnetic_field_exponent':'B_0 Exponent'}
 _default_descriptions={'eos':'Equation of state',
                        'progenitor_mass':'Mass of model progenitor in units Msun',
@@ -30,7 +48,41 @@ _default_descriptions={'eos':'Equation of state',
                        'magnetic_field_exponent':'Exponent of magnetic field'
                       }
 class Parameter(list):
-    def __init__(self, values, *, name:str='parameter', label=None, description:str=None, desc_values:str=None):
+    """A class to describe the model parameter: it's range of allowed values, name, description etc. """
+    def __init__(self, values, *, 
+                 name:str='parameter', 
+                 label:str=None, 
+                 description:str=None, 
+                 desc_values:str=None):
+        """
+        Parameters
+        ----------
+        values: iterable
+            list of allowed parameter values. If len(values)==1 the parameter is considered fixed (this can be used to add default metadata to the model).
+            
+        Keyword parameters
+        ------------------
+        name:str
+            a variable name for the parameter (used to set the `label` and `description` if they are `None`)
+        label:str
+            A key to be used for this parameter in the metadata dictionary (i.e. 'EOS` for name=`eos` etc)
+            If `None`(default), label will be derived from name
+        description:str
+            A long description of the parameter, to be used in the docstring generation
+            If `None`(default), description will be derived from name
+        desc_values:str
+            A string representation of the given values range, to be used in the docstring generation
+            If `None`(default), desc_values will be just `str(values)`
+
+        If label or description is `None` they are derived from the name, 
+        by capitalizing and replacing underscores with spaces.
+        
+        Example
+        -------
+        Parameter(range(0,100,1),name='supernova_parameter', desc_values='[0,1,...99]')
+        # creates a parameter object:
+        # Parameter(name="supernova_parameter", label="Supernova parameter", description="Supernova parameter", values='[0,1,...99]')
+        """
         super().__init__(values)
         self.name = name
         self.label = label or _default_labels.get(name, name.replace('_',' ').capitalize())
@@ -74,6 +126,7 @@ class ParameterSet:
         return user_params
                 
     def validate(self, **user_params):
+        """Check that provided user parameters are valid, i.e. are within the given list values"""
         #check that we have all correct parameters
         for name in user_params:
             if name not in self.params:
