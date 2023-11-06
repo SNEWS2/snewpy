@@ -15,7 +15,7 @@ def deprecated(*names, message='Agrument `{name}` is deprecated'):
             params = S.bind(*args,**kwargs)
             for name in names:
                 if name in params.arguments:
-                    warn(message.format(name=name))
+                    warn(message.format(name=name), category=DeprecationWarning, stacklevel=2)
             return func(*args,**kwargs)
         return _wrapper
     return _f
@@ -115,12 +115,15 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
         class c(base_class):
             _doc_params_ = {
                 'Keyword parameters': pset.generate_docstring(base_class.__init__, **base_class.__init__.__annotations__),
-                'Raises':"""ValueError:
+                'Raises':"""
+                FileNotFoundError
+                    If a file for the chosen model parameters cannot be found
+                ValueError:
                     If a combination of parameters is invalid when loading from parameters"""
             }
             @classmethod
             def _generate_docstring(cls)->str:
-                docstring = ""
+                docstring = dedent(base_class.__init__.__doc__ or '')
                 for section, desc in cls._doc_params_.items():
                     s = f'{section}\n'+'-'*len(section)+'\n'+dedent(desc)
                     docstring+='\n'+s+'\n'
@@ -172,8 +175,7 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
                 else:
                     super().__init__(**kwargs)
                     
-        c1._doc_params_ = {'Parameters':"""filename: str
-            Absolute or relative path to the file with model data. This argument is deprecated.""", **c._doc_params_}
+        c1._doc_params_ = {'Parameters':"""filename: str\n    Absolute or relative path to the file with model data. This argument is deprecated.""", **c._doc_params_}
         c1.__init__.__doc__ = c1._generate_docstring()
         
         #update the call signature

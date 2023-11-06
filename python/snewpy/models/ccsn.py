@@ -212,30 +212,16 @@ class OConnor_2013(loaders.OConnor_2013):
     """Model based on the black hole formation simulation in `O'Connor & Ott (2013) <https://arxiv.org/abs/1207.1100>`_.
     """
     @deprecated('eos','base','mass')
-    def __init__(self, base=None, mass=None, *, eos:str='LS220', progenitor_mass:u.Quantity=None):
-        """Model Initialization.
-
-        Parameters
-        ----------
+    def __init__(self, base=None, mass=15, *, eos:str='LS220', progenitor_mass:u.Quantity=None):
+        """
+        Model Initialization.
+        
+        Deprecated parameters
+        ---------------------
         base : str
             Absolute or relative path folder with model data. This argument is deprecated.
         mass: int
             Mass of model progenitor in units Msun. This argument is deprecated.
-        eos: str
-            Equation of state. Valid values are {eos}.
-
-        Other Parameters
-        ----------------
-        progenitor_mass: astropy.units.Quantity
-            Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
-
-        Raises
-        ------
-        FileNotFoundError
-            If a file for the chosen model parameters cannot be found
-        ValueError
-            If a combination of parameters is invalid when loading from parameters
-
         """
         # TODO: (For v2.0) Change `base` to filename, move compressed model files to OConnor_2013 model folder
         if mass is not None:
