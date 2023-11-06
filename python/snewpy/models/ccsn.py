@@ -36,7 +36,7 @@ from astropy import units as u
 from astropy.table import Table
 
 from snewpy.models import loaders
-from .base import PinchedModel, _RegistryModel
+from .base import PinchedModel
 
 from snewpy.models.registry_model import RegistryModel, Parameter, deprecated
 
