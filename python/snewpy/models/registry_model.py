@@ -1,7 +1,7 @@
 """
 This module contains utilities to define a new registry supernova model.
 
-Examples usage can be seen in :module:`snewpy.models.ccsn`.
+Examples usage can be seen in :mod:`snewpy.models.ccsn`.
 
 
 .. autoclass:: Parameter
@@ -228,7 +228,7 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
     def _wrap(base_class):
         class c(base_class):
             _doc_params_ = {
-                'Keyword parameters': pset.generate_docstring(base_class.__init__, **base_class.__init__.__annotations__),
+                'Other parameters': pset.generate_docstring(base_class.__init__, **base_class.__init__.__annotations__),
                 'Raises':"""
                 FileNotFoundError
                     If a file for the chosen model parameters cannot be found
@@ -276,7 +276,9 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
         c.__init__.__doc__ = c._generate_docstring()
         c.__init__.__signature__ = inspect.signature(base_class.__init__)
         if not _init_from_filename:
+            c.__qualname__ = base_class.__qualname__
             c.__name__ = base_class.__name__
+            c.__module__ = base_class.__module__
             return c
 
         class c1(c):
@@ -303,7 +305,9 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
         c1.__init__.__signature__ = S.replace(parameters=params)
         #c1.__init__ = set_defaults(**defaults)(c1.__init__)
         #print(c1.__init__.__signature__)
+        c1.__qualname__ = base_class.__qualname__
         c1.__name__ = base_class.__name__
+        c1.__module__ = base_class.__module__
         #print(help(c1))
         return c1
         
