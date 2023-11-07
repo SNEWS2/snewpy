@@ -1,11 +1,13 @@
 """
-Defining a new supernova model
-------------------------------
+This module contains utilities to define a new registry supernova model.
+
+Examples usage can be seen in :module:`snewpy.models.ccsn`.
+
 
 .. autoclass:: Parameter
-
+    :members:
+    
 .. autodecorator:: RegistryModel
-
 """
 from functools import wraps
 import itertools as it
@@ -71,7 +73,7 @@ class Parameter(list):
         values : iterable
             List of allowed parameter values. If len(values)==1 the parameter is considered fixed (this can be used to add default metadata to the model).
             
-        Keyword Parameters
+        Other Parameters
         ------------------
         name : str
             a variable name for the parameter (used to set the ``label`` and ``description`` if they are `None`)
@@ -89,12 +91,12 @@ class Parameter(list):
         If label or description is `None` they are derived from the name, 
         by capitalizing and replacing underscores with spaces.
         
-        Example
-        -------
+        Examples
+        --------
         
-            Parameter(range(0,100,1),name='supernova_parameter', desc_values='[0,1,...99]')
-            # creates a parameter object:
-            # Parameter(name="supernova_parameter", label="Supernova parameter", description="Supernova parameter", values='[0,1,...99]')
+        >>> # create a parameter object:
+        >>> Parameter(range(0,100,1),name='supernova_parameter', desc_values='[0,1,...99]')
+        Parameter(name="supernova_parameter", label="Supernova parameter", description="Supernova parameter", values='[0,1,...99]')
         """
         super().__init__(values)
         self.name = name
@@ -212,12 +214,14 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
         * Populates the `self.metadata` from the given user parameters
         * Optional (deprecated) "filename" argument, and calls initialization from the filename
 
-    The decorated class:
-        * **must** inherit from the loader class, and implement the __init__ method, which:
-            * defines the filename from the given user parameters
-            * optionally modify the `self.metadata` dictionary, and 
-            * calls the corresponding loader class constructor
-        * **can** define the ``_metadata_from_filename (self, filename:str)->dict``, to help populate the metadata when a `filename` argument is passed
+        The decorated class:
+            * *must* inherit from the loader class
+            * *must* implement the __init__ method, which
+            
+                1. defines the filename from the given user parameters
+                2. optionally modify the `self.metadata` dictionary, and 
+                3. calls the corresponding loader class constructor
+            * *can* define the ``_metadata_from_filename (self, filename:str)->dict``, to help populate the metadata when a `filename` argument is passed
     
     """
     pset:ParameterSet = ParameterSet(param_validator=_param_validator, **params)
@@ -268,6 +272,7 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
                     A tuple of all valid parameter combinations stored as Dictionaries"""
                 return pset.valid_combinations_dict
         #generate the docstring
+        c.__doc__ = base_class.__doc__
         c.__init__.__doc__ = c._generate_docstring()
         c.__init__.__signature__ = inspect.signature(base_class.__init__)
         if not _init_from_filename:
@@ -284,7 +289,7 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
                     super(base_class, self).__init__(filename=os.path.abspath(filename), metadata=self.metadata)
                 else:
                     super().__init__(**kwargs)
-                    
+        c1.__doc__ = c.__doc__            
         c1._doc_params_ = {'Parameters':"""filename: str\n    Absolute or relative path to the file with model data. This argument is deprecated.""", **c._doc_params_}
         c1.__init__.__doc__ = c1._generate_docstring()
         
