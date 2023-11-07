@@ -25,6 +25,7 @@ class method to get a list of all valid combinations and filter it:
   'metallicity': 0.004, 'eos': 'togashi'}]
 
 .. _Garching Supernova Archive: https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/
+
 """
 import logging
 import os
@@ -217,7 +218,7 @@ class OConnor_2013(loaders.OConnor_2013):
         """
         Model Initialization.
         
-        Deprecated parameters
+        Parameters
         ---------------------
         base : str
             Absolute or relative path folder with model data. This argument is deprecated.
@@ -353,11 +354,6 @@ class Fornax_2019(loaders.Fornax_2019):
             Absolute or relative path to file with model data. This argument is deprecated.
         cache_flux : bool
             If true, pre-compute the flux on a fixed angular grid and store the values in a FITS file.
-
-        Other Parameters
-        ----------------
-        progenitor_mass: astropy.units.Quantity
-            Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
         """
         if progenitor_mass.value == 16:
             filename = f'lum_spec_{int(progenitor_mass.value):d}M_r250.h5'
@@ -465,3 +461,5 @@ class SNOwGLoBES:
             fluence[k] = fl[:,idx]
 
         return fluence
+
+del Table, PinchedModel, RegistryModel, Parameter, deprecated, loaders
