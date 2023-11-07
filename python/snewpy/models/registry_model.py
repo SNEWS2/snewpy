@@ -25,15 +25,14 @@ def deprecated(*names, message='Agrument `{name}` is deprecated'):
     message: str
         a template with {name} parameter, to make the message for each argument.
 
-    Example:
-    --------
-    
-        @deprecated('foo','bar', message='Argument `{name}` is deprecated and will be removed in SNEWPYv2.0!')
-        def test_function(*, foo=1, bar=2, baz=3):
-            pass
-            
-        #calling test_function(foo=1, baz=3) will issue a deprecation warning:
-        #    DeprecationWarning: Argument `foo` is deprecated and will be removed in SNEWPYv2.0!
+    .. Example::
+
+    @deprecated('foo','bar', message='Argument `{name}` is deprecated and will be removed in SNEWPYv2.0!')
+    def test_function(*, foo=1, bar=2, baz=3):
+        pass
+        
+    #calling test_function(foo=1, baz=3) will issue a deprecation warning:
+    #    DeprecationWarning: Argument `foo` is deprecated and will be removed in SNEWPYv2.0!
     """
     def _f(func):
         #get function signature
@@ -77,14 +76,14 @@ class Parameter(list):
         name : str
             a variable name for the parameter (used to set the ``label`` and ``description`` if they are `None`)
         label : str
-            A key to be used for this parameter in the metadata dictionary (i.e. 'EOS' for name='eos' etc)
+            A key to be used for this parameter in the metadata dictionary (e.g. 'EOS' for name='eos')
             If `None`(default), label will be derived from name
         description : str
             A long description of the parameter, to be used in the docstring generation
-            If ``None``(default), description will be derived from name
+            If `None`(default), description will be derived from name
         desc_values:str
             A string representation of the given values range, to be used in the docstring generation
-            If ``None``(default), desc_values will be just `str(values)`
+            If `None`(default), desc_values will be just `str(values)`
 
             
         If label or description is `None` they are derived from the name, 
@@ -188,25 +187,38 @@ class ParameterSet:
     
 def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
     """A class decorator for defining the supernova model, that initializes from physics parameters.
-    This decorator helps to construct the daughter of the given class, which implements the constructor with 
-    
-        * Validation of the input user parameters (see :meth:`RegistryModel.validate`)
-        * Generated constructor docstring based on allowed parameters
-        * Optional (deprecated) "filename" argument
-        * Populates the `self.metadata` from the given user parameters
-        
-    The decorated class:
-        * **must** inherit from the loader class, and implement the __init__ method with parameters
     
     Parameters
     -----------
     params:dict
-            Keyword arguments, passing each parameter as iterable or instance of :class:`Parameter`
+        Keyword arguments, passing each parameter as iterable or instance of :class:`Parameter`
     _param_validator:callable or None
         A function of user parameters (dict), returning true if the passed user parameters are valid.
         If `None` (default) - all the combinations are allowed
     _init_from_filename:bool
-        If true, the model 
+        If `True`(default), adds the deprecated initialization from the filename (for the backward compatibility)
+
+    Returns
+    -------
+        Model class
+            A class, inherited from the input class, which has modified `__init__` function (see details below)
+    
+    Note
+    ----
+    This decorator helps to construct the daughter of the given class, which automatically implements the constructor with:
+    
+        * Validation of the input user parameters (see :meth:`RegistryModel.validate`)
+        * Generated constructor docstring based on allowed parameters
+        * Populates the `self.metadata` from the given user parameters
+        * Optional (deprecated) "filename" argument, and calls initialization from the filename
+
+    The decorated class:
+        * **must** inherit from the loader class, and implement the __init__ method, which:
+            * defines the filename from the given user parameters
+            * optionally modify the `self.metadata` dictionary, and 
+            * calls the corresponding loader class constructor
+        * **can** define the ``_metadata_from_filename (self, filename:str)->dict``, to help populate the metadata when a `filename` argument is passed
+    
     """
     pset:ParameterSet = ParameterSet(param_validator=_param_validator, **params)
     def _wrap(base_class):
