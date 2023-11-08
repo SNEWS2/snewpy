@@ -174,6 +174,8 @@ class DetectionChannel:
     efficiency:FunctionOfEnergy=1.
     weight:float=1.
 
+    def __repr__(self):
+        return f'{self.__class__.__name__} (name={self.name}, flavor={self.flavor.name}, smearing={self.smearing is not None})'
     def calc_rate(self, flux:Container, apply_smearing=True, apply_efficiency=True)->Container:
         """Calculate the event rate in this channel
         
@@ -204,27 +206,31 @@ class DetectionChannel:
         rate = self.xsec*flux[self.flavor]*self.weight*Ntargets
         return rate
 
-@dataclass
 class Detector:
-    """A detector configuration for the rate calculation.
+    """A detector configuration for the rate calculation. """
+    
+    def __init__(self, name:str, mass: u.Quantity, channels: Dict[str,DetectionChannel]):
+        """
+        Parameters
+        ----------
+        name: str
+            Detector name
+        mass: Quantity[mass]
+            Detector mass
+        channels: Dict[str,DetectionChannel]
+            Dictionary of detection channels in the format {name:channel}
+    
+        Note
+        ----
+        These parameters and detection channels can be modified later, before calling :meth:`run`
+        """
+        self.name = name
+        self.mass = mass
+        self.channels = channels
 
-    Parameters
-    ----------
-    name: str
-        Detector name
-    mass: Quantity[mass]
-        Detector mass
-    channels: Dict[str,DetectionChannel]
-        Dictionary of detection channels in the format {name:channel}
-
-    Note
-    ----
-    These parameters and detection channels can be modified later, before calling :meth:`run`
-    """
-    name: str
-    mass: u.Quantity
-    channels: Dict[str,DetectionChannel]
-
+    def __repr__(self):
+        return f'Detector(name="{self.name}", mass={self.mass}, channels={list(self.channels)})'
+    
     def run(self, flux:Container, detector_effects:bool=True)->Dict[str, Container]:
         """Calculate the interaction rates for all channels in the detector.
 
