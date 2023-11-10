@@ -147,32 +147,40 @@ class FunctionOfEnergy:
 
 @dataclass
 class DetectionChannel:
-    """Description of a single detection channel in the detector.
-
-    Parameters
-    ----------
-    name:str
-        channel name
-    flavor:Flavor
-        flavor of the interacting neutrino
-    xsec:FunctionOfEnergy
-        crossection as a function of energy
-    smearing:SmearingMatrix
-        The detection energy smearing matrix. 
-        If `None`(default) no smearing is applied
-    efficiency:FunctionOfEnergy or float.
-        The detection efficiency vs. detected energy. If scalar efficiency is independent of energy. 
-        If 1. (default) means 100% efficiency
-    weight:float.
-        Channel weight, to be multiplied to the resulting event rates.
-        Default value is 1.
-    """
-    name:str
-    flavor:Flavor
-    xsec:FunctionOfEnergy
-    smearing:SmearingMatrix=None
-    efficiency:FunctionOfEnergy=1.
-    weight:float=1.
+    """Description of a single detection channel in the detector"""
+    
+    def __init__(self, flavor:Flavor, xsec:callable, smearing:SmearingMatrix=None,
+                 efficiency:FunctionOfEnergy=1., weight:float=1.):
+        """
+        Parameters
+        ----------
+        name:str
+            channel name
+        flavor:Flavor
+            flavor of the interacting neutrino
+        xsec:callable or FunctionOfEnergy
+            crossection as a function of energy
+        smearing:SmearingMatrix
+            The detection energy smearing matrix. 
+            If `None`(default) no smearing is applied
+        efficiency: float or np.ndarray or callable.
+            The detection efficiency vs. detected energy. 
+            If scalar (float), efficiency is independent of energy. Value of `1.` (default) means 100% efficiency.
+            If it's a vector (np.ndarray), the values correspond to the efficiency in each bin of `smearing.bins_smeared`.
+            If it's a callable it should define efficiency as a function of energy
+        weight:float.
+            Channel weight, to be multiplied to the resulting event rates.
+            Default value is 1.
+        """
+        self.flavor=flavor
+        if callable(xsec) and not isinstance(xsec,FunctionOfEnergy):
+            xsec = FunctionOfEnergy(xsec)
+        self.xsec = xsec
+        if callable(efficiency) and not isinstance(efficiency,FunctionOfEnergy):
+            efficiency = FunctionOfEnergy(efficiency)
+        self.efficiency = efficiency
+        self.smearing = smearing
+        self.weight = weight
 
     def __repr__(self):
         return f'{self.__class__.__name__} (name={self.name}, flavor={self.flavor.name}, smearing={self.smearing is not None})'
@@ -353,7 +361,7 @@ class RateCalculator(SnowglobesData):
                 warn(f'Efficiency not found for detector={name}, channel={ch.name}. Using 100% efficiency')
                 efficiency = 1
             flavor=_get_flavor_index(ch)
-            channel = DetectionChannel(name=ch.name,
+            channel = DetectionChannel(
                     flavor=flavor,
                     weight=ch.weight*self.detectors[name].factor,
                     xsec=self.load_xsec(ch.name,flavor),
