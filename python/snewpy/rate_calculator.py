@@ -183,7 +183,7 @@ class DetectionChannel:
         self.weight = weight
 
     def __repr__(self):
-        return f'{self.__class__.__name__} (name={self.name}, flavor={self.flavor.name}, smearing={self.smearing is not None})'
+        return f'{self.__class__.__name__} (flavor={self.flavor.name}, smearing={self.smearing is not None})'
     def calc_rate(self, flux:Container, apply_smearing=True, apply_efficiency=True)->Container:
         """Calculate the event rate in this channel
         
