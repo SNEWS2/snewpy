@@ -145,7 +145,6 @@ class FunctionOfEnergy:
     def from_threshold(cls, e_min=1<<u.MeV):
         return cls(lambda e: 1*(e>e_min))
 
-@dataclass
 class DetectionChannel:
     """Description of a single detection channel in the detector"""
     
@@ -173,15 +172,30 @@ class DetectionChannel:
             Default value is 1.
         """
         self.flavor=flavor
-        if callable(xsec) and not isinstance(xsec,FunctionOfEnergy):
-            xsec = FunctionOfEnergy(xsec)
         self.xsec = xsec
-        if callable(efficiency) and not isinstance(efficiency,FunctionOfEnergy):
-            efficiency = FunctionOfEnergy(efficiency)
         self.efficiency = efficiency
         self.smearing = smearing
         self.weight = weight
 
+    @property
+    def efficiency(self):
+        return self._efficiency
+        
+    @efficiency.setter
+    def efficiency(self, efficiency):
+        if callable(efficiency) and not isinstance(efficiency,FunctionOfEnergy):
+            efficiency = FunctionOfEnergy(efficiency)
+        self._efficiency = efficiency
+
+    @property
+    def xsec(self):
+        return self._xsec
+    @xsec.setter
+    def xsec(self, xsec):
+        if callable(xsec) and not isinstance(xsec,FunctionOfEnergy):
+                xsec = FunctionOfEnergy(xsec)
+        self._xsec = xsec
+    
     def __repr__(self):
         return f'{self.__class__.__name__} (flavor={self.flavor.name}, smearing={self.smearing is not None})'
     def calc_rate(self, flux:Container, apply_smearing=True, apply_efficiency=True)->Container:
