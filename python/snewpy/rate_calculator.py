@@ -155,7 +155,7 @@ class DetectionChannel:
         ----------
         name:str
             channel name
-        flavor:Flavor
+        flavor:Flavor or list[Flavor]
             flavor of the interacting neutrino
         xsec:callable or FunctionOfEnergy
             crossection as a function of energy
@@ -177,6 +177,14 @@ class DetectionChannel:
         self.smearing = smearing
         self.weight = weight
 
+    @property 
+    def flavor(self):
+        return self._flavor
+    @flavor.setter
+    def flavor(self, flavors):
+        if isinstance(flavors, Flavor):
+            flavors = [flavors]
+        self._flavor = flavors
     @property
     def efficiency(self):
         return self._efficiency
@@ -197,7 +205,7 @@ class DetectionChannel:
         self._xsec = xsec
     
     def __repr__(self):
-        return f'{self.__class__.__name__} (flavor={self.flavor.name}, smearing={self.smearing is not None})'
+        return f'{self.__class__.__name__} (flavor={",".join([f.name for f in self.flavor])}, smearing={self.smearing is not None}, weight={self.weight})'
     def calc_rate(self, flux:Container, apply_smearing=True, apply_efficiency=True)->Container:
         """Calculate the event rate in this channel
         
@@ -225,7 +233,13 @@ class DetectionChannel:
         """calculate interaction rate for given channel"""
         tgt_mass = 1<<u.kt
         Ntargets = tgt_mass.to_value(u.Dalton)
-        rate = self.xsec*flux[self.flavor]*self.weight*Ntargets
+        #sum flux over flavors
+        array_total = sum([flux[flv].array for flv in self.flavor])
+        #create a summary flux container
+        flux_total = Container(array_total, flavor=self.flavor, 
+                               time=flux.time, energy=flux.energy,
+                               integrable_axes=flux._integrable_axes)
+        rate = self.xsec*flux_total*self.weight*Ntargets
         return rate
 
 class Detector:
