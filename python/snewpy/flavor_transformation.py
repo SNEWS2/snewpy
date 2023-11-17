@@ -14,7 +14,10 @@ from astropy.coordinates import AltAz
 
 from .neutrino import MassHierarchy, Flavor
 
-import EMEWS
+try:
+    import EMEWS
+except:
+    EMEWS = None
 
 class FlavorTransformation(ABC):
     """Generic interface to compute neutrino and antineutrino survival probability."""
@@ -252,7 +255,7 @@ class ThreeFlavorTransformation(FlavorTransformation):
         
 
     def Earth_matter(self, E):
-        """the first rows of the D and Dbar matrices for the case of Earth matter effects
+        """the D matrix for the case of Earth matter effects
 
         Parameters
         ----------
@@ -261,31 +264,28 @@ class ThreeFlavorTransformation(FlavorTransformation):
 
         Returns
         -------
-        the six floats or six ndarrays of the first rows of the D and Dbar matrices
+        an array of length of the E array with each element being the D matrix after computing Earth-matter effects
         """
+        if EMEWS == None:
+            print("The EMEWS module cannot be found. Results do not include the Earth-matter effect.")
+            return self.vacuum(E)
+
         if self.prior_E != None:
             if u.allclose(self.prior_E, E) == True:
-                return self.D_e1, self.D_e2, self.D_e3, self.Dbar_e1, self.Dbar_e2, self.Dbar_e3
+                return self.D
 
-        if self.prior_E == None:
-            self.D_e1 = np.zeros(len(E))
-            self.D_e2 = np.zeros(len(E))
-            self.D_e3 = np.zeros(len(E))
-            self.Dbar_e1 = np.zeros(len(E))
-            self.Dbar_e2 = np.zeros(len(E))
-            self.Dbar_e3 = np.zeros(len(E))
-
+        self.D = np.zeros(len(E),(6,6))
         self.prior_E = E
          
         E = E.to_value('MeV')
-
-        #input data object for Sqa
-        ID = EMEWS.InputDataSqa3Earth()
+        
+        #input data object for EMEWS
+        ID = EMEWS.InputDataEMEWS()
 
         ID.altitude = self.AltAz.alt.deg
         ID.azimuth = self.AltAz.az.deg
 
-        ID.outputfilenamestem = "./out/Sqa3Earth:PREM"   # stem of output filenames 
+        ID.outputfilenamestem = "./out/EMEWS:PREM"   # stem of output filenames 
         ID.densityprofile = "./PREM.rho.dat"             # PREM density profile    
         ID.electronfraction = "./PREM.Ye.dat"            # Electron fraction of density profile     
         
@@ -301,11 +301,11 @@ class ThreeFlavorTransformation(FlavorTransformation):
         ID.theta23 = self.mix_params.theta23.value    # in degrees
         ID.deltaCP = self.mix_params.deltaCP.value    # in degrees
 
-        ID.accuracy = 1.01E-007       # controls accuracy of integrtaor: smaller is more accurate
-        ID.stepcounterlimit = 10    # output frequency if outputflag = True: larger is less frequent
-        ID.outputflag = False         # set to True if output is desired
+        ID.accuracy = 1.01E-007      # controls accuracy of integrtaor: smaller is more accurate
+        ID.stepcounterlimit = 1      # output frequency if outputflag = True: larger is less frequent
+        ID.outputflag = False        # set to True if output is desired
  
-        #matrix from Sqa3Earth needs to be rearranged to match SNEWPY indici
+        #matrix from EMEWS needs to be rearranged to match SNEWPY indici
         Pfm = EMEWS.Run(ID)
 
         m = 0
