@@ -274,7 +274,12 @@ class ThreeFlavorTransformation(FlavorTransformation):
             if u.allclose(self.prior_E, E) == True:
                 return self.D
 
-        self.D = np.zeros(len(E),(6,6))
+        self.D_e1 = np.zeros(len(E))
+        self.D_e2 = np.zeros(len(E))
+        self.D_e3 = np.zeros(len(E))
+        self.Dbar_e1 = np.zeros(len(E))
+        self.Dbar_e2 = np.zeros(len(E))
+        self.Dbar_e3 = np.zeros(len(E))
         self.prior_E = E
          
         E = E.to_value('MeV')
