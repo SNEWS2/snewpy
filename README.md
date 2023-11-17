@@ -25,7 +25,7 @@ By default, they will be downloaded to a subdirectory named `SNEWPY-models/<mode
 
 
 ### Earth-Matter Effect
-The EMEWS module is available [here:/](https://github.com/SNEWS2/EMEWS). Follow the installation instructions provided with the code. Whenever you use the module you need to provide a density and an electron fraction profile of the Earth. The PREM is provided. The script SNEWS2.0_rate_table_singleexample+EME.py found in python/snewpy/scripts uses the module. 
+The EMEWS module is available [here](https://github.com/SNEWS2/EMEWS). Follow the installation instructions provided with the code. Whenever you use the module you need to provide a density and an electron fraction profile of the Earth. The PREM is provided. The script SNEWS2.0_rate_table_singleexample+EME.py found in python/snewpy/scripts uses the module. 
 
 
 
