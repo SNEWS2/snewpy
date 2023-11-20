@@ -23,6 +23,17 @@ Alternatively, you can run the following command to explicitly download models y
 
 `python -c 'import snewpy; snewpy.get_models()'`
 
+### Earth-Matter Effect
+The EMEWS module is available [here](https://github.com/SNEWS2/EMEWS). Follow the installation instructions provided with the code. Whenever you use the module you need to provide a density and an electron fraction profile of the Earth. The PREM is provided. The script SNEWS2.0_rate_table_singleexample+EME.py found in python/snewpy/scripts uses the module. 
+
+
+### For Developers
+
+**Your contributions to SNEWPY are welcome!** For minor changes, simply submit a pull request. If you plan larger changes, it’s probably a good idea to open an issue first to coordinate our work.
+
+To contribute, first clone the repository (`git clone https://github.com/SNEWS2/snewpy.git`), then make changes and install your modified version locally using `pip install .` from the base directory of the repository.
+Once you’re happy with your changes, please submit a pull request.
+Unit tests will run automatically for every pull request or you can run them locally using `python -m unittest python/snewpy/test/test_*.py`.
 
 ## Usage and Documentation
 
