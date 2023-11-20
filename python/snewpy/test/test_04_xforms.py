@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import unittest
 
-from snewpy.flavor_transformation import MassHierarchy, MixingParameters
+from snewpy.neutrino import MassHierarchy, MixingParameters
 from snewpy.flavor_transformation import \
     NoTransformation, CompleteExchange, \
     AdiabaticMSW, NonAdiabaticMSWH, \
