@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Unit tests for the neutrino submodule.
+"""Unit tests for the models initializations.
 """
 import unittest
 

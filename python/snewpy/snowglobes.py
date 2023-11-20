@@ -19,7 +19,6 @@ There are three basic steps to using SNOwGLoBES from SNEWPY:
     The output tables allow to build the detected neutrino energy spectrum and neutrino time distribution, for each reaction channel or the sum of them.
 """
 
-import io
 import logging
 import os
 import re
@@ -100,7 +99,7 @@ def generate_time_series(model_path, model_type, flavor_transformation, d, outpu
     Returns
     -------
     str
-        Path of compressed .tar file with neutrino flux data.
+        Path of NumPy archive file with neutrino fluence data.
     """
     model_class = getattr(snewpy.models.ccsn, model_type)
 
@@ -120,12 +119,8 @@ def generate_time_series(model_path, model_type, flavor_transformation, d, outpu
     else:
         dt = (tmax - tmin) / (ntbins+1)
 
-    tedges = np.arange(tmin/u.s, tmax/u.s, dt/u.s)*u.s
-    times = 0.5*(tedges[1:] + tedges[:-1])
-
-    #energy with 0.2 MeV binning similar to SNOwGLoBES
-    energy = np.linspace(0.2, 100, 501) << u.MeV 
-
+    times = np.arange(tmin/u.s, tmax/u.s, dt/u.s)*u.s
+    energy = np.linspace(0, 100, 501) * u.MeV
     flux = snmodel.get_flux(t=times, E=energy,  distance=d, flavor_xform=flavor_transformation)
     fluence = flux.integrate('time', limits = times).integrate('energy', limits = energy)
     #save resulting fluence to file
@@ -135,9 +130,7 @@ def generate_time_series(model_path, model_type, flavor_transformation, d, outpu
         model_file_root, _ = os.path.splitext(model_file)  # strip extension (if present)
         tfname = f'{model_file_root}'+str(flavor_transformation)+f'.{tmin:.3f},{tmax:.3f},{ntbins:d}-{d:.1f}.npz'
     fluence.save(tfname)
-
     return tfname
-
 
 def generate_fluence(model_path, model_type, flavor_transformation, d, output_filename=None, tstart=None, tend=None, snmodel_dict={}):
     """Generate fluence files in SNOwGLoBES format.
@@ -168,7 +161,7 @@ def generate_fluence(model_path, model_type, flavor_transformation, d, output_fi
     Returns
     -------
     str
-        Path of compressed .tar file with neutrino flux data.
+        Path of NumPy archive file with neutrino fluence data.
     """
     model_class = getattr(snewpy.models.ccsn, model_type)
 
@@ -197,8 +190,7 @@ def generate_fluence(model_path, model_type, flavor_transformation, d, output_fi
     energy   = np.arange(0, 101, 0.2) << u.MeV
     #energy bins similar to SNOwGLoBES
     energy_t = (np.linspace(0, 100, 201)+0.25) << u.MeV 
-
-    flux = snmodel.get_flux(t=snmodel.get_time(), E=energy_t,  distance=d, flavor_xform=flavor_transformation)
+    flux = snmodel.get_flux(t=snmodel.get_time(), E=energy,  distance=d, flavor_xform=flavor_transformation)
     fluence = flux.integrate('time', limits = times).integrate('energy', limits = energy_t)
     times = fluence.time
     #store the energy bin centers instead of the edges

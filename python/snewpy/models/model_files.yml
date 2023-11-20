@@ -1,57 +1,52 @@
 # Define remote locations of simulation files for each model.
 #  1. Model data on GitHub must provide the SNEWPY release version.
 #  2. Model data on Zenodo must provide the Zenodo record ID.
+
+config:
+    - &snewpy "https://github.com/SNEWS2/snewpy/raw/v{snewpy_version}/models/{model}/{filename}"
+    - &ccsnmodels "https://github.com/SNEWS2/snewpy-models-ccsn/raw/main/models/{model}/{filename}"
+
 models:
 
     Bollig_2016:
-        repository: github
-        release_version: 1.3
+        repository: *snewpy
 
     Fornax_2019: 
-        repository: github
-        release_version: 1.3
+        repository: *snewpy
 
     Fornax_2021: 
-        repository: github
-        release_version: 1.3
+        repository: *snewpy
+
+    Fornax_2022: 
+        repository: *ccsnmodels
 
     Kuroda_2020: 
-        repository: github
-        release_version: 1.3
+        repository: *snewpy
 
     Nakazato_2013: 
-        repository: github
-        release_version: 1.3
+        repository: *snewpy
 
     OConnor_2013: 
-        repository: github
-        release_version: 1.3
+        repository: *snewpy
 
     OConnor_2015: 
-        repository: github
-        release_version: 1.3
+        repository: *snewpy
  
     Sukhbold_2015: 
-        repository: github
-        release_version: 1.3
+        repository: *snewpy
  
     Tamborra_2014: 
-        repository: github
-        release_version: 1.4b1
+        repository: *snewpy
  
     Walk_2018: 
-        repository: github
-        release_version: 1.4b1
+        repository: *snewpy
  
     Walk_2019: 
-        repository: github
-        release_version: 1.4b1
+        repository: *snewpy
 
     Warren_2020:
-        repository: github
-        release_version: 1.3
+        repository: *snewpy
 
     Zha_2021: 
-        repository: github
-        release_version: 1.4b1
+        repository: *snewpy
 

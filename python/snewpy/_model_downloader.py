@@ -18,6 +18,7 @@ from tqdm.auto import tqdm
 from typing import Optional
 
 from snewpy import model_path
+from snewpy import __version__ as snewpy_version
 
 import logging
 logger = logging.getLogger('FileHandle')
@@ -101,7 +102,7 @@ local path.
         return self.path
 
 
-def from_zenodo(zenodo_id:str, model:str, filename:str, path:str=model_path):
+def from_zenodo(zenodo_id:str, model:str, filename:str):
     """Access files on Zenodo.
 
     Parameters
@@ -109,52 +110,21 @@ def from_zenodo(zenodo_id:str, model:str, filename:str, path:str=model_path):
     zenodo_id : Zenodo record for model files.
     model : Name of the model class for this model file.
     filename : Expected filename storing simulation data.
-    path : Local installation path (defaults to astropy cache).
 
     Returns
     -------
-    file : FileHandle object.
+    file_url, md5sum
     """
     zenodo_url = f'https://zenodo.org/api/records/{zenodo_id}'
-    path = Path(path)/str(model)
-    path.mkdir(exist_ok=True, parents=True)
-
     record = requests.get(zenodo_url).json()
-
     # Search for model file string in Zenodo request for this record.
     file = next((_file for _file in record['files'] if _file['key'] == filename), None)
 
-    # If matched, return a FileHandle which takes care of downloading and
-    # checksum (or loads a local data file). Otherwise raise an exception.
+    # If matched, return a tuple of URL and checksum.Otherwise raise an exception.
     if file is not None:
-        return FileHandle(path = path/file['key'],
-                                 remote= file['links']['self'],
-                                 md5 = file['checksum'].split(':')[1])
+        return file['links']['self'], file['checksum'].split(':')[1]
     else:
         raise MissingFileError(filename)
-
-
-def from_github(release_version:str, model:str, filename:str, path:str=model_path):
-    """Access files on GitHub.
-
-    Parameters
-    ----------
-    release_version: SNEWPY release with corresponding model data.
-    model : Name of the model class for this model file.
-    filename : Expected filename storing simulation data.
-    path : Local installation path (defaults to astropy cache).
-
-    Returns
-    -------
-    file : FileHandle object.
-    """
-    github_url = f'https://github.com/SNEWS2/snewpy/raw/v{release_version}/models/{model}/{filename}'
-    localpath = Path(path)/str(model)
-    localpath.mkdir(exist_ok=True, parents=True)
-
-    return FileHandle(path = localpath/filename,
-                      remote = github_url)
-
 
 def get_model_data(model: str, filename: str, path: str = model_path) -> Path:
     """Access model data. Configuration for each model is in a YAML file
@@ -173,7 +143,7 @@ def get_model_data(model: str, filename: str, path: str = model_path) -> Path:
     if os.path.isabs(filename):
         return Path(filename)
 
-    params = { 'model':model, 'filename':filename, 'path':path }
+    params = { 'model':model, 'filename':filename, 'snewpy_version':snewpy_version}
 
     # Parse YAML file with model repository configurations.
     with open_text('snewpy.models', 'model_files.yml') as f:
@@ -183,16 +153,17 @@ def get_model_data(model: str, filename: str, path: str = model_path) -> Path:
         if model in models.keys():
             # Get data from GitHub or Zenodo.
             modconf = models[model]
-            repo = modconf['repository']
-
-            if repo == 'github':
-                params['release_version'] = modconf['release_version']
-                fh = from_github(**params)
-            elif repo == 'zenodo':
+            repo = modconf.pop('repository')
+            if repo == 'zenodo':
                 params['zenodo_id'] = modconf['zenodo_id']
-                fh = from_zenodo(**params)
+                url, md5 = from_zenodo(**params)
             else:
-                raise ValueError(f'Repository {repo} not recognized')
+                #format the url directly
+                params.update(modconf) #default parameters can be overriden in the model config
+                url, md5 = repo.format(**params), None
+            localpath = Path(path)/str(model)
+            localpath.mkdir(exist_ok=True, parents=True)
+            fh = FileHandle(path = localpath/filename,remote = url, md5=md5)
             return fh.load()
         else:
             raise KeyError(f'No configuration for {model}')

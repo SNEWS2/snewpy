@@ -3,7 +3,6 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import os
-from distutils.command.sdist import sdist as DistutilsSdist
 from setuptools import setup, find_packages
 
 # Git-based version info. Remove?
@@ -41,7 +40,7 @@ setup_keywords['zip_safe'] = False
 setup_keywords['packages'] = find_packages('python')
 setup_keywords['package_dir'] = {'': 'python'}
 setup_keywords['package_data'] = {'':['templates/*.glb', 'models/*.yml']}
-setup_keywords['cmdclass'] = {'version': SetVersion, 'sdist': DistutilsSdist}
+setup_keywords['cmdclass'] = {'version': SetVersion}
 setup_keywords['test_suite']='snewpy.test.snewpy_test_suite.snewpy_test_suite'
 
 requires = []
@@ -51,7 +50,7 @@ with open('requirements.txt', 'r') as f:
             requires.append(line.strip())
 setup_keywords['install_requires'] = requires
 setup_keywords['extras_require'] = {  # Optional
-    'dev': ['pytest'],
+    'dev': ['pytest','hypothesis'],
     'docs':['numpydoc']
 }
 #

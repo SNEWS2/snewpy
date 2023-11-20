@@ -34,7 +34,6 @@
 import re
 from os.path import abspath, isdir, isfile, join
 from setuptools import Command
-from distutils.log import INFO
 
 
 def get_version():
@@ -177,4 +176,4 @@ class SetVersion(Command):
     def run(self):
         update_version(tag=self.tag)
         ver = get_version()
-        self.announce("Version is now {}.".format(ver), level=INFO)
+        self.announce("Version is now {}.".format(ver), level=2)
