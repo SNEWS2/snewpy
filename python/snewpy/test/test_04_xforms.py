@@ -33,8 +33,8 @@ class TestFlavorTransformations(unittest.TestCase):
         self.distance = 10 * u.kpc
 
         # Quantum decoherence parameters; see arXiv:2306.17591.
-        self.gamma3 = (1e-27 * u.eV / (c.hbar.to('eV s') * c.c)).to('1/kpc')
-        self.gamma8 = (1e-27 * u.eV / (c.hbar.to('eV s') * c.c)).to('1/kpc')
+        self.gamma3 = (1e-27 * u.eV / (c.hbar * c.c)).to('1/kpc')
+        self.gamma8 = (1e-27 * u.eV / (c.hbar * c.c)).to('1/kpc')
         self.n = 0
         self.energy_ref = 10 * u.MeV
 
@@ -498,7 +498,7 @@ class TestFlavorTransformations(unittest.TestCase):
         Quantum Decoherence with NMO and new mixing angles 
         """
         # Override the default mixing angles.
-        xform = QuantumDecoherence(mix_angles=(self.theta12, self.theta13, self.theta23), Gamma3=self.gamma3 * (c.hbar.to('eV s') * c.c.to('kpc / s')), Gamma8=self.gamma8 * (c.hbar.to('eV s') * c.c.to('kpc / s')), dist=self.distance, n=self.n, E0=self.energy_ref, mh=MassHierarchy.NORMAL)
+        xform = QuantumDecoherence(mix_angles=(self.theta12, self.theta13, self.theta23), Gamma3=self.gamma3 * c.hbar * c.c, Gamma8=self.gamma8 * c.hbar * c.c, dist=self.distance, n=self.n, E0=self.energy_ref, mh=MassHierarchy.NORMAL)
 
         # Test computation survival and transition probabilities of mass states.
         _E = 10*u.MeV
@@ -532,7 +532,7 @@ class TestFlavorTransformations(unittest.TestCase):
         Quantum decoherence with NMO and default mixing angles
         """
         # Use default mixing angles defined in the submodule.
-        xform = QuantumDecoherence(Gamma3=self.gamma3 * (c.hbar.to('eV s') * c.c.to('kpc / s')), Gamma8=self.gamma8 * (c.hbar.to('eV s') * c.c.to('kpc / s')), dist=self.distance, n=self.n, E0=self.energy_ref)
+        xform = QuantumDecoherence(Gamma3=self.gamma3 * c.hbar * c.c, Gamma8=self.gamma8 * c.hbar * c.c, dist=self.distance, n=self.n, E0=self.energy_ref)
 
         # Check transition probabilities (normal hierarchy is default).
         mixpars = MixingParameters()
@@ -560,7 +560,7 @@ class TestFlavorTransformations(unittest.TestCase):
         Quantum Decoherence with IMO and new mixing angles 
         """
         # Override the default mixing angles.
-        xform = QuantumDecoherence(mix_angles=(self.theta12, self.theta13, self.theta23), Gamma3=self.gamma3 * (c.hbar.to('eV s') * c.c.to('kpc / s')), Gamma8=self.gamma8 * (c.hbar.to('eV s') * c.c.to('kpc / s')), dist=self.distance, n=self.n, E0=self.energy_ref, mh=MassHierarchy.INVERTED)
+        xform = QuantumDecoherence(mix_angles=(self.theta12, self.theta13, self.theta23), Gamma3=self.gamma3 * c.hbar * c.c, Gamma8=self.gamma8 * c.hbar * c.c, dist=self.distance, n=self.n, E0=self.energy_ref, mh=MassHierarchy.INVERTED)
 
         # Test computation survival and transition probabilities of mass states.
         _E = 10*u.MeV
@@ -594,7 +594,7 @@ class TestFlavorTransformations(unittest.TestCase):
         Quantum decoherence with IMO and default mixing angles
         """
         # Use default mixing angles defined in the submodule.
-        xform = QuantumDecoherence(Gamma3=self.gamma3 * (c.hbar.to('eV s') * c.c.to('kpc / s')), Gamma8=self.gamma8 * (c.hbar.to('eV s') * c.c.to('kpc / s')), dist=self.distance, n=self.n, E0=self.energy_ref, mh=MassHierarchy.INVERTED)
+        xform = QuantumDecoherence(Gamma3=self.gamma3 * c.hbar * c.c, Gamma8=self.gamma8 * c.hbar * c.c, dist=self.distance, n=self.n, E0=self.energy_ref, mh=MassHierarchy.INVERTED)
 
         # Check transition probabilities.
         mixpars = MixingParameters(MassHierarchy.INVERTED)
