@@ -15,6 +15,7 @@ import inspect
 import os
 from textwrap import dedent
 from warnings import warn
+from snewpy._model_downloader import RemoteFileLoader
 
 def deprecated(*names, message='Agrument `{name}` is deprecated'):
     """A function decorator to issue a deprecation warning if a given argument is provided in the wrapped function call.
@@ -187,7 +188,7 @@ class ParameterSet:
             s+=[f'{name}: {type_name}\n    {p.description}. Valid values are: {p.desc_values}.']
         return '\n'.join(s)
     
-def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
+def RegistryModel(_init_from_filename=True, _param_validator=None, _config_path='{module_name}.{class_name}',**params):
     """A class decorator for defining the supernova model, that initializes from physics parameters.
     
     Parameters
@@ -199,7 +200,12 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
         If `None` (default) - all the combinations are allowed
     _init_from_filename:bool
         If `True`(default), adds the deprecated initialization from the filename (for the backward compatibility)
-
+    _config_path:str
+        config_path : dot-separated path template of the model in the YAML configuration (e.g. "ccsn.Bollig_2016"), or a template.
+        Default value is "{module_name}.{class_name}" template. The template parameters will be substituted by:
+        "{module_name}" -> the name of the the module where the decorated class is defined
+        "{class_name}"  -> the name of the decorated class
+    
     Returns
     -------
         Model class
@@ -226,7 +232,9 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
     """
     pset:ParameterSet = ParameterSet(param_validator=_param_validator, **params)
     def _wrap(base_class):
-        class c(base_class):
+        config_path=_config_path.format(module_name=base_class.__module__.split('.')[-1], class_name=base_class.__name__)
+        print(f'config_path = {config_path}')
+        class c(base_class, RemoteFileLoader(config_path)):
             _doc_params_ = {
                 'Other parameters': pset.generate_docstring(base_class.__init__, **base_class.__init__.__annotations__),
                 'Raises':"""
