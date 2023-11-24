@@ -24,8 +24,7 @@ except ImportError:
 
 from snewpy.models.base import SupernovaModel, PinchedModel
 from snewpy.neutrino import Flavor
-from snewpy import _model_downloader
-
+        
 class GarchingArchiveModel(PinchedModel):
     """Subclass that reads models in the format used in the
     `Garching Supernova Archive <https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/>`_."""
@@ -65,7 +64,7 @@ class GarchingArchiveModel(PinchedModel):
             _aname = 'ALPHA_{}'.format(flavor.name)
 
             # Open the requested filename using the model downloader.
-            datafile = _model_downloader.get_model_data(self.__class__.__name__, _filename)
+            datafile = self._get_file(_filename)
 
             simtab = Table.read(datafile,
                                 names=['TIME', _lname, _ename, _e2name],
@@ -102,7 +101,7 @@ class Nakazato_2013(PinchedModel):
             If a file for the chosen model parameters cannot be found
         """
         # Open the requested filename using the model downloader.
-        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
+        datafile = self._get_file(filename)
         # Read FITS table using the astropy reader.
         simtab = Table.read(datafile)
 
@@ -141,7 +140,7 @@ class OConnor_2013(PinchedModel):
         filename : str
             Absolute or relative path to FITS file with model data.
         """
-        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
+        datafile = self._get_file(filename)
         # Open luminosity file.
         with tarfile.open(datafile) as tf:
             # Extract luminosity data.
@@ -174,7 +173,7 @@ class OConnor_2015(PinchedModel):
             Absolute or relative path to FITS file with model data.
         """
 
-        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
+        datafile = self._get_file(filename)
         simtab = Table.read(datafile,
                             names=['TIME', 'L_NU_E', 'L_NU_E_BAR', 'L_NU_X',
                                     'E_NU_E', 'E_NU_E_BAR', 'E_NU_X',
@@ -218,7 +217,7 @@ class Warren_2020(PinchedModel):
             Absolute or relative path to file prefix, we add nue/nuebar/nux
         """
         # Open the requested filename using the model downloader.
-        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
+        datafile = self._get_file(filename)
 
         # Open luminosity file.
         # Read data from HDF5 files, then store.
@@ -265,7 +264,7 @@ class Kuroda_2020(PinchedModel):
         """
 
         # Open the requested filename using the model downloader.
-        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
+        datafile = self._get_file(filename)
         # Read ASCII data.
         simtab = Table.read(datafile, format='ascii')
 
@@ -396,7 +395,7 @@ class Fornax_2019(SupernovaModel):
                                 Flavor.NU_X_BAR: 'nu2'}
 
             # Open the requested filename using the model downloader.
-            datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
+            datafile = self._get_file(filename)
             # Open HDF5 data file.
             self._h5file = h5py.File(datafile, 'r')
 
@@ -663,7 +662,7 @@ class Fornax_2021(SupernovaModel):
         self.metadata = metadata
 
         # Open the requested filename using the model downloader.
-        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
+        datafile = self._get_file(filename)
         # Open HDF5 data file.
         _h5file = h5py.File(datafile, 'r')
 
