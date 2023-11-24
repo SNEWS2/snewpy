@@ -9,7 +9,7 @@ from astropy.table import Table
 from astropy.units import UnitTypeError, get_physical_type
 from astropy.units.quantity import Quantity
 from scipy.special import loggamma
-from snewpy import _model_downloader
+from snewpy._model_downloader import LocalFileLoader
 
 from snewpy.neutrino import Flavor
 from snewpy.flavor_transformation import NoTransformation
@@ -25,7 +25,7 @@ def _wrap_init(init, check):
     return _wrapper
 
 
-class SupernovaModel(ABC):
+class SupernovaModel(ABC, LocalFileLoader):
     """Base class defining an interface to a supernova model."""
 
     def __init_subclass__(cls, **kwargs):
