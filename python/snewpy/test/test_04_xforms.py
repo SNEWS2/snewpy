@@ -14,6 +14,9 @@ from astropy import constants as c
 import numpy as np
 from numpy import sin, cos, exp, abs
 
+import pytest
+pytestmark=pytest.mark.base
+
 class TestFlavorTransformations(unittest.TestCase):
 
     def setUp(self):

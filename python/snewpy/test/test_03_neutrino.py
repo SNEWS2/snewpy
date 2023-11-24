@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Unit tests for the neutrino submodule.
 """
+import pytest
+pytestmark=pytest.mark.base
 
 import unittest
 
