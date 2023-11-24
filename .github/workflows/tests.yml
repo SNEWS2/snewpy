@@ -39,6 +39,15 @@ jobs:
           pip install ".[dev]"
       
       # Run the unit tests
-      - name: Test with pytest
-        run: |
-          pytest -m 'not snowglobes'
+      - name: Testing base functionality
+        run: pytest -m 'base'
+
+      - name: Testing ModelRegistry
+          if: contains(github.event.pull_request.labels.*.name, 'ModelRegistry')
+        run: pytest -m 'registry'
+      - name: Testing Models
+          if: contains(github.event.pull_request.labels.*.name, 'SupernovaModel')
+        run: pytest -m 'models'
+      - name: Testing SNOwGLoBES
+          if: contains(github.event.pull_request.labels.*.name, 'SNOwGLoBES')
+        run: pytest -m 'snowglobes'
