@@ -195,9 +195,28 @@ class ModelRegistry:
         return fh.load()
 
 
+
+
+
 registry = ModelRegistry()
+#classes to be used in the models Loaders
+class LocalFileLoader:
+    @classmethod
+    def _get_file(cls, filename:str)->Path:
+        path = Path(filename).absolute()
+        if path.exists():
+            return path
+        else:
+            raise FileNotFoundError(path)
 
-
+def RemoteFileLoader(config_path:str, registry:ModelRegistry=registry)->'RemoteFileLoaderClass':
+    class RemoteFileLoaderClass(LocalFileLoader):
+        @classmethod
+        def _get_file(cls, filename:str)->Path:
+            return registry.get_file(config_path, filename)
+    return RemoteFileLoaderClass
+        
+#function for backward compatibility
 def get_model_data(model: str, filename: str) -> Path:
     """Get the requested data file from the models file repository
 
