@@ -194,27 +194,28 @@ class ModelRegistry:
         fh = FileHandle(path=localpath / filename, remote=url, md5=md5)
         return fh.load()
 
-
-
-
-
 registry = ModelRegistry()
 #classes to be used in the models Loaders
 class LocalFileLoader:
     @classmethod
     def _get_file(cls, filename:str)->Path:
+        """
+        Return the file absolute path, raise FileNotFoundError if it doesn't exist
+        """
         path = Path(filename).absolute()
         if path.exists():
             return path
         else:
             raise FileNotFoundError(path)
 
-def RemoteFileLoader(config_path:str, registry:ModelRegistry=registry)->'RemoteFileLoaderClass':
-    class RemoteFileLoaderClass(LocalFileLoader):
-        @classmethod
-        def _get_file(cls, filename:str)->Path:
-            return registry.get_file(config_path, filename)
-    return RemoteFileLoaderClass
+class RemoteFileLoader(LocalFileLoader):
+    _registry=registry
+    @classmethod
+    def _get_file(cls, filename:str)->Path:
+        """
+        Download the file if needed, return absolute path
+        """
+        return cls._registry.get_file(cls._config_path, filename)
         
 #function for backward compatibility
 def get_model_data(model: str, filename: str) -> Path:

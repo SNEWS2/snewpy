@@ -203,8 +203,9 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, _config_path=
     _config_path:str
         config_path : dot-separated path template of the model in the YAML configuration (e.g. "ccsn.Bollig_2016"), or a template.
         Default value is "{module_name}.{class_name}" template. The template parameters will be substituted by:
-        "{module_name}" -> the name of the the module where the decorated class is defined
-        "{class_name}"  -> the name of the decorated class
+           "{module_name}" -> the name of the the module where the decorated class is defined
+           "{class_name}"  -> the name of the decorated class.
+        Ignored, if decorated class has `_config_path` member.
     
     Returns
     -------
@@ -232,9 +233,8 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, _config_path=
     """
     pset:ParameterSet = ParameterSet(param_validator=_param_validator, **params)
     def _wrap(base_class):
-        config_path=_config_path.format(module_name=base_class.__module__.split('.')[-1], class_name=base_class.__name__)
-        print(f'config_path = {config_path}')
-        class c(base_class, RemoteFileLoader(config_path)):
+        class c(base_class, RemoteFileLoader):
+            _config_path="{module_path}.{class_name}"
             _doc_params_ = {
                 'Other parameters': pset.generate_docstring(base_class.__init__, **base_class.__init__.__annotations__),
                 'Raises':"""
@@ -279,9 +279,16 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, _config_path=
                 valid_combinations: tuple[dict]
                     A tuple of all valid parameter combinations stored as Dictionaries"""
                 return pset.valid_combinations_dict
+        #generate the configuration path
+        if not hasattr(c,"_config_path"):
+            c._config_path="{module_name}.{class_name}"
+        #generate the configuration path
+        c._config_path=_config_path.format(module_name=base_class.__module__.split('.')[-1], class_name=base_class.__name__)
+        print(f'config_path = {c._config_path}')
         #generate the docstring
         c.__doc__ = base_class.__doc__
         c.__init__.__doc__ = c._generate_docstring()
+        #copy the signature
         c.__init__.__signature__ = inspect.signature(base_class.__init__)
         if not _init_from_filename:
             c.__qualname__ = base_class.__qualname__
@@ -299,7 +306,8 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, _config_path=
                     super(base_class, self).__init__(filename=os.path.abspath(filename), metadata=self.metadata)
                 else:
                     super().__init__(**kwargs)
-        c1.__doc__ = c.__doc__            
+        #generate the docstring
+        c1.__doc__ = c.__doc__
         c1._doc_params_ = {'Parameters':"""filename: str\n    Absolute or relative path to the file with model data. This argument is deprecated.""", **c._doc_params_}
         c1.__init__.__doc__ = c1._generate_docstring()
         
@@ -307,16 +315,12 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, _config_path=
         S = inspect.signature(c)
         S1 = inspect.signature(c1.__init__)
         #set default values to None if they are not set
-        
         kw_params = [p.replace(kind=inspect.Parameter.KEYWORD_ONLY) for name,p in S.parameters.items()]
         params = [S1.parameters['self'],S1.parameters['filename'],*kw_params]
         c1.__init__.__signature__ = S.replace(parameters=params)
-        #c1.__init__ = set_defaults(**defaults)(c1.__init__)
-        #print(c1.__init__.__signature__)
         c1.__qualname__ = base_class.__qualname__
         c1.__name__ = base_class.__name__
         c1.__module__ = base_class.__module__
-        #print(help(c1))
         return c1
         
     return _wrap    
