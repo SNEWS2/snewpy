@@ -384,12 +384,7 @@ class Fornax_2021(loaders.Fornax_2021):
         return super().__init__(filename, self.metadata)
 
 
-class Fornax_2022(_RegistryModel):
-    """Model based on 2D simulations of 100 progenitors from Tianshu Wang, David Vartanyan, Adam Burrows, and Matthew S.B. Coleman, MNRAS 517:543, 2022.
-       Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.2d.large/
-        """
-    param = {'progenitor': 
-                [  '9.0',     '9.25',     '9.5',      '9.75',     '10.0',
+_fornax_2022_progenitors = [  '9.0',     '9.25',     '9.5',      '9.75',     '10.0',
                   '10.25',    '10.5',     '10.75',    '11.0',     '11.25',
                   '11.5',     '11.75',    '12.00.bh', '12.03.bh', '12.07.bh',
                   '12.1.bh',  '12.13',    '12.15',    '12.18.bh', '12.20.bh',
@@ -409,42 +404,22 @@ class Fornax_2022(_RegistryModel):
                   '20.09',    '20.18',    '20.37',    '21.00',    '21.68',
                   '22.00',    '22.30',    '22.82',    '23.00',    '23.04',
                   '23.43',    '24.00',    '25.00',    '26.00',    '26.99']
-            }
-    param['progenitor_mass'] = [float(x[:-3]) if x.endswith('bh') else float(x) for x in param['progenitor']] * u.Msun
 
-    _param_validator = lambda p: float(p['progenitor'][:-3] if 'bh' in p['progenitor'] else p['progenitor'])*u.Msun == p['progenitor_mass']
-
-    _param_abbrv = {
-        'progenitor': '["9.0".."26.99"]',
-        'progenitor_mass': '[9.0..26.99] solMass'}
-
-    def __new__(cls, *, progenitor=None, progenitor_mass=None):
-        """Model Initialization.
-
-        Parameters
-        ----------
-        filename : str
-            Absolute or relative path to file with model data. This argument is deprecated.
-
-        Other Parameters
-        ----------------
-        progenitor: str
-            Progenitor type mass and result, e.g., '10.0' or 14.70.bh' Valid values are {progenitor}.
+@RegistryModel(
+    progenitor = Parameter(name='progenitor',
+                           values=_fornax_2022_progenitors,
+                           desc_values= '["9.0".."26.99"]',
+                           description= "Progenitor type mass and result, e.g., '10.0' or '14.70.bh'")
+    )
+class Fornax_2022(loaders.Fornax_2022):
+    """Model based on 2D simulations of 100 progenitors from Tianshu Wang, David Vartanyan, Adam Burrows, and Matthew S.B. Coleman, MNRAS 517:543, 2022.
+       Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.2d.large/
         """
-        # Load from Parameters
-        if progenitor_mass is None:
-            progenitor_mass = (float(progenitor[:-3]) if progenitor.endswith('bh') else float(progenitor)) * u.Msun
+    def __init__(self, progenitor:str):
+        self.metadata['Progenitor mass']=(float(progenitor[:-3]) if progenitor.endswith('bh') else float(progenitor)) * u.Msun
 
-        cls.check_valid_params(cls, progenitor=progenitor, progenitor_mass=progenitor_mass)
         filename = f'lum_spec_{progenitor}_dat.h5'
-
-        metadata = {'Progenitor': progenitor,
-                    'Progenitor mass': progenitor_mass}
-
-        return loaders.Fornax_2022(filename, metadata)
-
-    # Populate Docstring with abbreviated param values
-    __new__.__doc__ = __new__.__doc__.format(**_param_abbrv)
+        return super().__init__(filename, self.metadata)
 
 class SNOwGLoBES:
     """A model that does not inherit from SupernovaModel (yet) and imports a group of SNOwGLoBES files."""
