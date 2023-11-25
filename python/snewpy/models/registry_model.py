@@ -248,7 +248,6 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
                 S = inspect.signature(self.__init__)
                 params = S.bind(**kwargs)
                 params.apply_defaults()
-                #print(f"Calling init with params={params}")
                 kwargs = params.kwargs
                 #select the parameters which correspond to metadata
                 param_kwargs = {name:val for name,val in kwargs.items() if name in pset.params}
@@ -260,7 +259,6 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
                 #call the constructor with only the needed arguments (the rest are only for metadata)
                 S = inspect.signature(super().__init__)
                 init_params = {name:val for name,val in kwargs.items() if name in S.parameters}
-                print(init_params)
                 return super().__init__(**init_params)
                 
             @classmethod
@@ -274,8 +272,10 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
         #generate the docstring
         c.__doc__ = base_class.__doc__
         c.__init__.__doc__ = c._generate_docstring()
+        #fill the constructor signature
         c.__init__.__signature__ = inspect.signature(base_class.__init__)
         if not _init_from_filename:
+            #fill the class and module name to be the same as in class
             c.__qualname__ = base_class.__qualname__
             c.__name__ = base_class.__name__
             c.__module__ = base_class.__module__
@@ -291,24 +291,23 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
                     super(base_class, self).__init__(filename=os.path.abspath(filename), metadata=self.metadata)
                 else:
                     super().__init__(**kwargs)
+
+        #generate the docstring
         c1.__doc__ = c.__doc__            
         c1._doc_params_ = {'Parameters':"""filename: str\n    Absolute or relative path to the file with model data. This argument is deprecated.""", **c._doc_params_}
         c1.__init__.__doc__ = c1._generate_docstring()
-        
         #update the call signature
         S = inspect.signature(c)
         S1 = inspect.signature(c1.__init__)
         #set default values to None if they are not set
-        
         kw_params = [p.replace(kind=inspect.Parameter.KEYWORD_ONLY) for name,p in S.parameters.items()]
         params = [S1.parameters['self'],S1.parameters['filename'],*kw_params]
+        #fill the constructor signature
         c1.__init__.__signature__ = S.replace(parameters=params)
-        #c1.__init__ = set_defaults(**defaults)(c1.__init__)
-        #print(c1.__init__.__signature__)
+        #fill the class and module name to be the same as in class
         c1.__qualname__ = base_class.__qualname__
         c1.__name__ = base_class.__name__
         c1.__module__ = base_class.__module__
-        #print(help(c1))
         return c1
         
     return _wrap    
