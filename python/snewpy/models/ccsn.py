@@ -499,4 +499,3 @@ class SNOwGLoBES:
 
         return fluence
 
-del Table, PinchedModel, RegistryModel, Parameter, deprecated, loaders
