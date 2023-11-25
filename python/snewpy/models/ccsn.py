@@ -213,7 +213,7 @@ class Walk_2019(loaders.Walk_2019):
 class OConnor_2013(loaders.OConnor_2013):
     """Model based on the black hole formation simulation in `O'Connor & Ott (2013) <https://arxiv.org/abs/1207.1100>`_.
     """
-    @deprecated('eos','base','mass', message="Argument {name} is deprecated. To initialize this model, use keyword arguments")
+    @deprecated('base', 'mass', message="Argument {name} is deprecated. To initialize this model, use keyword arguments")
     def __init__(self, base=None, mass=15, *, eos:str='LS220', progenitor_mass:u.Quantity=None):
         """
         Model Initialization.
@@ -273,7 +273,7 @@ class Zha_2021(loaders.Zha_2021):
                                               np.linspace(60, 80, 3),
                                               np.linspace(100, 120, 2))) << u.Msun,
                               name='progenitor_mass',
-                              desc_values='[9..0.25..13, 13..0.1..30, 31..35, 35..5..60, 70..10..90, 100, 120] solMass'),
+                              desc_values='[9..0.25..13, 13..0.1..30, 31..33, 35..5..60, 70, 80, 100, 120] solMass'),
     turbmixing_param= Parameter([1.23, 1.25, 1.27],
                               name='turbmixing_param',
                               label='Turb. mixing param.',
@@ -364,7 +364,7 @@ class Fornax_2019(loaders.Fornax_2019):
 @RegistryModel(
     progenitor_mass = Parameter((list(range(12, 24)) + [25, 26, 26.99]) * u.Msun, 
                                 name='progenitor_mass', 
-                                desc_values='[12..26, 26.99] solMass')
+                                desc_values='[12..23, 25, 26, 26.99] solMass')
 )
 class Fornax_2021(loaders.Fornax_2021):
     """Model based on 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019. 
