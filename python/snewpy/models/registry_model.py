@@ -248,10 +248,14 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
                 S = inspect.signature(self.__init__)
                 params = S.bind(**kwargs)
                 params.apply_defaults()
-                kwargs = params.kwargs
+                kwargs = params.arguments
                 #select the parameters which correspond to metadata
+                print(kwargs)
+                print(params)
                 param_kwargs = {name:val for name,val in kwargs.items() if name in pset.params}
+                print(param_kwargs)
                 param_kwargs = pset.fill_default_parameters(**param_kwargs)
+                print(param_kwargs)
                 # validate the input parameters
                 pset.validate(**param_kwargs)
                 #Store model metadata
