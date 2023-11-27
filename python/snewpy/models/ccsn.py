@@ -147,7 +147,7 @@ class Tamborra_2014(loaders.Tamborra_2014):
     """Model based on 3D simulations from `Tamborra et al., PRD 90:045032, 2014 <https://arxiv.org/abs/1406.0006>`_.
     Data files are from the `Garching Supernova Archive`_.
     """
-    def __init__(self, eos:str='LS220', *, progenitor_mass:u.Quantity, direction:int):
+    def __init__(self, *, progenitor_mass:u.Quantity, direction:int):
         filename = f's{progenitor_mass.value:3.1f}c_3D_dir{direction}'
         # Metadata is handled by __init__ in _GarchingArchiveModel
         return super().__init__(filename=filename, metadata=self.metadata)
@@ -177,8 +177,7 @@ class Walk_2018(loaders.Walk_2018):
     the `Garching Supernova Archive`_.
     """
     @deprecated('eos')
-    def __init__(self, *, progenitor_mass:u.Quantity, rotation:str, direction:int, 
-                 eos:str='LS220'):
+    def __init__(self, *, progenitor_mass:u.Quantity, rotation:str, direction:int):
         
         filename = f's{progenitor_mass.value:3.1f}c_3D_{rotation}rot_dir{direction}'
         return super().__init__(filename=filename, metadata=self.metadata)
@@ -196,7 +195,7 @@ class Walk_2019(loaders.Walk_2019):
     PRD 101:123013, 2019 <https://arxiv.org/abs/1910.12971>`_. Data files are
     from the `Garching Supernova Archive`_.
     """
-    def __init__(self, eos:str='LS220',* ,progenitor_mass:u.Quantity, direction:int):
+    def __init__(self, * ,progenitor_mass:u.Quantity, direction:int):
         filename = f's{progenitor_mass.value:3.1f}c_3DBH_dir{direction}'
         return super().__init__(filename=filename, metadata=self.metadata)
 
@@ -242,7 +241,7 @@ class OConnor_2013(loaders.OConnor_2013):
 class OConnor_2015(loaders.OConnor_2015):
     """Model based on the black hole formation simulation in `O'Connor (2015) <https://arxiv.org/abs/1411.7058>`_.
     """
-    def __init__(self, progenitor_mass:u.Quantity, eos='LS220'):
+    def __init__(self, progenitor_mass:u.Quantity):
         # Filename is currently the same regardless of parameters
         filename = 'M1_neutrinos.dat'
         return super().__init__(filename, self.metadata)
@@ -261,7 +260,7 @@ class Zha_2021(loaders.Zha_2021):
         metadata = {'Progenitor mass': float(os.path.splitext(os.path.basename(filename))[0][1:]) * u.Msun}
         return metadata 
         
-    def __init__(self, *, eos:str='STOS_B145', progenitor_mass:u.Quantity):
+    def __init__(self, *, progenitor_mass:u.Quantity):
         filename = f's{progenitor_mass.value:g}.dat'
         return super().__init__(filename, self.metadata)
 
@@ -279,7 +278,7 @@ class Zha_2021(loaders.Zha_2021):
                               label='Turb. mixing param.',
                               description='Turbulent mixing parameter alpha_lambda',
                               ),
-    eos=['SFHo']   
+    eos=['SFHo']
 )
 class Warren_2020(loaders.Warren_2020):
     """Model based on simulations from Warren et al., ApJ 898:139, 2020.
@@ -294,7 +293,7 @@ class Warren_2020(loaders.Warren_2020):
                     'EOS': 'SFHo'}
         return metadata
 
-    def __init__(self, eos='SFHo', *, progenitor_mass, turbmixing_param):
+    def __init__(self, *, progenitor_mass, turbmixing_param):
         if progenitor_mass.value.is_integer() and progenitor_mass.value <= 30.:
             fname = os.path.join(f'stir_a{turbmixing_param:3.2f}',
                                  f'stir_multimessenger_a{turbmixing_param:3.2f}_m{progenitor_mass.value:.1f}.h5')
@@ -328,7 +327,7 @@ class Kuroda_2020(loaders.Kuroda_2020):
         return metadata
 
     @deprecated('eos','mass')
-    def __init__(self, eos='LS220', mass=None, *, progenitor_mass=20*u.Msun, rotational_velocity, magnetic_field_exponent):
+    def __init__(self, mass=None, *, rotational_velocity, magnetic_field_exponent):
         filename = f'LnuR{int(rotational_velocity.value):1d}0B{int(magnetic_field_exponent):02d}.dat'
         return super().__init__(filename, self.metadata)
 
