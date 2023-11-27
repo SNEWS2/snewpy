@@ -405,7 +405,7 @@ _fornax_2022_progenitors = [  '9.0',     '9.25',     '9.5',      '9.75',     '10
                   '22.00',    '22.30',    '22.82',    '23.00',    '23.04',
                   '23.43',    '24.00',    '25.00',    '26.00',    '26.99']
 
-@RegistryModel(
+@RegistryModel(_init_from_filename = False,
     progenitor = Parameter(name='progenitor',
                            values=_fornax_2022_progenitors,
                            desc_values= '["9.0".."26.99"]',
