@@ -50,6 +50,25 @@ def deprecated(*names, message='Agrument `{name}` is deprecated'):
         return _wrapper
     return _f
 
+def _expand_defaults(func, **defaults):
+    """Update the signature of the given function with the parameters with default values.
+    Examples
+    --------
+    >>> def foo(x, y=1):
+    >>>     pass
+    >>> foo?
+    Signature: foo(x, y=1)
+    >>> _expand_defaults(foo, x=123, z=456)
+    >>> foo?
+    Signature: foo(x=123, y=500, *, z=456)
+    """
+    S = inspect.signature(func)
+    params = list(S.parameters.values())
+    #defaults.update(**{p.name:p.default for p in params if p.default!=p.empty})
+    params_updated = [p.replace(default=defaults.pop(p.name, p.default)) for p in params]
+    #add the remaining default parameters
+    params_updated+=[inspect.Parameter(name,kind=inspect.Parameter.KEYWORD_ONLY, default=value) for name,value in defaults.items()]
+    func.__signature__ = S.replace(parameters=params_updated)
 
 _default_labels={'eos':'EOS', 'magnetic_field_exponent':'B_0 Exponent'}
 _default_descriptions={'eos':'Equation of state',
@@ -222,6 +241,8 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
                 2. optionally modify the `self.metadata` dictionary, and 
                 3. calls the corresponding loader class constructor
             * *can* define the ``_metadata_from_filename (self, filename:str)->dict``, to help populate the metadata when a `filename` argument is passed
+
+    If a parameter has a single allowed value (i.e. fixed), this value will be default for this parameter in constructor.
     
     """
     pset:ParameterSet = ParameterSet(param_validator=_param_validator, **params)
@@ -250,12 +271,8 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
                 params.apply_defaults()
                 kwargs = params.arguments
                 #select the parameters which correspond to metadata
-                print(kwargs)
-                print(params)
                 param_kwargs = {name:val for name,val in kwargs.items() if name in pset.params}
-                print(param_kwargs)
                 param_kwargs = pset.fill_default_parameters(**param_kwargs)
-                print(param_kwargs)
                 # validate the input parameters
                 pset.validate(**param_kwargs)
                 #Store model metadata
@@ -278,6 +295,10 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
         c.__init__.__doc__ = c._generate_docstring()
         #fill the constructor signature
         c.__init__.__signature__ = inspect.signature(base_class.__init__)
+        #If we have "fixed" parameters in ParameterSet, add them to the signature as keyword arguments
+        defaults = pset.fill_default_parameters()
+        _expand_defaults(c.__init__, **defaults)
+        
         if not _init_from_filename:
             #fill the class and module name to be the same as in class
             c.__qualname__ = base_class.__qualname__
