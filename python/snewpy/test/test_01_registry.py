@@ -406,10 +406,15 @@ class TestModels(unittest.TestCase):
         pns_mass = [1.78, 1.77, 1.76, 1.77, 1.77, 1.77, 1.77, 1.74, 1.77, 1.76, 1.75, 1.74, 1.73, 1.62] * u.Msun
 
         for ((am, ac), mpns) in zip(axion_mass_coupling, pns_mass):
-            model = Mori_2023(axion_mass=am, axion_coupling=ac)
+            model = Mori_2023(axion_mass=am*u.MeV, axion_coupling=ac*1e-10/u.GeV)
 
-            self.assertEqual(model.metadata['Axion mass'], float(am)*u.MeV)
-            self.assertEqual(model.metadata['Axion coupling'], float(ac)*1e-10/u.GeV)
+            axion_mass = float(am) * u.MeV
+            self.assertEqual(model.metadata['Axion mass'], axion_mass)
+    
+            axion_coupling = float(ac) * 1e-10/u.GeV
+            axion_coupling = np.round(axion_coupling.to('1e-10/GeV'))
+            self.assertEqual(model.metadata['Axion coupling'], axion_coupling)
+
             self.assertEqual(model.metadata['Progenitor mass'], 20*u.Msun)
             self.assertEqual(model.metadata['PNS mass'], mpns)
 

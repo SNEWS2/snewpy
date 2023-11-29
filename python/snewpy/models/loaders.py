@@ -759,37 +759,13 @@ class Mori_2023(PinchedModel):
         filename : str
             Absolute or relative path to file prefix.
         """
-        # PNS mass table, from Mori+ 2023.
-        mpns = { (0, 0):    1.78,
-                 (100, 2):  1.77,
-                 (100, 4):  1.76,
-                 (100, 10): 1.77,
-                 (100, 12): 1.77,
-                 (100, 14): 1.77,
-                 (100, 16): 1.77,
-                 (100, 20): 1.74,
-                 (200, 2):  1.77,
-                 (200, 4):  1.76,
-                 (200, 6):  1.75,
-                 (200, 8):  1.74,
-                 (200, 10): 1.73,
-                 (200, 20): 1.62 }
-
         # Set up model metadata
         self.axion_mass = metadata['Axion mass']
         self.axion_coupling = metadata['Axion coupling']
         self.progenitor_mass = metadata['Progenitor mass']
+        self.pns_mass = metadata['PNS mass']
 
         self.metadata = metadata
-
-        filebase = os.path.splitext(os.path.basename(filename))[0]
-        if 'std' in filebase:
-            am, ac = 0, 0
-        else:
-            am, ac = [int(_) for _ in filebase.split('_')[1:]]
-
-        self.pns_mass = mpns[(am,ac)] * u.Msun
-        self.metadata['PNS mass'] = self.pns_mass
 
         # Open the requested filename using the model downloader.
         datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)

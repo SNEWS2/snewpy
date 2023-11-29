@@ -814,8 +814,8 @@ class Mori_2023(_RegistryModel):
 
     _param_validator = lambda p: \
         (p['axion_mass'] == 0 and p['axion_coupling'] == 0) or \
-        (p['axion_mass'] == 100 and p['axion_coupling'] in (2,4,10,12,14,16,20)) or \
-        (p['axion_mass'] == 200 and p['axion_coupling'] in (2,4,6,8,10,20))
+        (p['axion_mass'].to_value('MeV') == 100 and p['axion_coupling'].to_value('1e-10/GeV') in (2,4,10,12,14,16,20)) or \
+        (p['axion_mass'].to_value('MeV') == 200 and p['axion_coupling'].to_value('1e-10/GeV') in (2,4,6,8,10,20))
 
     _param_abbrv = {
         'axion_mass': '[0, 100, 200] MeV',
@@ -831,18 +831,44 @@ class Mori_2023(_RegistryModel):
         axion_coupling: int
             Axion-photon coupling, in units of 1e-10/GeV. Valid values are {axion_coupling}.
         """
+        # Make sure axion coupling is converted to units 1e-10/GeV:
+        axion_coupling = np.round(axion_coupling.to('1e-10/GeV'))
+
         # Load from Parameters
         cls.check_valid_params(cls, axion_mass=axion_mass, axion_coupling=axion_coupling)
 
         if axion_mass == 0:
             filename = 't-prof_std.dat'
         else:
-            filename = f't-prof_{axion_mass.to_value("MeV")}_{axion_coupling.to_value("1e-10/GeV")}.dat'
+            filename = f't-prof_{axion_mass.to_value("MeV"):g}_{axion_coupling.to_value("1e-10/GeV"):g}.dat'
 
+        # PNS mass table, from Mori+ 2023.
+        mpns = { (0, 0):    1.78,
+                 (100, 2):  1.77,
+                 (100, 4):  1.76,
+                 (100, 10): 1.77,
+                 (100, 12): 1.77,
+                 (100, 14): 1.77,
+                 (100, 16): 1.77,
+                 (100, 20): 1.74,
+                 (200, 2):  1.77,
+                 (200, 4):  1.76,
+                 (200, 6):  1.75,
+                 (200, 8):  1.74,
+                 (200, 10): 1.73,
+                 (200, 20): 1.62 }
+
+        am = int(axion_mass.to_value('MeV'))
+        ac = int(axion_coupling.to_value('1e-10/GeV'))
+        pns_mass = mpns[(am,ac)]
+
+        # Set the metadata.
         metadata = {
             'Axion mass': axion_mass,
             'Axion coupling': axion_coupling,
-            'Progenitor mass': 20*u.Msun }
+            'Progenitor mass': 20*u.Msun,
+            'PNS mass' : pns_mass*u.Msun
+            }
 
         return loaders.Mori_2023(filename, metadata)
 
