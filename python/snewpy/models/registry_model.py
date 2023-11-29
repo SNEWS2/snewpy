@@ -79,7 +79,7 @@ _default_descriptions={'eos':'Equation of state',
                        'rotational_velocity': 'Rotational velocity of progenitor',
                        'magnetic_field_exponent':'Exponent of magnetic field'
                       }
-class Parameter(list):
+class Parameter:
     """A class to describe the model parameter: it's range of allowed values, name, description etc. """
     def __init__(self, values, *,
                  name:str='parameter', 
@@ -117,12 +117,18 @@ class Parameter(list):
         >>> Parameter(range(0,100,1),name='supernova_parameter', desc_values='[0,1,...99]')
         Parameter(name="supernova_parameter", label="Supernova parameter", description="Supernova parameter", values='[0,1,...99]')
         """
-        super().__init__(values)
         self.name = name
+        self.values = values
         self.label = label or _default_labels.get(name, name.replace('_',' ').capitalize())
         self.description = description or _default_descriptions.get(name,self.label)
         self.desc_values = desc_values or str(values)
-        
+
+    def __iter__(self):
+        return self.values.__iter__()
+    def __len__(self):
+        return self.values.__len__()
+    def __getitem__(self, index):
+        return self.values.__getitem__(index)
     def __repr__(self):
         return f"{self.__class__.__name__}(name=\"{self.name}\", label=\"{self.label}\", description=\"{self.description}\", values='{self.desc_values}')"
     @property
@@ -188,7 +194,12 @@ class ParameterSet:
 
     def __getitem__(self, name:str):
         return self.params.__getitem__(name)
-
+    def items(self):
+        return self.params.items()
+    def values(self):
+        return self.params.values()
+    def __iter__(self):
+        return self.params.__iter__()
     def __repr__(self):
         s = f"{self.__class__.__name__}:\n"
         s+='\n'.join([f' * \t{name}={ps}' for name,ps in self.params.items()])
@@ -248,6 +259,7 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
     pset:ParameterSet = ParameterSet(param_validator=_param_validator, **params)
     def _wrap(base_class):
         class c(base_class):
+            parameters:ParameterSet = pset
             _doc_params_ = {
                 'Other parameters': pset.generate_docstring(base_class.__init__, **base_class.__init__.__annotations__),
                 'Raises':"""
@@ -271,12 +283,12 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
                 params.apply_defaults()
                 kwargs = params.arguments
                 #select the parameters which correspond to metadata
-                param_kwargs = {name:val for name,val in kwargs.items() if name in pset.params}
-                param_kwargs = pset.fill_default_parameters(**param_kwargs)
+                param_kwargs = {name:val for name,val in kwargs.items() if name in self.parameters}
+                param_kwargs = self.parameters.fill_default_parameters(**param_kwargs)
                 # validate the input parameters
-                pset.validate(**param_kwargs)
+                self.parameters.validate(**param_kwargs)
                 #Store model metadata
-                self.metadata = {pset[name].label: value for name,value in param_kwargs.items()}
+                self.metadata = {self.parameters[name].label: value for name,value in param_kwargs.items()}
                 #call the constructor with only the needed arguments (the rest are only for metadata)
                 S = inspect.signature(super().__init__)
                 init_params = {name:val for name,val in kwargs.items() if name in S.parameters}
@@ -289,14 +301,20 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
                 -------
                 valid_combinations: tuple[dict]
                     A tuple of all valid parameter combinations stored as Dictionaries"""
-                return pset.valid_combinations_dict
+                return cls.parameters.valid_combinations_dict
+            
+            @classmethod
+            @property
+            def param(cls):
+                #class property for backward compatibility
+                return {name: p.values for name,p in cls.parameters.items()}
         #generate the docstring
         c.__doc__ = base_class.__doc__
         c.__init__.__doc__ = c._generate_docstring()
         #fill the constructor signature
         c.__init__.__signature__ = inspect.signature(base_class.__init__)
         #If we have "fixed" parameters in ParameterSet, add them to the signature as keyword arguments
-        defaults = pset.fill_default_parameters()
+        defaults = c.parameters.fill_default_parameters()
         _expand_defaults(c.__init__, **defaults)
         
         if not _init_from_filename:
