@@ -777,8 +777,8 @@ class Mori_2023(_RegistryModel):
             filename = f't-prof_{axion_mass}_{axion_coupling}.dat'
 
         metadata = {
-            'Axion mass': axion_mass * u.MeV,
-            'Axion coupling': axion_coupling * 1e-10/u.GeV,
+            'Axion mass': axion_mass,
+            'Axion coupling': axion_coupling,
             'Progenitor mass': 20*u.Msun }
 
         return loaders.Mori_2023(filename, metadata)
