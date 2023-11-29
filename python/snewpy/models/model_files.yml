@@ -17,6 +17,9 @@ models:
     Fornax_2021: 
         repository: *snewpy
 
+    Fornax_2022: 
+        repository: *ccsnmodels
+
     Kuroda_2020: 
         repository: *snewpy
 
