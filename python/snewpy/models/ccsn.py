@@ -420,6 +420,59 @@ class Fornax_2022(loaders.Fornax_2022):
         filename = f'lum_spec_{progenitor}_dat.h5'
         return super().__init__(filename, self.metadata)
 
+
+@RegistryModel(_init_from_filename = False,
+               _param_validator = lambda p: \
+               (p['axion_mass'] == 0 and p['axion_coupling'] == 0) or \
+               (p['axion_mass'].to_value('MeV') == 100 and p['axion_coupling'].to_value('1e-10/GeV') in (2,4,10,12,14,16,20)) or \
+               (p['axion_mass'].to_value('MeV') == 200 and p['axion_coupling'].to_value('1e-10/GeV') in (2,4,6,8,10,20)),
+               
+               axion_mass = Parameter(name='axion_mass',
+                                      values=[0, 100, 200]<<u.MeV,
+                                      description='Axion mass in units of MeV'
+                                     ),
+               axion_coupling = Parameter(name='axion_coupling', 
+                                          values=[0, 2, 4, 6, 8, 10, 12, 14, 16, 20]<<(1e-10/u.GeV),
+                                          #desc_values='[0..20] 1e-10/GeV',
+                                          description='Axion-photon coupling, in units of 1e-10/GeV'
+                                         ),
+               progenitor_mass=[20]*u.Msun
+              )
+class Mori_2023(loaders.Mori_2023):
+    """Model based on 2D simulations with axionlike particles, K. Mori, T.  Takiwaki, K. Kotake and S. Horiuchi, Phys. Rev. D 108:063027, 2023. All models are based on the non-rotating 20 M_sun solar metallicity progenitor model from S.E. Woolsey and A. Heger, Phys. Rep. 442:269, 2007. Data from private communication.
+        """
+    def __init__(self, axion_mass:u.Quantity, axion_coupling:u.Quantity):
+        # Make sure axion coupling is converted to units 1e-10/GeV:
+        #axion_coupling = np.round(axion_coupling.to('1e-10/GeV'))
+
+        if axion_mass == 0:
+            filename = 't-prof_std.dat'
+        else:
+            filename = f't-prof_{axion_mass.to_value("MeV"):g}_{axion_coupling.to_value("1e-10/GeV"):g}.dat'
+
+        # PNS mass table, from Mori+ 2023.
+        mpns = { (0, 0):    1.78,
+                 (100, 2):  1.77,
+                 (100, 4):  1.76,
+                 (100, 10): 1.77,
+                 (100, 12): 1.77,
+                 (100, 14): 1.77,
+                 (100, 16): 1.77,
+                 (100, 20): 1.74,
+                 (200, 2):  1.77,
+                 (200, 4):  1.76,
+                 (200, 6):  1.75,
+                 (200, 8):  1.74,
+                 (200, 10): 1.73,
+                 (200, 20): 1.62 }
+        am = int(axion_mass.to_value('MeV'))
+        ac = int(axion_coupling.to_value('1e-10/GeV'))
+        pns_mass = mpns[(am,ac)]
+
+        # Set the metadata.
+        self.metadata['PNS mass'] = pns_mass*u.Msun
+        return super().__init__(filename, self.metadata)
+
 class SNOwGLoBES:
     """A model that does not inherit from SupernovaModel (yet) and imports a group of SNOwGLoBES files."""
 

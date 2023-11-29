@@ -50,3 +50,6 @@ models:
     Zha_2021: 
         repository: *snewpy
 
+    Mori_2023: 
+        repository: *ccsnmodels
+
