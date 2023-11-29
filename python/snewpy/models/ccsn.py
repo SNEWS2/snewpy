@@ -746,8 +746,8 @@ class Fornax_2021(_RegistryModel):
 class Mori_2023(_RegistryModel):
     """Model based on 2D simulations with axionlike particles, K. Mori, T.  Takiwaki, K. Kotake and S. Horiuchi, Phys. Rev. D 108:063027, 2023. All models are based on the non-rotating 20 M_sun solar metallicity progenitor model from S.E. Woolsey and A. Heger, Phys. Rep. 442:269, 2007. Data from private communication.
         """
-    param = {'axion_mass' : [0, 100, 200],
-             'axion_coupling' : [0, 2, 4, 6, 8, 10, 12, 14, 16, 20] }
+    param = {'axion_mass' : [0, 100, 200]<<u.MeV,
+             'axion_coupling' : [0, 2, 4, 6, 8, 10, 12, 14, 16, 20]<<(1e-10/u.GeV) }
 
     _param_validator = lambda p: \
         (p['axion_mass'] == 0 and p['axion_coupling'] == 0) or \
