@@ -774,7 +774,7 @@ class Mori_2023(_RegistryModel):
         if axion_mass == 0:
             filename = 't-prof_std.dat'
         else:
-            filename = f't-prof_{axion_mass}_{axion_coupling}.dat'
+            filename = f't-prof_{axion_mass.to_value("MeV")}_{axion_coupling.to_value("1e-10/GeV")}.dat'
 
         metadata = {
             'Axion mass': axion_mass,
