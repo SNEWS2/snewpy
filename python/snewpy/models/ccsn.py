@@ -742,50 +742,67 @@ class Fornax_2021(_RegistryModel):
     # Populate Docstring with abbreviated param values
     __new__.__doc__ = __new__.__doc__.format(**_param_abbrv)
 
-
-class Mori_2023(_RegistryModel):
-    """Model based on 2D simulations with axionlike particles, K. Mori, T.  Takiwaki, K. Kotake and S. Horiuchi, Phys. Rev. D 108:063027, 2023. All models are based on the non-rotating 20 M_sun solar metallicity progenitor model from S.E. Woolsey and A. Heger, Phys. Rep. 442:269, 2007. Data from private communication.
+class Fornax_2022(_RegistryModel):
+    """Model based on 2D simulations of 100 progenitors from Tianshu Wang, David Vartanyan, Adam Burrows, and Matthew S.B. Coleman, MNRAS 517:543, 2022.
+       Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.2d.large/
         """
-    param = {'axion_mass' : [0, 100, 200]<<u.MeV,
-             'axion_coupling' : [0, 2, 4, 6, 8, 10, 12, 14, 16, 20]<<(1e-10/u.GeV) }
+    param = {'progenitor': 
+                [  '9.0',     '9.25',     '9.5',      '9.75',     '10.0',
+                  '10.25',    '10.5',     '10.75',    '11.0',     '11.25',
+                  '11.5',     '11.75',    '12.00.bh', '12.03.bh', '12.07.bh',
+                  '12.1.bh',  '12.13',    '12.15',    '12.18.bh', '12.20.bh',
+                  '12.25',    '12.33.bh', '12.40.bh', '12.45.bh', '12.50.bh',
+                  '12.54.bh', '12.60.bh', '12.63',    '12.70',    '12.72.bh',
+                  '12.75',    '12.80.bh', '12.85.bh', '12.90.bh', '12.93',
+                  '12.97.bh', '13.00.bh', '13.05.bh', '13.11',    '13.25.bh',
+                  '13.27.bh', '13.32.bh', '13.40.bh', '13.45',    '13.50.bh',
+                  '13.60.bh', '13.75',    '13.82.bh', '13.90.bh', '13.96',
+                  '14.01',    '14.13.bh', '14.25.bh', '14.40.bh', '14.41.bh',
+                  '14.43',    '14.44.bh', '14.70.bh', '14.87.bh', '15.00.bh',
+                  '15.01',    '15.04.bh', '15.05',    '15.38.bh', '16.43',
+                  '16.65',    '16.99',    '17.00',    '17.07',    '17.10',
+                  '17.40',    '17.48',    '17.50',    '17.51',    '17.83',
+                  '18.04',    '18.05',    '18.09',    '18.10',    '18.50',
+                  '19.02',    '19.56',    '19.83',    '19.99',    '20.08',
+                  '20.09',    '20.18',    '20.37',    '21.00',    '21.68',
+                  '22.00',    '22.30',    '22.82',    '23.00',    '23.04',
+                  '23.43',    '24.00',    '25.00',    '26.00',    '26.99']
+            }
+    param['progenitor_mass'] = [float(x[:-3]) if x.endswith('bh') else float(x) for x in param['progenitor']] * u.Msun
 
-    _param_validator = lambda p: \
-        (p['axion_mass'] == 0 and p['axion_coupling'] == 0) or \
-        (p['axion_mass'] == 100 and p['axion_coupling'] in (2,4,10,12,14,16,20)) or \
-        (p['axion_mass'] == 200 and p['axion_coupling'] in (2,4,6,8,10,20))
+    _param_validator = lambda p: float(p['progenitor'][:-3] if 'bh' in p['progenitor'] else p['progenitor'])*u.Msun == p['progenitor_mass']
 
     _param_abbrv = {
-        'axion_mass': '[0, 100, 200] MeV',
-        'axion_coupling' : '[0..20] 1e-10/GeV' }
+        'progenitor': '["9.0".."26.99"]',
+        'progenitor_mass': '[9.0..26.99] solMass'}
 
-    def __new__(cls, axion_mass, axion_coupling):
+    def __new__(cls, *, progenitor=None, progenitor_mass=None):
         """Model Initialization.
 
         Parameters
         ----------
-        axion_mass: int
-            Axion mass in units of MeV. Valid values are {axion_mass}.
-        axion_coupling: int
-            Axion-photon coupling, in units of 1e-10/GeV. Valid values are {axion_coupling}.
+        filename : str
+            Absolute or relative path to file with model data. This argument is deprecated.
+
+        Other Parameters
+        ----------------
+        progenitor: str
+            Progenitor type mass and result, e.g., '10.0' or 14.70.bh' Valid values are {progenitor}.
         """
         # Load from Parameters
-        cls.check_valid_params(cls, axion_mass=axion_mass, axion_coupling=axion_coupling)
+        if progenitor_mass is None:
+            progenitor_mass = (float(progenitor[:-3]) if progenitor.endswith('bh') else float(progenitor)) * u.Msun
 
-        if axion_mass == 0:
-            filename = 't-prof_std.dat'
-        else:
-            filename = f't-prof_{axion_mass.to_value("MeV")}_{axion_coupling.to_value("1e-10/GeV")}.dat'
+        cls.check_valid_params(cls, progenitor=progenitor, progenitor_mass=progenitor_mass)
+        filename = f'lum_spec_{progenitor}_dat.h5'
 
-        metadata = {
-            'Axion mass': axion_mass,
-            'Axion coupling': axion_coupling,
-            'Progenitor mass': 20*u.Msun }
+        metadata = {'Progenitor': progenitor,
+                    'Progenitor mass': progenitor_mass}
 
-        return loaders.Mori_2023(filename, metadata)
+        return loaders.Fornax_2022(filename, metadata)
 
     # Populate Docstring with abbreviated param values
     __new__.__doc__ = __new__.__doc__.format(**_param_abbrv)
-
 
 class SNOwGLoBES:
     """A model that does not inherit from SupernovaModel (yet) and imports a group of SNOwGLoBES files."""

@@ -595,7 +595,7 @@ class Fornax_2021(SupernovaModel):
         Parameters
         ----------
         filename : str
-            Absolute or relative path to FITS file with model data.
+            Absolute or relative path to HDF5 file with model data.
         """
         # Set up model metadata.
         self.progenitor_mass = float(filename.split('/')[-1].split('_')[2][:-1]) * u.Msun
@@ -704,81 +704,48 @@ class Fornax_2021(SupernovaModel):
         return initialspectra
 
 
-class Mori_2023(PinchedModel):
+class Fornax_2022(Fornax_2021):
     def __init__(self, filename, metadata={}):
         """
         Parameters
         ----------
         filename : str
-            Absolute or relative path to file prefix.
+            Absolute or relative path to HDF5 file with model data.
         """
-        # PNS mass table, from Mori+ 2023.
-        mpns = { (0, 0):    1.78,
-                 (100, 2):  1.77,
-                 (100, 4):  1.76,
-                 (100, 10): 1.77,
-                 (100, 12): 1.77,
-                 (100, 14): 1.77,
-                 (100, 16): 1.77,
-                 (100, 20): 1.74,
-                 (200, 2):  1.77,
-                 (200, 4):  1.76,
-                 (200, 6):  1.75,
-                 (200, 8):  1.74,
-                 (200, 10): 1.73,
-                 (200, 20): 1.62 }
-
-        # Set up model metadata
-        self.axion_mass = metadata['Axion mass']
-        self.axion_coupling = metadata['Axion coupling']
-        self.progenitor_mass = metadata['Progenitor mass']
+        # Set up model metadata.
+        self.progenitor = os.path.splitext(os.path.basename(filename))[0].split('_')[2]
+        self.progenitor_mass = float(self.progenitor[:-3])*u.Msun if self.progenitor.endswith('bh') else float(self.progenitor)*u.Msun
 
         self.metadata = metadata
 
-        filebase = os.path.splitext(os.path.basename(filename))[0]
-        if 'std' in filebase:
-            am, ac = 0, 0
-        else:
-            am, ac = [int(_) for _ in filebase.split('_')[1:]]
-
-        self.pns_mass = mpns[(am,ac)] * u.Msun
-        self.metadata['PNS mass'] = self.pns_mass
-
         # Open the requested filename using the model downloader.
         datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
+        # Open HDF5 data file.
+        _h5file = h5py.File(datafile, 'r')
 
-        # Read ASCII data.
-        simtab = Table.read(datafile, format='ascii')
+        self.metadata['PNS mass'] = _h5file.attrs['Mpns'] * u.Msun
+        self.time = _h5file['nu0'].attrs['time'] * u.s
 
-        # Remove the first table row, which appears to have zero input.
-        simtab = simtab[simtab['1:t_sim[s]'] > 0]
+        self.luminosity = {}
+        self._E = {}
+        self._dLdE = {}
+        for flavor in Flavor:
+            # Convert flavor to key name in the model HDF5 file
+            key = {Flavor.NU_E: 'nu0',
+                   Flavor.NU_E_BAR: 'nu1',
+                   Flavor.NU_X: 'nu2',
+                   Flavor.NU_X_BAR: 'nu2'}[flavor]
 
-        # Get grid of model times.
-        simtab['TIME'] = simtab['2:t_pb[s]'] << u.s
-        for j, (f, fkey) in enumerate(zip([Flavor.NU_E, Flavor.NU_E_BAR, Flavor.NU_X], 'ebx')):
-            simtab[f'L_{f.name}'] = simtab[f'{6+j}:Le{fkey}[e/s]'] << u.erg / u.s
-            # Compute the pinch parameter from E_rms and E_avg
-            # <E^2> / <E>^2 = (2+a)/(1+a), where
-            # E_rms^2 = <E^2> - <E>^2.
-            Eavg = simtab[f'{9+j}:Em{fkey}[MeV]']
-            Erms = simtab[f'{12+j}:Er{fkey}[MeV]']
-            E2 = Erms**2 + Eavg**2
-            x = E2 / Eavg**2
-            alpha = (2-x) / (x-1)
+            self._E[flavor] = np.asarray(_h5file[key]['egroup'])
+            self._dLdE[flavor] = {f"g{i}": np.asarray(_h5file[key][f'g{i}']) for i in range(12)}
 
-            simtab[f'E_{f.name}'] = Eavg << u.MeV
-            simtab[f'E2_{f.name}'] = E2 << u.MeV**2
-            simtab[f'ALPHA_{f.name}'] = alpha
+            # Compute luminosity by integrating over model energy bins.
+            dE = np.asarray(_h5file[key]['degroup'])
+            n = len(dE[0])
+            dLdE = np.zeros((len(self.time), n), dtype=float)
+            for i in range(n):
+                dLdE[:, i] = self._dLdE[flavor][f"g{i}"]
 
-#            simtab[f'E_{f.name}'] = simtab[f'{9+j}:Em{fkey}[MeV]'] << u.MeV
-#            Erms = simtab[f'{12+j}:Er{fkey}[MeV]'] * u.MeV
-#
-#            # Compute the pinch parameter from E_rms and E_avg
-#            simtab[f'E2_{f.name}'] = Erms**2 + simtab[f'E_{f.name}']**2
-#            x = simtab[f'E2_{f.name}'] / simtab[f'E_{f.name}']**2
-#            simtab[f'ALPHA_{f.name}'] = (2-x) / (x-1)
-
-        self.filename = os.path.basename(filename)
-
-        super().__init__(simtab, metadata)
-
+            # Note factor of 0.25 in nu_x and nu_x_bar.
+            factor = 1. if flavor.is_electron else 0.25
+            self.luminosity[flavor] = np.sum(dLdE*dE, axis=1) * factor * 1e50 * u.erg/u.s
