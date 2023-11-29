@@ -742,6 +742,7 @@ class Fornax_2021(_RegistryModel):
     # Populate Docstring with abbreviated param values
     __new__.__doc__ = __new__.__doc__.format(**_param_abbrv)
 
+
 class Fornax_2022(_RegistryModel):
     """Model based on 2D simulations of 100 progenitors from Tianshu Wang, David Vartanyan, Adam Burrows, and Matthew S.B. Coleman, MNRAS 517:543, 2022.
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.2d.large/
@@ -803,6 +804,77 @@ class Fornax_2022(_RegistryModel):
 
     # Populate Docstring with abbreviated param values
     __new__.__doc__ = __new__.__doc__.format(**_param_abbrv)
+
+
+class Mori_2023(_RegistryModel):
+    """Model based on 2D simulations with axionlike particles, K. Mori, T.  Takiwaki, K. Kotake and S. Horiuchi, Phys. Rev. D 108:063027, 2023. All models are based on the non-rotating 20 M_sun solar metallicity progenitor model from S.E. Woolsey and A. Heger, Phys. Rep. 442:269, 2007. Data from private communication.
+        """
+    param = {'axion_mass' : [0, 100, 200]<<u.MeV,
+             'axion_coupling' : [0, 2, 4, 6, 8, 10, 12, 14, 16, 20]<<(1e-10/u.GeV) }
+
+    _param_validator = lambda p: \
+        (p['axion_mass'] == 0 and p['axion_coupling'] == 0) or \
+        (p['axion_mass'].to_value('MeV') == 100 and p['axion_coupling'].to_value('1e-10/GeV') in (2,4,10,12,14,16,20)) or \
+        (p['axion_mass'].to_value('MeV') == 200 and p['axion_coupling'].to_value('1e-10/GeV') in (2,4,6,8,10,20))
+
+    _param_abbrv = {
+        'axion_mass': '[0, 100, 200] MeV',
+        'axion_coupling' : '[0..20] 1e-10/GeV' }
+
+    def __new__(cls, axion_mass, axion_coupling):
+        """Model Initialization.
+
+        Parameters
+        ----------
+        axion_mass: int
+            Axion mass in units of MeV. Valid values are {axion_mass}.
+        axion_coupling: int
+            Axion-photon coupling, in units of 1e-10/GeV. Valid values are {axion_coupling}.
+        """
+        # Make sure axion coupling is converted to units 1e-10/GeV:
+        axion_coupling = np.round(axion_coupling.to('1e-10/GeV'))
+
+        # Load from Parameters
+        cls.check_valid_params(cls, axion_mass=axion_mass, axion_coupling=axion_coupling)
+
+        if axion_mass == 0:
+            filename = 't-prof_std.dat'
+        else:
+            filename = f't-prof_{axion_mass.to_value("MeV"):g}_{axion_coupling.to_value("1e-10/GeV"):g}.dat'
+
+        # PNS mass table, from Mori+ 2023.
+        mpns = { (0, 0):    1.78,
+                 (100, 2):  1.77,
+                 (100, 4):  1.76,
+                 (100, 10): 1.77,
+                 (100, 12): 1.77,
+                 (100, 14): 1.77,
+                 (100, 16): 1.77,
+                 (100, 20): 1.74,
+                 (200, 2):  1.77,
+                 (200, 4):  1.76,
+                 (200, 6):  1.75,
+                 (200, 8):  1.74,
+                 (200, 10): 1.73,
+                 (200, 20): 1.62 }
+
+        am = int(axion_mass.to_value('MeV'))
+        ac = int(axion_coupling.to_value('1e-10/GeV'))
+        pns_mass = mpns[(am,ac)]
+
+        # Set the metadata.
+        metadata = {
+            'Axion mass': axion_mass,
+            'Axion coupling': axion_coupling,
+            'Progenitor mass': 20*u.Msun,
+            'PNS mass' : pns_mass*u.Msun
+            }
+
+        return loaders.Mori_2023(filename, metadata)
+
+    # Populate Docstring with abbreviated param values
+    __new__.__doc__ = __new__.__doc__.format(**_param_abbrv)
+
 
 class SNOwGLoBES:
     """A model that does not inherit from SupernovaModel (yet) and imports a group of SNOwGLoBES files."""
