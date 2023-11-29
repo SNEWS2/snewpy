@@ -303,11 +303,7 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
                     A tuple of all valid parameter combinations stored as Dictionaries"""
                 return cls.parameters.valid_combinations_dict
             
-            @classmethod
-            @property
-            def param(cls):
-                #class property for backward compatibility
-                return {name: p.values for name,p in cls.parameters.items()}
+            param = {name: p.values for name, p in parameters.items()}
         #generate the docstring
         c.__doc__ = base_class.__doc__
         c.__init__.__doc__ = c._generate_docstring()
