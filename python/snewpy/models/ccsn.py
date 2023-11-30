@@ -433,8 +433,8 @@ class Fornax_2022(loaders.Fornax_2022):
                                      ),
                axion_coupling = Parameter(name='axion_coupling', 
                                           values=[0, 2, 4, 6, 8, 10, 12, 14, 16, 20]<<(1e-10/u.GeV),
-                                          #desc_values='[0..20] 1e-10/GeV',
-                                          description='Axion-photon coupling, in units of 1e-10/GeV'
+                                          description='Axion-photon coupling, in units of 1e-10/GeV',
+                                          precision=2 #round to 1e-12/u.GeV
                                          ),
                progenitor_mass=[20]*u.Msun
               )
