@@ -203,7 +203,6 @@ class Walk_2019(loaders.Walk_2019):
     progenitor_mass = Parameter(values=(list(range(12, 34)) +
                                  list(range(35, 61, 5)) +
                                  [70, 80, 100, 120]) * u.Msun, 
-                                name='progenitor_mass',
                                 desc_values='[12..33, 35..5..60, 70, 80, 100, 120] solMass'
                                ),
     eos = ['HShen', 'LS220'],
@@ -247,8 +246,7 @@ class OConnor_2015(loaders.OConnor_2015):
         return super().__init__(filename, self.metadata)
 
 @RegistryModel(
-    progenitor_mass = Parameter(name='progenitor_mass',
-                                values=(list(range(16, 27)) + [19.89, 22.39, 30, 33]) * u.Msun,
+    progenitor_mass = Parameter(values=(list(range(16, 27)) + [19.89, 22.39, 30, 33]) * u.Msun,
                                 desc_values = '[16..26, 19.89, 22.39, 30, 33] solMass'
                                ),
     eos = ['STOS_B145']
@@ -271,7 +269,6 @@ class Zha_2021(loaders.Zha_2021):
                                               np.linspace(35, 55, 5),
                                               np.linspace(60, 80, 3),
                                               np.linspace(100, 120, 2))) << u.Msun,
-                              name='progenitor_mass',
                               desc_values='[9..0.25..13, 13..0.1..30, 31..33, 35..5..60, 70, 80, 100, 120] solMass'),
     turbmixing_param= Parameter([1.23, 1.25, 1.27],
                               name='turbmixing_param',
@@ -304,8 +301,7 @@ class Warren_2020(loaders.Warren_2020):
 
 @RegistryModel(
     rotational_velocity= [0, 1] * u.rad / u.s,
-    magnetic_field_exponent= Parameter([0, 12, 13],
-                                      name='magnetic_field_exponent',
+    magnetic_field_exponent= Parameter([0, 12, 13],                                      
                                       label='B_0 Exponent',
                                       description='Exponent of magnetic field (See Eq. 46)'),
     eos=['LS220'], 
@@ -361,8 +357,7 @@ class Fornax_2019(loaders.Fornax_2019):
         return super().__init__(filename, self.metadata, cache_flux=cache_flux)
 
 @RegistryModel(
-    progenitor_mass = Parameter((list(range(12, 24)) + [25, 26, 26.99]) * u.Msun, 
-                                name='progenitor_mass', 
+    progenitor_mass = Parameter((list(range(12, 24)) + [25, 26, 26.99]) * u.Msun,
                                 desc_values='[12..23, 25, 26, 26.99] solMass')
 )
 class Fornax_2021(loaders.Fornax_2021):
@@ -405,8 +400,7 @@ _fornax_2022_progenitors = [  '9.0',     '9.25',     '9.5',      '9.75',     '10
                   '23.43',    '24.00',    '25.00',    '26.00',    '26.99']
 
 @RegistryModel(_init_from_filename = False,
-    progenitor = Parameter(name='progenitor',
-                           values=_fornax_2022_progenitors,
+    progenitor = Parameter(values=_fornax_2022_progenitors,
                            desc_values= '["9.0".."26.99"]',
                            description= "Progenitor type mass and result, e.g., '10.0' or '14.70.bh'")
     )
@@ -427,12 +421,9 @@ class Fornax_2022(loaders.Fornax_2022):
                (p['axion_mass'].to_value('MeV') == 100 and p['axion_coupling'].to_value('1e-10/GeV') in (2,4,10,12,14,16,20)) or \
                (p['axion_mass'].to_value('MeV') == 200 and p['axion_coupling'].to_value('1e-10/GeV') in (2,4,6,8,10,20)),
                
-               axion_mass = Parameter(name='axion_mass',
-                                      values=[0, 100, 200]<<u.MeV,
-                                      description='Axion mass in units of MeV'
-                                     ),
-               axion_coupling = Parameter(name='axion_coupling', 
-                                          values=[0, 2, 4, 6, 8, 10, 12, 14, 16, 20]<<(1e-10/u.GeV),
+               axion_mass = Parameter(values=[0, 100, 200]<<u.MeV,
+                                      description='Axion mass in units of MeV'),
+               axion_coupling = Parameter(values=[0, 2, 4, 6, 8, 10, 12, 14, 16, 20]<<(1e-10/u.GeV),
                                           description='Axion-photon coupling, in units of 1e-10/GeV',
                                           precision=2 #round to 1e-12/u.GeV
                                          ),

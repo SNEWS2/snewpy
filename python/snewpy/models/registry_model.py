@@ -83,7 +83,7 @@ _default_descriptions={'eos':'Equation of state',
 class Parameter:
     """A class to describe the model parameter: it's range of allowed values, name, description etc. """
     def __init__(self, values, *,
-                 name:str='parameter', 
+                 name:str=None, 
                  label:str=None, 
                  description:str=None, 
                  desc_values:str=None,
@@ -121,13 +121,19 @@ class Parameter:
         >>> Parameter(range(0,100,1),name='supernova_parameter', desc_values='[0,1,...99]')
         Parameter(name="supernova_parameter", label="Supernova parameter", description="Supernova parameter", values='[0,1,...99]')
         """
-        self.name = name
         self.values = values
-        self.label = label or _default_labels.get(name, name.replace('_',' ').capitalize())
-        self.description = description or _default_descriptions.get(name,self.label)
+        self.label = label 
+        self.description = description
         self.desc_values = desc_values or str(values)
         self.precision = precision
-
+        if(name):
+            self.set_description_and_label(name)
+        
+    def set_description_and_label(self, name:str):
+        """Generate the description and label from the parameter given name"""
+        self.label = self.label or _default_labels.get(name, name.replace('_',' ').capitalize())
+        self.description = self.description or _default_descriptions.get(name,self.label)
+        
     def apply_precision(self, value):
         if self.precision:
             if hasattr(self.values, 'unit'):
@@ -146,7 +152,7 @@ class Parameter:
     def __getitem__(self, index):
         return self.values.__getitem__(index)
     def __repr__(self):
-        return f"{self.__class__.__name__}(name=\"{self.name}\", label=\"{self.label}\", description=\"{self.description}\", values='{self.desc_values}')"
+        return f"{self.__class__.__name__}(label=\"{self.label}\", description=\"{self.description}\", values={self.desc_values})"
     @property
     def fixed(self):
         """True if this parameter has only one option"""
@@ -170,6 +176,8 @@ class ParameterSet:
         for name,val in params.items():
             if not isinstance(val,Parameter):
                 val = Parameter(values=val,name=name)
+            else:
+                val.set_description_and_label(name)
             self.params[name]=val
         #fill the valid parameter combinations
         self.combinations = list(it.product(*[list(v) for v in self.params.values()]))
