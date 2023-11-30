@@ -15,6 +15,7 @@ import inspect
 import os
 from textwrap import dedent
 from warnings import warn
+import numpy as np
 
 def deprecated(*names, message='Agrument `{name}` is deprecated'):
     """A function decorator to issue a deprecation warning if a given argument is provided in the wrapped function call.
@@ -85,7 +86,8 @@ class Parameter:
                  name:str='parameter', 
                  label:str=None, 
                  description:str=None, 
-                 desc_values:str=None):
+                 desc_values:str=None,
+                 precision:int=None):
         """
         Parameters
         ----------
@@ -105,7 +107,9 @@ class Parameter:
         desc_values:str
             A string representation of the given values range, to be used in the docstring generation
             If `None`(default), desc_values will be just `str(values)`
-
+        precision:int or None
+            Number of decimals, used to round the input value if when testing if given element is in the list of allowed values. This should be used only if the `values` are an array of floats or `Quantity`.
+            If `None` (default) no rounding is applied.
             
         If label or description is `None` they are derived from the name, 
         by capitalizing and replacing underscores with spaces.
@@ -122,7 +126,19 @@ class Parameter:
         self.label = label or _default_labels.get(name, name.replace('_',' ').capitalize())
         self.description = description or _default_descriptions.get(name,self.label)
         self.desc_values = desc_values or str(values)
+        self.precision = precision
 
+    def apply_precision(self, value):
+        if self.precision:
+            if hasattr(self.values, 'unit'):
+                #convert unit before 
+                value = value<<self.values.unit 
+            value = np.around(value,decimals=self.precision)
+        return value
+        
+    def __contains__(self, value):    
+        value = self.apply_precision(value)
+        return value in self.values
     def __iter__(self):
         return self.values.__iter__()
     def __len__(self):
@@ -155,7 +171,7 @@ class ParameterSet:
             if not isinstance(val,Parameter):
                 val = Parameter(values=val,name=name)
             self.params[name]=val
-                
+        #fill the valid parameter combinations
         self.combinations = list(it.product(*[list(v) for v in self.params.values()]))
         self.valid_combinations = []
         if param_validator:
@@ -167,30 +183,48 @@ class ParameterSet:
         else:
             self.valid_combinations = self.combinations
         self.valid_combinations_dict = [dict(zip(self.params,p)) for p in self.valid_combinations]
-
-    def fill_default_parameters(self, **user_params)->dict:
+        #fill the default values for fixed parameters
+        self.defaults = {name:p[0] for name,p in self.params.items() if p.fixed}
+            
+    def _fill_default_parameters(self, **user_params)->dict:
         """Set the parameter values if they are missing in 'user_params' and fixed (i.e. have a single option"""
-        for name,p in self.params.items():
-            if(p.fixed):
-                user_params.setdefault(name,p[0])
+        return dict(self.defaults, **user_params)
+
+    def _apply_precision(self, **user_params)->dict:
+        """Check that we have all required parameters in `user_params`.
+        Apply parameter precision and unit conversion for every given parameter"""
+        for name,val in user_params.items():
+            if name in self.params:
+                user_params[name]=self.params[name].apply_precision(val)
         return user_params
-                
-    def validate(self, **user_params):
-        """Check that provided user parameters are valid, i.e. are within the given list values"""
+        
+    def _check_all_parameters_present(self, **user_params):
+        """Check that `user_params` contains all needed parameters, and nothing extra"""
         #check that we have all correct parameters
         for name in user_params:
             if name not in self.params:
                 raise ValueError(f"Unexpected parameter '{name}', allowed parameters are {list(self.params.keys())}")
-            if user_params[name] not in self.params[name]:
-                #check if all the parameters are in allowed ranges
-                raise ValueError(f"Invalid parameter value for '{name}'={user_params[name]}. Allowed values are: {self.params[name].desc_values}")
         for name in self.params:
             if name not in user_params:
                 raise ValueError(f"Missing parameter '{name}'")
+                
+    def _check_parameter_values(self, **user_params):
+        """Check that provided user parameters are valid, i.e. are within the given list values"""
+        for name in user_params:
+            if user_params[name] not in self.params[name]:
+                raise ValueError(f"Invalid parameter value for '{name}'={user_params[name]}. Allowed values are: {self.params[name].desc_values}")
+        #check that parameter combination is valid
         ptuple = tuple([user_params[name] for name in self.params])
         if not ptuple in self.valid_combinations:
             valid_dicts = [dict(zip(self.params.keys(),pars)) for pars in self.valid_combinations]
             raise ValueError(f"Invalid parameters combination: {user_params}")
+            
+    def validate(self, **user_params):
+        """Check that provided user parameters are valid, i.e. are within the given list values"""
+        #check that we have all correct parameters
+        self._check_all_parameters_present(**user_params)
+        user_params = self._apply_precision(**user_params)
+        self._check_parameter_values(**user_params)
 
     def __getitem__(self, name:str):
         return self.params.__getitem__(name)
@@ -283,15 +317,16 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
                 params.apply_defaults()
                 kwargs = params.arguments
                 #select the parameters which correspond to metadata
-                param_kwargs = {name:val for name,val in kwargs.items() if name in self.parameters}
-                param_kwargs = self.parameters.fill_default_parameters(**param_kwargs)
+                arguments = {name:val for name,val in kwargs.items() if name in self.parameters}
+                arguments = self.parameters._fill_default_parameters(**arguments)
+                arguments = self.parameters._apply_precision(**arguments)
                 # validate the input parameters
-                self.parameters.validate(**param_kwargs)
+                self.parameters.validate(**arguments)
                 #Store model metadata
-                self.metadata = {self.parameters[name].label: value for name,value in param_kwargs.items()}
+                self.metadata = {self.parameters[name].label: value for name,value in arguments.items()}
                 #call the constructor with only the needed arguments (the rest are only for metadata)
                 S = inspect.signature(super().__init__)
-                init_params = {name:val for name,val in kwargs.items() if name in S.parameters}
+                init_params = {name:val for name,val in arguments.items() if name in S.parameters}
                 return super().__init__(**init_params)
                 
             @classmethod
@@ -310,7 +345,7 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
         #fill the constructor signature
         c.__init__.__signature__ = inspect.signature(base_class.__init__)
         #If we have "fixed" parameters in ParameterSet, add them to the signature as keyword arguments
-        defaults = c.parameters.fill_default_parameters()
+        defaults = c.parameters.defaults
         _expand_defaults(c.__init__, **defaults)
         
         if not _init_from_filename:
