@@ -7,7 +7,7 @@ from snewpy.flavor_transformation import \
     AdiabaticMSW, NonAdiabaticMSWH, \
     AdiabaticMSWes, NonAdiabaticMSWes, \
     TwoFlavorDecoherence, ThreeFlavorDecoherence, \
-    NeutrinoDecay
+    NeutrinoDecay, QuantumDecoherence
 
 from astropy import units as u
 from astropy import constants as c
@@ -31,6 +31,12 @@ class TestFlavorTransformations(unittest.TestCase):
         self.mass3 = 0.5 * u.eV/c.c**2
         self.lifetime = 1 * u.day
         self.distance = 10 * u.kpc
+
+        # Quantum decoherence parameters; see arXiv:2306.17591.
+        self.gamma3 = (1e-27 * u.eV / (c.hbar * c.c)).to('1/kpc')
+        self.gamma8 = (1e-27 * u.eV / (c.hbar * c.c)).to('1/kpc')
+        self.n = 0
+        self.energy_ref = 10 * u.MeV
 
     def test_noxform(self):
         """
@@ -486,3 +492,127 @@ class TestFlavorTransformations(unittest.TestCase):
         self.assertTrue(np.array_equal(xform.prob_exbar(self.t, self.E), prob_exbar))
         self.assertTrue(np.array_equal(xform.prob_xxbar(self.t, self.E), 1. - 0.5*prob_exbar))
         self.assertEqual(xform.prob_xebar(self.t, self.E), 0.5*(1. - De3))
+
+    def test_quantumdecoherence_nmo(self):
+        """
+        Quantum Decoherence with NMO and new mixing angles 
+        """
+        # Override the default mixing angles.
+        xform = QuantumDecoherence(mix_angles=(self.theta12, self.theta13, self.theta23), Gamma3=self.gamma3 * c.hbar * c.c, Gamma8=self.gamma8 * c.hbar * c.c, dist=self.distance, n=self.n, E0=self.energy_ref, mh=MassHierarchy.NORMAL)
+
+        # Test computation survival and transition probabilities of mass states.
+        _E = 10*u.MeV
+        self.assertTrue(xform.P11(_E) == 1/3 + 1/2 * np.exp(-(self.gamma3 * (_E/self.energy_ref)**self.n + self.gamma8 * (_E/self.energy_ref)**self.n / 3) * self.distance) + 1/6 * np.exp(-self.gamma8 * (_E/self.energy_ref)**self.n * self.distance))
+        self.assertTrue(xform.P21(_E) == 1/3 - 1/2 * np.exp(-(self.gamma3 * (_E/self.energy_ref)**self.n + self.gamma8 * (_E/self.energy_ref)**self.n / 3) * self.distance) + 1/6 * np.exp(-self.gamma8 * (_E/self.energy_ref)**self.n * self.distance))
+        self.assertTrue(xform.P22(_E) == 1/3 + 1/2 * np.exp(-(self.gamma3 * (_E/self.energy_ref)**self.n + self.gamma8 * (_E/self.energy_ref)**self.n / 3) * self.distance) + 1/6 * np.exp(-self.gamma8 * (_E/self.energy_ref)**self.n * self.distance))
+        self.assertTrue(xform.P31(_E) == 1/3 - 1/3 * np.exp(-self.gamma8 * (_E/self.energy_ref)**self.n * self.distance))
+        self.assertTrue(xform.P32(_E) == 1/3 - 1/3 * np.exp(-self.gamma8 * (_E/self.energy_ref)**self.n * self.distance))
+        self.assertAlmostEqual(float(xform.P33(_E)), float(1/3 + 2/3 * np.exp(-self.gamma8 * (_E/self.energy_ref)**self.n * self.distance)), places=12)
+
+        De1 = (cos(self.theta12) * cos(self.theta13))**2
+        De2 = (sin(self.theta12) * cos(self.theta13))**2
+        De3 = sin(self.theta13)**2
+
+        # Check flavor transition probabilities.
+        prob_ee = np.asarray([xform.P31(_E)*De1 + xform.P32(_E)*De2 + xform.P33(_E)*De3 for _E in self.E])
+
+        self.assertTrue(np.array_equal(xform.prob_ee(self.t, self.E), prob_ee))
+        self.assertTrue(np.array_equal(xform.prob_ex(self.t, self.E), 1 - prob_ee))
+        self.assertTrue(np.array_equal(xform.prob_xx(self.t, self.E), 1 - 0.5*(1 - prob_ee)))
+        self.assertTrue(np.array_equal(xform.prob_xe(self.t, self.E), 0.5*(1 - prob_ee)))
+
+        prob_eebar = np.asarray([xform.P11(_E)*De1 + xform.P21(_E)*De2 + xform.P31(_E)*De3 for _E in self.E])
+
+        self.assertTrue(np.array_equal(xform.prob_exbar(self.t, self.E), 1 - prob_eebar))
+        self.assertTrue(np.array_equal(xform.prob_xxbar(self.t, self.E), 1. - 0.5*(1 - prob_eebar)))
+        self.assertTrue(np.array_equal(xform.prob_xebar(self.t, self.E), 0.5*(1. - prob_eebar)))
+
+    def test_quantumdecoherence_nmo_default_mixing(self):
+        """
+        Quantum decoherence with NMO and default mixing angles
+        """
+        # Use default mixing angles defined in the submodule.
+        xform = QuantumDecoherence(Gamma3=self.gamma3 * c.hbar * c.c, Gamma8=self.gamma8 * c.hbar * c.c, dist=self.distance, n=self.n, E0=self.energy_ref)
+
+        # Check transition probabilities (normal hierarchy is default).
+        mixpars = MixingParameters()
+        th12, th13, th23 = mixpars.get_mixing_angles()
+
+        De1 = (cos(th12) * cos(th13))**2
+        De2 = (sin(th12) * cos(th13))**2
+        De3 = sin(th13)**2
+
+        prob_ee = np.asarray([xform.P31(_E)*De1 + xform.P32(_E)*De2 + xform.P33(_E)*De3 for _E in self.E])
+
+        self.assertTrue(np.array_equal(xform.prob_ee(self.t, self.E), prob_ee))
+        self.assertTrue(np.array_equal(xform.prob_ex(self.t, self.E), 1 - prob_ee))
+        self.assertTrue(np.array_equal(xform.prob_xx(self.t, self.E), 1 - 0.5*(1 - prob_ee)))
+        self.assertTrue(np.array_equal(xform.prob_xe(self.t, self.E), 0.5*(1 - prob_ee)))
+
+        prob_eebar = np.asarray([xform.P11(_E)*De1 + xform.P21(_E)*De2 + xform.P31(_E)*De3 for _E in self.E])
+
+        self.assertTrue(np.array_equal(xform.prob_exbar(self.t, self.E), 1 - prob_eebar))
+        self.assertTrue(np.array_equal(xform.prob_xxbar(self.t, self.E), 1. - 0.5*(1 - prob_eebar)))
+        self.assertTrue(np.array_equal(xform.prob_xebar(self.t, self.E), 0.5*(1. - prob_eebar)))
+
+    def test_quantumdecoherence_imo(self):
+        """
+        Quantum Decoherence with IMO and new mixing angles 
+        """
+        # Override the default mixing angles.
+        xform = QuantumDecoherence(mix_angles=(self.theta12, self.theta13, self.theta23), Gamma3=self.gamma3 * c.hbar * c.c, Gamma8=self.gamma8 * c.hbar * c.c, dist=self.distance, n=self.n, E0=self.energy_ref, mh=MassHierarchy.INVERTED)
+
+        # Test computation survival and transition probabilities of mass states.
+        _E = 10*u.MeV
+        self.assertTrue(xform.P11(_E) == 1/3 + 1/2 * np.exp(-(self.gamma3 * (_E/self.energy_ref)**self.n + self.gamma8 * (_E/self.energy_ref)**self.n / 3) * self.distance) + 1/6 * np.exp(-self.gamma8 * (_E/self.energy_ref)**self.n * self.distance))
+        self.assertTrue(xform.P21(_E) == 1/3 - 1/2 * np.exp(-(self.gamma3 * (_E/self.energy_ref)**self.n + self.gamma8 * (_E/self.energy_ref)**self.n / 3) * self.distance) + 1/6 * np.exp(-self.gamma8 * (_E/self.energy_ref)**self.n * self.distance))
+        self.assertTrue(xform.P22(_E) == 1/3 + 1/2 * np.exp(-(self.gamma3 * (_E/self.energy_ref)**self.n + self.gamma8 * (_E/self.energy_ref)**self.n / 3) * self.distance) + 1/6 * np.exp(-self.gamma8 * (_E/self.energy_ref)**self.n * self.distance))
+        self.assertTrue(xform.P31(_E) == 1/3 - 1/3 * np.exp(-self.gamma8 * (_E/self.energy_ref)**self.n * self.distance))
+        self.assertTrue(xform.P32(_E) == 1/3 - 1/3 * np.exp(-self.gamma8 * (_E/self.energy_ref)**self.n * self.distance))
+        self.assertAlmostEqual(float(xform.P33(_E)), float(1/3 + 2/3 * np.exp(-self.gamma8 * (_E/self.energy_ref)**self.n * self.distance)), places=12)
+
+        De1 = (cos(self.theta12) * cos(self.theta13))**2
+        De2 = (sin(self.theta12) * cos(self.theta13))**2
+        De3 = sin(self.theta13)**2
+
+        # Check transition probabilities.
+        prob_ee = np.asarray([xform.P22(_E)*De2 + xform.P21(_E)*De1 + xform.P32(_E)*De3 for _E in self.E])
+
+        self.assertTrue(np.array_equal(xform.prob_ee(self.t, self.E), prob_ee))
+        self.assertTrue(np.array_equal(xform.prob_ex(self.t, self.E), 1 - prob_ee))
+        self.assertTrue(np.array_equal(xform.prob_xx(self.t, self.E), 1 - 0.5*(1 - prob_ee)))
+        self.assertTrue(np.array_equal(xform.prob_xe(self.t, self.E), 0.5*(1 - prob_ee)))
+
+        prob_eebar = np.asarray([xform.P31(_E)*De1 + xform.P32(_E)*De2 + xform.P33(_E)*De3 for _E in self.E])
+
+        self.assertTrue(np.array_equal(xform.prob_exbar(self.t, self.E), 1 - prob_eebar))
+        self.assertTrue(np.array_equal(xform.prob_xxbar(self.t, self.E), 1. - 0.5*(1 - prob_eebar)))
+        self.assertTrue(np.array_equal(xform.prob_xebar(self.t, self.E), 0.5*(1. - prob_eebar)))
+
+    def test_quantumdecoherence_imo_default_mixing(self):
+        """
+        Quantum decoherence with IMO and default mixing angles
+        """
+        # Use default mixing angles defined in the submodule.
+        xform = QuantumDecoherence(Gamma3=self.gamma3 * c.hbar * c.c, Gamma8=self.gamma8 * c.hbar * c.c, dist=self.distance, n=self.n, E0=self.energy_ref, mh=MassHierarchy.INVERTED)
+
+        # Check transition probabilities.
+        mixpars = MixingParameters(MassHierarchy.INVERTED)
+        th12, th13, th23 = mixpars.get_mixing_angles()
+
+        De1 = (cos(th12) * cos(th13))**2
+        De2 = (sin(th12) * cos(th13))**2
+        De3 = sin(th13)**2
+
+        prob_ee = np.asarray([xform.P22(_E)*De2 + xform.P21(_E)*De1 + xform.P32(_E)*De3 for _E in self.E])
+
+        self.assertTrue(np.array_equal(xform.prob_ee(self.t, self.E), prob_ee))
+        self.assertTrue(np.array_equal(xform.prob_ex(self.t, self.E), 1 - prob_ee))
+        self.assertTrue(np.array_equal(xform.prob_xx(self.t, self.E), 1 - 0.5*(1 - prob_ee)))
+        self.assertTrue(np.array_equal(xform.prob_xe(self.t, self.E), 0.5*(1 - prob_ee)))
+
+        prob_eebar = np.asarray([xform.P31(_E)*De1 + xform.P32(_E)*De2 + xform.P33(_E)*De3 for _E in self.E])
+
+        self.assertTrue(np.array_equal(xform.prob_exbar(self.t, self.E), 1 - prob_eebar))
+        self.assertTrue(np.array_equal(xform.prob_xxbar(self.t, self.E), 1. - 0.5*(1 - prob_eebar)))
+        self.assertTrue(np.array_equal(xform.prob_xebar(self.t, self.E), 0.5*(1. - prob_eebar)))

@@ -228,5 +228,5 @@ parameter_presets = {
 }
    
 
-def MixingParameters(mass_order:MassHierarchy=MassHierarchy.NORMAL, version:str='NuFIT5.0'):
-    return parameter_presets[version][mass_order]
+def MixingParameters(mh:MassHierarchy=MassHierarchy.NORMAL, version:str='NuFIT5.0'):
+    return parameter_presets[version][mh]
