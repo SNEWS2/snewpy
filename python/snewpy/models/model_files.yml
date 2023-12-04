@@ -4,9 +4,7 @@
 
 config:
     - &snewpy "https://github.com/SNEWS2/snewpy/raw/v{snewpy_version}/models/{model}/{filename}"
-    - &ccsnmodels "https://github.com/SNEWS2/snewpy-models-ccsn/raw/main/models/{model}/{filename}"
-    - &ccsn_repository "https://github.com/SNEWS2/snewpy-models-ccsn/raw/v0.1a/models/{model}/{filename}"
-
+    - &ccsn_repository "https://github.com/SNEWS2/snewpy-models-ccsn/raw/v0.2/models/{model}/{filename}"
 models:
 
     Bollig_2016:
@@ -19,7 +17,7 @@ models:
         repository: *ccsn_repository
 
     Fornax_2022: 
-        repository: *ccsnmodels
+        repository: *ccsn_repository
 
     Kuroda_2020: 
         repository: *ccsn_repository
@@ -52,5 +50,5 @@ models:
         repository: *ccsn_repository
 
     Mori_2023: 
-        repository: *ccsnmodels
+        repository: *ccsn_repository
 
