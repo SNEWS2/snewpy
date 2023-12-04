@@ -4,52 +4,51 @@
 
 config:
     - &snewpy "https://github.com/SNEWS2/snewpy/raw/v{snewpy_version}/models/{model}/{filename}"
-    - &ccsnmodels "https://github.com/SNEWS2/snewpy-models-ccsn/raw/main/models/{model}/{filename}"
-
+    - &ccsn_repository "https://github.com/SNEWS2/snewpy-models-ccsn/raw/v0.2/models/{model}/{filename}"
 models:
 
     Bollig_2016:
-        repository: *snewpy
+        repository: *ccsn_repository
 
     Fornax_2019: 
-        repository: *snewpy
+        repository: *ccsn_repository
 
     Fornax_2021: 
-        repository: *snewpy
+        repository: *ccsn_repository
 
     Fornax_2022: 
-        repository: *ccsnmodels
+        repository: *ccsn_repository
 
     Kuroda_2020: 
-        repository: *snewpy
+        repository: *ccsn_repository
 
     Nakazato_2013: 
-        repository: *snewpy
+        repository: *ccsn_repository
 
     OConnor_2013: 
-        repository: *snewpy
+        repository: *ccsn_repository
 
     OConnor_2015: 
-        repository: *snewpy
+        repository: *ccsn_repository
  
     Sukhbold_2015: 
-        repository: *snewpy
+        repository: *ccsn_repository
  
     Tamborra_2014: 
-        repository: *snewpy
+        repository: *ccsn_repository
  
     Walk_2018: 
-        repository: *snewpy
+        repository: *ccsn_repository
  
     Walk_2019: 
-        repository: *snewpy
+        repository: *ccsn_repository
 
     Warren_2020:
-        repository: *snewpy
+        repository: *ccsn_repository
 
     Zha_2021: 
-        repository: *snewpy
+        repository: *ccsn_repository
 
     Mori_2023: 
-        repository: *ccsnmodels
+        repository: *ccsn_repository
 
