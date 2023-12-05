@@ -20,7 +20,7 @@ class TestSimpleRate(unittest.TestCase):
         transformation = 'AdiabaticMSW_NMO' # Desired flavor transformation
 
         # Construct file system path of model file and name of output file
-        model_file_path = os.path.join(model_path,modeltype,model)
+        model_file_path = f'{model_path}/{modeltype}/{model}'
         outfile = f'{modeltype}_{model}_{transformation}'
 
         # Now, do the main work:
