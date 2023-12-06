@@ -300,14 +300,6 @@ def RegistryModel(_param_validator=None, **params):
     def _wrap(base_class):
         class c(base_class):
             parameters:ParameterSet = pset
-            _doc_params_ = {
-                'Other parameters': pset.generate_docstring(base_class.__init__, **base_class.__init__.__annotations__),
-                'Raises':"""
-                FileNotFoundError
-                    If a file for the chosen model parameters cannot be found
-                ValueError
-                    If a combination of parameters is invalid when loading from parameters"""
-            }
             @classmethod
             def _generate_docstring(cls)->str:
                 docstring = dedent(base_class.__init__.__doc__ or '')
@@ -343,33 +335,42 @@ def RegistryModel(_param_validator=None, **params):
                 return cls.parameters.valid_combinations_dict
             
             param = {name: p.values for name, p in parameters.items()}
-        #generate the docstring
-        c.__doc__ = base_class.__doc__
-        c.__init__.__doc__ = c._generate_docstring()
         #fill the constructor signature
         c.__init__.__signature__ = inspect.signature(base_class.__init__)
         #If we have "fixed" parameters in ParameterSet, add them to the signature as keyword arguments
         defaults = c.parameters.defaults
         _expand_defaults(c.__init__, **defaults)
-        
+        #generate the docstring
+        c._doc_params_ = {
+                'Other parameters': pset.generate_docstring(c.__init__, **c.__init__.__annotations__),
+                'Raises':"""
+                FileNotFoundError
+                    If a file for the chosen model parameters cannot be found
+                ValueError
+                    If a combination of parameters is invalid when loading from parameters"""
+            }
+        c.__doc__ = base_class.__doc__
+        c.__init__.__doc__ = c._generate_docstring()
         #fill the class and module name to be the same as in class
         c.__qualname__ = base_class.__qualname__
         c.__name__ = base_class.__name__
         c.__module__ = base_class.__module__
         return c
-    return _wrap    
+    return _wrap
 
 
 def legacy_filename_initialization(c):
     """Wrap the model class, adding a filename argument in the init"""
     class c1(c):
+        _loader_class = c.__mro__[2] #store the loader class for later use
+
         @deprecated('filename')
         def __init__(self, filename:str=None, *args, **kwargs):
             if filename is not None:
                 self.metadata = {}
                 if hasattr(self,'_metadata_from_filename'):
                     self.metadata = self._metadata_from_filename(filename)
-                super(base_class, self).__init__(filename=os.path.abspath(filename), metadata=self.metadata)
+                self._loader_class.__init__(self, filename=os.path.abspath(filename), metadata=self.metadata)
             else:
                 super().__init__(*args, **kwargs)
 
