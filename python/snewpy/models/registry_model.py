@@ -318,14 +318,12 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
                     docstring+='\n'+s+'\n'
                 return docstring
                 
-            def __init__(self, **kwargs):
+            def __init__(self, *args, **kwargs):
                 # enforce the default parameters
-                S = inspect.signature(self.__init__)
-                params = S.bind(**kwargs)
+                params = inspect.signature(self.__init__).bind(*args, **kwargs)
                 params.apply_defaults()
-                kwargs = params.arguments
                 #select the parameters which correspond to metadata
-                arguments = {name:val for name,val in kwargs.items() if name in self.parameters}
+                arguments = {name:val for name,val in params.arguments.items() if name in self.parameters}
                 arguments = self.parameters._fill_default_parameters(**arguments)
                 arguments = self.parameters._apply_precision(**arguments)
                 # validate the input parameters
@@ -365,14 +363,14 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
 
         class c1(c):
             @deprecated('filename')
-            def __init__(self, filename:str=None, **kwargs):
+            def __init__(self, filename:str=None, *args, **kwargs):
                 if filename is not None:
                     self.metadata = {}
                     if hasattr(self,'_metadata_from_filename'):
                         self.metadata = self._metadata_from_filename(filename)
                     super(base_class, self).__init__(filename=os.path.abspath(filename), metadata=self.metadata)
                 else:
-                    super().__init__(**kwargs)
+                    super().__init__(*args, **kwargs)
 
         #generate the docstring
         c1.__doc__ = c.__doc__            
@@ -382,8 +380,12 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
         S = inspect.signature(c)
         S1 = inspect.signature(c1.__init__)
         #set default values to None if they are not set
-        kw_params = [p.replace(kind=inspect.Parameter.KEYWORD_ONLY) for name,p in S.parameters.items()]
-        params = [S1.parameters['self'],S1.parameters['filename'],*kw_params]
+        other_params = []
+        for p in S.parameters.values():
+            if p.default==p.empty:
+                p = p.replace(default=None)
+            other_params+=[p]
+        params = [S1.parameters['self'],S1.parameters['filename'],*other_params]
         #fill the constructor signature
         c1.__init__.__signature__ = S.replace(parameters=params)
         #fill the class and module name to be the same as in class
