@@ -39,7 +39,9 @@ from astropy.table import Table
 from snewpy.models import loaders
 from .base import PinchedModel
 
-from snewpy.models.registry_model import RegistryModel, Parameter, deprecated, legacy_filename_initialization
+from snewpy.models.registry_model import RegistryModel, Parameter
+from snewpy.models.registry_model import deprecated, legacy_filename_initialization
+from textwrap import dedent
 
 class Analytic3Species(PinchedModel):
     """An analytical model calculating spectra given total luminosity,
@@ -178,7 +180,6 @@ class Walk_2018(loaders.Walk_2018):
     PRD 98:123001, 2018 <https://arxiv.org/abs/1807.02366>`_. Data files are from
     the `Garching Supernova Archive`_.
     """
-    @deprecated('eos')
     def __init__(self, *, progenitor_mass:u.Quantity, rotation:str, direction:int):
         
         filename = f's{progenitor_mass.value:3.1f}c_3D_{rotation}rot_dir{direction}'
@@ -202,6 +203,7 @@ class Walk_2019(loaders.Walk_2019):
         filename = f's{progenitor_mass.value:3.1f}c_3DBH_dir{direction}'
         return super().__init__(filename=filename, metadata=self.metadata)
 
+
 @RegistryModel(
     progenitor_mass = Parameter(values=(list(range(12, 34)) +
                                  list(range(35, 61, 5)) +
@@ -210,31 +212,34 @@ class Walk_2019(loaders.Walk_2019):
                                ),
     eos = ['HShen', 'LS220']
 )
-class OConnor_2013(loaders.OConnor_2013):
+class _OConnor_2013_new(loaders.OConnor_2013):
     """Model based on the black hole formation simulation in `O'Connor & Ott (2013) <https://arxiv.org/abs/1207.1100>`_.
-    """
-    @deprecated('base', 'mass', message="Argument {name} is deprecated. To initialize this model, use keyword arguments")
-    def __init__(self, base=None, mass=15, *, eos:str='LS220', progenitor_mass:u.Quantity=None):
+    """    
+    def __init__(self, eos:str, progenitor_mass:u.Quantity):
+        # Load from Parameters
+        filename = f'{eos}_timeseries.tar.gz'
+        return super().__init__(filename=filename, metadata=self.metadata)
+
+class OConnor_2013(legacy_filename_initialization(_OConnor_2013_new)):
+    @deprecated('base', 'mass')
+    def __init__(self, base=None, mass=None, eos='LS220', *, progenitor_mass=None):
         """
-        Model Initialization.
-        
         Parameters
-        ---------------------
+        ----------
         base : str
             Absolute or relative path folder with model data. This argument is deprecated.
         mass: int
             Mass of model progenitor in units Msun. This argument is deprecated.
         """
-        # TODO: (For v2.0) Change `base` to filename, move compressed model files to OConnor_2013 model folder
-        # TODO (For V2.0) Remove `mass`
-        self.metadata.setdefault('Progenitor mass', mass*u.Msun)
-        if base is not None:
-            filename = os.path.join(base, f"{eos}_timeseries.tar.gz")
-            return super().__init__(os.path.abspath(filename), self.metadata)
-        # Load from Parameters
-        filename = f'{eos}_timeseries.tar.gz'
-        return super().__init__(filename=filename, metadata=self.metadata)
+        if mass:
+            progenitor_mass = mass*u.Msun
+        self.metadata = {'Progenitor mass':progenitor_mass}
+        if(base):
+            return super().__init__(filename=base, eos=eos, progenitor_mass=progenitor_mass)
 
+OConnor_2013.__init__.__doc__=dedent(OConnor_2013.__init__.__doc__)+_OConnor_2013_new.__init__.__doc__
+
+@deprecated('eos')
 @legacy_filename_initialization
 @RegistryModel(
     progenitor_mass = [40 * u.Msun],
@@ -248,6 +253,7 @@ class OConnor_2015(loaders.OConnor_2015):
         filename = 'M1_neutrinos.dat'
         return super().__init__(filename, self.metadata)
 
+@deprecated('eos')
 @legacy_filename_initialization
 @RegistryModel(
     progenitor_mass = Parameter(values=(list(range(16, 27)) + [19.89, 22.39, 30, 33]) * u.Msun,
@@ -265,6 +271,8 @@ class Zha_2021(loaders.Zha_2021):
     def __init__(self, *, progenitor_mass:u.Quantity):
         filename = f's{progenitor_mass.value:g}.dat'
         return super().__init__(filename, self.metadata)
+
+@deprecated('eos')
 @legacy_filename_initialization
 @RegistryModel(
     progenitor_mass=Parameter(np.concatenate((np.linspace(9.0, 12.75, 16),
@@ -303,6 +311,7 @@ class Warren_2020(loaders.Warren_2020):
                                  f'stir_multimessenger_a{turbmixing_param:3.2f}_m{progenitor_mass.value:g}.h5')
         return super().__init__(fname, self.metadata)
 
+@deprecated('eos','mass')
 @legacy_filename_initialization
 @RegistryModel(
     rotational_velocity= [0, 1] * u.rad / u.s,
@@ -327,7 +336,6 @@ class Kuroda_2020(loaders.Kuroda_2020):
         }
         return metadata
 
-    @deprecated('eos','mass')
     def __init__(self, mass=None, *, rotational_velocity, magnetic_field_exponent):
         filename = f'LnuR{int(rotational_velocity.value):1d}0B{int(magnetic_field_exponent):02d}.dat'
         return super().__init__(filename, self.metadata)
@@ -346,12 +354,9 @@ class Fornax_2019(loaders.Fornax_2019):
         return metadata
         
     def __init__(self, cache_flux=False, *, progenitor_mass):
-        """Model Initialization.
-
+        """
         Parameters
         ----------
-        filename : str
-            Absolute or relative path to file with model data. This argument is deprecated.
         cache_flux : bool
             If true, pre-compute the flux on a fixed angular grid and store the values in a FITS file.
         """
