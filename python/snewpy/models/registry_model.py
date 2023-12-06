@@ -259,7 +259,7 @@ class ParameterSet:
             s+=[f'{name}: {type_name}\n    {p.description}. Valid values are: {p.desc_values}.']
         return '\n'.join(s)
     
-def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
+def RegistryModel(_param_validator=None, **params):
     """A class decorator for defining the supernova model, that initializes from physics parameters.
     
     Parameters
@@ -269,8 +269,6 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
     _param_validator:callable or None
         A function of user parameters (dict), returning true if the passed user parameters are valid.
         If `None` (default) - all the combinations are allowed
-    _init_from_filename:bool
-        If `True`(default), adds the deprecated initialization from the filename (for the backward compatibility)
 
     Returns
     -------
@@ -307,7 +305,7 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
                 'Raises':"""
                 FileNotFoundError
                     If a file for the chosen model parameters cannot be found
-                ValueError:
+                ValueError
                     If a combination of parameters is invalid when loading from parameters"""
             }
             @classmethod
@@ -354,44 +352,47 @@ def RegistryModel(_init_from_filename=True, _param_validator=None, **params):
         defaults = c.parameters.defaults
         _expand_defaults(c.__init__, **defaults)
         
-        if not _init_from_filename:
-            #fill the class and module name to be the same as in class
-            c.__qualname__ = base_class.__qualname__
-            c.__name__ = base_class.__name__
-            c.__module__ = base_class.__module__
-            return c
-
-        class c1(c):
-            @deprecated('filename')
-            def __init__(self, filename:str=None, *args, **kwargs):
-                if filename is not None:
-                    self.metadata = {}
-                    if hasattr(self,'_metadata_from_filename'):
-                        self.metadata = self._metadata_from_filename(filename)
-                    super(base_class, self).__init__(filename=os.path.abspath(filename), metadata=self.metadata)
-                else:
-                    super().__init__(*args, **kwargs)
-
-        #generate the docstring
-        c1.__doc__ = c.__doc__            
-        c1._doc_params_ = {'Parameters':"""filename: str\n    Absolute or relative path to the file with model data. This argument is deprecated.""", **c._doc_params_}
-        c1.__init__.__doc__ = c1._generate_docstring()
-        #update the call signature
-        S = inspect.signature(c)
-        S1 = inspect.signature(c1.__init__)
-        #set default values to None if they are not set
-        other_params = []
-        for p in S.parameters.values():
-            if p.default==p.empty:
-                p = p.replace(default=None)
-            other_params+=[p]
-        params = [S1.parameters['self'],S1.parameters['filename'],*other_params]
-        #fill the constructor signature
-        c1.__init__.__signature__ = S.replace(parameters=params)
         #fill the class and module name to be the same as in class
-        c1.__qualname__ = base_class.__qualname__
-        c1.__name__ = base_class.__name__
-        c1.__module__ = base_class.__module__
-        return c1
-        
+        c.__qualname__ = base_class.__qualname__
+        c.__name__ = base_class.__name__
+        c.__module__ = base_class.__module__
+        return c
     return _wrap    
+
+
+def legacy_filename_initialization(c):
+    """Wrap the model class, adding a filename argument in the init"""
+    class c1(c):
+        @deprecated('filename')
+        def __init__(self, filename:str=None, *args, **kwargs):
+            if filename is not None:
+                self.metadata = {}
+                if hasattr(self,'_metadata_from_filename'):
+                    self.metadata = self._metadata_from_filename(filename)
+                super(base_class, self).__init__(filename=os.path.abspath(filename), metadata=self.metadata)
+            else:
+                super().__init__(*args, **kwargs)
+
+    #generate the docstring
+    c1.__doc__ = c.__doc__
+    c1._doc_params_ = {'Parameters':
+                       """filename: str\n    Absolute or relative path to the file with model data. This argument is deprecated.""",
+                       **c._doc_params_}
+    c1.__init__.__doc__ = c1._generate_docstring()
+    #update the call signature
+    S = inspect.signature(c)
+    S1 = inspect.signature(c1.__init__)
+    #set default values to None if they are not set
+    other_params = []
+    for p in S.parameters.values():
+        if p.default==p.empty:
+            p = p.replace(default=None)
+        other_params+=[p]
+    params = [S1.parameters['self'],S1.parameters['filename'],*other_params]
+    #fill the constructor signature
+    c1.__init__.__signature__ = S.replace(parameters=params)
+    #fill the class and module name to be the same as in class
+    c1.__qualname__ = c.__qualname__
+    c1.__name__ = c.__name__
+    c1.__module__ = c.__module__
+    return c1
