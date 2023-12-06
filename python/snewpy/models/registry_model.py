@@ -16,6 +16,7 @@ import os
 from textwrap import dedent
 from warnings import warn
 import numpy as np
+import re
 
 def deprecated(*names, message='Agrument `{name}` is deprecated'):
     """A function decorator to issue a deprecation warning if a given argument is provided in the wrapped function call.
@@ -50,7 +51,53 @@ def deprecated(*names, message='Agrument `{name}` is deprecated'):
             return func(*args,**kwargs)
         return _wrapper
     return _f
-
+    
+def map_arguments(**names_dict):
+    """map function arguments to create a function with new signature,
+    and with updated docstring
+    
+    Parameters
+    ----------
+    names_dict: dict
+        Argument names in format {old_name:new_name}
+    
+    Examples
+    --------
+    >>> @map_arguments(bar='BAR')
+    >>> def foo(bar, baz):
+    >>>     print(f'bar={bar} baz={baz}')
+    >>>
+    >>> foo(BAR=123, baz=10) 
+    >>> #bar=123 baz=10
+    """
+    def _wrapper(func):
+        S = inspect.signature(func) #old signature
+        old2new = names_dict
+        new2old = {v:k for k,v in old2new.items()}
+        
+        @wraps(func)
+        def func_new(*args, **kwargs):
+            params = S1.bind(*args,**kwargs)
+            kwargs_old = params.kwargs
+            kwargs_new = {new2old.get(name,name):val for name,val in kwargs_old.items()}
+            return func(*params.args,**kwargs_new)
+            
+        #update signature
+        S1 = S.replace(parameters=[
+            p.replace(name=old2new.get(p.name,p.name)) for p in S.parameters.values()
+            ])
+        func_new.__signature__=S1
+        #update the docstring
+        def _update_docs(docs):
+            for name_old,name_new in old2new.items():
+                docs = re.sub(rf'\n{name_old}([\s:].*\n)',rf'\n{name_new}\g<1>',docs)
+            return docs
+        func_new.__doc__ = _update_docs(func.__doc__)
+        if(hasattr(func_new,'__init__')):
+            func_new.__init__.__doc__ = _update_docs(func.__init__.__doc__)
+        return func_new
+    return _wrapper
+    
 def _expand_defaults(func, **defaults):
     """Update the signature of the given function with the parameters with default values.
     Examples
@@ -367,9 +414,19 @@ def legacy_filename_initialization(c):
         @deprecated('filename')
         def __init__(self, filename:str=None, *args, **kwargs):
             if filename is not None:
-                self.metadata = {}
+                # enforce the default parameters
+                params = inspect.signature(self.__init__).bind(*args, **kwargs)
+                params.apply_defaults()
+                #select the parameters which correspond to metadata
+                arguments = {name:val for name,val in params.arguments.items() if name in self.parameters}
+                arguments = self.parameters._fill_default_parameters(**arguments)
+                arguments = self.parameters._apply_precision(**arguments)
+                # validate the input parameters
+                self.parameters.validate(**arguments)
+                #Store model metadata
+                self.metadata = {self.parameters[name].label: value for name,value in arguments.items()}
                 if hasattr(self,'_metadata_from_filename'):
-                    self.metadata = self._metadata_from_filename(filename)
+                    self.metadata.update(*self._metadata_from_filename(filename))
                 self._loader_class.__init__(self, filename=os.path.abspath(filename), metadata=self.metadata)
             else:
                 super().__init__(*args, **kwargs)
