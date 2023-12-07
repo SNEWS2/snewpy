@@ -233,7 +233,8 @@ class OConnor_2013(legacy_filename_initialization(_OConnor_2013_new)):
         """
         if mass:
             progenitor_mass = mass*u.Msun
-        self.metadata = {'Progenitor mass':progenitor_mass}
+        self.metadata = {'Progenitor mass':progenitor_mass,
+                         'EOS':eos}
         if(base):
             return super().__init__(filename=base, eos=eos, progenitor_mass=progenitor_mass)
 
