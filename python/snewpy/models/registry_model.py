@@ -18,6 +18,18 @@ from warnings import warn
 import numpy as np
 import re
 
+def _can_decorate_class_or_func(func_decorator):
+    """make the function decorator act as class decorator:
+    if decorated object is a class, wrap its "__init__" function.
+    """
+    def _wrapper(obj):
+        if inspect.isclass(obj):
+            obj.__init__=func_decorator(obj.__init__)
+            return obj
+        else:
+            return func_decorator(obj)
+    return _wrapper
+            
 def deprecated(*names, message='Agrument `{name}` is deprecated'):
     """A function decorator to issue a deprecation warning if a given argument is provided in the wrapped function call.
     
@@ -38,20 +50,21 @@ def deprecated(*names, message='Agrument `{name}` is deprecated'):
     #calling test_function(foo=1, baz=3) will issue a deprecation warning:
     #    DeprecationWarning: Argument `foo` is deprecated and will be removed in SNEWPYv2.0!
     """
-    def _f(func):
+    @_can_decorate_class_or_func
+    def _wrapper(func):
         #get function signature
         S = inspect.signature(func)
         @wraps(func)
-        def _wrapper(*args, **kwargs):
+        def _f(*args, **kwargs):
             #bind signature to find all the parameters
             params = S.bind(*args,**kwargs)
             for name in names:
                 if name in params.arguments:
-                    warn(message.format(name=name), category=DeprecationWarning, stacklevel=2)
+                    warn(message.format(name=name), category=UserWarning, stacklevel=2)
             return func(*args,**kwargs)
-        return _wrapper
-    return _f
-    
+        return _f
+    return _wrapper
+
 def map_arguments(**names_dict):
     """map function arguments to create a function with new signature,
     and with updated docstring
@@ -189,7 +202,7 @@ class Parameter:
             value = np.around(value,decimals=self.precision)
         return value
         
-    def __contains__(self, value):    
+    def __contains__(self, value):
         value = self.apply_precision(value)
         return value in self.values
     def __iter__(self):
@@ -405,13 +418,13 @@ def RegistryModel(_param_validator=None, **params):
         return c
     return _wrap
 
-
 def legacy_filename_initialization(c):
     """Wrap the model class, adding a filename argument in the init"""
+    
+    @deprecated('filename')
     class c1(c):
         _loader_class = c.__mro__[2] #store the loader class for later use
 
-        @deprecated('filename')
         def __init__(self, filename:str=None, *args, **kwargs):
             if filename is not None:
                 if not hasattr(self,'metadata'):
