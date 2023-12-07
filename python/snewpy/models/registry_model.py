@@ -414,17 +414,8 @@ def legacy_filename_initialization(c):
         @deprecated('filename')
         def __init__(self, filename:str=None, *args, **kwargs):
             if filename is not None:
-                # enforce the default parameters
-                params = inspect.signature(self.__init__).bind(*args, **kwargs)
-                params.apply_defaults()
-                #select the parameters which correspond to metadata
-                arguments = {name:val for name,val in params.arguments.items() if name in self.parameters}
-                arguments = self.parameters._fill_default_parameters(**arguments)
-                arguments = self.parameters._apply_precision(**arguments)
-                # validate the input parameters
-                self.parameters.validate(**arguments)
-                #Store model metadata
-                self.metadata = {self.parameters[name].label: value for name,value in arguments.items()}
+                if not hasattr(self,'metadata'):
+                    self.metadata = {}
                 if hasattr(self,'_metadata_from_filename'):
                     self.metadata.update(*self._metadata_from_filename(filename))
                 self._loader_class.__init__(self, filename=os.path.abspath(filename), metadata=self.metadata)
