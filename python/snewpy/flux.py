@@ -294,12 +294,13 @@ class _ContainerBase:
         return Axes.get(axis) not in self._integrable_axes
     
     def __rmul__(self, factor):
-        "multiply array by givem factor or matrix"
+        "multiply array by given factor or matrix"
         return self.__mul__(factor)
 
     def __mul__(self, factor) -> 'Container':
-        "multiply array by givem factor or matrix"
-        #if not (np.isscalar(factor)):
+        "multiply array by given factor or matrix"
+        if not (np.isscalar(factor) or isinstance(factor, np.ndarray)):
+            return NotImplemented
         #    raise ValueError("Factor should be a scalar value")
         array = self.array*factor
         axes = list(self.axes)
