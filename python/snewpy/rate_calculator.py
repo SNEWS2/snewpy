@@ -138,6 +138,10 @@ class FunctionOfEnergy:
         if not f.can_integrate('energy'): #we have bins, let's use central values for sampling
             e = center(f.energy)
         return f*self.value(e)
+    def __rmul__(self, f:Container)->Container:
+        #same as multiplication from the left
+        return self.__mul__(f)
+        
     def __call__(self, energy):
         return self.value(energy)
         
@@ -223,9 +227,6 @@ class DetectionChannel:
             if self.smearing is not None:
                 rate = self.smearing.apply(rate)
         if apply_efficiency:
-            if isinstance(self.efficiency, FunctionOfEnergy):
-                rate = self.efficiency * rate
-            else:
                 rate = rate*self.efficiency
         return rate
         
