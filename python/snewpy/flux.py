@@ -268,7 +268,10 @@ class _ContainerBase:
         #limits = limits.clip(xmin,xmax)
         #compute the integral
         yc = cumulative_trapezoid(self.array, x=ax, axis=axis, initial=0)
-        _integral = interp1d(x=ax, y=yc, fill_value='extrapolate', axis=axis, bounds_error=False)
+        #get first and last value to use as the fill values
+        yc_limits = (yc.take(0,axis=axis), yc.take(-1,axis=axis)) 
+        #this will make the _intergal constant if it gets out of bounds, i.e. effectively the flux 
+        _integral = interp1d(x=ax, y=yc, fill_value=yc_limits, axis=axis, bounds_error=False)
         array = np.diff(_integral(limits),axis=axis) << (self.array.unit*ax.unit)
         axes = list(self.axes)
         axes[axis] = limits
