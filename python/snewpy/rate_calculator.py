@@ -155,7 +155,7 @@ class DetectionChannel:
         ----------
         name:str
             channel name
-        flavor:Flavor or list[Flavor]
+        flavor:Flavor
             flavor of the interacting neutrino
         xsec:callable or FunctionOfEnergy
             crossection as a function of energy
