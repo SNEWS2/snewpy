@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 from astropy import units as u
-from snewpy.model.base import SupernovaModel
+from snewpy.models.base import SupernovaModel
 from snewpy.neutrino import Flavor
 from pathlib import Path
 
@@ -135,7 +135,6 @@ class Kato_2017(SupernovaModel):
         self.interpolated = _interp_TE(
             times, energies, self.array, ax_t=1, ax_e=2
         )
-        if(self.metadata is 
         self.filename = Path(path).stem
         self.progenitor_mass = float(self.filename.strip('m')) * u.Msun
         metadata = {'Progenitor Mass': self.progenitor_mass}
