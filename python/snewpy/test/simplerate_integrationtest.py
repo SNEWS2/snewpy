@@ -5,6 +5,15 @@ import unittest
 from snewpy import snowglobes
 from snewpy import model_path 
 
+from snewpy.models import ccsn
+import astropy.units as u
+
+def preload_model(name:str, **parameters):
+    #initialize the model with given name and parameters
+    model = ccsn.__dict__[name](**parameters)
+    return model
+
+
 class TestSimpleRate(unittest.TestCase):
 
     def test_simplerate(self):
@@ -23,6 +32,9 @@ class TestSimpleRate(unittest.TestCase):
         model_file_path = f'{model_path}/{modeltype}/{model}'
         outfile = f'{modeltype}_{model}_{transformation}'
 
+        #make sure the model files are loaded
+        preload_model(modeltype, progenitor_mass=11.2*u.Msun)
+        
         # Now, do the main work:
         print("Generating fluence files ...")
         tarredfile = snowglobes.generate_fluence(model_file_path, modeltype, transformation, distance, outfile)
