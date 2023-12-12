@@ -221,6 +221,8 @@ class _OConnor_2013_new(loaders.OConnor_2013):
         return super().__init__(filename=filename, metadata=self.metadata)
 
 class OConnor_2013(legacy_filename_initialization(_OConnor_2013_new)):
+    _config_path='ccsn.OConnor_2013'
+    
     @deprecated('base', 'mass')
     def __init__(self, base=None, mass=None, eos='LS220', *, progenitor_mass=None):
         """
