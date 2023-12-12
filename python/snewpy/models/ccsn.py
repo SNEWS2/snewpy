@@ -36,7 +36,7 @@ import numpy as np
 from astropy import units as u
 from astropy.table import Table
 
-from snewpy.models import loaders
+from snewpy.models import ccsn_loaders as loaders
 from .base import PinchedModel
 
 from snewpy.models.registry_model import RegistryModel, Parameter

@@ -1,8 +1,14 @@
+# -*- coding: utf-8 -*-
+"""
+The submodule ``snewpy.models.presn_loaders`` contains classes to load pre-supernova
+models from files stored on disk.
+"""
+
 import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
 from astropy import units as u
-from .base import SupernovaModel
+from snewpy.model.base import SupernovaModel
 from snewpy.neutrino import Flavor
 from pathlib import Path
 
@@ -112,7 +118,7 @@ class Kato_2017(SupernovaModel):
     def __init__(self, path):
         fluxes = {}
         #reading the time steps values:
-        times, step = np.loadtxt(f"{path}/total_nue/lightcurve_nue_all.dat", usecols=[0, 3]).T
+        times, step = np.loadtxt(self.request_file(f"{path}/total_nue/lightcurve_nue_all.dat"), usecols=[0, 3]).T
 
         file_base = {Flavor.NU_E: 'total_nue/spe_all',
                  Flavor.NU_E_BAR:'total_nueb/spe_all',
@@ -122,13 +128,14 @@ class Kato_2017(SupernovaModel):
         for flv,file_base in file_base.items():
             d2NdEdT = []
             for s in step:
-                energies, dNdE = np.loadtxt(f"{path}/{file_base}{s:05.0f}.dat").T
+                energies, dNdE = np.loadtxt(self.request_file(f"{path}/{file_base}{s:05.0f}.dat")).T
                 d2NdEdT += [dNdE]
             fluxes[flv] = np.stack(d2NdEdT)
         self.array = np.stack([fluxes[f] for f in Flavor], axis=0)
         self.interpolated = _interp_TE(
             times, energies, self.array, ax_t=1, ax_e=2
         )
+        if(self.metadata is 
         self.filename = Path(path).stem
         self.progenitor_mass = float(self.filename.strip('m')) * u.Msun
         metadata = {'Progenitor Mass': self.progenitor_mass}

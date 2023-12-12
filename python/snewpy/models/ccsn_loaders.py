@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-The submodule ``snewpy.models.loaders`` contains classes to load core-collapse
+The submodule ``snewpy.models.ccsn_loaders`` contains classes to load core-collapse
 supernova models from files stored on disk.
 """
 
