@@ -30,7 +30,7 @@ def _can_decorate_class_or_func(func_decorator):
             return func_decorator(obj)
     return _wrapper
             
-def deprecated(*names, message='Agrument `{name}` is deprecated'):
+def deprecated(*names, message='Argument `{name}` is deprecated.'):
     """A function decorator to issue a deprecation warning if a given argument is provided in the wrapped function call.
     
     Parameters
