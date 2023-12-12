@@ -5,17 +5,18 @@ from warnings import warn
 
 import numpy as np
 from astropy import units as u
-from astropy.table import Table, join
+from astropy.table import Table
 from astropy.units import UnitTypeError, get_physical_type
 from astropy.units.quantity import Quantity
 from scipy.special import loggamma
-from snewpy import _model_downloader
+from snewpy._model_downloader import LocalFileLoader
 
 from snewpy.neutrino import Flavor
 from snewpy.flavor_transformation import NoTransformation
 from functools import wraps
 
 from snewpy.flux import Flux
+from pathlib import Path
 
 def _wrap_init(init, check):
     @wraps(init)
@@ -23,9 +24,8 @@ def _wrap_init(init, check):
         init(self, *arg, **kwargs)
         check(self)
     return _wrapper
-
-
-class SupernovaModel(ABC):
+    
+class SupernovaModel(ABC, LocalFileLoader):
     """Base class defining an interface to a supernova model."""
 
     def __init_subclass__(cls, **kwargs):
@@ -310,68 +310,3 @@ class PinchedModel(SupernovaModel):
             result = np.squeeze(result)
             initialspectra[flavor] = result
         return initialspectra
-
-
-class _GarchingArchiveModel(PinchedModel):
-    """Subclass that reads models in the format used in the
-    `Garching Supernova Archive <https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/>`_."""
-    def __init__(self, filename, eos='LS220', metadata={}):
-        """Model Initialization.
-
-        Parameters
-        ----------
-        filename : str
-            Absolute or relative path to file with model data, we add nue/nuebar/nux.  This argument will be deprecated.
-        eos: str
-            Equation of state. Valid value is 'LS220'. This argument will be deprecated.
-
-        Other Parameters
-        ----------------
-        progenitor_mass: astropy.units.Quantity
-            Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
-        Raises
-        ------
-        FileNotFoundError
-            If a file for the chosen model parameters cannot be found
-        ValueError
-            If a combination of parameters is invalid when loading from parameters
-        """
-        if not metadata:
-            metadata = {
-                'Progenitor mass': float(os.path.basename(filename).split('s')[1].split('c')[0]) * u.Msun,
-                'EOS': eos,
-            }
-
-        # Read through the several ASCII files for the chosen simulation and
-        # merge the data into one giant table.
-        mergtab = None
-        for flavor in Flavor:
-            _flav = Flavor.NU_X if flavor == Flavor.NU_X_BAR else flavor
-            _sfx = _flav.name.replace('_', '').lower()
-            _filename = '{}_{}_{}'.format(filename, eos, _sfx)
-            _lname = 'L_{}'.format(flavor.name)
-            _ename = 'E_{}'.format(flavor.name)
-            _e2name = 'E2_{}'.format(flavor.name)
-            _aname = 'ALPHA_{}'.format(flavor.name)
-
-            # Open the requested filename using the model downloader.
-            datafile = _model_downloader.get_model_data(self.__class__.__name__, _filename)
-
-            simtab = Table.read(datafile,
-                                names=['TIME', _lname, _ename, _e2name],
-                                format='ascii')
-            simtab['TIME'].unit = 's'
-            simtab[_lname].unit = '1e51 erg/s'
-            simtab[_aname] = (2*simtab[_ename]**2 - simtab[_e2name]) / (simtab[_e2name] - simtab[_ename]**2)
-            simtab[_ename].unit = 'MeV'
-            del simtab[_e2name]
-
-            if mergtab is None:
-                mergtab = simtab
-            else:
-                mergtab = join(mergtab, simtab, keys='TIME', join_type='left')
-                mergtab[_lname].fill_value = 0.
-                mergtab[_ename].fill_value = 0.
-                mergtab[_aname].fill_value = 0.
-        simtab = mergtab.filled()
-        super().__init__(simtab, metadata)
