@@ -4,7 +4,15 @@
 import unittest
 from snewpy import snowglobes
 
+from snewpy.models import ccsn
+import astropy.units as u
+from snewpy import model_path as SNEWPY_model_dir
 
+def preload_model(name:str, **parameters):
+    #initialize the model with given name and parameters
+    model = ccsn.__dict__[name](**parameters)
+    return model
+    
 class TestSimpleRate(unittest.TestCase):
 
     def test_simplerate(self):
@@ -12,14 +20,15 @@ class TestSimpleRate(unittest.TestCase):
         """
         # Hardcoded paths on GitHub Action runner machines
         SNOwGLoBES_path = None
-        SNEWPY_model_dir = "models/"
 
         distance = 10  # Supernova distance in kpc
         detector = "wc100kt30prct" #SNOwGLoBES detector for water Cerenkov
         modeltype = 'Bollig_2016' # Model type from snewpy.models
         model = 's11.2c' # Name of model
         transformation = 'AdiabaticMSW_NMO' # Desired flavor transformation
-
+        
+        #make sure the model files are loaded
+        preload_model(modeltype, progenitor_mass=11.2*u.Msun)
         # Construct file system path of model file and name of output file
         model_path = SNEWPY_model_dir + "/" + modeltype + "/" + model
         outfile = modeltype + "_" + model + "_" + transformation
