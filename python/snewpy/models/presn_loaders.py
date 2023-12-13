@@ -38,9 +38,9 @@ class Odrzywolek_2010(SupernovaModel):
     [A. Odrzywolek and A. Heger, Acta Phys. Polon. B 41 (2010) 1611.]
     """
 
-    def __init__(self, fname):
+    def __init__(self, filename:str):
         df = pd.read_csv(
-            fname,
+            self.request_file(filename),
             delim_whitespace=True,
             skiprows=1,
             usecols=[1,6,7,8],
@@ -56,11 +56,8 @@ class Odrzywolek_2010(SupernovaModel):
             else:
                 # nuX/nuE ratio from Odrzywolek paper: (arXiv:astro-ph/0311012)
                 self.factor[f] = 0.36
-        self.filename = Path(fname).stem
-        self.progenitor_mass = float(self.filename.split('_')[0][1:]) * u.Msun
         time = -df.index.to_numpy() << u.s
-        metadata = {'Progenitor Mass': self.progenitor_mass}
-        super().__init__(time, metadata)
+        super().__init__(time, self.metadata)
 
     def get_initial_spectra(self, t, E, flavors=Flavor):
         # negative t for time before SN
@@ -82,9 +79,9 @@ class Patton_2017(SupernovaModel):
     [Kelly M. Patton et al 2017 ApJ 851 6, 
      https://doi.org/10.5281/zenodo.2598709]
     """
-    def __init__(self, fname):
+    def __init__(self, filename:str):
         df = pd.read_csv(
-            fname,
+            self.request_file(filename),
             comment="#",
             delim_whitespace=True,
             names=["time","Enu",Flavor.NU_E,Flavor.NU_E_BAR,Flavor.NU_X,Flavor.NU_X_BAR],
@@ -100,10 +97,7 @@ class Patton_2017(SupernovaModel):
         self.interpolated = _interp_TE(
             times, energies, self.array, ax_t=1, ax_e=2
         )
-        self.filename = Path(fname).stem
-        self.progenitor_mass = float(self.filename.split('_')[-1].rstrip('SolarMass')) * u.Msun
-        metadata = {'Progenitor Mass': self.progenitor_mass}
-        super().__init__(times << u.hour, metadata)
+        super().__init__(times << u.hour, self.metadata)
 
     def get_initial_spectra(self, t, E, flavors=Flavor):
         t = np.array(-t.to_value("hour"), ndmin=1)
@@ -128,17 +122,16 @@ class Kato_2017(SupernovaModel):
         for flv,file_base in file_base.items():
             d2NdEdT = []
             for s in step:
-                energies, dNdE = np.loadtxt(self.request_file(f"{path}/{file_base}{s:05.0f}.dat")).T
+                energies, dNdE = np.loadtxt(
+                    self.request_file(f"{path}/{file_base}{s:05.0f}.dat")
+                ).T
                 d2NdEdT += [dNdE]
             fluxes[flv] = np.stack(d2NdEdT)
         self.array = np.stack([fluxes[f] for f in Flavor], axis=0)
         self.interpolated = _interp_TE(
             times, energies, self.array, ax_t=1, ax_e=2
         )
-        self.filename = Path(path).stem
-        self.progenitor_mass = float(self.filename.strip('m')) * u.Msun
-        metadata = {'Progenitor Mass': self.progenitor_mass}
-        super().__init__(times << u.s, metadata)
+        super().__init__(times << u.s, self.metadata)
 
     def get_initial_spectra(self, t, E, flavors=Flavor):
         t = np.array(-t.to_value("s"), ndmin=1)
