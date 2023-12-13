@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""
+The submodule ``snewpy.models.presn`` contains models of presupernova neutrino fluxes,
+derived from the :class:`SupernovaModel` base class.
+"""
 import snewpy.models.presn_loaders as loaders
 from snewpy.models.registry_model import RegistryModel
 import numpy as np

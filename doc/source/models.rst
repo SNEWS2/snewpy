@@ -9,12 +9,23 @@ Base Class for Supernova Models
 Derived Models
 --------------
 
+Core-Collapse Supernova Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. automodule:: snewpy.models.ccsn
    :members:
-   :exclude-members: SNOwGLoBES
+   :exclude-members: get_param_combinations, SNOwGLoBES, Analytic3Species
+
+Presupernova Models
+~~~~~~~~~~~~~~~~~~~
+.. automodule:: snewpy.models.presn
+   :members:
+   :exclude-members: get_param_combinations
 
 Other Models
 ------------
+.. autoclass:: snewpy.models.ccsn.Analytic3Species
+   :members:
 
 .. autoclass:: snewpy.models.ccsn.SNOwGLoBES
    :members:
