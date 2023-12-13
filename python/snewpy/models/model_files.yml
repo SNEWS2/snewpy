@@ -5,6 +5,8 @@
 config:
     - &snewpy "https://github.com/SNEWS2/snewpy/raw/v{snewpy_version}/models/{model}/{filename}"
     - &ccsn_repository "https://github.com/SNEWS2/snewpy-models-ccsn/raw/v0.2/models/{model}/{filename}"
+    - &presn_repository "https://github.com/SNEWS2/snewpy-models-presn/raw/v0.1/models/{model}/{filename}"
+    
 models:
     ccsn:
         Bollig_2016:
@@ -51,4 +53,15 @@ models:
     
         Mori_2023: 
             repository: *ccsn_repository
+            
+    presn:
+    
+        Odrzywolek_2010:
+            repository: *presn_repository
+            
+        Patton_2017:
+            repository: *presn_repository
+            
+        Kato_2017:
+            repository: *presn_repository
 
