@@ -18,13 +18,13 @@ from warnings import warn
 import numpy as np
 import re
 
-all_models = set()
-
-import pandas as pd
+from astropy import table
 from tqdm.auto import tqdm
 
-def get_models_table(init:bool=False)->pd.DataFrame:
-    """Get the DataFrame table with all the possible Metadata parameters.
+all_models = set()
+    
+def get_table(init:bool=False)->table.Table:
+    """Get the astropy.Table table with all the possible Metadata parameters.
 
     Parameters
     ----------
@@ -40,7 +40,9 @@ def get_models_table(init:bool=False)->pd.DataFrame:
             metadata = [model(**params).metadata for params in param_combinations]
         else:
             metadata = [{model.parameters[key].label:val for key,val in params.items()} for params in param_combinations]
-        md_table = pd.DataFrame(metadata)
+            
+        md_table = table.Table(metadata)
+        md_table['model']='.'.join([model.__module__,model.__name__])
         md_table['init_params']=param_combinations
         #set the fixed metadata
         if hasattr(model,"__metadata__"):
@@ -48,9 +50,9 @@ def get_models_table(init:bool=False)->pd.DataFrame:
                 md_table[key]=value
         tables[model]=md_table
     
-    df = pd.concat(tables)
+    df = table.vstack(list(tables.values()))
     return df
-
+    
 def _can_decorate_class_or_func(func_decorator):
     """make the function decorator act as class decorator:
     if decorated object is a class, wrap its "__init__" function.
