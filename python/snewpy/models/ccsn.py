@@ -41,6 +41,7 @@ from .base import PinchedModel
 
 from snewpy.models.registry_model import RegistryModel, Parameter
 from snewpy.models.registry_model import deprecated, legacy_filename_initialization
+from snewpy.models.registry_model import all_models
 from textwrap import dedent
 
 class Analytic3Species(PinchedModel):
@@ -242,6 +243,9 @@ class OConnor_2013(legacy_filename_initialization(_OConnor_2013_new)):
             return super().__init__(eos=eos, progenitor_mass=progenitor_mass)
 
 OConnor_2013.__init__.__doc__=dedent(OConnor_2013.__init__.__doc__)+_OConnor_2013_new.__init__.__doc__
+#make sure that only the latest class is present in the models table
+all_models.remove(OConnor_2013.__mro__[1])
+all_models.add(OConnor_2013)
 
 @deprecated('eos')
 @legacy_filename_initialization
@@ -425,7 +429,7 @@ class Fornax_2022(loaders.Fornax_2022):
         """
     def __init__(self, progenitor:str):
         self.metadata['Progenitor mass']=(float(progenitor[:-3]) if progenitor.endswith('bh') else float(progenitor)) * u.Msun
-
+        self.metadata['Black hole'] = progenitor.endswith('bh')
         filename = f'lum_spec_{progenitor}_dat.h5'
         return super().__init__(filename, self.metadata)
 

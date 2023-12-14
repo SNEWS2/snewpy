@@ -23,8 +23,8 @@ from tqdm.auto import tqdm
 
 all_models = set()
     
-def get_table(init:bool=False)->table.Table:
-    """Get the astropy.Table table with all the possible Metadata parameters.
+def get_models_table(init:bool=False)->table.Table:
+    """Get the astropy.Table with all the possible Metadata parameters.
 
     Parameters
     ----------
