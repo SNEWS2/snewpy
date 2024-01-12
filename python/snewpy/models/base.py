@@ -303,7 +303,7 @@ class PinchedModel(SupernovaModel):
                     - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea)) / (u.erg * u.s)
             #remove bad values
             result[np.isnan(result)] = 0
-            result[E==0] = 0
+            result[:, E==0] = 0
             #remove unnecessary dimensions, if E or t was scalar:
             result = np.squeeze(result)
             initialspectra[flavor] = result
