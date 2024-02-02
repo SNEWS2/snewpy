@@ -4,9 +4,14 @@
 
 version: 2
 
+# Build information required.
+build:
+    os: "ubuntu-22.04"
+    tools:
+        python: "3.11"
+
 # Python version and requirements to build docs.
 python:
-    version: 3.8
     install:
     - method: pip
       path: .
