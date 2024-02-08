@@ -101,14 +101,14 @@ class _ContainerBase:
         data: :class:`astropy.Quantity`
             3D array of the stored quantity, must have dimensions compatible with (flavor, time, energy)
         
-        flavor: list of :class:`snewpy.neutrino.Flavor`
+        flavor: list or a single value of :class:`snewpy.neutrino.Flavor`
             array of flavors (should be ``len(flavor)==data.shape[0]``
         
-        time: array of :class:`astropy.Quantity`
+        time: :class:`astropy.Quantity`
             sampling points in time (then ``len(time)==data.shape[1]``) 
             or time bin edges (then ``len(time)==data.shape[1]+1``) 
     
-        energy: array of :class:`astropy.Quantity`
+        energy: :class:`astropy.Quantity`
             sampling points in energy (then ``len(energy)=data.shape[2]``) 
             or energy bin edges (then ``len(energy)=data.shape[2]+1``) 
     
