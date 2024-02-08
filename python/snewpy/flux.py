@@ -119,10 +119,11 @@ class _ContainerBase:
         if self.unit is not None:
             #try to convert to the unit
             data = data.to(self.unit)
-        self.array = data
+        #convert the input values to arrays if they are scalar
+        self.array = u.Quantity(data, ndmin=3)
+        self.time = u.Quantity(time, ndmin=1)
+        self.energy = u.Quantity(energy, ndmin=1)
         self.flavor = np.sort(flavor)
-        self.time = time
-        self.energy = energy
         
         if integrable_axes is not None:
             #store which axes can be integrated
