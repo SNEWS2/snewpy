@@ -123,7 +123,7 @@ class _ContainerBase:
         self.array = u.Quantity(data, ndmin=3)
         self.time = u.Quantity(time, ndmin=1)
         self.energy = u.Quantity(energy, ndmin=1)
-        self.flavor = np.sort(flavor)
+        self.flavor = np.sort(np.array(flavor, ndmin=1))
         
         if integrable_axes is not None:
             #store which axes can be integrated
