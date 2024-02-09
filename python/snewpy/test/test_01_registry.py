@@ -333,28 +333,12 @@ class TestModels(unittest.TestCase):
         """
         Instantiate a set of 'Fornax 2022' models
         """
-        progenitors = [
-            '9.0',     '9.25',     '9.5',      '9.75',     '10.0',
-            '10.25',    '10.5',     '10.75',    '11.0',     '11.25',
-            '11.5',     '11.75',    '12.00.bh', '12.03.bh', '12.07.bh',
-            '12.1.bh',  '12.13',    '12.15',    '12.18.bh', '12.20.bh',
-            '12.25',    '12.33.bh', '12.40.bh', '12.45.bh', '12.50.bh',
-            '12.54.bh', '12.60.bh', '12.63',    '12.70',    '12.72.bh',
-            '12.75',    '12.80.bh', '12.85.bh', '12.90.bh', '12.93',
-            '12.97.bh', '13.00.bh', '13.05.bh', '13.11',    '13.25.bh',
-            '13.27.bh', '13.32.bh', '13.40.bh', '13.45',    '13.50.bh',
-            '13.60.bh', '13.75',    '13.82.bh', '13.90.bh', '13.96',
-            '14.01',    '14.13.bh', '14.25.bh', '14.40.bh', '14.41.bh',
-            '14.43',    '14.44.bh', '14.70.bh', '14.87.bh', '15.00.bh',
-            '15.01',    '15.04.bh', '15.05',    '15.38.bh', '16.43',
-            '16.65',    '16.99',    '17.00',    '17.07',    '17.10',
-            '17.40',    '17.48',    '17.50',    '17.51',    '17.83',
-            '18.04',    '18.05',    '18.09',    '18.10',    '18.50',
-            '19.02',    '19.56',    '19.83',    '19.99',    '20.08',
-            '20.09',    '20.18',    '20.37',    '21.00',    '21.68',
-            '22.00',    '22.30',    '22.82',    '23.00',    '23.04',
-            '23.43',    '24.00',    '25.00',    '26.00',    '26.99' ]
-
+        progenitors = Fornax_2022.param['progenitor_mass']
+        bh_masses = [12.  , 12.03, 12.07, 12.1 , 12.18, 12.2 , 12.33, 12.4 , 12.45,
+                      12.5 , 12.54, 12.6 , 12.72, 12.8 , 12.85, 12.9 , 12.97, 13.  ,
+                      13.05, 13.25, 13.27, 13.32, 13.4 , 13.5 , 13.6 , 13.82, 13.9 ,
+                      14.13, 14.25, 14.4 , 14.41, 14.44, 14.7 , 14.87, 15.  , 15.04,
+                      15.38]<<u.Msun
         # PNS masses for each simulation, D. Vartanyan, private comm.
         pns_masses = [  1.35 , 1.38 , 1.4  , 1.45 , 1.5  ,
                         1.52 , 1.54 , 1.57 , 1.55 , 1.54 ,
@@ -375,16 +359,14 @@ class TestModels(unittest.TestCase):
                         1.85 , 2.39 , 2.34 , 2.31 , 1.99 ,
                         2.37 , 2.25 , 2.25 , 2.36 , 2.23 ,
                         2.1  , 2.16 , 1.98 , 2.01 , 2.1  ,
-                        1.98 , 2.11 , 2.18 , 2.14 , 2.2 ]
-
+                        1.98 , 2.11 , 2.18 , 2.14 , 2.2 ]<<u.Msun
+        
         for progenitor, m_pns in zip(progenitors, pns_masses):
-            model = Fornax_2022(progenitor=progenitor)
+            model = Fornax_2022(progenitor_mass=progenitor)
 
-            mass = float(progenitor[:-3] if 'bh' in progenitor else progenitor) * u.Msun
-            self.assertEqual(model.metadata['Progenitor'], progenitor)
-            self.assertEqual(model.metadata['Progenitor mass'], mass)
-            self.assertEqual(model.metadata['PNS mass'], m_pns*u.Msun)
-
+            self.assertEqual(model.metadata['Progenitor mass'], progenitor)
+            self.assertEqual(model.metadata['PNS mass'], m_pns)
+            self.assertEqual(model.metadata['Black hole'], progenitor in bh_masses)
             # Check that times are in proper units.
             t = model.get_time()
             self.assertTrue(t.unit, u.s)

@@ -265,10 +265,14 @@ class _ContainerBase:
         if limits is None:
             limits = u.Quantity([xmin, xmax])
         limits = limits.to(ax.unit)
-        limits = limits.clip(xmin, xmax)
+        #limits = limits.clip(xmin,xmax)
         #compute the integral
         yc = cumulative_trapezoid(self.array, x=ax, axis=axis, initial=0)
-        _integral = interp1d(x=ax, y=yc, fill_value=0, axis=axis, bounds_error=False)
+        #get first and last value to use as the fill values
+        yc_limits = (yc.take(0,axis=axis), yc.take(-1,axis=axis)) 
+        #this will make the _intergal constant if it gets out of bounds, 
+        # i.e. effectively the flux outside of bounds is zero
+        _integral = interp1d(x=ax, y=yc, fill_value=yc_limits, axis=axis, bounds_error=False)
         array = np.diff(_integral(limits),axis=axis) << (self.array.unit*ax.unit)
         axes = list(self.axes)
         axes[axis] = limits
@@ -290,12 +294,13 @@ class _ContainerBase:
         return Axes.get(axis) not in self._integrable_axes
     
     def __rmul__(self, factor):
-        "multiply array by givem factor or matrix"
-        return self.__mul__(self, factor)
+        "multiply array by given factor or matrix"
+        return self.__mul__(factor)
 
     def __mul__(self, factor) -> 'Container':
-        "multiply array by givem factor or matrix"
-        #if not (np.isscalar(factor)):
+        "multiply array by given factor or matrix"
+        if not (np.isscalar(factor) or isinstance(factor, np.ndarray)):
+            return NotImplemented
         #    raise ValueError("Factor should be a scalar value")
         array = self.array*factor
         axes = list(self.axes)

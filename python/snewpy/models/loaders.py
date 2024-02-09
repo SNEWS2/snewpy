@@ -559,7 +559,7 @@ class Fornax_2019(SupernovaModel):
                 # Pad log(E) array with values where flux is fixed to zero.
                 _logE = np.log10(_E[flavor].to_value('MeV'))
                 _dlogE = np.diff(_logE)
-                _logEbins = np.insert(_logE, 0, np.log10(np.finfo(float).eps))
+                _logEbins = np.insert(_logE, 0, np.log10(np.finfo(float).eps * E.unit/u.MeV))
                 _logEbins = np.append(_logEbins, _logE[-1] + _dlogE[-1])
 
                 # Pad with values where flux is fixed to zero.
@@ -675,7 +675,7 @@ class Fornax_2021(SupernovaModel):
             # Linear interpolation in flux.
             if interpolation.lower() == 'linear':
                 # Pad log(E) array with values where flux is fixed to zero.
-                _logEbins = np.insert(_logE, 0, np.log10(np.finfo(float).eps))
+                _logEbins = np.insert(_logE, 0, np.log10(np.finfo(float).eps * E.unit/u.MeV))
                 _logEbins = np.append(_logEbins, _logE[-1] + _dlogE[-1])
 
                 # Luminosity spectrum _dLdE is in units of 1e50 erg/s/MeV.
