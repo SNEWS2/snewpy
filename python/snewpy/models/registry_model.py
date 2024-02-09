@@ -23,7 +23,7 @@ from tqdm.auto import tqdm
 
 all_models = set()
     
-def get_models_table(init:bool=False)->table.Table:
+def get_models_table(init:bool=False)->table.QTable:
     """Get the astropy.Table with all the possible Metadata parameters.
 
     Parameters
@@ -41,7 +41,7 @@ def get_models_table(init:bool=False)->table.Table:
         else:
             metadata = [{model.parameters[key].label:val for key,val in params.items()} for params in param_combinations]
             
-        md_table = table.Table(metadata)
+        md_table = table.QTable(metadata)
         md_table['model']='.'.join([model.__module__,model.__name__])
         md_table['init_params']=param_combinations
         #set the fixed metadata
