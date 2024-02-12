@@ -120,17 +120,16 @@ class _ContainerBase:
             #try to convert to the unit
             data = data.to(self.unit)
         #convert the input values to arrays if they are scalar
-        self.array = u.Quantity(data, ndmin=3)
+        self.array = u.Quantity(data)
         self.time = u.Quantity(time, ndmin=1)
         self.energy = u.Quantity(energy, ndmin=1)
         self.flavor = np.sort(np.array(flavor, ndmin=1))
         
-        #list all valid shapes of the input array
         Nf,Nt,Ne = len(self.flavor), len(self.time), len(self.energy)
-        expected_shapes=[(Nf,Nt,Ne), (Nf,Nt-1,Ne), (Nf,Nt,Ne-1), (Nf,Nt-1,Ne-1)]
-        
+        #list all valid shapes of the input array
+        expected_shapes=[(nf,nt,ne) for nf in (Nf,Nf-1) for nt in (Nt,Nt-1) for ne in (Ne,Ne-1)]
         #treat special case if data is 1d array
-        if self.array.squeeze().ndim==1:
+        if self.array.ndim==1:
             #try to reshape the array to expected shape
             for expected_shape in expected_shapes:
                 if np.prod(expected_shape)==self.array.size:
