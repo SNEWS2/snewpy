@@ -125,6 +125,21 @@ class _ContainerBase:
         self.energy = u.Quantity(energy, ndmin=1)
         self.flavor = np.sort(np.array(flavor, ndmin=1))
         
+        #list all valid shapes of the input array
+        Nf,Nt,Ne = len(self.flavor), len(self.time), len(self.energy)
+        expected_shapes=[(Nf,Nt,Ne), (Nf,Nt-1,Ne), (Nf,Nt,Ne-1), (Nf,Nt-1,Ne-1)]
+        
+        #treat special case if data is 1d array
+        if self.array.squeeze().ndim==1:
+            #try to reshape the array to expected shape
+            for expected_shape in expected_shapes:
+                if np.prod(expected_shape)==self.array.size:
+                    self.array = self.array.reshape(expected_shape)
+                    break
+        #validate the data array shape
+        if self.array.shape not in expected_shapes:
+            raise ValueError(f"Data array of shape {data.shape} is inconsistent with any valid shapes {expected_shapes}")
+        
         if integrable_axes is not None:
             #store which axes can be integrated
             self._integrable_axes = set(integrable_axes)
