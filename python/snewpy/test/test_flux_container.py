@@ -59,12 +59,18 @@ def test_construction_succesfull(flavor, energy, time, unit):
     assert Container[unit](data, flavor, time, energy)
 
 @given(flavor=flavors, time=times, energy=energies, unit=units)
-def test_construction_with_wrong_units_raises_ValueError(flavor, energy, time, unit):
+def test_construction_with_wrong_units_raises_ConversionError(flavor, energy, time, unit):
     data = np.ones([len(flavor),len(time), len(energy)])<<unit
     with pytest.raises(u.UnitConversionError):
         Container[unit*u.kg](data, flavor, time, energy)
     with pytest.raises(u.UnitConversionError):
         Container[unit](data*u.kg, flavor, time, energy)
+
+@given(flavor=flavors, time=times, energy=energies, unit=units)
+def test_construction_with_wrong_dimensions_raises_ValueError(flavor, energy, time, unit):
+    data = np.ones([len(flavor)+1,len(time), len(energy)])<<unit
+    with pytest.raises(ValueError):
+        Container[unit](data, flavor, time, energy)
 
 @given(f=random_flux_containers())
 def test_summation_over_flavor(f:Container):

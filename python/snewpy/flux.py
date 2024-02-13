@@ -101,14 +101,14 @@ class _ContainerBase:
         data: :class:`astropy.Quantity`
             3D array of the stored quantity, must have dimensions compatible with (flavor, time, energy)
         
-        flavor: list of :class:`snewpy.neutrino.Flavor`
+        flavor: list or a single value of :class:`snewpy.neutrino.Flavor`
             array of flavors (should be ``len(flavor)==data.shape[0]``
         
-        time: array of :class:`astropy.Quantity`
+        time: :class:`astropy.Quantity`
             sampling points in time (then ``len(time)==data.shape[1]``) 
             or time bin edges (then ``len(time)==data.shape[1]+1``) 
     
-        energy: array of :class:`astropy.Quantity`
+        energy: :class:`astropy.Quantity`
             sampling points in energy (then ``len(energy)=data.shape[2]``) 
             or energy bin edges (then ``len(energy)=data.shape[2]+1``) 
     
@@ -119,10 +119,25 @@ class _ContainerBase:
         if self.unit is not None:
             #try to convert to the unit
             data = data.to(self.unit)
-        self.array = data
-        self.flavor = np.sort(flavor)
-        self.time = time
-        self.energy = energy
+        #convert the input values to arrays if they are scalar
+        self.array = u.Quantity(data)
+        self.time = u.Quantity(time, ndmin=1)
+        self.energy = u.Quantity(energy, ndmin=1)
+        self.flavor = np.sort(np.array(flavor, ndmin=1))
+        
+        Nf,Nt,Ne = len(self.flavor), len(self.time), len(self.energy)
+        #list all valid shapes of the input array
+        expected_shapes=[(nf,nt,ne) for nf in (Nf,Nf-1) for nt in (Nt,Nt-1) for ne in (Ne,Ne-1)]
+        #treat special case if data is 1d array
+        if self.array.ndim==1:
+            #try to reshape the array to expected shape
+            for expected_shape in expected_shapes:
+                if np.prod(expected_shape)==self.array.size:
+                    self.array = self.array.reshape(expected_shape)
+                    break
+        #validate the data array shape
+        if self.array.shape not in expected_shapes:
+            raise ValueError(f"Data array of shape {data.shape} is inconsistent with any valid shapes {expected_shapes}")
         
         if integrable_axes is not None:
             #store which axes can be integrated
