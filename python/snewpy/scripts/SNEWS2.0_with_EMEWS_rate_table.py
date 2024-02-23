@@ -42,8 +42,8 @@ models['s40'] = {'type':'OConnor_2015','file_name':'M1_neutrinos.dat'}
 AdiabaticMSW_NMO = AdiabaticMSW( MixingParameters(MassHierarchy.NORMAL) )
 AdiabaticMSW_IMO = AdiabaticMSW( MixingParameters(MassHierarchy.INVERTED) ) 
 
-EarthMatter_NMO = EarthMatter( MixingParameters(MassHierarchy.NORMAL) , SNaltaz )
-EarthMatter_IMO = EarthMatter( MixingParameters(MassHierarchy.INVERTED) , SNaltaz )
+EarthMatter_NMO = EarthMatter( SNaltaz , MixingParameters(MassHierarchy.NORMAL) )
+EarthMatter_IMO = EarthMatter( SNaltaz , MixingParameters(MassHierarchy.INVERTED) )
 
 transformations = [ Catenate(EarthMatter_NMO,AdiabaticMSW_NMO), \
                     Catenate(EarthMatter_IMO,AdiabaticMSW_IMO) ]
