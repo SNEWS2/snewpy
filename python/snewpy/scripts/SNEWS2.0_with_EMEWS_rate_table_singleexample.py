@@ -33,7 +33,7 @@ model = 's11.2c' # Name of model
 mix_params = MixingParameters(MassHierarchy.NORMAL)
 
 SupernovaMatter_NMO = AdiabaticMSW( mix_params )
-EarthMatter_NMO = EarthMatter( mix_params , SNaltaz )
+EarthMatter_NMO = EarthMatter( SNaltaz , mix_params )
 
 transformation = Catenate(EarthMatter_NMO,SupernovaMatter_NMO) # Desired flavor transformation
 
