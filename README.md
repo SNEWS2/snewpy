@@ -39,10 +39,10 @@ bollig = Bollig_2016(progenitor_mass=27*u.solMass)
 … and many flavor transformations that neutrinos could experience on the way to Earth …
 ```Python
 from snewpy.flavor_transformations import AdiabaticMSW
-from snewpy.neutrino import MassHierarchy
+from snewpy.neutrino import MassHierarchy, MixingParameters
 
 # Adiabatic MSW flavor transformation with normal mass ordering
-msw_nmo = AdiabaticMSW(mh=MassHierarchy.NORMAL)
+msw_nmo = AdiabaticMSW( MixingParameters(MassHierarchy.NORMAL) )
 ```
 
 … letting you quickly calculate the neutrino flux reaching Earth:
