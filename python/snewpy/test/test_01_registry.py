@@ -3,7 +3,7 @@
 """
 import unittest
 
-from snewpy.neutrino import Flavor
+from snewpy.neutrino import TwoFlavor
 from snewpy.flavor_transformation import NoTransformation
 from snewpy.models.ccsn import Nakazato_2013, Tamborra_2014, OConnor_2013, OConnor_2015, \
                           Sukhbold_2015, Bollig_2016, Walk_2018, \
@@ -63,8 +63,8 @@ class TestModels(unittest.TestCase):
                     # Check that we can compute flux dictionaries.
                     f = model.get_initial_spectra(0*u.s, 10*u.MeV)
                     self.assertEqual(type(f), dict)
-                    self.assertEqual(len(f), len(Flavor))
-                    self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
+                    self.assertEqual(len(f), len(TwoFlavor))
+                    self.assertEqual(f[TwoFlavor.NU_E].unit, 1/(u.erg * u.s))
 
     def test_Tamborra_2014(self):
         """
@@ -88,8 +88,8 @@ class TestModels(unittest.TestCase):
                     # Check that we can compute flux dictionaries.
                     f = model.get_initial_spectra(0*u.s, 10*u.MeV)
                     self.assertEqual(type(f), dict)
-                    self.assertEqual(len(f), len(Flavor))
-                    self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
+                    self.assertEqual(len(f), len(TwoFlavor))
+                    self.assertEqual(f[TwoFlavor.NU_E].unit, 1/(u.erg * u.s))
 
     def test_OConnor_2013(self):
         """
@@ -109,8 +109,8 @@ class TestModels(unittest.TestCase):
                 # Check that we can compute flux dictionaries.
                 f = model.get_initial_spectra(0*u.s, 10*u.MeV)
                 self.assertEqual(type(f), dict)
-                self.assertEqual(len(f), len(Flavor))
-                self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
+                self.assertEqual(len(f), len(TwoFlavor))
+                self.assertEqual(f[TwoFlavor.NU_E].unit, 1/(u.erg * u.s))
 
 
     def test_OConnor_2015(self):
@@ -129,8 +129,8 @@ class TestModels(unittest.TestCase):
         # Check that we can compute flux dictionaries.
         f = model.get_initial_spectra(0*u.s, 10*u.MeV)
         self.assertEqual(type(f), dict)
-        self.assertEqual(len(f), len(Flavor))
-        self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
+        self.assertEqual(len(f), len(TwoFlavor))
+        self.assertEqual(f[TwoFlavor.NU_E].unit, 1/(u.erg * u.s))
 
     def test_Sukhbold_2015(self):
         """
@@ -150,8 +150,8 @@ class TestModels(unittest.TestCase):
                 # Check that we can compute flux dictionaries.
                 f = model.get_initial_spectra(0*u.s, 10*u.MeV)
                 self.assertEqual(type(f), dict)
-                self.assertEqual(len(f), len(Flavor))
-                self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
+                self.assertEqual(len(f), len(TwoFlavor))
+                self.assertEqual(f[TwoFlavor.NU_E].unit, 1/(u.erg * u.s))
 
     def test_Bollig_2016(self):
         """
@@ -170,8 +170,8 @@ class TestModels(unittest.TestCase):
             # Check that we can compute flux dictionaries.
             f = model.get_initial_spectra(0*u.s, 10*u.MeV)
             self.assertEqual(type(f), dict)
-            self.assertEqual(len(f), len(Flavor))
-            self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
+            self.assertEqual(len(f), len(TwoFlavor))
+            self.assertEqual(f[TwoFlavor.NU_E].unit, 1/(u.erg * u.s))
 
     def test_Walk_2018(self):
         """
@@ -192,8 +192,8 @@ class TestModels(unittest.TestCase):
                 # Check that we can compute flux dictionaries.
                 f = model.get_initial_spectra(0*u.s, 10*u.MeV)
                 self.assertEqual(type(f), dict)
-                self.assertEqual(len(f), len(Flavor))
-                self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
+                self.assertEqual(len(f), len(TwoFlavor))
+                self.assertEqual(f[TwoFlavor.NU_E].unit, 1/(u.erg * u.s))
 
     def test_Walk_2019(self):
         """
@@ -214,8 +214,8 @@ class TestModels(unittest.TestCase):
                 # Check that we can compute flux dictionaries.
                 f = model.get_initial_spectra(0*u.s, 10*u.MeV)
                 self.assertEqual(type(f), dict)
-                self.assertEqual(len(f), len(Flavor))
-                self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
+                self.assertEqual(len(f), len(TwoFlavor))
+                self.assertEqual(f[TwoFlavor.NU_E].unit, 1/(u.erg * u.s))
 
     def test_Fornax_2019(self):
         """
@@ -233,8 +233,8 @@ class TestModels(unittest.TestCase):
             # Check that we can compute flux dictionaries.
             f = model.get_initial_spectra(0*u.s, 10*u.MeV, theta=23*u.degree, phi=22*u.degree)
             self.assertEqual(type(f), dict)
-            self.assertEqual(len(f), len(Flavor))
-            self.assertEqual(f[Flavor.NU_E].unit, u.erg/(u.MeV * u.s))
+            self.assertEqual(len(f), len(TwoFlavor))
+            self.assertEqual(f[TwoFlavor.NU_E].unit, u.erg/(u.MeV * u.s))
 
     def test_Warren_2020(self):
         """
@@ -262,8 +262,8 @@ class TestModels(unittest.TestCase):
                 # Check that we can compute flux dictionaries.
                 f = model.get_initial_spectra(0 * u.s, 10 * u.MeV)
                 self.assertEqual(type(f), dict)
-                self.assertEqual(len(f), len(Flavor))
-                self.assertEqual(f[Flavor.NU_E].unit, 1. / (u.erg * u.s))
+                self.assertEqual(len(f), len(TwoFlavor))
+                self.assertEqual(f[TwoFlavor.NU_E].unit, 1. / (u.erg * u.s))
 
     def test_Kuroda_2020(self):
         """
@@ -286,8 +286,8 @@ class TestModels(unittest.TestCase):
                 # Check that we can compute flux dictionaries.
                 f = model.get_initial_spectra(0*u.s, 10*u.MeV)
                 self.assertEqual(type(f), dict)
-                self.assertEqual(len(f), len(Flavor))
-                self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
+                self.assertEqual(len(f), len(TwoFlavor))
+                self.assertEqual(f[TwoFlavor.NU_E].unit, 1/(u.erg * u.s))
 
     def test_Fornax_2021(self):
         """
@@ -305,8 +305,8 @@ class TestModels(unittest.TestCase):
             # Check that we can compute flux dictionaries.
             f = model.get_initial_spectra(0*u.s, 10*u.MeV)
             self.assertEqual(type(f), dict)
-            self.assertEqual(len(f), len(Flavor))
-            self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
+            self.assertEqual(len(f), len(TwoFlavor))
+            self.assertEqual(f[TwoFlavor.NU_E].unit, 1/(u.erg * u.s))
 
     def test_Zha_2021(self):
         """
@@ -326,8 +326,8 @@ class TestModels(unittest.TestCase):
             # Check that we can compute flux dictionaries.
             f = model.get_initial_spectra(0*u.s, 10*u.MeV)
             self.assertEqual(type(f), dict)
-            self.assertEqual(len(f), len(Flavor))
-            self.assertEqual(f[Flavor.NU_E].unit, 1./(u.erg * u.s))
+            self.assertEqual(len(f), len(TwoFlavor))
+            self.assertEqual(f[TwoFlavor.NU_E].unit, 1./(u.erg * u.s))
 
     def test_Fornax_2022(self):
         """
@@ -374,8 +374,8 @@ class TestModels(unittest.TestCase):
             # Check that we can compute flux dictionaries.
             f = model.get_initial_spectra(0*u.s, 10*u.MeV)
             self.assertEqual(type(f), dict)
-            self.assertEqual(len(f), len(Flavor))
-            self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
+            self.assertEqual(len(f), len(TwoFlavor))
+            self.assertEqual(f[TwoFlavor.NU_E].unit, 1/(u.erg * u.s))
 
     def test_Mori_2023(self):
         """
@@ -407,6 +407,6 @@ class TestModels(unittest.TestCase):
             # Check that we can compute flux dictionaries.
             f = model.get_initial_spectra(0*u.s, 10*u.MeV)
             self.assertEqual(type(f), dict)
-            self.assertEqual(len(f), len(Flavor))
-            self.assertEqual(f[Flavor.NU_E].unit, 1./(u.erg * u.s))
+            self.assertEqual(len(f), len(TwoFlavor))
+            self.assertEqual(f[TwoFlavor.NU_E].unit, 1./(u.erg * u.s))
 
