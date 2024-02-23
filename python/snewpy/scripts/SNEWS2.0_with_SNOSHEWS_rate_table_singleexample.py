@@ -8,8 +8,9 @@ from snewpy import snowglobes
 from snewpy.flavor_transformation import *
 from snewpy.neutrino import *
 
+home_directory = os.getcwd()
 SNOwGLoBES_path = None  # change to SNOwGLoBES directory if using a custom detector configuration
-SNEWPY_model_dir = "/nucastro2/jpknelle/Research/SNEWS2/snewpy 1.4jpk/models"  # directory containing model input files
+SNEWPY_models_base = "/path/to/snewpy/models/"  # directory containing model input files
 
 distance = 10  # Supernova distance in kpc
 detector = "wc100kt30prct" #SNOwGLoBES detector for water Cerenkov
@@ -20,7 +21,9 @@ mix_params = MixingParameters(MassHierarchy.NORMAL)
 
 Basel_10point8_585 = SNprofile("profiles00585_stp.d","profiles00585_Ye.d")
 
-SupernovaMatter_NMO = MSWEffect(mix_params,Basel_10point8_585,1e7,1e12)
+rmin = 1e7 # starting radius of MSW Effect calculation in cm
+rmax = 1e12 # ending radius of MSW Effect calculation in cm
+SupernovaMatter_NMO = MSWEffect(mix_params,Basel_10point8_585,rmin,rmax)
 
 # Construct file system path of model file and name of output file
 model_path = SNEWPY_model_dir + "/" + modeltype + "/" + model
@@ -35,7 +38,6 @@ snowglobes.simulate(SNOwGLoBES_path, tarredfile, detector_input=detector)
 
 print("Collating results ...")
 tables = snowglobes.collate(SNOwGLoBES_path, tarredfile, skip_plots=True)
-
 
 # Use results to print the number of events in different interaction channels
 key = f"Collated_{outfile}_{detector}_events_smeared_weighted.dat"
