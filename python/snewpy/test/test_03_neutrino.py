@@ -4,35 +4,113 @@
 
 import unittest
 
-from snewpy.neutrino import Flavor, MassHierarchy, MixingParameters
+from snewpy.neutrino import TwoFlavor, ThreeFlavor, FourFlavor, MassHierarchy, MixingParameters
 
 from astropy import units as u
 
 class TestNeutrino(unittest.TestCase):
 
-    def test_flavor(self):
+    def test_twoflavor(self):
         """
         Neutrino flavor types
         """
-        nue  = Flavor.NU_E
+        nue  = TwoFlavor.NU_E
         self.assertTrue(nue.is_electron)
         self.assertTrue(nue.is_neutrino)
         self.assertFalse(nue.is_antineutrino)
 
-        nux  = Flavor.NU_X
+        nux  = TwoFlavor.NU_X
         self.assertFalse(nux.is_electron)
         self.assertTrue(nux.is_neutrino)
         self.assertFalse(nux.is_antineutrino)
 
-        nueb = Flavor.NU_E_BAR
+        nueb = TwoFlavor.NU_E_BAR
         self.assertTrue(nueb.is_electron)
         self.assertFalse(nueb.is_neutrino)
         self.assertTrue(nueb.is_antineutrino)
 
-        nuxb = Flavor.NU_X_BAR
+        nuxb = TwoFlavor.NU_X_BAR
         self.assertFalse(nuxb.is_electron)
         self.assertFalse(nuxb.is_neutrino)
         self.assertTrue(nuxb.is_antineutrino)
+
+    def test_threeflavor(self):
+        """
+        Neutrino flavor types
+        """
+        nue  = ThreeFlavor.NU_E
+        self.assertTrue(nue.is_electron)
+        self.assertTrue(nue.is_neutrino)
+        self.assertFalse(nue.is_antineutrino)
+
+        numu  = ThreeFlavor.NU_MU
+        self.assertFalse(numu.is_electron)
+        self.assertTrue(numu.is_neutrino)
+        self.assertFalse(numu.is_antineutrino)
+
+        nutau  = ThreeFlavor.NU_TAU
+        self.assertFalse(nutau.is_electron)
+        self.assertTrue(nutau.is_neutrino)
+        self.assertFalse(nutau.is_antineutrino)        
+
+        nueb = ThreeFlavor.NU_E_BAR
+        self.assertTrue(nueb.is_electron)
+        self.assertFalse(nueb.is_neutrino)
+        self.assertTrue(nueb.is_antineutrino)
+
+        numub  = ThreeFlavor.NU_MU_NAR
+        self.assertFalse(numub.is_electron)
+        self.assertTrue(numub.is_neutrino)
+        self.assertFalse(numub.is_antineutrino)
+
+        nutaub  = ThreeFlavor.NU_TAU_BAR
+        self.assertFalse(nutaub.is_electron)
+        self.assertTrue(nutaub.is_neutrino)
+        self.assertFalse(nutaub.is_antineutrino)  
+
+        def test_fourflavor(self):
+        """
+        Neutrino flavor types
+        """
+        nue  = FourFlavor.NU_E
+        self.assertTrue(nue.is_electron)
+        self.assertTrue(nue.is_neutrino)
+        self.assertFalse(nue.is_antineutrino)
+
+        numu  = FourFlavor.NU_MU
+        self.assertFalse(numu.is_electron)
+        self.assertTrue(numu.is_neutrino)
+        self.assertFalse(numu.is_antineutrino)
+
+        nutau  = FourFlavor.NU_TAU
+        self.assertFalse(nutau.is_electron)
+        self.assertTrue(nutau.is_neutrino)
+        self.assertFalse(nutau.is_antineutrino)        
+
+        nus  = FourFlavor.NU_S
+        self.assertFalse(nus.is_electron)
+        self.assertTrue(nus.is_neutrino)
+        self.assertFalse(nus.is_antineutrino)        
+
+        nueb = FourFlavor.NU_E_BAR
+        self.assertTrue(nueb.is_electron)
+        self.assertFalse(nueb.is_neutrino)
+        self.assertTrue(nueb.is_antineutrino)
+
+        numub  = FourFlavor.NU_MU_NAR
+        self.assertFalse(numub.is_electron)
+        self.assertTrue(numub.is_neutrino)
+        self.assertFalse(numub.is_antineutrino)
+
+        nutaub  = FourFlavor.NU_TAU_BAR
+        self.assertFalse(nutaub.is_electron)
+        self.assertTrue(nutaub.is_neutrino)
+        self.assertFalse(nutaub.is_antineutrino)  
+   
+        nusb  = FourFlavor.NU_S_BAR
+        self.assertFalse(nusb.is_electron)
+        self.assertTrue(nusb.is_neutrino)
+        self.assertFalse(nusb.is_antineutrino)  
 
 
     def test_mixing_nmo(self):
