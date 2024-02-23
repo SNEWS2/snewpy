@@ -63,10 +63,10 @@ class ThreeFlavorTransformation(FlavorTransformation):
         
         Parameters
         ----------
-        mix_params : MixingParameters3Flavor instance or None
+        mix_params : ThreeFlavorMixingParameters instance or None
         """
         if mix_params == None:
-            self.mix_params = MixingParameters3Flavor(MassHierarchy.NORMAL)
+            self.mix_params = ThreeFlavorMixingParameters(MassHierarchy.NORMAL)
         else:
             self.mix_params = mix_params
 
@@ -164,10 +164,10 @@ class FourFlavorTransformation:
         
         Parameters
         ----------
-        mix_params : MixingParameters4Flavor instance
+        mix_params : FourFlavorMixingParameters instance
         """
         if mix_params == None:
-            self.mix_params = MixingParameters4Flavor(MassHierarchy.NORMAL)
+            self.mix_params = FourFlavorMixingParameters(MassHierarchy.NORMAL)
         else:
             self.mix_params = mix_params
 
@@ -354,7 +354,7 @@ class AdiabaticMSW(ThreeFlavorTransformation):
         
         Parameters
         ----------
-        mix_params : MixingParameters3Flavor instance or None
+        mix_params : ThreeFlavorMixingParameters instance or None
         """
         super().__init__(mix_params)        
 
@@ -392,7 +392,7 @@ class NonAdiabaticMSWH(ThreeFlavorTransformation):
         
         Parameters
         ----------
-        mix_params : MixingParameters3Flavor instance or None
+        mix_params : ThreeFlavorMixingParameters instance or None
         """
         super().__init__(mix_params)  
 
@@ -434,7 +434,7 @@ class TwoFlavorDecoherence(ThreeFlavorTransformation):
         
         Parameters
         ----------
-        mix_params : MixingParameters3Flavor instance or None
+        mix_params : ThreeFlavorMixingParameters instance or None
         """
         super().__init__(mix_params)    
 
@@ -512,7 +512,7 @@ class MSWEffect(ThreeFlavorTransformation):
         Parameters
         ----------
         SNprofile : instance of profile class
-        mix_params : MixingParameters3Flavor instance or None
+        mix_params : ThreeFlavorMixingParameters instance or None
         """
         self.SNprofile = SNprofile
      
@@ -632,7 +632,7 @@ class AdiabaticMSWes(FourFlavorTransformation):
         
         Parameters
         ----------
-        mix_params : MixingParameters3Flavor instance or None
+        mix_params : FourFlavorMixingParameters instance or None
         """
         super().__init__(mix_params)   
 
@@ -684,7 +684,7 @@ class NonAdiabaticMSWes(FourFlavorTransformation):
         
         Parameters
         ----------
-        mix_params : MixingParameters3Flavor instance or None
+        mix_params : FourFlavorMixingParameters instance or None
         """
         super().__init__(mix_params)   
 
@@ -743,7 +743,7 @@ class NeutrinoDecay(ThreeFlavorTransformation):
 
         Parameters
         ----------
-        mix_params : MixingParameters3Flavor instance or None
+        mix_params : ThreeFlavorMixingParameters instance or None
         mass : astropy.units.quantity.Quantity
             Mass of the heaviest neutrino; expect in eV/c^2.
         tau : astropy.units.quantity.Quantity
@@ -792,31 +792,25 @@ class NeutrinoDecay(ThreeFlavorTransformation):
         p : 6 x 6 array or array of 6 x 6 arrays 
         """        
         decay_factor = np.exp(-self.gamma(E)*self.d) 
-        G = np.zeros((6,6,len(E)))  
+        PND = np.zeros((6,6,len(E)))  
 
         if self.mix_params.mass_order == MassHierarchy.NORMAL:
-            G[0,0] = 1
-            G[0,2] = 1 - decay_factor
-            G[1,1] = 1
-            G[2,2] = decay_factor
-
-            G[3,3] = 1
-            G[3,5] = 1 - decay_factor
-            G[4,4] = 1
-            G[5,5] = decay_factor
+            PND[0,0] = 1
+            PND[0,2] = 1 - decay_factor
+            PND[1,1] = 1
+            PND[2,2] = decay_factor
 
         if self.mix_params.mass_order == MassHierarchy.INVERTED:
-            G[0,0] = 1
-            G[1,1] = decay_factor
-            G[2,1] = 1 - decay_factor
-            G[2,2] = 1
+            PND[0,0] = 1
+            PND[1,1] = decay_factor
+            PND[2,1] = 1 - decay_factor
+            PND[2,2] = 1
 
-            G[3,3] = 1
-            G[4,4] = decay_factor
-            G[5,4] = 1 - decay_factor
-            G[5,5] = 1
+        for i in range(3):
+            for j in range(3):
+                PND[i+3,j+3] = PND[i,j]        
 
-        p = self.D @ G 
+        p = self.D @ PND 
 
         return p
 
@@ -826,12 +820,12 @@ class QuantumDecoherence(ThreeFlavorTransformation):
     of states. For a description and typical parameters, see M. V. dos Santos et al.,
     2023, arXiv:2306.17591.
     """
-    def __init__(self, mix_params=None, Gamma3=1e-27*u.eV, Gamma8=1e-27*u.eV, dist=10*u.kpc, n=0, E0=10*u.MeV, mh=MassHierarchy.NORMAL):
+    def __init__(self, mix_params=None, Gamma3=1e-27*u.eV, Gamma8=1e-27*u.eV, dist=10*u.kpc, n=0, E0=10*u.MeV):
         """Initialize transformation matrix.
 
         Parameters
         ----------
-        mix_params : MixingParameters3Flavor instance or None
+        mix_params : ThreeFlavorMixingParameters instance or None
 
         Gamma3 : astropy.units.quantity.Quantity
             Quantum decoherence parameter; expect in eV.
@@ -858,43 +852,6 @@ class QuantumDecoherence(ThreeFlavorTransformation):
     def __str__(self):
         return f'QuantumDecoherence_' + str(self.mix_params.mass_order)
 
-
-    def Decoherence(self, E):
-        """Survival probability of state nu_j to nu_i in vacuum.
-
-        Parameters
-        ----------
-        E : float
-            Energy.
-
-        Returns
-        -------
-        Pij : float
-            Survival probability of state nu_j to nu_i in vacuum.
-
-        :meta private:
-        """
-
-        PQD = np.zeros((6,6,len(E)))
-
-        PQD[1,1] = 1/3 + 1/2 * np.exp(-(self.Gamma3 * (E/self.E0)**self.n + self.Gamma8 * (E/self.E0)**self.n / 3) * self.d) + 1/6 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
-
-        PQD[1,2] = 1/3 - 1/2 * np.exp(-(self.Gamma3 * (E/self.E0)**self.n + self.Gamma8 * (E/self.E0)**self.n / 3) * self.d) + 1/6 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
-
-        PQD[1,3] = 1/3 - 1/3 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
-
-        PQD[2,1] = PQD[1,2]
-        PQD[2,2] = PQD[1,1]
-        PQD[2,3] = PQD[1,3]
-
-        PQD[3,1] = PQD[1,3]
-        PQD[3,2] = PQD[2,3]
-    
-        PQD[3,3] = 1/3 + 2/3 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
-
-        return PQD
-
-
     def get_probabilities(self, t, E): 
         """neutrino and antineutrino transition probabilities.
 
@@ -909,7 +866,28 @@ class QuantumDecoherence(ThreeFlavorTransformation):
         -------
         p : 6 x 6 array or array of 6 x 6 arrays 
         """        
-        PQD = self.Decoherence(E)
+        PQD = np.zeros((6,6,len(E)))
+
+        PQD[1,1] = 1/3 + 1/2 * np.exp(-(self.Gamma3 * (E/self.E0)**self.n + self.Gamma8 * (E/self.E0)**self.n / 3) * self.d) \ 
+                  + 1/6 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
+
+        PQD[1,2] = 1/3 - 1/2 * np.exp(-(self.Gamma3 * (E/self.E0)**self.n + self.Gamma8 * (E/self.E0)**self.n / 3) * self.d) \
+                  + 1/6 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
+
+        PQD[1,3] = 1/3 - 1/3 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
+
+        PQD[2,1] = PQD[1,2]
+        PQD[2,2] = PQD[1,1]
+        PQD[2,3] = PQD[1,3]
+
+        PQD[3,1] = PQD[1,3]
+        PQD[3,2] = PQD[2,3]
+    
+        PQD[3,3] = 1/3 + 2/3 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
+
+        for i in range(3):
+            for j in range(3):
+                PQD[i+3,j+3] = PQD[i,j]
 
         p = self.D @ PQD
 
@@ -923,7 +901,7 @@ class EarthMatter(ThreeFlavorTransformation):
         
         Parameters
         ----------
-        mix_params : MixingParameters3Flavor instance or None
+        mix_params : ThreeFlavorMixingParameters instance or None
         SNAltAz : astropy AltAz object
         """
         super().__init__(mix_params)  
