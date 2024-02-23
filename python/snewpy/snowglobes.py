@@ -19,6 +19,7 @@ There are three basic steps to using SNOwGLoBES from SNEWPY:
     The output tables allow to build the detected neutrino energy spectrum and neutrino time distribution, for each reaction channel or the sum of them.
 """
 
+import io
 import logging
 import os
 import re
@@ -34,12 +35,44 @@ from warnings import warn
 
 import snewpy.models
 from snewpy.flavor_transformation import *
-from snewpy.neutrino import MassHierarchy
+from snewpy.neutrino import MassHierarchy, MixingParameters
 from snewpy.rate_calculator import RateCalculator, center
 from snewpy.flux import Container
+
 logger = logging.getLogger(__name__)
 
-def generate_time_series(model_path, model_type, transformation_type, d, output_filename=None, ntbins=30, deltat=None, snmodel_dict={}):
+def get_transformation(flavor_transformation_string):
+    """A function for idetifying the flavor transformation class from a string
+
+    Parameters
+    ---------
+    flavor_transformation_string : string
+
+    Returns
+    -------
+    flavor_transformation_class : a flavor_transformation class 
+    """
+
+    IMO_mix_params = MixingParameters(MassHierarchy.INVERTED)
+    NMO_mix_params = MixingParameters(MassHierarchy.NORMAL) 
+    
+    if flavor_transformation_string.find("NeutrinoDecay") is True:
+        print("Using the default values for Neutrino Decay transformation")         
+
+    # Choose flavor transformation. Use dict to associate the transformation name with its class.
+    # The default mixing paramaters are the normal hierarchy values
+    flavor_transformation_dict = {'NoTransformation': NoTransformation(), 'CompleteExchange': CompleteExchange(), 'AdiabaticMSW_NMO': AdiabaticMSW(NMO_mix_params), 'AdiabaticMSW_IMO': AdiabaticMSW(IMO_mix_params), 'NonAdiabaticMSWH_NMO': NonAdiabaticMSWH(NMO_mix_params), 'NonAdiabaticMSWH_IMO': NonAdiabaticMSWH(IMO_mix_params), 'TwoFlavorDecoherence': TwoFlavorDecoherence(NMO_mix_params), 'TwoFlavorDecoherence_NMO': TwoFlavorDecoherence(NMO_mix_params), 'TwoFlavorDecoherence_IMO': TwoFlavorDecoherence(IMO_mix_params), 'ThreeFlavorDecoherence': ThreeFlavorDecoherence(), 'NeutrinoDecay_NMO': NeutrinoDecay(NMO_mix_params), 'NeutrinoDecay_IMO': NeutrinoDecay(IMO_mix_params)}
+
+    flavor_transformation_class = flavor_transformation_dict[flavor_transformation_string]
+
+    return flavor_transformation_class
+
+
+def get_model(model_type_string):
+    return getattr(snewpy.models.ccsn, model_type_string)
+    
+
+def generate_time_series(model_path, model_type, flavor_transformation, d, output_filename=None, ntbins=30, deltat=None, snmodel_dict={}):
     """Generate time series files in SNOwGLoBES format.
 
     This version will subsample the times in a supernova model, produce energy
@@ -49,10 +82,13 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
     ----------
     model_path : str
         Input file containing neutrino flux information from supernova model.
-    model_type : str
+    model_type : str or flavor transformation class  
+        If a string, the class if found using the get_model function.
+        See snewpy.flavor_transformation documentation for possible values of the string.
         Format of input file. Matches the name of the corresponding class in :py:mod:`snewpy.models`.
-    transformation_type : str
-        Name of flavor transformation. See snewpy.flavor_transformation documentation for possible values.
+    flavor_transformation : str or flavor transformation class  
+        If a string, the class if found using the get_transformation function.
+        See snewpy.flavor_transformation documentation for possible values of the string.
     d : int or float
         Distance to supernova in kpc.
     output_filename : str or None
@@ -67,16 +103,17 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
     Returns
     -------
     str
-        Path of NumPy archive file with neutrino fluence data.
+        Path of compressed .tar file with neutrino flux data.
     """
-    model_class = getattr(snewpy.models.ccsn, model_type)
-
-    # Choose flavor transformation. Use dict to associate the transformation name with its class.
-    flavor_transformation_dict = {'NoTransformation': NoTransformation(), 'AdiabaticMSW_NMO': AdiabaticMSW(mh=MassHierarchy.NORMAL), 'AdiabaticMSW_IMO': AdiabaticMSW(mh=MassHierarchy.INVERTED), 'NonAdiabaticMSWH_NMO': NonAdiabaticMSWH(mh=MassHierarchy.NORMAL), 'NonAdiabaticMSWH_IMO': NonAdiabaticMSWH(mh=MassHierarchy.INVERTED), 'TwoFlavorDecoherence': TwoFlavorDecoherence(), 'ThreeFlavorDecoherence': ThreeFlavorDecoherence(), 'NeutrinoDecay_NMO': NeutrinoDecay(mh=MassHierarchy.NORMAL), 'NeutrinoDecay_IMO': NeutrinoDecay(mh=MassHierarchy.INVERTED), 'QuantumDecoherence_NMO': QuantumDecoherence(mh=MassHierarchy.NORMAL), 'QuantumDecoherence_IMO': QuantumDecoherence(mh=MassHierarchy.INVERTED)}
-    flavor_transformation = flavor_transformation_dict[transformation_type]
-
+    # if model_type is a tring, find the appropriate class
+    if isinstance(model_type,str) == True:
+        model_type = get_model(model_type)
     model_dir, model_file = os.path.split(os.path.abspath(model_path))
-    snmodel = model_class(model_path, **snmodel_dict)
+    snmodel = model_type(model_path, **snmodel_dict)
+
+    # if flavor_transformation is a tring, find the appropriate class
+    if isinstance(flavor_transformation,str) == True:
+        flavor_transformation = get_transformation(flavor_transformation)
 
     # Subsample the model time. Default to 30 time slices.
     tmin = snmodel.get_time()[0]
@@ -87,8 +124,12 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
     else:
         dt = (tmax - tmin) / (ntbins+1)
 
-    times = np.arange(tmin/u.s, tmax/u.s, dt/u.s)*u.s
-    energy = np.linspace(0, 100, 501) * u.MeV
+    tedges = np.arange(tmin/u.s, tmax/u.s, dt/u.s)*u.s
+    times = 0.5*(tedges[1:] + tedges[:-1])
+
+    #energy with 0.2 MeV binning similar to SNOwGLoBES
+    energy = np.linspace(0.2, 100, 501) << u.MeV 
+
     flux = snmodel.get_flux(t=times, E=energy,  distance=d, flavor_xform=flavor_transformation)
     fluence = flux.integrate('time', limits = times).integrate('energy', limits = energy)
     #save resulting fluence to file
@@ -96,11 +137,13 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
         tfname = output_filename + '.npz'
     else:
         model_file_root, _ = os.path.splitext(model_file)  # strip extension (if present)
-        tfname = f'{model_file_root}.{transformation_type}.{tmin:.3f},{tmax:.3f},{ntbins:d}-{d:.1f}.npz'
+        tfname = f'{model_file_root}'+str(flavor_transformation)+f'.{tmin:.3f},{tmax:.3f},{ntbins:d}-{d:.1f}.npz'
     fluence.save(tfname)
+
     return tfname
 
-def generate_fluence(model_path, model_type, transformation_type, d, output_filename=None, tstart=None, tend=None, snmodel_dict={}):
+
+def generate_fluence(model_path, model_type, flavor_transformation, d, output_filename=None, tstart=None, tend=None, snmodel_dict={}):
     """Generate fluence files in SNOwGLoBES format.
 
     This version will subsample the times in a supernova model, produce energy
@@ -112,8 +155,9 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
         Input file containing neutrino flux information from supernova model.
     model_type : str
         Format of input file. Matches the name of the corresponding class in :py:mod:`snewpy.models`.
-    transformation_type : str
-        Name of flavor transformation. See snewpy.flavor_transformation documentation for possible values.
+    flavor_transformation : str or flavor transformation class  
+        If a string, the class if found using the get_transformation function.
+        See snewpy.flavor_transformation documentation for possible values of the string.
     d : int or float
         Distance to supernova in kpc.
     output_filename : str or None
@@ -128,16 +172,17 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
     Returns
     -------
     str
-        Path of NumPy archive file with neutrino fluence data.
+        Path of compressed .tar file with neutrino flux data.
     """
-    model_class = getattr(snewpy.models.ccsn, model_type)
-
-    # Choose flavor transformation. Use dict to associate the transformation name with its class.
-    flavor_transformation_dict = {'NoTransformation': NoTransformation(), 'AdiabaticMSW_NMO': AdiabaticMSW(mh=MassHierarchy.NORMAL), 'AdiabaticMSW_IMO': AdiabaticMSW(mh=MassHierarchy.INVERTED), 'NonAdiabaticMSWH_NMO': NonAdiabaticMSWH(mh=MassHierarchy.NORMAL), 'NonAdiabaticMSWH_IMO': NonAdiabaticMSWH(mh=MassHierarchy.INVERTED), 'TwoFlavorDecoherence': TwoFlavorDecoherence(), 'ThreeFlavorDecoherence': ThreeFlavorDecoherence(), 'NeutrinoDecay_NMO': NeutrinoDecay(mh=MassHierarchy.NORMAL), 'NeutrinoDecay_IMO': NeutrinoDecay(mh=MassHierarchy.INVERTED), 'QuantumDecoherence_NMO': QuantumDecoherence(mh=MassHierarchy.NORMAL), 'QuantumDecoherence_IMO': QuantumDecoherence(mh=MassHierarchy.INVERTED)}
-    flavor_transformation = flavor_transformation_dict[transformation_type]
-
+    # if model_type is a string, find the appropriate class
+    if isinstance(model_type,str) == True:
+        model_class = get_model(model_type)
     model_dir, model_file = os.path.split(os.path.abspath(model_path))
     snmodel = model_class(model_path, **snmodel_dict)
+
+    # if flavor_transformation is a string, find the appropriate class
+    if isinstance(flavor_transformation,str) == True:
+        flavor_transformation = get_transformation(flavor_transformation)
 
     #set the timings up
     #default if inputs are None: full time window of the model
@@ -157,7 +202,8 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
     energy   = np.arange(0, 101, 0.2) << u.MeV
     #energy bins similar to SNOwGLoBES
     energy_t = (np.linspace(0, 100, 201)+0.25) << u.MeV 
-    flux = snmodel.get_flux(t=snmodel.get_time(), E=energy,  distance=d, flavor_xform=flavor_transformation)
+
+    flux = snmodel.get_flux(t=snmodel.get_time(), E=energy_t,  distance=d, flavor_xform=flavor_transformation)
     fluence = flux.integrate('time', limits = times).integrate('energy', limits = energy_t)
     times = fluence.time
     #store the energy bin centers instead of the edges
@@ -165,9 +211,10 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
         tfname = output_filename+'.npz'
     else:
         model_file_root, _ = os.path.splitext(model_file)  # strip extension (if present)
-        tfname = f'{model_file_root}.{transformation_type}.{times[0]:.3f},{times[1]:.3f},{len(times)-1:d}-{d:.1f}.npz'
+        tfname = f'{model_file_root}.'+str(flavor_transformation)+f'.{times[0]:.3f},{times[1]:.3f},{len(times)-1:d}-{d:.1f}.npz'
 
     fluence.save(tfname)
+
     return tfname
 
 def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False, *, detector_effects=True):
@@ -369,7 +416,7 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="", skip_plots=False, ve
                             plt.close()
         #Make a tarfile with the condensed data files and plots
         output_name = Path(tarball_path).stem
-        output_name = output_name[:output_name.rfind('.tar')]+'_SNOprocessed'
+        output_name = output_name+'_SNOprocessed'
         output_path = Path(tarball_path).parent/(output_name+'.tar.gz')
         with tarfile.open(output_path, "w:gz") as tar:
             for file in tempdir.iterdir():

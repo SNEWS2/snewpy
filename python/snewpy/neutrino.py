@@ -22,8 +22,14 @@ class MassHierarchy(IntEnum):
             return MassHierarchy.NORMAL
         else:
             return MassHierarchy.INVERTED
-            
-class Flavor(IntEnum):
+
+    def __str__(self):
+        if self.value == MassHierarchy.NORMAL: 
+           return f'NMO'
+        if self.value == MassHierarchy.INVERTED: 
+           return f'IMO'
+
+class TwoFlavor(IntEnum):
     """Enumeration of CCSN Neutrino flavors."""
     NU_E = 0
     NU_X = 1
@@ -38,17 +44,91 @@ class Flavor(IntEnum):
 
     @property
     def is_electron(self):
-        """Return ``True`` for ``Flavor.NU_E`` and ``Flavor.NU_E_BAR``."""
-        return self.value in (Flavor.NU_E.value, Flavor.NU_E_BAR.value)
+        """Return ``True`` for ``TwoFlavor.NU_E`` and ``TwoFlavor.NU_E_BAR``."""
+        return self.value in (TwoFlavor.NU_E.value, TwoFlavor.NU_E_BAR.value)
 
     @property
     def is_neutrino(self):
-        """Return ``True`` for ``Flavor.NU_E`` and ``Flavor.NU_X``."""
-        return self.value in (Flavor.NU_E.value, Flavor.NU_X.value)
+        """Return ``True`` for ``TwoFlavor.NU_E`` and ``TwoFlavor.NU_X``."""
+        return self.value in (TwoFlavor.NU_E.value, TwoFlavor.NU_X.value)
 
     @property
     def is_antineutrino(self):
-        return self.value in (Flavor.NU_E_BAR.value, Flavor.NU_X_BAR.value)
+        return self.value in (TwoFlavor.NU_E_BAR.value, TwoFlavor.NU_X_BAR.value)
+
+            
+class ThreeFlavor(IntEnum):
+    """Enumeration of CCSN Neutrino flavors."""
+    NU_E = 0
+    NU_MU = 1
+    NU_TAU = 2
+    NU_E_BAR = 3
+    NU_MU_BAR = 4
+    NU_TAU_BAR = 5
+    
+    def to_tex(self):
+        """LaTeX-compatible string representations of flavor."""
+        if '_BAR' in self.name:
+            return r'$\overline{{\nu}}_{0}$'.format(self.name[3].lower())
+        return r'$\{0}$'.format(self.name.lower())
+
+    @property
+    def is_electron(self):
+        """Return ``True`` for ``ThreeFlavor.NU_E`` and ``ThreeFlavor.NU_E_BAR``."""
+        return self.value in (ThreeFlavor.NU_E.value, ThreeFlavor.NU_E_BAR.value)
+
+    @property
+    def is_neutrino(self):
+        """Return ``True`` for ``ThreeFlavor.NU_E`` and ``ThreeFlavor.NU_MU`` and ``ThreeFlavor.NU_TAU``."""
+        return self.value in (ThreeFlavor.NU_E.value, ThreeFlavor.NU_MU.value, ThreeFlavor.NU_TAU.value)
+
+    @property
+    def is_antineutrino(self):
+        return self.value in (ThreeFlavor.NU_E_BAR.value, ThreeFlavor.NU_MU_BAR.value, ThreeFlavor.NU_TAU_BAR.value)
+
+
+class FourFlavor(IntEnum):
+    """Enumeration of CCSN Neutrino flavors."""
+    NU_E = 0
+    NU_MU = 1
+    NU_TAU = 2
+    NU_S = 3
+    NU_E_BAR = 4
+    NU_MU_BAR = 5
+    NU_TAU_BAR = 6
+    NU_S_BAR = 7
+    
+    def to_tex(self):
+        """LaTeX-compatible string representations of flavor."""
+        if '_BAR' in self.name:
+            return r'$\overline{{\nu}}_{0}$'.format(self.name[3].lower())
+        return r'$\{0}$'.format(self.name.lower())
+
+    @property
+    def is_electron(self):
+        """Return ``True`` for ``FourFlavor.NU_E`` and ``FourFlavor.NU_E_BAR``."""
+        return self.value in (FourFlavor.NU_E.value, FourFlavor.NU_E_BAR.value)
+
+    @property
+    def is_neutrino(self):
+        """Return ``True`` for ``FourFlavor.NU_E`` and ``FourFlavor.NU_MU`` and ``FourFlavor.NU_TAU`` and ``FourFlavor.NU_S``."""
+        return self.value in (FourFlavor.NU_E.value, FourFlavor.NU_MU.value, FourFlavor.NU_TAU.value, FourFlavor.NU_S.value)
+
+    @property
+    def is_antineutrino(self):
+        return self.value in (FourFlavor.NU_E_BAR.value, FourFlavor.NU_MU_BAR.value, FourFlavor.NU_TAU_BAR.value, FourFlavor.NU_S_BAR.value)
+
+
+def Remove_Steriles():
+    A = np.zeros((6,8))
+    A[ThreeFlavor.NU_E,FourFlavor.NU_E] = 1
+    A[ThreeFlavor.NU_MU,FourFlavor.NU_MU] = 1
+    A[ThreeFlavor.NU_TAU,FourFlavor.NU_TAU] = 1
+    A[ThreeFlavor.NU_E_BAR,FourFlavor.NU_E_BAR] = 1
+    A[ThreeFlavor.NU_MU_BAR,FourFlavor.NU_MU_BAR] = 1
+    A[ThreeFlavor.NU_TAU_BAR,FourFlavor.NU_TAU_BAR] = 1
+    return A
+
         
 @dataclass
 class MixingParameters3Flavor(Mapping):
@@ -135,6 +215,43 @@ class MixingParameters3Flavor(Mapping):
         """        
         return (self.dm21_2, self.dm31_2, self.dm32_2)
 
+
+    def Vacuum_Mixing_Matrix(self):
+        """The vacuum mixing matrix given the mixing paramters
+           N.B. This is a 6 x 6 matrix
+        """
+
+        U = self.Complex_Rotation_Matrix(1,2,self.theta23,0) \
+            @ self.Complex_Rotation_Matrix(0,2,self.theta13,self.deltaCP) \
+            @ self.Complex_Rotation_Matrix(0,1,self.theta12,0) 
+
+        """Reorder rows to match SNEWPY's flavor ordering convention defined in neutrino.py"""
+        U[ThreeFlavor.NU_E], U[ThreeFlavor.NU_MU], U[ThreeFlavor.NU_TAU], \
+            U[ThreeFlavor.NU_E_BAR], U[ThreeFlavor.NU_MU_BAR], U[ThreeFlavor.NU_TAU_BAR] = \
+                U[0], U[1], U[2], U[3], U[4], U[5]
+
+        return U
+
+
+    def Complex_Rotation_Matrix(self,i,j,theta,phase):
+        """A complex rotation matrix. N.B. the minus sign in the complex exponential matches PDG convention"""
+        V = np.zeros((6,6),dtype = 'complex_')
+        for k in range(6): 
+            V[k,k] = 1
+
+        V[i,i] = np.cos(theta) 
+        V[j,j] = V[i,i]
+        V[i,j] = np.sin(theta) * ( np.cos(phase) - 1j * np.sin(phase) )
+        V[j,i] = - np.conjugate(V[i,j])
+
+        V[i+3,i+3] = V[i,i]
+        V[j+3,j+3] = V[j,j]
+        V[i+3,j+3] = np.conjugate(V[i,j]) 
+        V[j+3,i+3] = np.conjugate(V[j,i])
+
+        return V
+
+
 @dataclass
 class MixingParameters4Flavor(MixingParameters3Flavor):
     """A class for four flavor neutrino mixing. 
@@ -143,10 +260,16 @@ class MixingParameters4Flavor(MixingParameters3Flavor):
         >>> pars_3f = MixingParameters() #standard 3flavor mixing
         >>> pars_4f = MixingParameters4Flavor(**pars_3f, theta14=90<<u.deg, dm41_2=1<<u.GeV**2)
     """
-    #sterile neutrino miging angles
+    #sterile neutrino mixing angles. 
     theta14: u.Quantity[u.deg] = 0<<u.deg
-    theta24: u.Quantity[u.deg] = 0<<u.deg
-    theta34: u.Quantity[u.deg] = 0<<u.deg
+    theta24: Optional[u.Quantity[u.deg]] = 0<<u.deg
+    theta34: Optional[u.Quantity[u.deg]] = 0<<u.deg
+
+    #sterile CP violating phases
+    delta12: Optional[u.Quantity[u.deg]] = 0<<u.deg
+    #delta13: u.Quantity[u.deg] '''same as deltaCP in 3Flavor Mixing'''
+    delta24: Optional[u.Quantity[u.deg]] = 0<<u.deg
+
     #sterile neutrino mass squared differences
     dm41_2: u.Quantity[u.eV**2] = 0<<u.eV**2
     dm42_2: Optional[u.Quantity] = None
@@ -161,6 +284,65 @@ class MixingParameters4Flavor(MixingParameters3Flavor):
         assert np.isclose(dm2_sum,0), f'dm41_2 - dm42_2 - dm21_2 = {dm2_sum} !=0'
         dm2_sum = self.dm41_2 - self.dm43_2 - self.dm31_2
         assert np.isclose(dm2_sum,0), f'dm41_2 - dm43_2 - dm31_2 = {dm2_sum} !=0'
+
+    def get_mixing_angles(self):
+        """Mixing angles of the PMNS matrix.
+        
+        Returns
+        -------
+        tuple
+            Angles theta12, theta13, theta23, theta14, theta24, theta34. 
+        """
+        return (self.theta12, self.theta13, self.theta23, self.theta14, self.theta24, self.theta34)
+        
+    def get_mass_squared_differences(self):
+        """Mass squared differences .
+        
+        Returns
+        -------
+        tuple
+            dm21_2, dm31_2, dm32_2, dm41_2, dm42_3, dm43_2.
+        """        
+        return (self.dm21_2, self.dm31_2, self.dm32_2, self.dm41_2, self.dm42_3, self.dm43_2)
+
+    def Vacuum_Mixing_Matrix(self):
+        """The vacuum mixing matrix given the mixing paramters
+           N.B. This is a 8 x 8 matrix
+        """
+
+        U = self.Complex_Rotation_Matrix(2,3,self.theta34,0) \
+            @ self.Complex_Rotation_Matrix(1,3,self.theta24,self.delta24) \
+            @ self.Complex_Rotation_Matrix(0,3,self.theta14,0) \
+            @ self.Complex_Rotation_Matrix(1,2,self.theta23,0) \
+            @ self.Complex_Rotation_Matrix(0,2,self.theta13,self.deltaCP) \
+            @ self.Complex_Rotation_Matrix(0,1,self.theta12,self.delta12) 
+
+        """Reorder rows to match SNEWPY's flavor ordering convention defined in neutrino.py"""
+        U[FourFlavor.NU_E], U[FourFlavor.NU_MU], U[FourFlavor.NU_TAU], U[FourFlavor.NU_S], \
+            U[FourFlavor.NU_E_BAR], U[FourFlavor.NU_MU_BAR], U[FourFlavor.NU_TAU_BAR], U[FourFlavor.NU_S_BAR] = \
+                U[0], U[1], U[2], U[3], U[4], U[5], U[6], U[7]
+
+        return U
+
+
+    def Complex_Rotation_Matrix(self,i,j,theta,phase):
+        """A complex rotation matrix. N.B. the minus sign in the complex exponential matches PDG convention"""
+        V = np.zeros((8,8),dtype = 'complex_')
+        for k in range(8): 
+            V[k,k] = 1
+
+        V[i,i] = np.cos(theta) 
+        V[j,j] = V[i,i]
+        V[i,j] = np.sin(theta) * ( np.cos(phase) - 1j * np.sin(phase) )
+        V[j,i] = - np.conjugate(V[i,j])
+
+        V[i+4,i+4] = V[i,i]
+        V[j+4,j+4] = V[j,j]
+        V[i+4,j+4] = np.conjugate(V[i,j]) 
+        V[j+4,i+4] = np.conjugate(V[j,i])
+
+        return V
+
 
 parameter_presets = {
     # Values from JHEP 09 (2020) 178 [arXiv:2007.14792] and www.nu-fit.org.
@@ -228,5 +410,5 @@ parameter_presets = {
 }
    
 
-def MixingParameters(mh:MassHierarchy=MassHierarchy.NORMAL, version:str='NuFIT5.0'):
-    return parameter_presets[version][mh]
+def MixingParameters(mass_order:MassHierarchy=MassHierarchy.NORMAL, version:str='NuFIT5.0'):
+    return parameter_presets[version][mass_order]
