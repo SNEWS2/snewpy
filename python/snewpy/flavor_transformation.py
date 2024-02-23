@@ -999,7 +999,7 @@ class EarthMatter(ThreeFlavorTransformation):
 class Catenate:
     """Catenate two flavor transformation effects together."""
 
-    def __init__(self, transform2, transform1):
+    def __init__(self, transform1, transform2):
         """        
         Parameters
         ----------
