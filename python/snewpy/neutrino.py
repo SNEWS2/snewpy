@@ -131,7 +131,7 @@ def Remove_Steriles():
 
         
 @dataclass
-class MixingParameters3Flavor(Mapping):
+class ThreeFlavorMixingParameters(Mapping):
     """Mixing angles and mass differences, assuming three neutrino flavors.
     This class contains the default values used throughout SNEWPY, which are
     based on `NuFIT 5.0 <http://www.nu-fit.org>`_ results from July 2020,
@@ -253,12 +253,12 @@ class MixingParameters3Flavor(Mapping):
 
 
 @dataclass
-class MixingParameters4Flavor(MixingParameters3Flavor):
+class FourFlavorMixingParameters(ThreeFlavorMixingParameters):
     """A class for four flavor neutrino mixing. 
-    ..Note: it is an extension of :class:`MixingParameters3Flavor`, and can be constructed using it:
+    ..Note: it is an extension of :class:`ThreeFlavorMixingParameters`, and can be constructed using it:
     
-        >>> pars_3f = MixingParameters() #standard 3flavor mixing
-        >>> pars_4f = MixingParameters4Flavor(**pars_3f, theta14=90<<u.deg, dm41_2=1<<u.GeV**2)
+        >>> pars_3f = ThreeFlavorMixingParameters() #standard 3flavor mixing
+        >>> pars_4f = FpourFlavorMixingParameters(**pars_3f, theta14=90<<u.deg, dm41_2=1<<u.GeV**2)
     """
     #sterile neutrino mixing angles. 
     theta14: u.Quantity[u.deg] = 0<<u.deg
@@ -348,7 +348,7 @@ parameter_presets = {
     # Values from JHEP 09 (2020) 178 [arXiv:2007.14792] and www.nu-fit.org.
     'NuFIT5.0': {
         MassHierarchy.NORMAL:
-        MixingParameters3Flavor(
+        ThreeFlavorMixingParameters(
             theta12 = 33.44<< u.deg,
             theta13 = 8.57 << u.deg,
             theta23 = 49.20 << u.deg,
@@ -357,7 +357,7 @@ parameter_presets = {
             dm31_2 =  2.517e-3 << u.eV**2
         ),
         MassHierarchy.INVERTED:
-        MixingParameters3Flavor(    
+        ThreeFlavorMixingParameters(    
             theta12 = 33.45 << u.deg,
             theta13 = 8.60 << u.deg,
             theta23 = 49.30 << u.deg,
@@ -368,7 +368,7 @@ parameter_presets = {
     },
     'NuFIT5.2': {
         MassHierarchy.NORMAL:
-        MixingParameters3Flavor(
+        ThreeFlavorMixingParameters(
             theta12 = 33.41 << u.deg,
             theta13 = 8.58 << u.deg,
             theta23 = 42.20 << u.deg,
@@ -389,7 +389,7 @@ parameter_presets = {
     'PDG2022':{
     # Values from https://pdg.lbl.gov
         MassHierarchy.NORMAL:
-        MixingParameters3Flavor(
+        ThreeFlavorMixingParameters(
             theta12 = 33.65 << u.deg,
             theta13 = 8.53 << u.deg,
             theta23 = 47.64 << u.deg,
@@ -398,7 +398,7 @@ parameter_presets = {
             dm32_2 = 2.453e-3 << u.eV**2
         ),
         MassHierarchy.INVERTED:
-        MixingParameters3Flavor(
+        ThreeFlavorMixingParameters(
             theta12 = 33.65 << u.deg,
             theta13 = 8.53 << u.deg,
             theta23 = 47.24 << u.deg,
