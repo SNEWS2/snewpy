@@ -14,24 +14,7 @@ from astropy.coordinates import AltAz
 
 from .neutrino import MassHierarchy, ThreeFlavor, FourFlavor
 
-try:
-    import EMEWS
-except:
-    EMEWS = None
-
-try:
-    import SNOSHEWS
-except:
-    SNOSHEWS = None
-
-
-class SNprofile:
-    """Simple container for density and electron fraction profiles"""
-
-    def __init__(self, rhofilename, Yefilename):         
-        self.rhofilename = rhofilename
-        self.Yefilename = Yefilename
-
+###############################################################################
 
 class FlavorTransformation(ABC):
     """Generic interface to compute neutrino and antineutrino survival probability."""
@@ -54,6 +37,7 @@ class FlavorTransformation(ABC):
         """    
         pass
 
+###############################################################################
 
 class ThreeFlavorTransformation(FlavorTransformation):
     """Base class defining common data and methods for all three flavor transformations"""
@@ -70,7 +54,7 @@ class ThreeFlavorTransformation(FlavorTransformation):
         else:
             self.mix_params = mix_params
 
-        U = self.mix_params.Vacuum_Mixing_Matrix()
+        U = self.mix_params.VacuumMixingMatrix()
 
         self.D = np.zeros((6,6)) # note the first index is a flavor, the second is a mass state
         for f in ThreeFlavor:
@@ -98,7 +82,7 @@ class ThreeFlavorTransformation(FlavorTransformation):
         M2[1+3,1+3] = self.mix_params.dm21_2.value 
         M2[2+3,2+3] = self.mix_params.dm31_2.value 
 
-        U = self.mix_params.Vacuum_Mixing_Matrix()
+        U = self.mix_params.VacuumMixingMatrix()
 
         HV = U @ M2 @ np.conjugate(np.transpose(U))
 
@@ -155,6 +139,7 @@ class ThreeFlavorTransformation(FlavorTransformation):
 
         return PmfHDL
 
+###############################################################################
 
 class FourFlavorTransformation:
     """Base class defining common data and method for all four flavor transformations"""
@@ -171,7 +156,7 @@ class FourFlavorTransformation:
         else:
             self.mix_params = mix_params
 
-        U = Vacuum_Mixing_Matrix()
+        U = VacuumMixingMatrix()
 
         self.D = np.zeros((8,8)) # note the first index is a flavor, the second is a mass state
         for f in FourFlavor:
@@ -203,7 +188,7 @@ class FourFlavorTransformation:
         M2[2+4,2+4] = self.mix_params.dm31_2.value 
         M2[3+4,3+4] = self.mix_params.dm41_2.value 
 
-        U = Vacuum_Mixing_Matrix()
+        U = VacuumMixingMatrix()
 
         HV = np.zeros((6,6,len(E)))        
         for m in range(len(E)):
@@ -271,6 +256,7 @@ class FourFlavorTransformation:
 
         return PmfHDL
 
+###############################################################################
 
 class NoTransformation(FlavorTransformation):
     """Survival probabilities for no oscillation case."""
@@ -301,7 +287,8 @@ class NoTransformation(FlavorTransformation):
 
         return p
 
-    
+###############################################################################
+
 class CompleteExchange(FlavorTransformation):
     """Survival probabilities for the case when the electron flavors 
        are half exchanged with the mu flavors and the half with the tau flavors.
@@ -345,6 +332,7 @@ class CompleteExchange(FlavorTransformation):
 
         return p        
         
+###############################################################################
 
 class AdiabaticMSW(ThreeFlavorTransformation):
     """Adiabatic MSW effect."""
@@ -383,6 +371,7 @@ class AdiabaticMSW(ThreeFlavorTransformation):
 
         return p
         
+###############################################################################
 
 class NonAdiabaticMSWH(ThreeFlavorTransformation):
     """Nonadiabatic MSW effect."""
@@ -425,6 +414,7 @@ class NonAdiabaticMSWH(ThreeFlavorTransformation):
         
         return p
 
+###############################################################################
 
 class TwoFlavorDecoherence(ThreeFlavorTransformation):
     """Star-earth transit survival probability: two flavor case."""
@@ -471,6 +461,7 @@ class TwoFlavorDecoherence(ThreeFlavorTransformation):
 
         return p
 
+###############################################################################
 
 class ThreeFlavorDecoherence(ThreeFlavorTransformation):
     """Star-earth transit survival probability: three flavor case."""
@@ -500,7 +491,20 @@ class ThreeFlavorDecoherence(ThreeFlavorTransformation):
 
         return p
 
+###############################################################################
 
+try:
+    import SNOSHEWS
+except:
+    SNOSHEWS = None
+
+class SNprofile:
+    """Simple container for density and electron fraction profiles"""
+
+    def __init__(self, rhofilename, Yefilename):         
+        self.rhofilename = rhofilename
+        self.Yefilename = Yefilename
+        
 class MSWEffect(ThreeFlavorTransformation):
     """The MSW effect using a density profile and electron 
        fraction provided by the user. Uses the SNOSHEWS module.
@@ -614,6 +618,7 @@ class MSWEffect(ThreeFlavorTransformation):
 
         return p
         
+###############################################################################
 
 class AdiabaticMSWes(FourFlavorTransformation):
     """A four-neutrino mixing prescription. The assumptions used are that:
@@ -666,6 +671,7 @@ class AdiabaticMSWes(FourFlavorTransformation):
 
         return p 
         
+###############################################################################
 
 class NonAdiabaticMSWes(FourFlavorTransformation):
     """A four-neutrino mixing prescription. The assumptions used are that:
@@ -728,6 +734,7 @@ class NonAdiabaticMSWes(FourFlavorTransformation):
         
         return p        
 
+###############################################################################
 
 """ The modifier transformtions. These cannot be used by themselves but can be 
     combined with a flavor transformtion class from the first group using the Catenate class
@@ -814,6 +821,7 @@ class NeutrinoDecay(ThreeFlavorTransformation):
 
         return p
 
+###############################################################################
 
 class QuantumDecoherence(ThreeFlavorTransformation):
     """Quantum Decoherence, where propagation in vacuum leads to equipartition
@@ -893,7 +901,95 @@ class QuantumDecoherence(ThreeFlavorTransformation):
 
         return p
 
+###############################################################################
 
+class ThreeFlavorNoEarthMatter(ThreeFlavorTransformation):
+
+    def __init__(self, mix_params = None ):
+        """Initialize flavor transformation
+        
+        Parameters
+        ----------
+        mix_params : ThreeFlavorMixingParameters instance or None
+        """
+        super().__init__(mix_params)  
+
+    def __str__(self):
+        pass
+
+    def get_probabilities(self, t, E):
+        """the D matrix for the case of no Earth matter effects and three neutrino flavors
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        an array of length of the E array with each element being the 
+        D matrix after computing Earth-matter effects
+        """
+        U = self.mix_params.VacuumMixingMatrix()
+
+        D = np.zeros((6,6,len(E))) # note the first index is a flavor, the second is a mass state
+        for f in ThreeFlavor:
+            for i in range(6):
+                for m in range(len(E)): 
+                    D[f,i,m] = float(np.abs(U[f,i])**2)    
+                    
+        return D
+
+###############################################################################
+
+class FourFlavorNoEarthMatter(FourFlavorTransformation):
+
+    def __init__(self, mix_params = None ):
+        """Initialize flavor transformation
+        
+        Parameters
+        ----------
+        mix_params : FourFlavorMixingParameters instance or None
+        """
+        super().__init__(mix_params)  
+
+    def __str__(self):
+        pass
+
+    def get_probabilities(self, t, E):
+        """the D matrix for the case of no Earth matter effects and four neutrino flavors
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        an array of length of the E array with each element being the 
+        D matrix after computing Earth-matter effects
+        """
+        U = self.mix_params.VacuumMixingMatrix()
+
+        D = np.zeros((8,8,len(E))) # note the first index is a flavor, the second is a mass state
+        for f in FourFlavor:
+            for i in range(8):
+                for m in range(len(E)): 
+                    D[f,i,m] = float(np.abs(U[f,i])**2)    
+                    
+        return D
+
+###############################################################################
+
+try:
+    import EMEWS
+except:
+    EMEWS = None
+        
 class EarthMatter(ThreeFlavorTransformation):
 
     def __init__(self, SNAltAz, mix_params = None ):
