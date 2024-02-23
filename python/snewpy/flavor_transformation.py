@@ -58,7 +58,7 @@ class FlavorTransformation(ABC):
 class ThreeFlavorTransformation(FlavorTransformation):
     """Base class defining common data and methods for all three flavor transformations"""
 
-    def __init__(self, mix_params = None):
+    def __init__(self, mix_params):
         """Initialize flavor transformation
         
         Parameters
@@ -349,12 +349,12 @@ class CompleteExchange(FlavorTransformation):
 class AdiabaticMSW(ThreeFlavorTransformation):
     """Adiabatic MSW effect."""
 
-    def __init__(self, mix_params):
+    def __init__(self, mix_params = None):
         """Initialize flavor transformation
         
         Parameters
         ----------
-        mix_params : MixingParameters3Flavor instance
+        mix_params : MixingParameters3Flavor instance or None
         """
         super().__init__(mix_params)        
 
@@ -387,14 +387,14 @@ class AdiabaticMSW(ThreeFlavorTransformation):
 class NonAdiabaticMSWH(ThreeFlavorTransformation):
     """Nonadiabatic MSW effect."""
 
-    def __init__(self, mix_params):
+    def __init__(self, mix_params = None):
         """Initialize flavor transformation
         
         Parameters
         ----------
-        mix_params : MixingParameters3Flavor instance
+        mix_params : MixingParameters3Flavor instance or None
         """
-        super().__init__(mix_params)   
+        super().__init__(mix_params)  
 
     def __str__(self):
         return f'NonAdiabaticMSWH_' + str(self.mix_params.mass_order)
@@ -429,14 +429,14 @@ class NonAdiabaticMSWH(ThreeFlavorTransformation):
 class TwoFlavorDecoherence(ThreeFlavorTransformation):
     """Star-earth transit survival probability: two flavor case."""
 
-    def __init__(self, mix_params):
+    def __init__(self, mix_params = None):
         """Initialize flavor transformation
         
         Parameters
         ----------
-        mix_params : MixingParameters3Flavor instance
+        mix_params : MixingParameters3Flavor instance or None
         """
-        super().__init__(mix_params)       
+        super().__init__(mix_params)    
 
     def __str__(self):
         return f'TwoFlavorDecoherence_' + str(self.mix_params.mass_order)
@@ -472,11 +472,12 @@ class TwoFlavorDecoherence(ThreeFlavorTransformation):
         return p
 
 
-class ThreeFlavorDecoherence(FlavorTransformation):
+class ThreeFlavorDecoherence(ThreeFlavorTransformation):
     """Star-earth transit survival probability: three flavor case."""
 
     def __init__(self):
-        pass
+        """Initialize ThreeFlavorTransformation to default case"""
+        super().__init__(None) 
 
     def __str__(self):
         return f'ThreeFlavorDecoherence'
@@ -505,17 +506,27 @@ class MSWEffect(ThreeFlavorTransformation):
        fraction provided by the user. Uses the SNOSHEWS module.
     """
 
-    def __init__(self, mix_params, SNprofile, rmin, rmax):
+    def __init__(self, SNprofile, mix_params = None, rmin = None, rmax = None):
         """Initialize flavor transformation
         
         Parameters
         ----------
-        mix_params : MixingParameters3Flavor instance
         SNprofile : instance of profile class
+        mix_params : MixingParameters3Flavor instance or None
         """
         self.SNprofile = SNprofile
-        self.rmin = rmin
-        self.rmax = rmax
+     
+        super().__init__(mix_params) 
+        
+        if rmin == None:
+            rmin = 0
+        else: 
+            self.rmin = rmin
+            
+        if rmax == None:
+            rmax = 1e99
+        else: 
+            self.rmax = rmax
 
         super().__init__(mix_params)        
 
@@ -616,12 +627,12 @@ class AdiabaticMSWes(FourFlavorTransformation):
     For further insight see, for example, Esmaili, Peres, and Serpico, 
         Phys. Rev. D 90, 033013 (2014).
     """
-    def __init__(self, mix_params):
+    def __init__(self, mix_params = None):
         """Initialize flavor transformation
         
         Parameters
         ----------
-        mix_params : MixingParameters3Flavor instance
+        mix_params : MixingParameters3Flavor instance or None
         """
         super().__init__(mix_params)   
 
@@ -668,12 +679,12 @@ class NonAdiabaticMSWes(FourFlavorTransformation):
     For further insight see, for example, Esmaili, Peres, and Serpico, 
         Phys. Rev. D 90, 033013 (2014).
     """
-    def __init__(self, mix_params):
+    def __init__(self, mix_params = None):
         """Initialize flavor transformation
         
         Parameters
         ----------
-        mix_params : MixingParameters3Flavor instance
+        mix_params : MixingParameters3Flavor instance or None
         """
         super().__init__(mix_params)   
 
@@ -727,12 +738,12 @@ class NeutrinoDecay(ThreeFlavorTransformation):
     neutrino. For a description and typical parameters, see A. de Gouvêa et al.,
     PRD 101:043013, 2020, arXiv:1910.01127.
     """
-    def __init__(self, mix_params, mass=1*u.eV/c.c**2, tau=1*u.day, dist=10*u.kpc):
+    def __init__(self, mix_params=None, mass=1*u.eV/c.c**2, tau=1*u.day, dist=10*u.kpc):
         """Initialize transformation matrix.
 
         Parameters
         ----------
-        mix_params : MixingParameters3Flavor instance
+        mix_params : MixingParameters3Flavor instance or None
         mass : astropy.units.quantity.Quantity
             Mass of the heaviest neutrino; expect in eV/c^2.
         tau : astropy.units.quantity.Quantity
@@ -815,12 +826,12 @@ class QuantumDecoherence(ThreeFlavorTransformation):
     of states. For a description and typical parameters, see M. V. dos Santos et al.,
     2023, arXiv:2306.17591.
     """
-    def __init__(self, mix_params, Gamma3=1e-27*u.eV, Gamma8=1e-27*u.eV, dist=10*u.kpc, n=0, E0=10*u.MeV, mh=MassHierarchy.NORMAL):
+    def __init__(self, mix_params=None, Gamma3=1e-27*u.eV, Gamma8=1e-27*u.eV, dist=10*u.kpc, n=0, E0=10*u.MeV, mh=MassHierarchy.NORMAL):
         """Initialize transformation matrix.
 
         Parameters
         ----------
-        mix_params : MixingParameters3Flavor instance
+        mix_params : MixingParameters3Flavor instance or None
 
         Gamma3 : astropy.units.quantity.Quantity
             Quantum decoherence parameter; expect in eV.
@@ -907,19 +918,14 @@ class QuantumDecoherence(ThreeFlavorTransformation):
 
 class EarthMatter(ThreeFlavorTransformation):
 
-    def __init__(self, mix_params = None, SNAltAz = None ):
+    def __init__(self, SNAltAz, mix_params = None ):
         """Initialize flavor transformation
         
         Parameters
         ----------
         mix_params : MixingParameters3Flavor instance or None
-        SNAltAz : astropy AltAz object or None
+        SNAltAz : astropy AltAz object
         """
-        if mix_params == None:
-            self.mix_params = MixingParameters3Flavor(MassHierarchy.NORMAL)
-        else:
-            self.mix_params = mix_params
-
         super().__init__(mix_params)  
             
         self.SNAltAz = SNAltAz
@@ -947,14 +953,6 @@ class EarthMatter(ThreeFlavorTransformation):
         """
         if EMEWS == None:
             print("The EMEWS module cannot be found. Results do not include the Earth-matter effect.")
-            return self.D
-
-        if self.SNAltAz == None:
-            print("No supernova location provided. Results do not include the Earth-matter effect.")
-            return self.D
-
-        if self.SNAltAz.alt > 0:
-            print("The supernova sky location has a positive altitude. Results do not include the Earth-matter effect.")
             return self.D
 
         if self.prior_E != None:
