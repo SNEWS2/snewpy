@@ -14,19 +14,17 @@ from snewpy.neutrino import *
 
 home_directory = os.getcwd()
 SNOwGLoBES_path = None  # change to SNOwGLoBES directory if using a custom detector configuration
-#SNEWPY_models_base = "/path/to/snewpy/models/"  # directory containing model input files
-SNEWPY_models_base = "/nucastro2/jpknelle/Research/SNEWS2/snewpy 1.4jpk/models"
+SNEWPY_models_base = "/path/to/snewpy/models/"  # directory containing model input files
 
 # skycoordinates of neutrino source
 Betelgeuse = SkyCoord.from_name('Betelgeuse') 
     
 # neutrino detector
 SuperK = EarthLocation.of_site('SuperK')
-utcoffset = +9*u.hour  
+UTcoffset = +9*u.hour  
 
 # when the supernova occured
-time = Time('2021-5-26 23:14:00') - utcoffset
-#time = Time('2021-5-26 23:14:00') - utcoffset - 12*u.hour    
+time = Time('2021-5-26 23:14:00') - UTcoffset
 
 # altaz of supernovae at detector
 SNaltaz = Betelgeuse.transform_to(AltAz(obstime=time,location=SuperK)) 
