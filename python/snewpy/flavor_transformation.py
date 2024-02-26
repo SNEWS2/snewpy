@@ -54,13 +54,6 @@ class ThreeFlavorTransformation(FlavorTransformation):
         else:
             self.mix_params = mix_params
 
-        U = self.mix_params.VacuumMixingMatrix()
-
-        self.D = np.zeros((6,6)) # note the first index is a flavor, the second is a mass state
-        for f in ThreeFlavor:
-            for i in range(6):
-                self.D[f,i] = float(np.abs(U[f,i])**2)
-
 
     def Pmf_HighDensityLimit(self):
         """ The probability that a given flavor state is 'detected' as a particular matter state in the 
@@ -155,15 +148,6 @@ class FourFlavorTransformation:
             self.mix_params = FourFlavorMixingParameters(MassHierarchy.NORMAL)
         else:
             self.mix_params = mix_params
-
-        U = VacuumMixingMatrix()
-
-        self.D = np.zeros((8,8)) # note the first index is a flavor, the second is a mass state
-        for f in FourFlavor:
-            for i in range(8):
-                self.D[f,i] = float(np.abs(U[f,i])**2)
-
-        self.D = None
 
     def Pmf_HighDensityLimit(self):
         """ The probability that a given flavor state is 'detected' as a particular matter state in the 
@@ -349,8 +333,27 @@ class AdiabaticMSW(ThreeFlavorTransformation):
     def __str__(self):
         return f'AdiabaticMSW_' + str(self.mix_params.mass_order)
 
-    def get_probabilities(self, t, E): 
-        """neutrino and antineutrino transition probabilities.
+    def get_SNprobabilities(self, t, E): 
+        """neutrino and antineutrino transition probabilities in the supernova
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        Pmf : 6 x 6 array
+        """    
+        Pmf = self.Pmf_HighDensityLimit()
+
+        return Pmf
+
+    def get_probabilities(self, t, E):         
+        """neutrino and antineutrino transition probabilities from the 
+        neutrinosphere to Earth
 
         Parameters
         ----------
@@ -363,11 +366,12 @@ class AdiabaticMSW(ThreeFlavorTransformation):
         -------
         p : 6 x 6 array or array of 6 x 6 arrays 
         """    
-        Pmf = self.Pmf_HighDensityLimit()
+        Pmf = self.get_SNprobabilities(t,E)
+        D = ThreeFlavorNoEarthMatter(self.mix_params).get_probabilities(t,E)
 
         p = np.empty((6,6,len(E))) 
         for m in range(len(E)):
-            p[:,:,m] = self.D @ Pmf
+            p[:,:,m] = D[:,:,m] @ Pmf[:,:]
 
         return p
         
@@ -388,8 +392,8 @@ class NonAdiabaticMSWH(ThreeFlavorTransformation):
     def __str__(self):
         return f'NonAdiabaticMSWH_' + str(self.mix_params.mass_order)
 
-    def get_probabilities(self, t, E): 
-        """neutrino and antineutrino transition probabilities.
+    def get_SNprobabilities(self, t, E): 
+        """neutrino and antineutrino transition probabilities in the supernova
 
         Parameters
         ----------
@@ -397,7 +401,11 @@ class NonAdiabaticMSWH(ThreeFlavorTransformation):
             List of times.
         E : float or ndarray
             List of energies.
-        """
+
+        Returns
+        -------
+        Pmf : 6 x 6 array
+        """            
         PmfHDL = self.Pmf_HighDensityLimit()
 
         Pmf = PmfHDL
@@ -408,9 +416,29 @@ class NonAdiabaticMSWH(ThreeFlavorTransformation):
             for f in ThreeFlavor:
                 Pmf[3,f], Pmf[5,f] = Pmf[5,f], Pmf[3,f]
 
+        return Pmf
+
+    def get_probabilities(self, t, E):         
+        """neutrino and antineutrino transition probabilities.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+            
+        Returns
+        -------
+        p : 6 x 6 array or array of 6 x 6 arrays 
+        """    
+
+        Pmf = self.get_SNprobabilities(t,E)      
+        D = ThreeFlavorNoEarthMatter(self.mix_params).get_probabilities(t,E)        
+        
         p = np.empty((6,6,len(E))) 
         for m in range(len(E)):
-            p[:,:,m] = self.D @ Pmf
+            p[:,:,m] = D[:,:,m] @ Pmf[:,:]
         
         return p
 
@@ -431,7 +459,7 @@ class TwoFlavorDecoherence(ThreeFlavorTransformation):
     def __str__(self):
         return f'TwoFlavorDecoherence_' + str(self.mix_params.mass_order)
 
-    def get_probabilities(self, t, E): 
+    def get_SNprobabilities(self, t, E): 
         """neutrino and antineutrino transition probabilities.
 
         Parameters
@@ -445,7 +473,7 @@ class TwoFlavorDecoherence(ThreeFlavorTransformation):
         -------
         p : 6 x 6 array or array of 6 x 6 arrays 
         """    
-        PmfHDL = self.Pmf_HighDensityLimit(E)
+        PmfHDL = self.Pmf_HighDensityLimit(E)  
 
         Pmf = PmfHDL
         if self.mix_params.mass_order == MassHierarchy.NORMAL:
@@ -453,12 +481,32 @@ class TwoFlavorDecoherence(ThreeFlavorTransformation):
                 Pmf[1,f], Pmf[2,f] = 0.5 * ( Pmf[1,f] + Pmf[2,f] ), 0.5 * ( Pmf[1,f] + Pmf[2,f] )
         if self.mix_params.mass_order == MassHierarchy.INVERTED:
             for f in ThreeFlavor:
-                Pmf[3,f], Pmf[5,f] = 0.5 * ( Pmf[3,f] + Pmf[4,f] ), 0.5 * ( Pmf[3,f] + Pmf[5,f] )
+                Pmf[3,f], Pmf[5,f] = 0.5 * ( Pmf[3,f] + Pmf[5,f] ), 0.5 * ( Pmf[3,f] + Pmf[5,f] )
 
+        return Pmf
+
+    def get_probabilities(self, t, E):         
+        """neutrino and antineutrino transition probabilities.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+            
+        Returns
+        -------
+        p : 6 x 6 array or array of 6 x 6 arrays 
+        """    
+
+        Pmf = self.get_SNprobabilities(t,E)      
+        D = ThreeFlavorNoEarthMatter(self.mix_params).get_probabilities(t,E)        
+        
         p = np.empty((6,6,len(E))) 
         for m in range(len(E)):
-            p[:,:,m] = self.D @ Pmf
-
+            p[:,:,m] = D[:,:,m] @ Pmf[:,:]
+        
         return p
 
 ###############################################################################
@@ -473,7 +521,7 @@ class ThreeFlavorDecoherence(ThreeFlavorTransformation):
     def __str__(self):
         return f'ThreeFlavorDecoherence'
 
-    def get_probabilities(self, t, E): 
+    def get_SNprobabilities(self, t, E): 
         """neutrino and antineutrino transition probabilities.
 
         Parameters
@@ -490,6 +538,9 @@ class ThreeFlavorDecoherence(ThreeFlavorTransformation):
         p = np.ones((6,6,len(E))) / 3
 
         return p
+
+    def get_probabilities(self, t, E): 
+        return self.get_SNprobabilities(t,E) 
 
 ###############################################################################
 
@@ -521,14 +572,16 @@ class MSWEffect(ThreeFlavorTransformation):
         self.SNprofile = SNprofile
      
         super().__init__(mix_params) 
-        
+
+        # rmmin will be corrected by SNOSHEWS to the minimum radius of the profile if rmin is less than that value        
         if rmin == None:
-            rmin = 0
+            rmin = 0 
         else: 
             self.rmin = rmin
-            
+
+        # rmax will be corrected by SNOSHEWS to the maximum radius of the profile if rmax is greater than that value
         if rmax == None:
-            rmax = 1e99
+            rmax = 1e99 
         else: 
             self.rmax = rmax
 
@@ -537,7 +590,7 @@ class MSWEffect(ThreeFlavorTransformation):
     def __str__(self):
         return f'MSW_' + str(self.mix_params.mass_order)
 
-    def get_probabilities(self, t, E): 
+    def get_SNprobabilities(self, t, E): 
         """neutrino and antineutrino transition probabilities.
 
         Parameters
@@ -549,8 +602,9 @@ class MSWEffect(ThreeFlavorTransformation):
 
         Returns
         -------
-        p : 6 x 6 array or array of 6 x 6 arrays 
+        Pmf : array of 6 x 6 matrices
         """
+                     
         if SNOSHEWS == None:
             print("The SNOSHEWS module cannot be found. Returning results using AdiabaticMSW prescription")
             return AdiabticMSW(self.mix_params).get_probabilities(t,E)
@@ -612,9 +666,31 @@ class MSWEffect(ThreeFlavorTransformation):
             Pmf[4,ThreeFlavor.NU_TAU_BAR,m] = pSN[1][m][1][2]
             Pmf[5,ThreeFlavor.NU_TAU_BAR,m] = pSN[1][m][2][2]
             m += 1
+            
+    return Pmf
+
+    def get_probabilities(self, t, E): 
+        """neutrino and antineutrino transition probabilities.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        p : 6 x 6 array or array of 6 x 6 arrays 
+        """
+        p = np.empty((6,6,len(E))
+
+        Pmf = self.get_SNprobabilities(t,E)
+        D = ThreeFlavorNoEarthMatter(self.mix_params).get_probabilities(t,E)                                     
 
         # multiply the D matrix and the Pmf matrix together
-        p = self.D @ Pmf
+        for m in range(len(E)):
+            p[:,:,m] = self.D[:,:,m] @ Pmf[:,:,m]
 
         return p
         
@@ -644,7 +720,7 @@ class AdiabaticMSWes(FourFlavorTransformation):
     def __str__(self):
         return f'AdiabaticMSWes_' + str(self.mix_params.mass_order)
     
-    def get_probabilities(self, t, E): 
+    def get_SNprobabilities(self, t, E): 
         """neutrino and antineutrino transition probabilities.
 
         Parameters
@@ -656,16 +732,36 @@ class AdiabaticMSWes(FourFlavorTransformation):
 
         Returns
         -------
-        p : 6 x 6 array or array of 6 x 6 arrays 
+        Pmf : 8 x 8 matrix
         """   
-        PmfHDL = self.Pmf_HighDensityLimit(E)
+        Pmf = self.Pmf_HighDensityLimit(E)
 
-        Pmf = PmfHDL
- 
+        return Pmf
+
+    def get_probabilities(self, t, E):         
+        """neutrino and antineutrino transition probabilities.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        p : 6 x 6 matrix
+        """   
+        p = np.empty((8,8,len(E))
+        
+        D = FourFlavorNoEarthMatter(self.mix_params).get_probabilities(t,E)                                     
+        Pmf = self.get_SNprobabilities(t,E)
+        
         # multiply the D matrix and the Pmf matrix together
-        p = self.D @ Pmf
+        for m in range(len(E)):
+            p[:,:,m] = D[:,:,m] @ Pmf[:,:]
 
-        # remove sterile rows/columns
+        # remove sterile rows/columns: A is a 6 x 8 matrix
         A = Remove_Steriles()
         p = A @ p @ np.transpose(A)
 
@@ -697,7 +793,7 @@ class NonAdiabaticMSWes(FourFlavorTransformation):
     def __str__(self):
         return f'NonAdiabaticMSWes_' + str(self.mix_params.mass_order)
     
-    def get_probabilities(self, t, E): 
+    def get_SNprobabilities(self, t, E): 
         """neutrino and antineutrino transition probabilities.
 
         Parameters
@@ -709,7 +805,7 @@ class NonAdiabaticMSWes(FourFlavorTransformation):
 
         Returns
         -------
-        p : 6 x 6 array or array of 6 x 6 arrays 
+        Pmf : an 8 x 8 matrix
         """                
         PmfHDL = self.Pmf_HighDensityLimit()
         Pmf = PmfHDL
@@ -724,9 +820,29 @@ class NonAdiabaticMSWes(FourFlavorTransformation):
                 Pmf[1,f], Pmf[3,f] = Pmf[3,f], Pmf[1,f]
                 Pmf[4,f], Pmf[5,f], Pmf[7,f] = Pmf[5,f], Pmf[7,f], Pmf[4,f]
 
-        p = np.empty((6,6,len(E))) 
+        return Pmf
+
+    def get_probabilities(self, t, E): 
+        """neutrino and antineutrino transition probabilities.
+
+        Parameters
+        ----------
+        t : float or ndarray
+            List of times.
+        E : float or ndarray
+            List of energies.
+
+        Returns
+        -------
+        p : 6 x 6 array or array of 6 x 6 arrays       
+        """
+
+        D = FourFlavorNoEarthMatter(self.mix_params).get_probabilities(t,E)                                     
+        Pmf = self.get_SNprobabilities(t,E)
+
+        p = np.empty((8,8,len(E))) 
         for m in range(len(E)):
-            p[:,:,m] = self.D @ Pmf
+            p[:,:,m] = D[:,:,m] @ Pmf[:,:]
 
         # remove sterile rows/columns
         A = Remove_Steriles()
@@ -796,7 +912,7 @@ class NeutrinoDecay(ThreeFlavorTransformation):
 
         Returns
         -------
-        p : 6 x 6 array or array of 6 x 6 arrays 
+        PND : an array of 6 x 6 matrices
         """        
         decay_factor = np.exp(-self.gamma(E)*self.d) 
         PND = np.zeros((6,6,len(E)))  
@@ -817,9 +933,7 @@ class NeutrinoDecay(ThreeFlavorTransformation):
             for j in range(3):
                 PND[i+3,j+3] = PND[i,j]        
 
-        p = self.D @ PND 
-
-        return p
+        return PND
 
 ###############################################################################
 
@@ -872,7 +986,7 @@ class QuantumDecoherence(ThreeFlavorTransformation):
 
         Returns
         -------
-        p : 6 x 6 array or array of 6 x 6 arrays 
+        PQD : an array of 6 x 6 matrices
         """        
         PQD = np.zeros((6,6,len(E)))
 
@@ -897,9 +1011,7 @@ class QuantumDecoherence(ThreeFlavorTransformation):
             for j in range(3):
                 PQD[i+3,j+3] = PQD[i,j]
 
-        p = self.D @ PQD
-
-        return p
+        return PQD
 
 ###############################################################################
 
@@ -970,8 +1082,7 @@ class FourFlavorNoEarthMatter(FourFlavorTransformation):
 
         Returns
         -------
-        an array of length of the E array with each element being the 
-        D matrix after computing Earth-matter effects
+        an array of 8 x 8 matrices of length equal to the length of the E array
         """
         U = self.mix_params.VacuumMixingMatrix()
 
@@ -1008,7 +1119,6 @@ class EarthMatter(ThreeFlavorTransformation):
 
     def __str__(self):
         return f'EarthMatter_' + str(self.mix_params.mass_order)
-
 
     def get_probabilities(self, t, E):
         """the D matrix for the case of Earth matter effects
@@ -1093,23 +1203,33 @@ class EarthMatter(ThreeFlavorTransformation):
 
 
 class Catenate:
-    """Catenate two flavor transformation effects together."""
+    """Catenate flavor transformation effects together."""
 
-    def __init__(self, transform1, transform2):
+    def __init__(self, SNTransformation, InVacuumTransformation = None, AtEarthTransformation = None):
         """        
         Parameters
         ----------
-        transform1, transform2 : two instances of flavor transformation classes        
-        The order is that transform1 is applied first, then transform2
+        SNTransformation : the transformation that occurs in the supernova
+        InVacuumTransformation : the transforamtion that occurs in the vacuum
+        AtEarthTransformation : the transformation that occurs at Earth
+        The order is that SNTransformation is applied first, then InVacuumTransformation, 
+        then AtEarthTransformation
         """  
-        self.transform1 = transform1
-        self.transform2 = transform2        
+        self.transform1 = SNTransformation
+        
+        if  InVacuumTransformation == None:
+            self.transform2 = NoTransformation(self.transform1.mx_params)
+        else:
+            self.transform2 = InVacuumTransformation
 
-        self.D = None        
+        if  AtEarthTransformation == None:
+            self.transform3 = ThreeFlavorNoEarthMatter(self.transform1.mx_params)
+        else:
+            self.transform3 = AtEarthTransformation
 
 
     def __str__(self):
-        return str(self.transform2) + '+' + str(self.transform1)
+        return str(self.transform1) + '+' + str(self.transform2) + '+' + str(self.transform3)
 
     def get_probabilities(self, t, E): 
         """neutrino and antineutrino transition probabilities.
@@ -1125,15 +1245,12 @@ class Catenate:
         -------
         p : 6 x 6 array or array of 6 x 6 arrays 
         """ 
-        p1 = self.transform1.get_probabilities(t,E)
+        p1 = self.transform1.get_SNprobabilities(t,E)
         p2 = self.transform2.get_probabilities(t,E)
-
-        self.D = self.transform2.D
-
-        invD = np.linalg.inv(self.transform1.D)   
+        p3 = self.transform2.get_probabilities(t,E)        
 
         p = np.empty((6,6,len(E)))
         for m in range(len(E)):
-            p[:,:,m] = p2[:,:,m] @ invD @ p1[:,:,m]
+            p[:,:,m] = p3[:,:,m] @ p2[:,:,m] @ p1[:,:,m]
 
         return p   
