@@ -23,7 +23,7 @@ except ImportError:
     pass
 
 from snewpy.models.base import PinchedModel, _GarchingArchiveModel, SupernovaModel
-from snewpy.neutrino import Flavor
+from snewpy.neutrino import TwoFlavor, ThreeFlavor
 from snewpy import _model_downloader
 
 class Nakazato_2013(PinchedModel):
@@ -210,7 +210,7 @@ class Kuroda_2020(PinchedModel):
 
         # Get grid of model times.
         simtab['TIME'] = simtab['Tpb[ms]'] << u.ms
-        for f in [Flavor.NU_E, Flavor.NU_E_BAR, Flavor.NU_X]:
+        for f in [TwoFlavor.NU_E, TwoFlavor.NU_E_BAR, TwoFlavor.NU_X]:
             fkey = re.sub('(E|X)_BAR', r'A\g<1>', f.name).lower()
             simtab[f'L_{f.name}'] = simtab[f'<L{fkey}>'] * 1e51 << u.erg / u.s
             simtab[f'E_{f.name}'] = simtab[f'<E{fkey}>'] << u.MeV
@@ -260,16 +260,16 @@ class Fornax_2019(SupernovaModel):
 
             if os.path.exists(fitsfile):
                 self._read_fits(fitsfile)
-                ntim, nene, npix = self.dLdE[Flavor.NU_E].shape
+                ntim, nene, npix = self.dLdE[TwoFlavor.NU_E].shape
                 self.npix = npix
                 self.nside = hp.npix2nside(npix)
             else:
                 with h5py.File(filename, 'r') as _h5file:
                     # Conversion of flavor to key name in the model HDF5 file.
-                    self._flavorkeys = {Flavor.NU_E: 'nu0',
-                                        Flavor.NU_E_BAR: 'nu1',
-                                        Flavor.NU_X: 'nu2',
-                                        Flavor.NU_X_BAR: 'nu2'}
+                    self._flavorkeys = {TwoFlavor.NU_E: 'nu0',
+                                        TwoFlavor.NU_E_BAR: 'nu1',
+                                        TwoFlavor.NU_X: 'nu2',
+                                        TwoFlavor.NU_X_BAR: 'nu2'}
 
                     if self.time is None:
                         self.time = _h5file['nu0']['g0'].attrs['time'] * u.s
@@ -288,17 +288,17 @@ class Fornax_2019(SupernovaModel):
 
                     # Store 3D tables of dL/dE for each flavor.
                     logger = logging.getLogger()
-                    for flavor in Flavor:
+                    for flavor in TwoFlavor:
 
                         key = self._flavorkeys[flavor]
                         logger.info('Caching {} for {} ({})'.format(filename, str(flavor), key))
 
                         # HDF5 file only contains NU_E, NU_E_BAR, and NU_X.
-                        if flavor == Flavor.NU_X_BAR:
-                            self.E[flavor] = self.E[Flavor.NU_X]
-                            self.dE[flavor] = self.dE[Flavor.NU_X]
-                            self.dLdE[flavor] = self.dLdE[Flavor.NU_X]
-                            self.luminosity[flavor] = self.luminosity[Flavor.NU_X]
+                        if flavor == TwoFlavor.NU_X_BAR:
+                            self.E[flavor] = self.E[TwoFlavor.NU_X]
+                            self.dE[flavor] = self.dE[TwoFlavor.NU_X]
+                            self.dLdE[flavor] = self.dLdE[TwoFlavor.NU_X]
+                            self.luminosity[flavor] = self.luminosity[TwoFlavor.NU_X]
                             continue
 
                         self.E[flavor] = _h5file[key]['egroup'][()] * u.MeV
@@ -329,10 +329,10 @@ class Fornax_2019(SupernovaModel):
                     self._write_fits(fitsfile, overwrite=True)
         else:
             # Conversion of flavor to key name in the model HDF5 file.
-            self._flavorkeys = {Flavor.NU_E: 'nu0',
-                                Flavor.NU_E_BAR: 'nu1',
-                                Flavor.NU_X: 'nu2',
-                                Flavor.NU_X_BAR: 'nu2'}
+            self._flavorkeys = {TwoFlavor.NU_E: 'nu0',
+                                TwoFlavor.NU_E_BAR: 'nu1',
+                                TwoFlavor.NU_X: 'nu2',
+                                TwoFlavor.NU_X_BAR: 'nu2'}
 
             # Open the requested filename using the model downloader.
             datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
@@ -354,7 +354,7 @@ class Fornax_2019(SupernovaModel):
 
         self.time = hdus['TIME'].data * u.Unit(hdus['TIME'].header['BUNIT'])
 
-        for flavor in Flavor:
+        for flavor in TwoFlavor:
             name = str(flavor).split('.')[-1]
 
             ext = '{}_ENERGY'.format(name)
@@ -384,7 +384,7 @@ class Fornax_2019(SupernovaModel):
         hdu_time.header['BUNIT'] = 'second'
         hx.append(hdu_time)
 
-        for flavor in Flavor:
+        for flavor in TwoFlavor:
             name = str(flavor).split('.')[-1]
 
             hdu_E = fits.ImageHDU(self.E[flavor].to_value('MeV'))
@@ -477,7 +477,7 @@ class Fornax_2019(SupernovaModel):
         t = t.to(self.time.unit)
         j = (np.abs(t - self.time)).argmin()
 
-        for flavor in Flavor:
+        for flavor in TwoFlavor:
             # Cached data: read out the relevant time and angular rows.
             if self.is_cached:
                 # Convert input angles to a HEALPix index.
@@ -489,10 +489,10 @@ class Fornax_2019(SupernovaModel):
             # Read the HDF5 input file directly and extract the spectra.
             else:
                 # File only contains NU_E, NU_E_BAR, and NU_X.
-                if flavor == Flavor.NU_X_BAR:
-                    E[flavor] = E[Flavor.NU_X]
-                    dE[flavor] = dE[Flavor.NU_X]
-                    binspec[flavor] = binspec[Flavor.NU_X]
+                if flavor == TwoFlavor.NU_X_BAR:
+                    E[flavor] = E[TwoFlavor.NU_X]
+                    dE[flavor] = dE[TwoFlavor.NU_X]
+                    binspec[flavor] = binspec[TwoFlavor.NU_X]
                     continue
 
                 key = self._flavorkeys[flavor]
@@ -520,7 +520,7 @@ class Fornax_2019(SupernovaModel):
 
         return E, dE, binspec
 
-    def get_initial_spectra(self, t, E, theta, phi, flavors=Flavor, interpolation='linear'):
+    def get_initial_spectra(self, t, E, theta, phi, flavors=ThreeFlavor, interpolation='linear'):
         """Get neutrino spectra/luminosity curves before flavor transformation.
 
         Parameters
@@ -533,7 +533,7 @@ class Fornax_2019(SupernovaModel):
             Zenith angle of the spectral emission.
         phi : astropy.Quantity
             Azimuth angle of the spectral emission.
-        flavors: iterable of snewpy.neutrino.Flavor
+        flavors: iterable of snewpy.neutrino.ThreeFlavor
             Return spectra for these flavors only (default: all)
         interpolation : str
             Scheme to interpolate in spectra ('nearest', 'linear').
@@ -552,7 +552,17 @@ class Fornax_2019(SupernovaModel):
         E[E == 0] = np.finfo(float).eps * E.unit
         logE = np.log10(E.to_value('MeV'))
 
-        for flavor in flavors:
+        for f in flavors:
+
+            if f == ThreeFlavor.NU_E:
+                flavor = TwoFlavor.NU_E
+            if f == ThreeFlavor.NU_MU or f == ThreeFlavor.NU_TAU:
+                flavor = TwoFlavor.NU_X
+
+            if f == ThreeFlavor.NU_E_BAR:
+                flavor = TwoFlavor.NU_E_BAR
+            if f == ThreeFlavor.NU_MU_BAR or f == ThreeFlavor.NU_TAU_BAR:
+                flavor = TwoFlavor.NU_X_BAR           
 
             # Linear interpolation in flux.
             if interpolation.lower() == 'linear':
@@ -567,7 +577,7 @@ class Fornax_2019(SupernovaModel):
                 _dLdE = np.insert(_dLdE, 0, 0.)
                 _dLdE = np.append(_dLdE, 0.)
 
-                initialspectra[flavor] = np.interp(logE, _logEbins, _dLdE) * self.fluxunit
+                initialspectra[f] = np.interp(logE, _logEbins, _dLdE) * self.fluxunit
 
             elif interpolation.lower() == 'nearest':
                 _logE = np.log10(_E[flavor].to_value('MeV'))
@@ -581,7 +591,8 @@ class Fornax_2019(SupernovaModel):
 
                 _dLdE = np.zeros(len(E))
                 _dLdE[np.where(select)] = np.asarray([_spec[flavor][i].to_value(self.fluxunit) for i in idx[select]])
-                initialspectra[flavor] = _dLdE * self.fluxunit
+                
+                initialspectra[f] = _dLdE * self.fluxunit
 
             else:
                 raise ValueError('Unrecognized interpolation type "{}"'.format(interpolation))
@@ -611,12 +622,12 @@ class Fornax_2021(SupernovaModel):
         self.luminosity = {}
         self._E = {}
         self._dLdE = {}
-        for flavor in Flavor:
+        for flavor in TwoFlavor:
             # Convert flavor to key name in the model HDF5 file
-            key = {Flavor.NU_E: 'nu0',
-                   Flavor.NU_E_BAR: 'nu1',
-                   Flavor.NU_X: 'nu2',
-                   Flavor.NU_X_BAR: 'nu2'}[flavor]
+            key = {TwoFlavor.NU_E: 'nu0',
+                   TwoFlavor.NU_E_BAR: 'nu1',
+                   TwoFlavor.NU_X: 'nu2',
+                   TwoFlavor.NU_X_BAR: 'nu2'}[flavor]
 
             self._E[flavor] = np.asarray(_h5file[key]['egroup'])
             self._dLdE[flavor] = {f"g{i}": np.asarray(_h5file[key][f'g{i}']) for i in range(12)}
@@ -632,7 +643,7 @@ class Fornax_2021(SupernovaModel):
             factor = 1. if flavor.is_electron else 0.25
             self.luminosity[flavor] = np.sum(dLdE*dE, axis=1) * factor * 1e50 * u.erg/u.s
 
-    def get_initial_spectra(self, t, E, flavors=Flavor, interpolation='linear'):
+    def get_initial_spectra(self, t, E, flavors=ThreeFlavor, interpolation='linear'):
         """Get neutrino spectra/luminosity curves after oscillation.
 
         Parameters
@@ -641,7 +652,7 @@ class Fornax_2021(SupernovaModel):
             Time to evaluate initial spectra.
         E : astropy.Quantity or ndarray of astropy.Quantity
             Energies to evaluate the initial spectra.
-        flavors: iterable of snewpy.neutrino.Flavor
+        flavors: iterable of snewpy.neutrino.ThreeFlavor
             Return spectra for these flavors only (default: all)
         interpolation : str
             Scheme to interpolate in spectra ('nearest', 'linear').
@@ -662,7 +673,18 @@ class Fornax_2021(SupernovaModel):
         t = t.to(self.time.unit)
         j = (np.abs(t - self.time)).argmin()
 
-        for flavor in flavors:
+        for f in flavors:
+
+            if f == ThreeFlavor.NU_E:
+                flavor = TwoFlavor.NU_E
+            if f == ThreeFlavor.NU_MU or f == ThreeFlavor.NU_TAU:
+                flavor = TwoFlavor.NU_X
+
+            if f == ThreeFlavor.NU_E_BAR:
+                flavor = TwoFlavor.NU_E_BAR
+            if f == ThreeFlavor.NU_MU_BAR or f == ThreeFlavor.NU_TAU_BAR:
+                flavor = TwoFlavor.NU_X_BAR
+                
             # Energy bin centers (in MeV)
             _E = self._E[flavor][j]
             _logE = np.log10(_E)
@@ -681,7 +703,8 @@ class Fornax_2021(SupernovaModel):
                 # Luminosity spectrum _dLdE is in units of 1e50 erg/s/MeV.
                 # Pad with values where flux is fixed to zero, then divide by E to get number luminosity
                 _dNLdE = np.asarray([0.] + [self._dLdE[flavor]['g{}'.format(i)][j] for i in range(12)] + [0.])
-                initialspectra[flavor] = (np.interp(logE, _logEbins, _dNLdE) / E *
+                
+                initialspectra[f] = (np.interp(logE, _logEbins, _dNLdE) / E *
                                           factor * 1e50 * u.erg/u.s/u.MeV).to('1 / (erg s)')
 
             elif interpolation.lower() == 'nearest':
@@ -696,7 +719,8 @@ class Fornax_2021(SupernovaModel):
                 _dNLdE = np.zeros(len(E))
                 _dNLdE[np.where(select)] = np.asarray(
                     [self._dLdE[flavor]['g{}'.format(i)][j] / _E[i] for i in idx[select]])
-                initialspectra[flavor] = ((_dNLdE << 1/u.MeV) * factor * 1e50 * u.erg/u.s/u.MeV).to('1 / (erg s)')
+                
+                initialspectra[f] = ((_dNLdE << 1/u.MeV) * factor * 1e50 * u.erg/u.s/u.MeV).to('1 / (erg s)')
 
             else:
                 raise ValueError('Unrecognized interpolation type "{}"'.format(interpolation))
@@ -729,12 +753,12 @@ class Fornax_2022(Fornax_2021):
         self.luminosity = {}
         self._E = {}
         self._dLdE = {}
-        for flavor in Flavor:
+        for flavor in TwoFlavor:
             # Convert flavor to key name in the model HDF5 file
-            key = {Flavor.NU_E: 'nu0',
-                   Flavor.NU_E_BAR: 'nu1',
-                   Flavor.NU_X: 'nu2',
-                   Flavor.NU_X_BAR: 'nu2'}[flavor]
+            key = {TwoFlavor.NU_E: 'nu0',
+                   TwoFlavor.NU_E_BAR: 'nu1',
+                   TwoFlavor.NU_X: 'nu2',
+                   TwoFlavor.NU_X_BAR: 'nu2'}[flavor]
 
             self._E[flavor] = np.asarray(_h5file[key]['egroup'])
             self._dLdE[flavor] = {f"g{i}": np.asarray(_h5file[key][f'g{i}']) for i in range(12)}
@@ -778,7 +802,7 @@ class Mori_2023(PinchedModel):
 
         # Get grid of model times.
         simtab['TIME'] = simtab['2:t_pb[s]'] << u.s
-        for j, (f, fkey) in enumerate(zip([Flavor.NU_E, Flavor.NU_E_BAR, Flavor.NU_X], 'ebx')):
+        for j, (f, fkey) in enumerate(zip([TwoFlavor.NU_E, TwoFlavor.NU_E_BAR, TwoFlavor.NU_X], 'ebx')):
             simtab[f'L_{f.name}'] = simtab[f'{6+j}:Le{fkey}[e/s]'] << u.erg / u.s
             # Compute the pinch parameter from E_rms and E_avg
             # <E^2> / <E>^2 = (2+a)/(1+a), where
