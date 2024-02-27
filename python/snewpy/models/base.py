@@ -239,7 +239,7 @@ def get_value(x):
         return x.value
     return x
 
-class PinchedModelTwoFlavor(SupernovaModel):
+class PinchedModel(SupernovaModel):
     """Subclass that contains spectra/luminosity pinches"""
     def __init__(self, simtab, metadata):
         """ Initialize the PinchedModel using the data from the given table.
@@ -247,16 +247,32 @@ class PinchedModelTwoFlavor(SupernovaModel):
         Parameters
         ----------
         simtab: astropy.Table 
-            Should contain columns TIME, {L,E,ALPHA}_NU_{E,E_BAR,X,X_BAR}
-            The values for X_BAR may be missing, then NU_X data will be used
+            Should contain columns TIME, {L,E,ALPHA}_NU_{E,E_BAR,MU,MU_BAR,TAU,TAU_BAR}
+            The values for MU_BAR and TAU_BAR may be missing, then NU_MU and NU_TAU data will be used
+            If NU_X and NU_X_BAR are used then NU_MU = NU_TAU = NU_X, NU_MU_BAR = NU_TAU_BAR = NU_X_BAR
         metadata: dict
             Model parameters dict
         """
-        if not 'L_NU_X_BAR' in simtab.colnames:
-            # table only contains NU_E, NU_E_BAR, and NU_X, so double up
-            # the use of NU_X for NU_X_BAR.
+        if 'L_NU_X' in simtab.colnames:
             for val in ['L','E','ALPHA']:
-                simtab[f'{val}_NU_X_BAR'] = simtab[f'{val}_NU_X']
+                simtab[f'{val}_NU_MU'] = simtab[f'{val}_NU_X']
+                simtab[f'{val}_NU_TAU'] = simtab[f'{val}_NU_X']
+                if 'L_NU_X_BAR' in simtab.colnames:
+                    for val in ['L','E','ALPHA']:
+                    simtab[f'{val}_NU_MU_BAR'] = simtab[f'{val}_NU_X_BAR']
+                    simtab[f'{val}_NU_TAU_BAR'] = simtab[f'{val}_NU_X_BAR']
+                else: 
+                    for val in ['L','E','ALPHA']:
+                        simtab[f'{val}_NU_MU_BAR'] = simtab[f'{val}_NU_MU']
+                        simtab[f'{val}_NU_TAU_BAR'] = simtab[f'{val}_NU_TAU']
+
+        if not 'L_NU_MU_BAR' in simtab.colnames:
+            for val in ['L','E','ALPHA']:
+                simtab[f'{val}_NU_MU_BAR'] = simtab[f'{val}_NU_MU']
+        if not 'L_NU_TAU_BAR' in simtab.colnames:
+            for val in ['L','E','ALPHA']:
+                simtab[f'{val}_NU_TAU_BAR'] = simtab[f'{val}_NU_TAU']
+
         # Get grid of model times.
         time = simtab['TIME'] << u.s
         # Set up dictionary of luminosity, mean energy and shape parameter
@@ -264,7 +280,7 @@ class PinchedModelTwoFlavor(SupernovaModel):
         self.luminosity = {}
         self.meanE = {}
         self.pinch = {}
-        for f in Flavor:
+        for f in ThreeFlavor:
             self.luminosity[f] = simtab[f'L_{f.name}'] << u.erg/u.s
             self.meanE[f] = simtab[f'E_{f.name}'] << u.MeV
             self.pinch[f] = simtab[f'ALPHA_{f.name}']
@@ -307,17 +323,6 @@ class PinchedModelTwoFlavor(SupernovaModel):
         t = t.to(self.time.unit)
 
         for f in flavors:
-
-            if f == ThreeFlavor.NU_E:
-                flavor = TwoFlavor.NU_E
-            if f == ThreeFlavor.NU_MU or f == ThreeFlavor.NU_TAU:
-                flavor = TwoFlavor.NU_X
-
-            if f == ThreeFlavor.NU_E_BAR:
-                flavor = TwoFlavor.NU_E_BAR
-            if f == ThreeFlavor.NU_MU_BAR or f == ThreeFlavor.NU_TAU_BAR:
-                flavor = TwoFlavor.NU_X_BAR
-
             # Use np.interp rather than scipy.interpolate.interp1d because it
             # can handle dimensional units (astropy.Quantity).
             L  = get_value(np.interp(t, self.time, self.luminosity[flavor].to('erg/s')))
@@ -342,7 +347,7 @@ class PinchedModelTwoFlavor(SupernovaModel):
         return initial_spectra
 
 
-class _GarchingArchiveModel(PinchedModelTwoFlavor):
+class _GarchingArchiveModel(PinchedModel):
     """Subclass that reads models in the format used in the
     `Garching Supernova Archive <https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/>`_."""
     def __init__(self, filename, eos='LS220', metadata={}):
