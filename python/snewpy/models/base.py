@@ -11,7 +11,7 @@ from astropy.units.quantity import Quantity
 from scipy.special import loggamma
 from snewpy import _model_downloader
 
-from snewpy.neutrino import Flavor
+from snewpy.neutrino import TwoFlavor, ThreeFlavor
 from snewpy.flavor_transformation import NoTransformation
 from functools import wraps
 
@@ -100,7 +100,7 @@ class SupernovaModel(ABC):
         return self.time
 
     @abstractmethod
-    def get_initial_spectra(self, t, E, flavors=Flavor):
+    def get_initial_spectra(self, t, E, flavors=ThreeFlavor):
         """Get neutrino spectra at the source.
 
         Parameters
@@ -144,26 +144,45 @@ class SupernovaModel(ABC):
         dict
             Dictionary of transformed spectra, keyed by neutrino flavor.
         """
-        initialspectra = self.get_initial_spectra(t, E)
+        initial_spectra = self.get_initial_spectra(t, E)
+        transformation_matrix = flavor_xform.get_probabilities(t,E)         
         transformed_spectra = {}
 
-        transformed_spectra[Flavor.NU_E] = \
-            flavor_xform.prob_ee(t, E) * initialspectra[Flavor.NU_E] + \
-            flavor_xform.prob_ex(t, E) * initialspectra[Flavor.NU_X]
+        NU_E, NU_MU, NU_TAU, NU_E_BAR, NU_MU_BAR, NU_TAU_BAR = \
+             ThreeFlavor.NU_E, ThreeFlavor.NU_MU, ThreeFlavor.NU_TAU, \
+             ThreeFlavor.NU_E_BAR, ThreeFlavor.NU_MU_BAR, ThreeFlavor.NU_TAU_BAR
 
-        transformed_spectra[Flavor.NU_X] = \
-            flavor_xform.prob_xe(t, E) * initialspectra[Flavor.NU_E] + \
-            flavor_xform.prob_xx(t, E) * initialspectra[Flavor.NU_X] 
+        transformed_spectra[NU_E] = \
+            transformation_matrix[NU_E, NU_E] * initial_spectra[NU_E] + \
+            transformation_matrix[NU_E, NU_MU] * initial_spectra[NU_MU] + \
+            transformation_matrix[NU_E, NU_TAU] * initial_spectra[NU_TAU]
 
-        transformed_spectra[Flavor.NU_E_BAR] = \
-            flavor_xform.prob_eebar(t, E) * initialspectra[Flavor.NU_E_BAR] + \
-            flavor_xform.prob_exbar(t, E) * initialspectra[Flavor.NU_X_BAR]
+        transformed_spectra[NU_MU] = \
+            transformation_matrix[NU_MU, NU_E] * initial_spectra[NU_E] + \
+            transformation_matrix[NU_MU, NU_MU] * initial_spectra[NU_MU] + \
+            transformation_matrix[NU_MU, NU_TAU] * initial_spectra[NU_TAU]
 
-        transformed_spectra[Flavor.NU_X_BAR] = \
-            flavor_xform.prob_xebar(t, E) * initialspectra[Flavor.NU_E_BAR] + \
-            flavor_xform.prob_xxbar(t, E) * initialspectra[Flavor.NU_X_BAR] 
+        transformed_spectra[NU_TAU] = \
+            transformation_matrix[NU_TAU, NU_E] * initial_spectra[NU_E] + \
+            transformation_matrix[NU_TAU, NU_MU] * initial_spectra[NU_MU] + \
+            transformation_matrix[NU_TAU, NU_TAU] * initial_spectra[NU_TAU]
 
-        return transformed_spectra   
+        transformed_spectra[NU_E_BAR] = \
+            transformation_matrix[NU_E_BAR, NU_E_BAR] * initial_spectra[NU_E_BAR] + \
+            transformation_matrix[NU_E_BAR, NU_MU_BAR] * initial_spectra[NU_MU_BAR] + \
+            transformation_matrix[NU_E_BAR, NU_TAU_BAR] * initial_spectra[NU_TAU_BAR]
+
+        transformed_spectra[NU_MU_BAR] = \
+            transformation_matrix[NU_MU, NU_E_BAR] * initial_spectra[NU_E_BAR] + \
+            transformation_matrix[NU_MU, NU_MU_BAR] * initial_spectra[NU_MU_BAR] + \
+            transformation_matrix[NU_MU, NU_TAU_BAR] * initial_spectra[NU_TAU_BAR]
+
+        transformed_spectra[NU_TAU_BAR] = \
+            transformation_matrix[NU_TAU, NU_E_BAR] * initial_spectra[NU_E_BAR] + \
+            transformation_matrix[NU_TAU, NU_MU_BAR] * initial_spectra[NU_MU_BAR] + \
+            transformation_matrix[NU_TAU, NU_TAU_BAR] * initial_spectra[NU_TAU_BAR]
+
+        return transformed_spectra    
 
     def get_flux (self, t, E, distance, flavor_xform=NoTransformation()):
         """Get neutrino flux through 1cm^2 surface at the given distance
@@ -189,11 +208,9 @@ class SupernovaModel(ABC):
         distance = distance << u.kpc #assume that provided distance is in kpc, or convert
         factor = 1/(4*np.pi*(distance.to('cm'))**2)
         f = self.get_transformed_spectra(t, E, flavor_xform)
-
-        array = np.stack([f[flv] for flv in sorted(Flavor)])
-        return  Flux(data=array*factor, flavor=np.sort(Flavor), time=t, energy=E)
-
-
+        
+        array = np.stack([f[flv] for flv in sorted(ThreeFlavor)])
+        return  Flux(data=array*factor, flavor=np.sort(ThreeFlavor), time=t, energy=E)
 
     def get_oscillatedspectra(self, *args):
         """DO NOT USE! Only for backward compatibility!
@@ -222,7 +239,7 @@ def get_value(x):
         return x.value
     return x
 
-class PinchedModel(SupernovaModel):
+class PinchedModelTwoFlavor(SupernovaModel):
     """Subclass that contains spectra/luminosity pinches"""
     def __init__(self, simtab, metadata):
         """ Initialize the PinchedModel using the data from the given table.
@@ -254,7 +271,7 @@ class PinchedModel(SupernovaModel):
         super().__init__(time, metadata)
 
 
-    def get_initial_spectra(self, t, E, flavors=Flavor):
+    def get_initial_spectra(self, t, E, flavors=ThreeFlavor):
         """Get neutrino spectra/luminosity curves before oscillation.
 
         Parameters
@@ -263,12 +280,12 @@ class PinchedModel(SupernovaModel):
             Time to evaluate initial spectra.
         E : astropy.Quantity or ndarray of astropy.Quantity
             Energies to evaluate the initial spectra.
-        flavors: iterable of snewpy.neutrino.Flavor
+        flavors: iterable of snewpy.neutrino.ThreeFlavor class
             Return spectra for these flavors only (default: all)
 
         Returns
         -------
-        initialspectra : dict
+        initial_spectra : dict
             Dictionary of model spectra, keyed by neutrino flavor.
         """
         #convert input arguments to 1D arrays
@@ -277,7 +294,10 @@ class PinchedModel(SupernovaModel):
         #Reshape the Energy array to shape [1,len(E)]
         E = np.expand_dims(E, axis=0)
 
-        initialspectra = {}
+        initial_spectra = {}
+
+        # Avoid division by zero in energy PDF below.
+        E[E==0] = np.finfo(float).eps * E.unit
 
         # Estimate L(t), <E_nu(t)> and alpha(t). Express all energies in erg.
         E = E.to_value('erg')
@@ -286,7 +306,18 @@ class PinchedModel(SupernovaModel):
         # the interpolation will not work correctly.
         t = t.to(self.time.unit)
 
-        for flavor in flavors:
+        for f in flavors:
+
+            if f == ThreeFlavor.NU_E:
+                flavor = TwoFlavor.NU_E
+            if f == ThreeFlavor.NU_MU or f == ThreeFlavor.NU_TAU:
+                flavor = TwoFlavor.NU_X
+
+            if f == ThreeFlavor.NU_E_BAR:
+                flavor = TwoFlavor.NU_E_BAR
+            if f == ThreeFlavor.NU_MU_BAR or f == ThreeFlavor.NU_TAU_BAR:
+                flavor = TwoFlavor.NU_X_BAR
+
             # Use np.interp rather than scipy.interpolate.interp1d because it
             # can handle dimensional units (astropy.Quantity).
             L  = get_value(np.interp(t, self.time, self.luminosity[flavor].to('erg/s')))
@@ -303,14 +334,15 @@ class PinchedModel(SupernovaModel):
                     - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea)) / (u.erg * u.s)
             #remove bad values
             result[np.isnan(result)] = 0
-            result[:, E[0]==0] = 0
             #remove unnecessary dimensions, if E or t was scalar:
             result = np.squeeze(result)
-            initialspectra[flavor] = result
-        return initialspectra
+
+            initial_spectra[f] = result             
+
+        return initial_spectra
 
 
-class _GarchingArchiveModel(PinchedModel):
+class _GarchingArchiveModel(PinchedModelTwoFlavor):
     """Subclass that reads models in the format used in the
     `Garching Supernova Archive <https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/>`_."""
     def __init__(self, filename, eos='LS220', metadata={}):
@@ -343,8 +375,8 @@ class _GarchingArchiveModel(PinchedModel):
         # Read through the several ASCII files for the chosen simulation and
         # merge the data into one giant table.
         mergtab = None
-        for flavor in Flavor:
-            _flav = Flavor.NU_X if flavor == Flavor.NU_X_BAR else flavor
+        for flavor in TwoFlavor:
+            _flav = TwoFlavor.NU_X if flavor == TwoFlavor.NU_X_BAR else flavor
             _sfx = _flav.name.replace('_', '').lower()
             _filename = '{}_{}_{}'.format(filename, eos, _sfx)
             _lname = 'L_{}'.format(flavor.name)
