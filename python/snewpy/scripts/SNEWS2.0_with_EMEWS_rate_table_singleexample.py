@@ -31,10 +31,11 @@ model = 's11.2c' # Name of model
 
 mix_params = MixingParameters(MassHierarchy.NORMAL)
 
-SupernovaMatter_NMO = AdiabaticMSW( mix_params )
-EarthMatter_NMO = EarthMatter( SNaltaz , mix_params )
+SupernovaTransition = AdiabaticMSW( mix_params )
+VacuumTransition = None
+EarthMatterTransition = EarthMatter( SNaltaz , mix_params )
 
-transformation = Catenate(EarthMatter_NMO,SupernovaMatter_NMO) # Desired flavor transformation
+transformation = Catenate(SupernovaTransition,VacuumTransition,EarthMatterTransition) # Desired flavor transformation
 
 # Construct file system path of model file and name of output file
 model_path = SNEWPY_models_base + "/" + modeltype + "/" + model
