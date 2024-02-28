@@ -552,35 +552,34 @@ class Fornax_2019(SupernovaModel):
         E[E == 0] = np.finfo(float).eps * E.unit
         logE = np.log10(E.to_value('MeV'))
 
-        for f in flavors:
+        for f3 in flavors:
+            if f3 == ThreeFlavor.NU_E:
+                f2 = TwoFlavor.NU_E
+            if f3 == ThreeFlavor.NU_MU or f3 == ThreeFlavor.NU_TAU:
+                f2 = TwoFlavor.NU_X
 
-            if f == ThreeFlavor.NU_E:
-                flavor = TwoFlavor.NU_E
-            if f == ThreeFlavor.NU_MU or f == ThreeFlavor.NU_TAU:
-                flavor = TwoFlavor.NU_X
-
-            if f == ThreeFlavor.NU_E_BAR:
-                flavor = TwoFlavor.NU_E_BAR
-            if f == ThreeFlavor.NU_MU_BAR or f == ThreeFlavor.NU_TAU_BAR:
-                flavor = TwoFlavor.NU_X_BAR           
+            if f3 == ThreeFlavor.NU_E_BAR:
+                f2 = TwoFlavor.NU_E_BAR
+            if f3 == ThreeFlavor.NU_MU_BAR or f3 == ThreeFlavor.NU_TAU_BAR:
+                f2 = TwoFlavor.NU_X_BAR           
 
             # Linear interpolation in flux.
             if interpolation.lower() == 'linear':
                 # Pad log(E) array with values where flux is fixed to zero.
-                _logE = np.log10(_E[flavor].to_value('MeV'))
+                _logE = np.log10(_E[f2].to_value('MeV'))
                 _dlogE = np.diff(_logE)
                 _logEbins = np.insert(_logE, 0, np.log10(np.finfo(float).eps * E.unit/u.MeV))
                 _logEbins = np.append(_logEbins, _logE[-1] + _dlogE[-1])
 
                 # Pad with values where flux is fixed to zero.
-                _dLdE = _spec[flavor].to_value(self.fluxunit)
+                _dLdE = _spec[f2].to_value(self.fluxunit)
                 _dLdE = np.insert(_dLdE, 0, 0.)
                 _dLdE = np.append(_dLdE, 0.)
 
-                initialspectra[f] = np.interp(logE, _logEbins, _dLdE) * self.fluxunit
+                initialspectra[f3] = np.interp(logE, _logEbins, _dLdE) * self.fluxunit
 
             elif interpolation.lower() == 'nearest':
-                _logE = np.log10(_E[flavor].to_value('MeV'))
+                _logE = np.log10(_E[f2].to_value('MeV'))
                 _dlogE = np.diff(_logE)[0]
                 _logEbins = _logE - _dlogE
                 _logEbins = np.concatenate((_logEbins, [_logE[-1] + _dlogE]))
@@ -590,9 +589,9 @@ class Fornax_2019(SupernovaModel):
                 select = (idx > 0) & (idx < len(_E[flavor]))
 
                 _dLdE = np.zeros(len(E))
-                _dLdE[np.where(select)] = np.asarray([_spec[flavor][i].to_value(self.fluxunit) for i in idx[select]])
+                _dLdE[np.where(select)] = np.asarray([_spec[f2][i].to_value(self.fluxunit) for i in idx[select]])
                 
-                initialspectra[f] = _dLdE * self.fluxunit
+                initialspectra[f3] = _dLdE * self.fluxunit
 
             else:
                 raise ValueError('Unrecognized interpolation type "{}"'.format(interpolation))
@@ -673,26 +672,25 @@ class Fornax_2021(SupernovaModel):
         t = t.to(self.time.unit)
         j = (np.abs(t - self.time)).argmin()
 
-        for f in flavors:
+        for f3 in flavors:
+            if f3 == ThreeFlavor.NU_E:
+                f2 = TwoFlavor.NU_E
+            if f3 == ThreeFlavor.NU_MU or f3 == ThreeFlavor.NU_TAU:
+                f2 = TwoFlavor.NU_X
 
-            if f == ThreeFlavor.NU_E:
-                flavor = TwoFlavor.NU_E
-            if f == ThreeFlavor.NU_MU or f == ThreeFlavor.NU_TAU:
-                flavor = TwoFlavor.NU_X
-
-            if f == ThreeFlavor.NU_E_BAR:
-                flavor = TwoFlavor.NU_E_BAR
-            if f == ThreeFlavor.NU_MU_BAR or f == ThreeFlavor.NU_TAU_BAR:
-                flavor = TwoFlavor.NU_X_BAR
+            if f3 == ThreeFlavor.NU_E_BAR:
+                f2 = TwoFlavor.NU_E_BAR
+            if f3 == ThreeFlavor.NU_MU_BAR or f3 == ThreeFlavor.NU_TAU_BAR:
+                f2 = TwoFlavor.NU_X_BAR
                 
             # Energy bin centers (in MeV)
-            _E = self._E[flavor][j]
+            _E = self._E[f2][j]
             _logE = np.log10(_E)
             _dlogE = np.diff(_logE)
 
             # Model flavors (internally) are nu_e, nu_e_bar, and nu_x, which stands
             # for nu_mu(_bar) and nu_tau(_bar), making the flux 4x higher than nu_e and nu_e_bar.
-            factor = 1. if flavor.is_electron else 0.25
+            factor = 1. if f2.is_electron else 0.25
 
             # Linear interpolation in flux.
             if interpolation.lower() == 'linear':
@@ -704,7 +702,7 @@ class Fornax_2021(SupernovaModel):
                 # Pad with values where flux is fixed to zero, then divide by E to get number luminosity
                 _dNLdE = np.asarray([0.] + [self._dLdE[flavor]['g{}'.format(i)][j] for i in range(12)] + [0.])
                 
-                initialspectra[f] = (np.interp(logE, _logEbins, _dNLdE) / E *
+                initialspectra[f3] = (np.interp(logE, _logEbins, _dNLdE) / E *
                                           factor * 1e50 * u.erg/u.s/u.MeV).to('1 / (erg s)')
 
             elif interpolation.lower() == 'nearest':
@@ -718,9 +716,9 @@ class Fornax_2021(SupernovaModel):
                 # Divide luminosity spectrum by energy at bin center to get number luminosity spectrum
                 _dNLdE = np.zeros(len(E))
                 _dNLdE[np.where(select)] = np.asarray(
-                    [self._dLdE[flavor]['g{}'.format(i)][j] / _E[i] for i in idx[select]])
+                    [self._dLdE[f2]['g{}'.format(i)][j] / _E[i] for i in idx[select]])
                 
-                initialspectra[f] = ((_dNLdE << 1/u.MeV) * factor * 1e50 * u.erg/u.s/u.MeV).to('1 / (erg s)')
+                initialspectra[f3] = ((_dNLdE << 1/u.MeV) * factor * 1e50 * u.erg/u.s/u.MeV).to('1 / (erg s)')
 
             else:
                 raise ValueError('Unrecognized interpolation type "{}"'.format(interpolation))
