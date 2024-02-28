@@ -325,9 +325,9 @@ class PinchedModel(SupernovaModel):
         for f in flavors:
             # Use np.interp rather than scipy.interpolate.interp1d because it
             # can handle dimensional units (astropy.Quantity).
-            L  = get_value(np.interp(t, self.time, self.luminosity[flavor].to('erg/s')))
-            Ea = get_value(np.interp(t, self.time, self.meanE[flavor].to('erg')))
-            a  = np.interp(t, self.time, self.pinch[flavor])
+            L  = get_value(np.interp(t, self.time, self.luminosity[f].to('erg/s')))
+            Ea = get_value(np.interp(t, self.time, self.meanE[f].to('erg')))
+            a  = np.interp(t, self.time, self.pinch[f])
 
             #Reshape the time-related arrays to shape [len(t),1]
             L  = np.expand_dims(L, axis=1)
