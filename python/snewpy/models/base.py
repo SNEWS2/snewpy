@@ -259,8 +259,8 @@ class PinchedModel(SupernovaModel):
                 simtab[f'{val}_NU_TAU'] = simtab[f'{val}_NU_X']
                 if 'L_NU_X_BAR' in simtab.colnames:
                     for val in ['L','E','ALPHA']:
-                    simtab[f'{val}_NU_MU_BAR'] = simtab[f'{val}_NU_X_BAR']
-                    simtab[f'{val}_NU_TAU_BAR'] = simtab[f'{val}_NU_X_BAR']
+                        simtab[f'{val}_NU_MU_BAR'] = simtab[f'{val}_NU_X_BAR']
+                        simtab[f'{val}_NU_TAU_BAR'] = simtab[f'{val}_NU_X_BAR']
                 else: 
                     for val in ['L','E','ALPHA']:
                         simtab[f'{val}_NU_MU_BAR'] = simtab[f'{val}_NU_MU']
