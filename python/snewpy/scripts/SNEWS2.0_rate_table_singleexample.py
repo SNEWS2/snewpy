@@ -2,7 +2,7 @@
 from snewpy import snowglobes
 
 SNOwGLoBES_path = None  # change to SNOwGLoBES directory if using a custom detector configuration
-SNEWPY_model_base = "/path/to/snewpy/models/"  # directory containing model input files
+SNEWPY_models_base = "/path/to/snewpy/models/"  # directory containing model input files
 
 distance = 10  # Supernova distance in kpc
 detector = "wc100kt30prct" #SNOwGLoBES detector for water Cerenkov
@@ -11,7 +11,7 @@ model = 's11.2c' # Name of model
 transformation = 'AdiabaticMSW_NMO' # Desired flavor transformation
 
 # Construct file system path of model file and name of output file
-model_path = SNEWPY_model_base + "/" + modeltype + "/" + model
+model_path = SNEWPY_models_base + "/" + modeltype + "/" + model
 outfile = modeltype + "_" + model + "_" + transformation
 
 # Now, do the main work:
@@ -23,7 +23,6 @@ snowglobes.simulate(SNOwGLoBES_path, tarredfile, detector_input=detector)
 
 print("Collating results ...")
 tables = snowglobes.collate(SNOwGLoBES_path, tarredfile, skip_plots=True)
-
 
 # Use results to print the number of events in different interaction channels
 key = f"Collated_{outfile}_{detector}_events_smeared_weighted.dat"
