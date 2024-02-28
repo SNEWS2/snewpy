@@ -377,7 +377,7 @@ parameter_presets = {
             dm31_2 = 2.507e-3 << u.eV**2
         ),
         MassHierarchy.INVERTED:
-        MixingParameters3Flavor(        
+        ThreeFlavorMixingParameters(        
             theta12 = 33.41 << u.deg,
             theta13 = 8.57 << u.deg,
             theta23 = 49.00 << u.deg,
