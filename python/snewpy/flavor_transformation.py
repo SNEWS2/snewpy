@@ -665,7 +665,7 @@ class MSWEffect(ThreeFlavorTransformation):
             Pmf[4,ThreeFlavor.NU_TAU_BAR,m] = pSN[1][m][1][2]
             Pmf[5,ThreeFlavor.NU_TAU_BAR,m] = pSN[1][m][2][2]
             
-    return Pmf
+        return Pmf
 
     def get_probabilities(self, t, E): 
         """neutrino and antineutrino transition probabilities.
