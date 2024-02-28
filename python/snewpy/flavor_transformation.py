@@ -750,7 +750,7 @@ class AdiabaticMSWes(FourFlavorTransformation):
         -------
         p : 6 x 6 matrix
         """   
-        p = np.empty((8,8,len(E))
+        p = np.empty((8,8,len(E)))
         
         D = FourFlavorNoEarthMatter(self.mix_params).get_probabilities(t,E)                                     
         Pmf = self.get_SNprobabilities(t,E)
