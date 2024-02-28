@@ -37,7 +37,7 @@ EarthMatter_NMO = EarthMatter( SNaltaz , mix_params )
 transformation = Catenate(EarthMatter_NMO,SupernovaMatter_NMO) # Desired flavor transformation
 
 # Construct file system path of model file and name of output file
-model_path = SNEWPY_model_dir + "/" + modeltype + "/" + model
+model_path = SNEWPY_model_base + "/" + modeltype + "/" + model
 outfile = modeltype + "_" + model + "_" + str(transformation)
 
 # Now, do the main work:
