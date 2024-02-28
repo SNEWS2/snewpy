@@ -341,9 +341,13 @@ class AdiabaticMSW(ThreeFlavorTransformation):
 
         Returns
         -------
-        Pmf : 6 x 6 array
+        Pmf : array of 6 x 6 arrays
         """    
-        Pmf = self.Pmf_HighDensityLimit()
+        PHDL = self.Pmf_HighDensityLimit()
+        Pmf = np.empty((6,6,len(E))) 
+
+        for m in range(len(E)):
+            Pmf[:,:,m] = PHDL[:,:]
 
         return Pmf
 
@@ -360,14 +364,14 @@ class AdiabaticMSW(ThreeFlavorTransformation):
 
         Returns
         -------
-        p : 6 x 6 array or array of 6 x 6 arrays 
+        p : array of 6 x 6 arrays 
         """    
         Pmf = self.get_SNprobabilities(t,E)
         D = ThreeFlavorNoEarthMatter(self.mix_params).get_probabilities(t,E)
 
         p = np.empty((6,6,len(E))) 
         for m in range(len(E)):
-            p[:,:,m] = D[:,:,m] @ Pmf[:,:]
+            p[:,:,m] = D[:,:,m] @ Pmf[:,:,m]
 
         return p
         
@@ -402,15 +406,17 @@ class NonAdiabaticMSWH(ThreeFlavorTransformation):
         -------
         Pmf : 6 x 6 array
         """            
-        PmfHDL = self.Pmf_HighDensityLimit()
+        PHDL = self.Pmf_HighDensityLimit()
+        Pmf = np.empty((r,6,len(E)))
 
-        Pmf = PmfHDL
-        if self.mix_params.mass_order == MassHierarchy.NORMAL:
-            for f in ThreeFlavor:
-                Pmf[1,f], Pmf[2,f] = Pmf[2,f], Pmf[1,f]
-        if self.mix_params.mass_order == MassHierarchy.INVERTED:
-            for f in ThreeFlavor:
-                Pmf[3,f], Pmf[5,f] = Pmf[5,f], Pmf[3,f]
+        for m in range(len(E)):
+            Pmf[:,:,m] = PHDL[:,:]
+            if self.mix_params.mass_order == MassHierarchy.NORMAL:
+                for f in ThreeFlavor:
+                    Pmf[1,f,m], Pmf[2,f,m] = Pmf[2,f,m], Pmf[1,f,m]
+            if self.mix_params.mass_order == MassHierarchy.INVERTED:
+                for f in ThreeFlavor:
+                    Pmf[3,f,m], Pmf[5,f,m] = Pmf[5,f,m], Pmf[3,f,m]
 
         return Pmf
 
@@ -434,7 +440,7 @@ class NonAdiabaticMSWH(ThreeFlavorTransformation):
         
         p = np.empty((6,6,len(E))) 
         for m in range(len(E)):
-            p[:,:,m] = D[:,:,m] @ Pmf[:,:]
+            p[:,:,m] = D[:,:,m] @ Pmf[:,:,m]
         
         return p
 
@@ -469,15 +475,17 @@ class TwoFlavorDecoherence(ThreeFlavorTransformation):
         -------
         p : 6 x 6 array or array of 6 x 6 arrays 
         """    
-        PmfHDL = self.Pmf_HighDensityLimit(E)  
+        PHDL = self.Pmf_HighDensityLimit(E)  
+        Pmf = np.empty((6,6,len(E)))
 
-        Pmf = PmfHDL
-        if self.mix_params.mass_order == MassHierarchy.NORMAL:
-            for f in ThreeFlavor:
-                Pmf[1,f], Pmf[2,f] = 0.5 * ( Pmf[1,f] + Pmf[2,f] ), 0.5 * ( Pmf[1,f] + Pmf[2,f] )
-        if self.mix_params.mass_order == MassHierarchy.INVERTED:
-            for f in ThreeFlavor:
-                Pmf[3,f], Pmf[5,f] = 0.5 * ( Pmf[3,f] + Pmf[5,f] ), 0.5 * ( Pmf[3,f] + Pmf[5,f] )
+        for m in range(len(E)):
+            Pmf[:,:,m] = PHDL[:,:]
+            if self.mix_params.mass_order == MassHierarchy.NORMAL:
+                for f in ThreeFlavor:
+                    Pmf[1,f,m], Pmf[2,f,m] = 0.5 * ( Pmf[1,f,m] + Pmf[2,f,m] ), 0.5 * ( Pmf[1,f,m] + Pmf[2,f,m] )
+            if self.mix_params.mass_order == MassHierarchy.INVERTED:
+                for f in ThreeFlavor:
+                    Pmf[3,f,m], Pmf[5,f,m] = 0.5 * ( Pmf[3,f,m] + Pmf[5,f,m] ), 0.5 * ( Pmf[3,f,m] + Pmf[5,f,m] )
 
         return Pmf
 
@@ -501,7 +509,7 @@ class TwoFlavorDecoherence(ThreeFlavorTransformation):
         
         p = np.empty((6,6,len(E))) 
         for m in range(len(E)):
-            p[:,:,m] = D[:,:,m] @ Pmf[:,:]
+            p[:,:,m] = D[:,:,m] @ Pmf[:,:,m]
         
         return p
 
@@ -732,9 +740,14 @@ class AdiabaticMSWes(FourFlavorTransformation):
         -------
         Pmf : 8 x 8 matrix
         """   
-        Pmf = self.Pmf_HighDensityLimit(E)
+        PHDL = self.Pmf_HighDensityLimit()
+        Pmf = np.empty((8,8,len(E))) 
+
+        for m in range(len(E)):
+            Pmf[:,:,m] = PHDL[:,:]
 
         return Pmf
+
 
     def get_probabilities(self, t, E):         
         """neutrino and antineutrino transition probabilities.
@@ -757,7 +770,7 @@ class AdiabaticMSWes(FourFlavorTransformation):
         
         # multiply the D matrix and the Pmf matrix together
         for m in range(len(E)):
-            p[:,:,m] = D[:,:,m] @ Pmf[:,:]
+            p[:,:,m] = D[:,:,m] @ Pmf[:,:,m]
 
         # remove sterile rows/columns: A is a 6 x 8 matrix
         A = Remove_Steriles()
@@ -805,18 +818,21 @@ class NonAdiabaticMSWes(FourFlavorTransformation):
         -------
         Pmf : an 8 x 8 matrix
         """                
-        PmfHDL = self.Pmf_HighDensityLimit()
-        Pmf = PmfHDL
+        PHDL = self.Pmf_HighDensityLimit()
+        Pmf = np.empty((8,8,len(E)))
 
-        if self.mix_params.mass_order == MassHierarchy.NORMAL:
-            for f in ThreeFlavor:
-                Pmf[2,f], Pmf[3,f] = Pmf[3,f], Pmf[2,f]
-                Pmf[5,f], Pmf[6,f], Pmf[7,f] = Pmf[6,f], Pmf[7,f], Pmf[5,f]
+        for m in range(len(E)):
+            Pmf[:,:,m] = PHDL[:,:]
 
-        if self.mix_params.mass_order == MassHierarchy.INVERTED:
-            for f in ThreeFlavor:
-                Pmf[1,f], Pmf[3,f] = Pmf[3,f], Pmf[1,f]
-                Pmf[4,f], Pmf[5,f], Pmf[7,f] = Pmf[5,f], Pmf[7,f], Pmf[4,f]
+            if self.mix_params.mass_order == MassHierarchy.NORMAL:
+                for f in ThreeFlavor:
+                    Pmf[2,f,m], Pmf[3,f,m] = Pmf[3,f,m], Pmf[2,f,m]
+                    Pmf[5,f,m], Pmf[6,f,m], Pmf[7,f,m] = Pmf[6,f,m], Pmf[7,f,m], Pmf[5,f,m]
+
+            if self.mix_params.mass_order == MassHierarchy.INVERTED:
+                for f in ThreeFlavor:
+                    Pmf[1,f,m], Pmf[3,f,m] = Pmf[3,f,m], Pmf[1,f,m]
+                    Pmf[4,f,m], Pmf[5,f,m], Pmf[7,f,m] = Pmf[5,f,m], Pmf[7,f,m], Pmf[4,f,m]
 
         return Pmf
 
@@ -840,7 +856,7 @@ class NonAdiabaticMSWes(FourFlavorTransformation):
 
         p = np.empty((8,8,len(E))) 
         for m in range(len(E)):
-            p[:,:,m] = D[:,:,m] @ Pmf[:,:]
+            p[:,:,m] = D[:,:,m] @ Pmf[:,:,m]
 
         # remove sterile rows/columns
         A = Remove_Steriles()
