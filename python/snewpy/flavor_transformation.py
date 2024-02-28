@@ -1213,7 +1213,7 @@ class Catenate:
         self.transform1 = SNTransformation
         
         if  InVacuumTransformation == None:
-            self.transform2 = NoTransformation(self.transform1.mix_params)
+            self.transform2 = NoTransformation()
         else:
             self.transform2 = InVacuumTransformation
 
