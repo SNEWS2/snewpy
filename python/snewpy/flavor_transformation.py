@@ -1213,12 +1213,12 @@ class Catenate:
         self.transform1 = SNTransformation
         
         if  InVacuumTransformation == None:
-            self.transform2 = NoTransformation(self.transform1.mx_params)
+            self.transform2 = NoTransformation(self.transform1.mix_params)
         else:
             self.transform2 = InVacuumTransformation
 
         if  AtEarthTransformation == None:
-            self.transform3 = ThreeFlavorNoEarthMatter(self.transform1.mx_params)
+            self.transform3 = ThreeFlavorNoEarthMatter(self.transform1.mix_params)
         else:
             self.transform3 = AtEarthTransformation
 
