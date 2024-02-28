@@ -8,7 +8,6 @@ from snewpy import snowglobes
 from snewpy.flavor_transformation import *
 from snewpy.neutrino import *
 
-home_directory = os.getcwd()
 SNOwGLoBES_path = None  # change to SNOwGLoBES directory if using a custom detector configuration
 SNEWPY_models_base = "/path/to/snewpy/models/"  # directory containing model input files
 
