@@ -25,7 +25,7 @@ rmax = 1e12 # ending radius of MSW Effect calculation in cm
 SupernovaMatter_NMO = MSWEffect( Basel_10point8_585 , mix_params , rmin , rmax )
 
 # Construct file system path of model file and name of output file
-model_path = SNEWPY_model_dir + "/" + modeltype + "/" + model
+model_path = SNEWPY_model_base + "/" + modeltype + "/" + model
 outfile = modeltype + "_" + model + "_" + str(SupernovaMatter_NMO)
 
 # Now, do the main work:
