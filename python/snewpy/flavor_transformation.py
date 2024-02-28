@@ -1242,7 +1242,7 @@ class Catenate:
         """ 
         p1 = self.transform1.get_SNprobabilities(t,E)
         p2 = self.transform2.get_probabilities(t,E)
-        p3 = self.transform2.get_probabilities(t,E)        
+        p3 = self.transform3.get_probabilities(t,E)        
 
         p = np.empty((6,6,len(E)))
         for m in range(len(E)):
