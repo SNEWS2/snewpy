@@ -118,7 +118,7 @@ class FourFlavor(IntEnum):
     def is_antineutrino(self):
         return self.value in (FourFlavor.NU_E_BAR.value, FourFlavor.NU_MU_BAR.value, FourFlavor.NU_TAU_BAR.value, FourFlavor.NU_S_BAR.value)
 
-
+"""The mapping of SNEWPY's flavor values for the active flavors from the FourFlavor values to the ThreeFlavor values"""
 def Remove_Steriles():
     A = np.zeros((6,8))
     A[ThreeFlavor.NU_E,FourFlavor.NU_E] = 1
@@ -216,16 +216,16 @@ class ThreeFlavorMixingParameters(Mapping):
         return (self.dm21_2, self.dm31_2, self.dm32_2)
 
 
-    def Vacuum_Mixing_Matrix(self):
+    def VacuumMixingMatrix(self):
         """The vacuum mixing matrix given the mixing paramters
            N.B. This is a 6 x 6 matrix
         """
 
-        U = self.Complex_Rotation_Matrix(1,2,self.theta23,0) \
-            @ self.Complex_Rotation_Matrix(0,2,self.theta13,self.deltaCP) \
-            @ self.Complex_Rotation_Matrix(0,1,self.theta12,0) 
+        U = self.ComplexRotationMatrix(1,2,self.theta23,0) \
+            @ self.ComplexRotationMatrix(0,2,self.theta13,self.deltaCP) \
+            @ self.ComplexRotationMatrix(0,1,self.theta12,0) 
 
-        """Reorder rows to match SNEWPY's flavor ordering convention defined in neutrino.py"""
+        """Reorder rows to match SNEWPY's flavor ordering convention"""
         U[ThreeFlavor.NU_E], U[ThreeFlavor.NU_MU], U[ThreeFlavor.NU_TAU], \
             U[ThreeFlavor.NU_E_BAR], U[ThreeFlavor.NU_MU_BAR], U[ThreeFlavor.NU_TAU_BAR] = \
                 U[0], U[1], U[2], U[3], U[4], U[5]
@@ -233,7 +233,7 @@ class ThreeFlavorMixingParameters(Mapping):
         return U
 
 
-    def Complex_Rotation_Matrix(self,i,j,theta,phase):
+    def ComplexRotationMatrix(self,i,j,theta,phase):
         """A complex rotation matrix. N.B. the minus sign in the complex exponential matches PDG convention"""
         V = np.zeros((6,6),dtype = 'complex_')
         for k in range(6): 
@@ -301,23 +301,23 @@ class FourFlavorMixingParameters(ThreeFlavorMixingParameters):
         Returns
         -------
         tuple
-            dm21_2, dm31_2, dm32_2, dm41_2, dm42_3, dm43_2.
+            dm21_2, dm31_2, dm32_2, dm41_2, dm42_2, dm43_2.
         """        
-        return (self.dm21_2, self.dm31_2, self.dm32_2, self.dm41_2, self.dm42_3, self.dm43_2)
+        return (self.dm21_2, self.dm31_2, self.dm32_2, self.dm41_2, self.dm42_2, self.dm43_2)
 
-    def Vacuum_Mixing_Matrix(self):
+    def VacuumMixingMatrix(self):
         """The vacuum mixing matrix given the mixing paramters
            N.B. This is a 8 x 8 matrix
         """
 
-        U = self.Complex_Rotation_Matrix(2,3,self.theta34,0) \
-            @ self.Complex_Rotation_Matrix(1,3,self.theta24,self.delta24) \
-            @ self.Complex_Rotation_Matrix(0,3,self.theta14,0) \
-            @ self.Complex_Rotation_Matrix(1,2,self.theta23,0) \
-            @ self.Complex_Rotation_Matrix(0,2,self.theta13,self.deltaCP) \
-            @ self.Complex_Rotation_Matrix(0,1,self.theta12,self.delta12) 
+        U = self.ComplexRotationMatrix(2,3,self.theta34,0) \
+            @ self.ComplexRotationMatrix(1,3,self.theta24,self.delta24) \
+            @ self.ComplexRotationMatrix(0,3,self.theta14,0) \
+            @ self.ComplexRotationMatrix(1,2,self.theta23,0) \
+            @ self.ComplexRotationMatrix(0,2,self.theta13,self.deltaCP) \
+            @ self.ComplexRotationMatrix(0,1,self.theta12,self.delta12) 
 
-        """Reorder rows to match SNEWPY's flavor ordering convention defined in neutrino.py"""
+        """Reorder rows to match SNEWPY's flavor ordering convention"""
         U[FourFlavor.NU_E], U[FourFlavor.NU_MU], U[FourFlavor.NU_TAU], U[FourFlavor.NU_S], \
             U[FourFlavor.NU_E_BAR], U[FourFlavor.NU_MU_BAR], U[FourFlavor.NU_TAU_BAR], U[FourFlavor.NU_S_BAR] = \
                 U[0], U[1], U[2], U[3], U[4], U[5], U[6], U[7]
@@ -325,7 +325,7 @@ class FourFlavorMixingParameters(ThreeFlavorMixingParameters):
         return U
 
 
-    def Complex_Rotation_Matrix(self,i,j,theta,phase):
+    def ComplexRotationMatrix(self,i,j,theta,phase):
         """A complex rotation matrix. N.B. the minus sign in the complex exponential matches PDG convention"""
         V = np.zeros((8,8),dtype = 'complex_')
         for k in range(8): 
