@@ -681,7 +681,7 @@ class MSWEffect(ThreeFlavorTransformation):
         -------
         p : 6 x 6 array or array of 6 x 6 arrays 
         """
-        p = np.empty((6,6,len(E))
+        p = np.empty((6,6,len(E)))
 
         Pmf = self.get_SNprobabilities(t,E)
         D = ThreeFlavorNoEarthMatter(self.mix_params).get_probabilities(t,E)                                     
