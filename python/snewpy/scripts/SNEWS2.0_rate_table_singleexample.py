@@ -2,7 +2,7 @@
 from snewpy import snowglobes
 
 SNOwGLoBES_path = None  # change to SNOwGLoBES directory if using a custom detector configuration
-SNEWPY_model_dir = "/path/to/snewpy/models/"  # directory containing model input files
+SNEWPY_model_base = "/path/to/snewpy/models/"  # directory containing model input files
 
 distance = 10  # Supernova distance in kpc
 detector = "wc100kt30prct" #SNOwGLoBES detector for water Cerenkov
@@ -11,7 +11,7 @@ model = 's11.2c' # Name of model
 transformation = 'AdiabaticMSW_NMO' # Desired flavor transformation
 
 # Construct file system path of model file and name of output file
-model_path = SNEWPY_model_dir + "/" + modeltype + "/" + model
+model_path = SNEWPY_model_base + "/" + modeltype + "/" + model
 outfile = modeltype + "_" + model + "_" + transformation
 
 # Now, do the main work:
