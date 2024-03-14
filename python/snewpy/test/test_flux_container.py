@@ -7,6 +7,7 @@ from snewpy.neutrino import Flavor
 import numpy as np
 import astropy.units as u
 import pytest
+pytestmark=pytest.mark.base
 #define strategies to generate float values
 def float_values(shape=array_shapes(max_dims=1),**kwargs):
     return arrays(float, shape=shape, 

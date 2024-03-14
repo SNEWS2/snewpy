@@ -15,6 +15,8 @@ from astropy import units as u
 
 import numpy as np
 
+import pytest
+pytestmark=[pytest.mark.models, pytest.mark.registry]
 
 class TestModels(unittest.TestCase):
 

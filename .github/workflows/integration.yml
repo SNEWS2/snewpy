@@ -35,6 +35,4 @@ jobs:
         run: |
           pip install ".[dev]"
       - name: Run Integration Tests
-        run: |
-          python -m unittest python/snewpy/test/simplerate_integrationtest.py
-          pytest -m 'snowglobes'
+        run: python -m unittest python/snewpy/test/simplerate_integrationtest.py
