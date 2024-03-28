@@ -101,14 +101,14 @@ class _ContainerBase:
         data: :class:`astropy.Quantity`
             3D array of the stored quantity, must have dimensions compatible with (flavor, time, energy)
         
-        flavor: list of :class:`snewpy.neutrino.Flavor`
+        flavor: list or a single value of :class:`snewpy.neutrino.Flavor`
             array of flavors (should be ``len(flavor)==data.shape[0]``
         
-        time: array of :class:`astropy.Quantity`
+        time: :class:`astropy.Quantity`
             sampling points in time (then ``len(time)==data.shape[1]``) 
             or time bin edges (then ``len(time)==data.shape[1]+1``) 
     
-        energy: array of :class:`astropy.Quantity`
+        energy: :class:`astropy.Quantity`
             sampling points in energy (then ``len(energy)=data.shape[2]``) 
             or energy bin edges (then ``len(energy)=data.shape[2]+1``) 
     
@@ -119,10 +119,25 @@ class _ContainerBase:
         if self.unit is not None:
             #try to convert to the unit
             data = data.to(self.unit)
-        self.array = data
-        self.flavor = np.sort(flavor)
-        self.time = time
-        self.energy = energy
+        #convert the input values to arrays if they are scalar
+        self.array = u.Quantity(data)
+        self.time = u.Quantity(time, ndmin=1)
+        self.energy = u.Quantity(energy, ndmin=1)
+        self.flavor = np.sort(np.array(flavor, ndmin=1))
+        
+        Nf,Nt,Ne = len(self.flavor), len(self.time), len(self.energy)
+        #list all valid shapes of the input array
+        expected_shapes=[(nf,nt,ne) for nf in (Nf,Nf-1) for nt in (Nt,Nt-1) for ne in (Ne,Ne-1)]
+        #treat special case if data is 1d array
+        if self.array.ndim==1:
+            #try to reshape the array to expected shape
+            for expected_shape in expected_shapes:
+                if np.prod(expected_shape)==self.array.size:
+                    self.array = self.array.reshape(expected_shape)
+                    break
+        #validate the data array shape
+        if self.array.shape not in expected_shapes:
+            raise ValueError(f"Data array of shape {data.shape} is inconsistent with any valid shapes {expected_shapes}")
         
         if integrable_axes is not None:
             #store which axes can be integrated
@@ -265,10 +280,14 @@ class _ContainerBase:
         if limits is None:
             limits = u.Quantity([xmin, xmax])
         limits = limits.to(ax.unit)
-        limits = limits.clip(xmin, xmax)
+        #limits = limits.clip(xmin,xmax)
         #compute the integral
         yc = cumulative_trapezoid(self.array, x=ax, axis=axis, initial=0)
-        _integral = interp1d(x=ax, y=yc, fill_value=0, axis=axis, bounds_error=False)
+        #get first and last value to use as the fill values
+        yc_limits = (yc.take(0,axis=axis), yc.take(-1,axis=axis)) 
+        #this will make the _intergal constant if it gets out of bounds, 
+        # i.e. effectively the flux outside of bounds is zero
+        _integral = interp1d(x=ax, y=yc, fill_value=yc_limits, axis=axis, bounds_error=False)
         array = np.diff(_integral(limits),axis=axis) << (self.array.unit*ax.unit)
         axes = list(self.axes)
         axes[axis] = limits
@@ -290,12 +309,13 @@ class _ContainerBase:
         return Axes.get(axis) not in self._integrable_axes
     
     def __rmul__(self, factor):
-        "multiply array by givem factor or matrix"
-        return self.__mul__(self, factor)
+        "multiply array by given factor or matrix"
+        return self.__mul__(factor)
 
     def __mul__(self, factor) -> 'Container':
-        "multiply array by givem factor or matrix"
-        #if not (np.isscalar(factor)):
+        "multiply array by given factor or matrix"
+        if not (np.isscalar(factor) or isinstance(factor, np.ndarray)):
+            return NotImplemented
         #    raise ValueError("Factor should be a scalar value")
         array = self.array*factor
         axes = list(self.axes)
