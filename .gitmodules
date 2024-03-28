@@ -1,3 +1,0 @@
-[submodule "models/presn-models"]
-	path = models/presn-models
-	url = git@github.com:SNEWS2/presn-models

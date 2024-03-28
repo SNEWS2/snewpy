@@ -3,6 +3,15 @@
 """
 import unittest
 from snewpy import snowglobes
+from snewpy import model_path 
+
+from snewpy.models import ccsn
+import astropy.units as u
+
+def preload_model(name:str, **parameters):
+    #initialize the model with given name and parameters
+    model = ccsn.__dict__[name](**parameters)
+    return model
 
 
 class TestSimpleRate(unittest.TestCase):
@@ -12,7 +21,6 @@ class TestSimpleRate(unittest.TestCase):
         """
         # Hardcoded paths on GitHub Action runner machines
         SNOwGLoBES_path = None
-        SNEWPY_model_dir = "models/"
 
         distance = 10  # Supernova distance in kpc
         detector = "wc100kt30prct" #SNOwGLoBES detector for water Cerenkov
@@ -21,12 +29,15 @@ class TestSimpleRate(unittest.TestCase):
         transformation = 'AdiabaticMSW_NMO' # Desired flavor transformation
 
         # Construct file system path of model file and name of output file
-        model_path = SNEWPY_model_dir + "/" + modeltype + "/" + model
-        outfile = modeltype + "_" + model + "_" + transformation
+        model_file_path = f'{model_path}/{modeltype}/{model}'
+        outfile = f'{modeltype}_{model}_{transformation}'
 
+        #make sure the model files are loaded
+        preload_model(modeltype, progenitor_mass=11.2*u.Msun)
+        
         # Now, do the main work:
         print("Generating fluence files ...")
-        tarredfile = snowglobes.generate_fluence(model_path, modeltype, transformation, distance, outfile)
+        tarredfile = snowglobes.generate_fluence(model_file_path, modeltype, transformation, distance, outfile)
 
         print("Simulating detector effects with SNOwGLoBES ...")
         snowglobes.simulate(SNOwGLoBES_path, tarredfile, detector_input=detector, detector_effects=True)

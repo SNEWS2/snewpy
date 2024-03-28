@@ -19,6 +19,41 @@ import numpy as np
 import re
 from snewpy._model_downloader import RegistryFileLoader
 
+from astropy import table
+from tqdm.auto import tqdm
+
+all_models = set()
+    
+def get_models_table(init:bool=False)->table.QTable:
+    """Get the astropy.Table with all the possible Metadata parameters.
+
+    Parameters
+    ----------
+    init:bool
+        If true - initialize each model to obtain the runtime metadata parameters (takes longer)
+        Default is false, i.e. use only input parameters
+    """
+    #prepare the table
+    tables = {}
+    for model in tqdm(all_models):
+        param_combinations = model.get_param_combinations()
+        if(init):
+            metadata = [model(**params).metadata for params in param_combinations]
+        else:
+            metadata = [{model.parameters[key].label:val for key,val in params.items()} for params in param_combinations]
+            
+        md_table = table.QTable(metadata)
+        md_table['model']='.'.join([model.__module__,model.__name__])
+        md_table['init_params']=param_combinations
+        #set the fixed metadata
+        if hasattr(model,"__metadata__"):
+            for key,value in model.__metadata__.items():
+                md_table[key]=value
+        tables[model]=md_table
+    
+    df = table.vstack(list(tables.values()))
+    return df
+    
 def _can_decorate_class_or_func(func_decorator):
     """make the function decorator act as class decorator:
     if decorated object is a class, wrap its "__init__" function.
@@ -420,6 +455,9 @@ def RegistryModel(_param_validator=None, **params):
         if not hasattr(c, '_config_path'):
             module_name = c.__module__.split(".")[-1]
             c._config_path = f'{module_name}.{c.__name__}'
+        #register the model in the list
+        global all_models
+        all_models.add(c)
         return c
     return _wrap
 
@@ -462,4 +500,8 @@ def legacy_filename_initialization(c):
     c1.__qualname__ = c.__qualname__
     c1.__name__ = c.__name__
     c1.__module__ = c.__module__
+    #register the model in the list
+    global all_models
+    all_models.remove(c)
+    all_models.add(c1)
     return c1
