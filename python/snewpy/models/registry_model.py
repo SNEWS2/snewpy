@@ -17,6 +17,7 @@ from textwrap import dedent
 from warnings import warn
 import numpy as np
 import re
+from snewpy._model_downloader import RegistryFileLoader
 
 from astropy import table
 from tqdm.auto import tqdm
@@ -393,7 +394,7 @@ def RegistryModel(_param_validator=None, **params):
     """
     pset:ParameterSet = ParameterSet(param_validator=_param_validator, **params)
     def _wrap(base_class):
-        class c(base_class):
+        class c(base_class, RegistryFileLoader):
             parameters:ParameterSet = pset
             @classmethod
             def _generate_docstring(cls)->str:
@@ -450,6 +451,10 @@ def RegistryModel(_param_validator=None, **params):
         c.__qualname__ = base_class.__qualname__
         c.__name__ = base_class.__name__
         c.__module__ = base_class.__module__
+        #set the configuration path
+        if not hasattr(c, '_config_path'):
+            module_name = c.__module__.split(".")[-1]
+            c._config_path = f'{module_name}.{c.__name__}'
         #register the model in the list
         global all_models
         all_models.add(c)
