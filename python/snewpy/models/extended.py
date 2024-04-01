@@ -16,6 +16,7 @@ from snewpy.flavor_transformation import NoTransformation
 from functools import wraps
 
 from snewpy.flux import Flux
+from snewpy.models.base import SupernovaModel
 
 
 class ExtendedModel(SupernovaModel):
@@ -31,6 +32,11 @@ class ExtendedModel(SupernovaModel):
                         self._get_initial_spectra = getattr(args[0], method_name)
                     else:
                         self.method_name  = getattr(args[0], method_name)
+            self.t_final = self.time[-1]
+            self.L_final = {Flavor.NU_E: self.luminosity[Flavor.NU_E][-1],
+                            Flavor.NU_X: self.luminosity[Flavor.NU_X][-1],
+                            Flavor.NU_E_BAR: self.luminosity[Flavor.NU_E_BAR][-1],
+                            Flavor.NU_X_BAR: self.luminosity[Flavor.NU_X_BAR][-1]}
         else:
             raise TypeError("ExtendedModel.__init__ requires a SupernovaModel object")
 
@@ -38,7 +44,7 @@ class ExtendedModel(SupernovaModel):
         """Get neutrino spectra/luminosity curves before oscillation"""
         return self._get_initial_spectra(*args)
 
-    def get_extended_luminosity(self, t, k = -1., A = 1e51 * u.erg / u.s, tau_c = 36. * u.s, alpha = 2.66):
+    def get_extended_luminosity(self, t, k = -1., A = 1e51 * u.erg / u.s, tau_c = 36. * u.s, alpha = 2.66, flavor = Flavor.NU_E):
         """Get neutrino luminosity from supernova cooling tail luminosity model.
 
         Parameters
@@ -61,4 +67,15 @@ class ExtendedModel(SupernovaModel):
         """
         if t.value < 0.5:
             warn("Extended luminosity model not applicable to early times")
-        return A * (t.value**k) * np.exp((t/tau_c)**alpha) * u.erg / u.s
+        if A is None:
+            tf = self.t_final
+            Lf = self.L_final[flavor]
+            A = Lf/((tf.value**k) * np.exp(-1.*((tf/tau_c)**alpha)) * u.erg / u.s)
+        return A * (t.value**k) * np.exp(-1.*((t/tau_c)**alpha)) * u.erg / u.s
+
+    def extend_luminosity(self, ts, k = -1., A = None, tau_c = 36. * u.s, alpha = 2.66):
+        for t in ts:
+            self.time = np.append(self.time, t)
+            for flavor in [Flavor.NU_E, Flavor.NU_X, Flavor.NU_E_BAR, Flavor.NU_X_BAR]:
+                L_ext = self.get_extended_luminosity(t, k = k, A = A, tau_c = tau_c, alpha = alpha, flavor = flavor)
+                self.luminosity[flavor] = np.append(self.luminosity[flavor], L_ext)
