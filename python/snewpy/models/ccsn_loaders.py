@@ -722,8 +722,8 @@ class Fornax_2021(SupernovaModel):
 
         # Make sure the input time uses the same units as the model time grid.
         # Convert input time to a time index.
-        t = t.to(self.time.unit)
-        j = (np.abs(t - self.time)).argmin()
+        t = u.Quantity(t.to(self.time.unit), ndmin=1)
+        j = np.array(list(np.abs(_t - self.time).argmin() for _t in t))
 
         for flavor in flavors:
             # Energy bin centers (in MeV)
@@ -738,14 +738,15 @@ class Fornax_2021(SupernovaModel):
             # Linear interpolation in flux.
             if interpolation.lower() == 'linear':
                 # Pad log(E) array with values where flux is fixed to zero.
-                _logEbins = np.insert(_logE, 0, np.log10(np.finfo(float).eps * E.unit/u.MeV))
-                _logEbins = np.append(_logEbins, _logE[-1] + _dlogE[-1])
+                _logEbins = np.insert(_logE, 0, np.log10(np.finfo(float).eps * E.unit/u.MeV), axis=1)
+                _logEbins = np.append(_logEbins, np.expand_dims(_logE[:,-1] + _dlogE[:,-1], 1), axis=1)
 
                 # Luminosity spectrum _dLdE is in units of 1e50 erg/s/MeV.
                 # Pad with values where flux is fixed to zero, then divide by E to get number luminosity
-                _dNLdE = np.asarray([0.] + [self._dLdE[flavor]['g{}'.format(i)][j] for i in range(12)] + [0.])
-                initialspectra[flavor] = (np.interp(logE, _logEbins, _dNLdE) / E *
-                                          factor * 1e50 * u.erg/u.s/u.MeV).to('1 / (erg s)')
+                _dNLdE = np.asarray([np.zeros(j.shape)] + [self._dLdE[flavor]['g{}'.format(i)][j] for i in range(12)] + [np.zeros(j.shape)]).T
+                interp_values = np.array([np.interp(logE, __logEbins, __dNLdE)
+                                          for __logEbins, __dNLdE in zip(_logEbins, _dNLdE)])
+                initialspectra[flavor] = (interp_values / E * factor * 1e50 * u.erg/u.s/u.MeV).to('1 / (erg s)')
 
             elif interpolation.lower() == 'nearest':
                 # Find edges of energy bins and identify which energy bin (each entry of) E falls into
