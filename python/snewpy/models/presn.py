@@ -5,8 +5,6 @@ derived from the :class:`SupernovaModel` base class.
 """
 import snewpy.models.presn_loaders as loaders
 from snewpy.models.registry_model import RegistryModel
-import numpy as np
-from scipy.interpolate import interp1d
 from astropy import units as u
 
 @RegistryModel(
@@ -47,5 +45,3 @@ class Kato_2017(loaders.Kato_2017):
     def __init__(self, progenitor_mass:u.Quantity):
         path=f"pre_collapse/m{progenitor_mass.to_value('Msun'):.0f}"
         super().__init__(path)
-        
-        
