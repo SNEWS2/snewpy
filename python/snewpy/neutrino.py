@@ -32,8 +32,8 @@ class MassHierarchy(IntEnum):
 class TwoFlavor(IntEnum):
     """Enumeration of CCSN Neutrino flavors."""
     NU_E = 0
-    NU_X = 1
-    NU_E_BAR = 2
+    NU_E_BAR = 1    
+    NU_X = 2
     NU_X_BAR = 3
     
     def to_tex(self):
@@ -55,15 +55,19 @@ class TwoFlavor(IntEnum):
     @property
     def is_antineutrino(self):
         return self.value in (TwoFlavor.NU_E_BAR.value, TwoFlavor.NU_X_BAR.value)
+        
+    def __eq__(self, other):
+        if isinstance(other,ThreeFlavor) == True or isinstance(other,FourFlavor) == True:
+            return other == self
 
             
 class ThreeFlavor(IntEnum):
     """Enumeration of CCSN Neutrino flavors."""
     NU_E = 0
-    NU_MU = 1
-    NU_TAU = 2
-    NU_E_BAR = 3
-    NU_MU_BAR = 4
+    NU_E_BAR = 1
+    NU_MU = 2
+    NU_MU_BAR = 3
+    NU_TAU = 4
     NU_TAU_BAR = 5
     
     def to_tex(self):
@@ -76,6 +80,16 @@ class ThreeFlavor(IntEnum):
     def is_electron(self):
         """Return ``True`` for ``ThreeFlavor.NU_E`` and ``ThreeFlavor.NU_E_BAR``."""
         return self.value in (ThreeFlavor.NU_E.value, ThreeFlavor.NU_E_BAR.value)
+        
+    @property        
+    def is_muon(self):
+        """Return ``True`` for ``ThreeFlavor.NU_MU``, ``ThreeFlavor.NU_MU_BAR``."""
+        return self.value in (ThreeFlavor.NU_MU.value, ThreeFlavor.NU_MU_BAR.value)
+
+    @property
+    def is_tauon(self):
+        """Return ``True`` for ``ThreeFlavor.NU_TAU``, ``ThreeFlavor.NU_TAU_BAR``."""
+        return self.value in (ThreeFlavor.NU_TAU.value, ThreeFlavor.NU_TAU_BAR.value)        
 
     @property
     def is_neutrino(self):
@@ -85,17 +99,31 @@ class ThreeFlavor(IntEnum):
     @property
     def is_antineutrino(self):
         return self.value in (ThreeFlavor.NU_E_BAR.value, ThreeFlavor.NU_MU_BAR.value, ThreeFlavor.NU_TAU_BAR.value)
+        
+    def __eq__(self, other):
+        if isinstance(other,FourFlavor) == True:
+            return other == self    
+    
+        f = self.value 
+
+        if isinstance(other,TwoFlavor) == True and self.is_tauon == True:
+             f -= 2
+          
+        if f == other.value:
+            return True
+        else:
+            return False
 
 
 class FourFlavor(IntEnum):
     """Enumeration of CCSN Neutrino flavors."""
     NU_E = 0
-    NU_MU = 1
-    NU_TAU = 2
-    NU_S = 3
-    NU_E_BAR = 4
-    NU_MU_BAR = 5
-    NU_TAU_BAR = 6
+    NU_E_BAR = 1
+    NU_MU = 2
+    NU_MU_BAR = 3    
+    NU_TAU = 4
+    NU_TAU_BAR = 5    
+    NU_S = 6
     NU_S_BAR = 7
     
     def to_tex(self):
@@ -108,7 +136,23 @@ class FourFlavor(IntEnum):
     def is_electron(self):
         """Return ``True`` for ``FourFlavor.NU_E`` and ``FourFlavor.NU_E_BAR``."""
         return self.value in (FourFlavor.NU_E.value, FourFlavor.NU_E_BAR.value)
+        
+       
+    @property        
+    def is_muon(self):
+        """Return ``True`` for ``FourFlavor.NU_MU``, ``FourFlavor.NU_MU_BAR``."""
+        return self.value in (FourFlavor.NU_MU.value, FourFlavor.NU_MU_BAR.value)
 
+    @property
+    def is_tauon(self):
+        """Return ``True`` for ``FourFlavor.NU_TAU``, ``FourFlavor.NU_TAU_BAR``."""
+        return self.value in (FourFlavor.NU_TAU.value, FourFlavor.NU_TAU_BAR.value)                
+
+    @property
+    def is_sterile(self):
+        """Return ``True`` for ``FourFlavor.NU_S``, ``FourFlavor.NU_S_BAR``."""
+        return self.value in (FourFlavor.NU_S.value, FourFlavor.NU_S_BAR.value)                
+        
     @property
     def is_neutrino(self):
         """Return ``True`` for ``FourFlavor.NU_E`` and ``FourFlavor.NU_MU`` and ``FourFlavor.NU_TAU`` and ``FourFlavor.NU_S``."""
@@ -117,6 +161,20 @@ class FourFlavor(IntEnum):
     @property
     def is_antineutrino(self):
         return self.value in (FourFlavor.NU_E_BAR.value, FourFlavor.NU_MU_BAR.value, FourFlavor.NU_TAU_BAR.value, FourFlavor.NU_S_BAR.value)
+        
+        
+    def __eq__(self, other):
+        f = self.value 
+        if isinstance(other,TwoFlavor) == True and self.is_tauon == True:
+             f -= 2
+            
+        if f == other.value:
+            return True
+        else:
+            return False
+
+
+        
 
 """The mapping of SNEWPY's flavor values for the active flavors from the FourFlavor values to the ThreeFlavor values"""
 def Remove_Steriles():
@@ -258,7 +316,7 @@ class FourFlavorMixingParameters(ThreeFlavorMixingParameters):
     ..Note: it is an extension of :class:`ThreeFlavorMixingParameters`, and can be constructed using it:
     
         >>> pars_3f = ThreeFlavorMixingParameters() #standard 3flavor mixing
-        >>> pars_4f = FourFlavorMixingParameters(**pars_3f, theta14=90<<u.deg, dm41_2=1<<u.GeV**2)
+        >>> pars_4f = FpourFlavorMixingParameters(**pars_3f, theta14=90<<u.deg, dm41_2=1<<u.GeV**2)
     """
     #sterile neutrino mixing angles. 
     theta14: u.Quantity[u.deg] = 0<<u.deg
