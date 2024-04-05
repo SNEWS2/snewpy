@@ -687,16 +687,17 @@ class Fornax_2021(SupernovaModel):
 
             elif interpolation.lower() == 'nearest':
                 # Find edges of energy bins and identify which energy bin (each entry of) E falls into
-                _logEbinEdges = _logE - _dlogE[0] / 2
-                _logEbinEdges = np.concatenate((_logEbinEdges, [_logE[-1] + _dlogE[-1] / 2]))
+                _logEbinEdges = _logE - _dlogE[0,0] / 2
+                _logEbinEdges = np.append(_logEbinEdges, np.expand_dims(_logE[:,-1] + _dlogE[:,-1]/2, 1), axis=1)
                 _EbinEdges = 10**_logEbinEdges
-                idx = np.searchsorted(_EbinEdges, E) - 1
-                select = (idx > 0) & (idx < len(_E))
+                idx = np.array([np.searchsorted(edges, E) - 1 for edges in _EbinEdges])
+                select = np.array([(_idx > 0) & (_idx < len(__E)) for _idx, __E in zip(idx, _E)])
 
                 # Divide luminosity spectrum by energy at bin center to get number luminosity spectrum
-                _dNLdE = np.zeros(len(E))
-                _dNLdE[np.where(select)] = np.asarray(
-                    [self._dLdE[flavor]['g{}'.format(i)][j] / _E[i] for i in idx[select]])
+                _dNLdE = np.zeros([len(j), len(np.atleast_1d(E))])
+                for i in range(len(j)):
+                    _dNLdE[i][np.where(select[i])] = np.asarray([self._dLdE[flavor]['g{}'.format(ebin_idx)][j[i]] / _E[i][ebin_idx]
+                                                                 for ebin_idx in idx[i][select[i]]])
                 initialspectra[flavor] = ((_dNLdE << 1/u.MeV) * factor * 1e50 * u.erg/u.s/u.MeV).to('1 / (erg s)')
 
             else:
