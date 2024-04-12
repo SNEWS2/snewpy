@@ -1739,7 +1739,7 @@ class QuantumDecoherence(FlavorTransformation):
 
         :meta private:
         """
-        return 1/3 + 1/2 * np.exp(-(self.Gamma3 * (E/self.E0)**self.n + self.Gamma8 * (E/self.E0)**self.n / 3) * self.d) + 1/6 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
+        return 1/3 + 1/2 * np.exp(-self.Gamma3 * (E/self.E0)**self.n * self.d) + 1/6 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
 
     def P21(self, E):
         """Transition probability from the state nu2 to nu1 in vacuum.
@@ -1757,7 +1757,7 @@ class QuantumDecoherence(FlavorTransformation):
 
         :meta private:
         """
-        return 1/3 - 1/2 * np.exp(-(self.Gamma3 * (E/self.E0)**self.n + self.Gamma8 * (E/self.E0)**self.n / 3) * self.d) + 1/6 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
+        return 1/3 - 1/2 * np.exp(-self.Gamma3 * (E/self.E0)**self.n * self.d) + 1/6 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
 
     def P22(self, E):
         """Survival probability of state nu2 in vacuum.
