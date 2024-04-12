@@ -1004,22 +1004,21 @@ class QuantumDecoherence(ThreeFlavorTransformation):
         """        
         PQD = np.zeros((6,6,len(E)))
 
-        PQD[1,1] = 1/3 + 1/2 * np.exp(-(self.Gamma3 * (E/self.E0)**self.n + self.Gamma8 * (E/self.E0)**self.n / 3) * self.d) \
+        PQD[0,0] = 1/3 + 1/2 * np.exp(-(self.Gamma3 * (E/self.E0)**self.n + self.Gamma8 * (E/self.E0)**self.n / 3) * self.d) \
                   + 1/6 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
 
-        PQD[1,2] = 1/3 - 1/2 * np.exp(-(self.Gamma3 * (E/self.E0)**self.n + self.Gamma8 * (E/self.E0)**self.n / 3) * self.d) \
+        PQD[0,1] = 1/3 - 1/2 * np.exp(-(self.Gamma3 * (E/self.E0)**self.n + self.Gamma8 * (E/self.E0)**self.n / 3) * self.d) \
                   + 1/6 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
 
-        PQD[1,3] = 1/3 - 1/3 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
+        PQD[0,2] = 1/3 - 1/3 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
 
-        PQD[2,1] = PQD[1,2]
-        PQD[2,2] = PQD[1,1]
-        PQD[2,3] = PQD[1,3]
+        PQD[1,0] = PQD[0,1]
+        PQD[1,1] = PQD[0,0]
+        PQD[1,2] = PQD[0,2]
 
-        PQD[3,1] = PQD[1,3]
-        PQD[3,2] = PQD[2,3]
-    
-        PQD[3,3] = 1/3 + 2/3 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
+        PQD[2,0] = PQD[0,2]
+        PQD[2,1] = PQD[1,2]    
+        PQD[2,2] = 1/3 + 2/3 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
 
         for i in range(3):
             for j in range(3):
