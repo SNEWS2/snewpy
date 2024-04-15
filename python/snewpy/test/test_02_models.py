@@ -13,6 +13,8 @@ from astropy import units as u
 from snewpy import model_path
 import os
 
+import pytest
+pytestmark=pytest.mark.models
 
 class TestModels(unittest.TestCase):
 

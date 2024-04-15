@@ -9,6 +9,7 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+    types: [opened, synchronize, reopened, ready_for_review, labeled]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -39,6 +40,19 @@ jobs:
           pip install ".[dev]"
       
       # Run the unit tests
-      - name: Test with pytest
-        run: |
-          pytest -m 'not snowglobes'
+      - name: Testing base functionality
+        run: pytest -m 'base'
+
+      - name: Testing ModelRegistry
+        if: contains(github.event.pull_request.labels.*.name, 'ModelRegistry')
+        run: pytest -m 'registry'
+      - name: Testing Models
+        if: contains(github.event.pull_request.labels.*.name, 'SupernovaModel')
+        run: pytest -m 'models'
+      - name: Testing SNOwGLoBES
+        if: contains(github.event.pull_request.labels.*.name, 'SNOwGLoBES')
+        run: pytest -m 'snowglobes'
+      #This will trigger only when user adds a "test:All" label
+      - name: Run all tests
+        if: ${{ github.event.label.name == 'test:All' }}
+        run: pytest
