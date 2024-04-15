@@ -74,6 +74,21 @@ class ExtendedModel(SupernovaModel):
         return A * (t.value**k) * np.exp(-1.*((t/tau_c)**alpha)) * u.erg / u.s
 
     def extend(self, ts, k = -1., A = None, tau_c = 36. * u.s, alpha = 2.66):
+        """Extend supernova model to specific times.
+
+        Parameters
+        ----------
+        ts : astropy.Quantity
+             Times to add to supernova model.
+        k : float
+            Power law factor (default: -1)
+        A : astropy.Quantity
+            Normalization factor (default: None)
+        tau_c : astropy.Quantity
+            Exponential decay characteristic timescale (default: 36 s)
+        alpha : float
+            Exponential decay factor (default: 2.66)
+        """
         for t in ts:
             self.time = np.append(self.time, t)
             for flavor in [Flavor.NU_E, Flavor.NU_X, Flavor.NU_E_BAR, Flavor.NU_X_BAR]:
