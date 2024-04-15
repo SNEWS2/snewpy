@@ -1003,11 +1003,10 @@ class QuantumDecoherence(ThreeFlavorTransformation):
         PQD : an array of 6 x 6 matrices
         """        
         PQD = np.zeros((6,6,len(E)))
-
-        PQD[0,0] = 1/3 + 1/2 * np.exp(-self.Gamma3 * (E/self.E0)**self.n * self.d) \
+        PQD[0,0] = 1/3 + 1/2 * np.exp(-(self.Gamma3 * (E/self.E0)**self.n + self.Gamma8 * (E/self.E0)**self.n / 3) * self.d) \
                   + 1/6 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
 
-        PQD[0,1] = 1/3 - 1/2 * np.exp(-self.Gamma3 * (E/self.E0)**self.n * self.d) \
+        PQD[0,1] = 1/3 - 1/2 * np.exp(-(self.Gamma3 * (E/self.E0)**self.n + self.Gamma8 * (E/self.E0)**self.n / 3) * self.d) \
                   + 1/6 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
 
         PQD[0,2] = 1/3 - 1/3 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
