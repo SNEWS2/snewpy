@@ -95,3 +95,4 @@ class ExtendedModel(SupernovaModel):
                 L_ext = self.get_extended_luminosity(t, k = k, A = A, tau_c = tau_c, alpha = alpha, flavor = flavor)
                 self.luminosity[flavor] = np.append(self.luminosity[flavor], L_ext)
                 self.meanE[flavor] = np.append(self.meanE[flavor], self.meanE[flavor][-1])
+                self.pinch[flavor] = np.append(self.pinch[flavor], self.pinch[flavor][-1])
