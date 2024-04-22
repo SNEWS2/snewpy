@@ -81,7 +81,7 @@ This will generate the following figure:
 .. image:: luminosity-comparison.*
 
 
-The SNEWPY repository contains many Jupyter notebooks in ``models/<model-name>/`` or ``doc/nb/`` with sample code
+The SNEWPY repository contains many Jupyter notebooks in ``doc/nb/`` with sample code
 showing different models or how to apply flavor transformations to the neutrino fluxes.
 
 More advanced usage of SNEWPY requires SNOwGLoBES and is described in the following section.
