@@ -9,6 +9,7 @@ Front-end for supernova models which provide neutrino luminosity and spectra.
 
 from ._version import __version__
 from pathlib import Path
+from sys import exit
 import os
 
 try:
