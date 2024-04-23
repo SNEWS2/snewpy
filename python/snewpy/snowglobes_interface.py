@@ -83,7 +83,7 @@ class SnowglobesData:
             self._load_smearing_matrices(self.base_dir/'smear')
 
     def _load_detectors(self, path:Path, detectors:str):
-        df = pd.read_table(path,names=['name','mass','factor'], delim_whitespace=True, comment='#')
+        df = pd.read_table(path, names=['name', 'mass', 'factor'], sep='\s+', comment='#')
         df['tgt_mass']=df.mass*df.factor
 
         if detectors == 'all':
@@ -108,17 +108,17 @@ class SnowglobesData:
             if l.startswith('%'):
                 # Format 1: explicit binning, same for all channels
                 tokens = l.split()[1:]
-                df = pd.read_table(f, delim_whitespace=True, index_col=1, comment='%', names=['name','n','parity','flavor','weight'])
+                df = pd.read_table(f, sep='\s+', index_col=1, comment='%', names=['name','n','parity','flavor','weight'])
             elif l.startswith('SN_nu'):
                 # Format 2: explicit binning, differs per channel
                 tokens = l.split()[6:]
-                df = pd.read_table(f, delim_whitespace=True, index_col=1, comment='%', names=['name','n','parity','flavor','weight'], usecols=range(1,6))
+                df = pd.read_table(f, sep='\s+', index_col=1, comment='%', names=['name','n','parity','flavor','weight'], usecols=range(1,6))
                 # drop coherent scattering channels, which have different binning
                 df = df[df["name"].str.startswith('coh_') == False]
             else:
                 # Format 3: no binning specified, use SNOwGLoBES default values
                 tokens = '% 200 0.0005 0.100 200 0.0005 0.100'.split()[1:]
-                df = pd.read_table(f, delim_whitespace=True, index_col=1, comment='%', names=['name','n','parity','flavor','weight'])
+                df = pd.read_table(f, sep='\s+', index_col=1, comment='%', names=['name','n','parity','flavor','weight'])
 
             self.channels[material] = df
 
@@ -136,7 +136,7 @@ class SnowglobesData:
         for detector in self.detectors:
             res_det = {}
             for file in (path/str(detector)).glob(f'effic_*_{detector}.dat'):
-                channel =  file.stem[len('effic_'):-len(detector)-1]
+                channel = file.stem[len('effic_'):-len(detector)-1]
                 logger.debug(f'Reading file ({detector},{channel}): {file}')
                 with open(file) as f:
                     effs = np.fromiter(f.readlines()[0].split("{")[-1].split("}")[0].split(","), float)
