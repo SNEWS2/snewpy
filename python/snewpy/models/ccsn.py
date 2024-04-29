@@ -455,8 +455,10 @@ class Mori_2023(loaders.Mori_2023):
                  (200, 8):  1.74,
                  (200, 10): 1.73,
                  (200, 20): 1.62 }
-        am = int(axion_mass.to_value('MeV'))
-        ac = int(axion_coupling.to_value('1e-10/GeV'))
+
+        am = int(axion_mass.to_value('MeV')) if isinstance(axion_mass, u.quantity.Quantity) else int(axion_mass)
+        ac = int(axion_coupling.to_value('1e-10/GeV')) if isinstance(axion_coupling, u.quantity.Quantity) else int(axion_coupling)
+
         pns_mass = mpns[(am,ac)]
 
         # Set the metadata.
