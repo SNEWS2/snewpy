@@ -38,3 +38,11 @@ jobs:
         run: |
           python -m unittest python/snewpy/test/simplerate_integrationtest.py
           pytest -m 'snowglobes'
+      - name: Run Jupyter notebooks
+        run: |
+          pip install nbclient ipykernel
+          jupyter kernelspec list
+          cd doc/nb/
+          jupyter execute ccsn/*.ipynb
+          jupyter execute presn/*.ipynb
+          jupyter execute AnalyticFluence.ipynb FlavorTransformation.ipynb
