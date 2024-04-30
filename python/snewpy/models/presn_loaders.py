@@ -55,7 +55,7 @@ class Odrzywolek_2010(SupernovaModel):
                 self.factor[f] = 1.0
             else:
                 # nuX/nuE ratio from Odrzywolek paper: (arXiv:astro-ph/0311012)
-                self.factor[f] = 0.36
+                self.factor[f] = 0.19
         time = -df.index.to_numpy() << u.s
         super().__init__(time, self.metadata)
 
