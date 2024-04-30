@@ -62,7 +62,7 @@ class FlavorScheme:
         return self.name.split('_')[1]
     
 
-def _makeFlavorScheme(name:str, leptons:list[str]):
+def _makeFlavorScheme(name:str, leptons:list):
     enum_class =  enum.IntEnum(name, start=0, type=FlavorScheme,
                    names = [f'NU_{L}{BAR}' for L in leptons for BAR in ['','_BAR']]
                   )
