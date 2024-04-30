@@ -8,7 +8,6 @@ Front-end for supernova models which provide neutrino luminosity and spectra.
 """
 
 from ._version import __version__
-from pathlib import Path
 from sys import exit
 import os
 
@@ -33,36 +32,29 @@ def get_models(models=None, download_dir='SNEWPY_models'):
         Local directory to download model files to.
     """
     from concurrent.futures import ThreadPoolExecutor, as_completed
-    from ._model_urls import model_urls
-    from ._model_downloader import _download as download
+    from .models.registry_model import all_models
 
-    for model in list(model_urls):
-        if model_urls[model] == []:
-            del model_urls[model]
-            continue
+    all_models = {m.__name__: m for m in all_models}
+    all_model_names = sorted(all_models.keys())
 
     if models == "all":
-        models = model_urls.keys()
+        models = all_model_names
     elif isinstance(models, str):
         models = [models]
     elif models == None:
         # Select model(s) to download
-        print(f"Available models in this version of SNEWPY: {list(model_urls.keys())}")
-        if not model_urls:
-            print("Error: `get_models()` only works after installing SNEWPY via `pip install snewpy`. "
-                  "If you have cloned the git repo, model files are available in the `models/` folder.")
-            return False
+        print(f"Available models in SNEWPY v{__version__}: {all_model_names}")
 
         selected = input("\nType a model name, 'all' to download all models or <Enter> to cancel: ").strip()
         if selected == "all":
-            models = model_urls.keys()
+            models = all_model_names
         elif selected == "":
             exit()
-        elif selected in model_urls.keys():
+        elif selected in all_model_names:
             models = [selected]
             while True:
                 selected = input("\nType another model name or <Enter> if you have selected all models you want to download: ").strip()
-                if selected in model_urls.keys():
+                if selected in all_model_names:
                     models.append(selected)
                 elif selected == "":
                     break
@@ -74,25 +66,12 @@ def get_models(models=None, download_dir='SNEWPY_models'):
 
         print(f"\nYou have selected the models: {models}\n")
 
-    # Download model files
-    if not os.path.isdir(download_dir):
-        print(f"Creating directory '{download_dir}' ...")
-        os.makedirs(download_dir)
-
     pool = ThreadPoolExecutor(max_workers=8)
     results = []
     for model in models:
-        model_dir = download_dir + '/' + model
-        print(f"Downloading files for '{model}' into '{model_dir}' ...")
-
-        for url in model_urls[model]:
-            local_file = model_dir + url.split(model, maxsplit=1)[1]
-            if os.path.exists(local_file) and local_file.find('README') == -1 and local_file.find('.ipynb') == -1:
-                print(f"File '{local_file}' already exists. Skipping download.")
-            else:
-                if not os.path.isdir(os.path.dirname(local_file)):
-                    os.makedirs(os.path.dirname(local_file))
-                results.append(pool.submit(download, src=url, dest=Path(local_file)))
+        print(f"Downloading files for '{model}' into '{model_path}' ...")
+        for progenitor in all_models[model].get_param_combinations():
+            results.append(pool.submit(all_models[model], **progenitor))
 
     exceptions = []
     for result in as_completed(results):
