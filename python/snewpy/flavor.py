@@ -10,7 +10,7 @@ class FlavorScheme:
             base = r'\overline{\nu}'
         lepton = self.lepton.lower()
         if self.is_muon or self.is_tauon:
-            lepton = f"\{lepton}"
+            lepton = '\\'+lepton
         return f"${base}_{{{lepton}}}$"
 
     @classmethod
