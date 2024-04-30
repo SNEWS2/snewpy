@@ -1,11 +1,6 @@
-def MakeFlavorScheme(name:str, leptons:list[str]):
-    return enum.Enum(name, start=0, type=FlavorScheme,
-                   names = [f'NU_{L}{BAR}' for L in leptons for BAR in ['','_BAR']]
-                  )
-
-TwoFlavor = MakeFlavorScheme('TwoFlavor',['E','X'])
-ThreeFlavor = MakeFlavorScheme('ThreeFlavor',['E','MU','TAU'])
-FourFlavor = MakeFlavorScheme('ThreeFlavor',['E','MU','TAU','S'])
+import enum
+import numpy as np
+import typing
 
 class FlavorScheme:
     def to_tex(self):
@@ -66,9 +61,9 @@ def _makeFlavorScheme(name:str, leptons:list[str]):
                    names = [f'NU_{L}{BAR}' for L in leptons for BAR in ['','_BAR']]
                   )
 
-TwoFlavor = MakeFlavorScheme('TwoFlavor',['E','X'])
-ThreeFlavor = MakeFlavorScheme('ThreeFlavor',['E','MU','TAU'])
-FourFlavor = MakeFlavorScheme('ThreeFlavor',['E','MU','TAU','S'])
+TwoFlavor = _makeFlavorScheme('TwoFlavor',['E','X'])
+ThreeFlavor = _makeFlavorScheme('ThreeFlavor',['E','MU','TAU'])
+FourFlavor = _makeFlavorScheme('ThreeFlavor',['E','MU','TAU','S'])
 
 
 class FlavorMatrix:
