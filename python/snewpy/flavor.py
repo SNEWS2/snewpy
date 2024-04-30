@@ -10,7 +10,7 @@ class FlavorScheme:
         return r'$\{0}$'.format(self.name.lower())
 
     @classmethod
-    def to_value(cls,key)->int:
+    def _to_value(cls,key)->int:
         if isinstance(key, str):
             try:
                 return cls[key].value
@@ -22,6 +22,8 @@ class FlavorScheme:
             if not isinstance(key, cls):
                 raise TypeError(f'Value {repr(key)} is not from {cls.__name__} sheme!')
             return key.value
+        elif isinstance(key, typing.Iterable):
+            return tuple(map(cls._to_value, key))
         return key
         
     @property
@@ -57,9 +59,10 @@ class FlavorScheme:
     
 
 def _makeFlavorScheme(name:str, leptons:list[str]):
-    return enum.Enum(name, start=0, type=FlavorScheme,
+    enum_class =  enum.IntEnum(name, start=0, type=FlavorScheme,
                    names = [f'NU_{L}{BAR}' for L in leptons for BAR in ['','_BAR']]
                   )
+    return enum_class
 
 TwoFlavor = _makeFlavorScheme('TwoFlavor',['E','X'])
 ThreeFlavor = _makeFlavorScheme('ThreeFlavor',['E','MU','TAU'])
@@ -82,7 +85,7 @@ class FlavorMatrix:
     def _convert_index(self, index):
         if isinstance(index, str) or (not isinstance(index,typing.Iterable)):
             index = [index]
-        new_idx = [flavors.to_value(idx) for idx,flavors in zip(index, [self.flavors2,self.flavors1])]
+        new_idx = [flavors._to_value(idx) for idx,flavors in zip(index, [self.flavors2,self.flavors1])]
         print(new_idx)
         return tuple(new_idx)
         
