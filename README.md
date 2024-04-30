@@ -1,6 +1,6 @@
 # SNEWPY: Supernova Neutrino Early Warning Models for Python
 
-<img src="/doc/source/snewpy-logo.png" alt="snewpy logo: The word 'snewpy' in a monospace font, with an explosion emoji inside the letter 'p'." style="width: 300px; max-width: 100%;" />
+<img src="https://github.com/SNEWS2/snewpy/blob/v1.4/doc/source/snewpy-logo.png?raw=true" alt="snewpy logo: The word 'snewpy' in a monospace font, with an explosion emoji inside the letter 'p'." style="width: 300px; max-width: 100%;" />
 
 [![DOI](https://zenodo.org/badge/221705586.svg)](https://zenodo.org/badge/latestdoi/221705586)
 [![PyPI](https://img.shields.io/pypi/v/snewpy)](https://pypi.org/project/snewpy/)
@@ -53,9 +53,9 @@ flux = bollig.get_flux(distance=10*u.kpc, transformation=msw_nmo)
 
 You can also calculate the observed event rate in all neutrino detectors supported by SNOwGLoBES, use the included SN models and flavor transformations in event generators like sntools, and much more.
 
-Example scripts which show how SNEWPY can be used are available in the
-`python/snewpy/scripts/` subfolder as well as notebooks in `doc/nb/`.
-Most downloadable models also include a Jupyter notebook with simple usage examples.
+Jupyter notebooks showcasing the downloadable supernova models available through SNEWPY and much of its functionality are available in the `doc/nb/` subfolder.
+Additional example scripts are in the
+`python/snewpy/scripts/` subfolder.
 
 Papers describing SNEWPY and the underlying physics are published in the Astrophysical Journal ([DOI:10.3847/1538-4357/ac350f](https://dx.doi.org/10.3847/1538-4357/ac350f), [arXiv:2109.08188](https://arxiv.org/abs/2109.08188)) and the Journal of Open Source Software ([DOI:10.21105/joss.03772](https://dx.doi.org/10.21105/joss.03772)).
 
