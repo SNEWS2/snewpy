@@ -5,9 +5,13 @@ import typing
 class FlavorScheme:
     def to_tex(self):
         """LaTeX-compatible string representations of flavor."""
+        base = r'\nu'
         if self.is_antineutrino:
-            return r'$\overline{{\nu}}_{0}$'.format(self.name[3].lower())
-        return r'$\{0}$'.format(self.name.lower())
+            base = r'\overline{\nu}'
+        lepton = self.lepton.lower()
+        if self.is_muon or self.is_tauon:
+            lepton = f"\{lepton}"
+        return f"${base}_{{{lepton}}}$"
 
     @classmethod
     def _to_value(cls,key)->int:
@@ -93,7 +97,7 @@ class FlavorMatrix:
         return self.array[self._convert_index(index)]
         
     def __setitem__(self, index, value):
-        self.array[self._convert_index(index)]=value
+        self.array[self._convert_index(index)] = value
         
     def __repr__(self):
         s = f'{self.__class__.__name__}:<{self.flavors1.__name__}->{self.flavors2.__name__}>:'
