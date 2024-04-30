@@ -75,7 +75,9 @@ class FlavorMatrix:
                     self.array = np.asarray(array)
                     self.flavors1 = flavors
                     self.flavors2 = flavors2 or flavors
-                    assert self.array.shape == (len(self.flavors2), len(self.flavors1))
+                    expected_shape = (len(self.flavors2), len(self.flavors1))
+                    assert self.array.shape == expected_shape, \
+                    f"Array shape {self.array.shape} mismatch expected {expected_shape}"
 
     def _convert_index(self, index):
         if isinstance(index, str) or (not isinstance(index,typing.Iterable)):
@@ -94,6 +96,13 @@ class FlavorMatrix:
         s = f'{self.__class__.__name__}:<{self.flavors1.__name__}->{self.flavors2.__name__}>:'
         s+='\n'+repr(self.array)
         return s
+    
+    def __matmul__(self, other):
+        if isinstance(other, FlavorMatrix):
+            data = np.tensordot(self.array, other.array, axes=[0,1])
+            return FlavorMatrix(data, self.flavors1, other.flavors2)
+        raise TypeError(f"Cannot multiply object of {self.__class__} by {other.__class__}")
+        
     #methods for creating matrix
     @classmethod
     def zeros(cls, flavors1:FlavorScheme, flavors2:FlavorScheme|None = None):
@@ -108,11 +117,39 @@ class FlavorMatrix:
         shape = (len(flavors2), len(flavors1))
         data = np.eye(*shape)
         return cls(data, flavors1, flavors2)
-        
+
     @classmethod
-    def identity(cls, flavors1:FlavorScheme, flavors2:FlavorScheme|None = None):
+    def from_function(cls, flavors1:FlavorScheme, flavors2:FlavorScheme|None = None, *, function):
         flavors2 = flavors2 or flavors1
-        data = [[f1.name==f2.name 
+        data = [[function(f1,f2)
                  for f1 in flavors1]
                 for f2 in flavors2]
         return cls(np.array(data,dtype=float), flavors1, flavors2)
+    @classmethod
+    def identity(cls, flavors1:FlavorScheme, flavors2:FlavorScheme|None = None):
+        return cls.from_function(flavors1, flavors2, lambda f1,f2: 1.*(f1.name==f2.name))
+
+
+def flavor_matrix(flavor1:FlavorScheme, flavor2:FlavorScheme=None):
+    """A decorator for creating the flavor matrix from the given function"""
+    flavor2 = flavor2 or flavor1
+    def _decorator(func):
+        return FlavorMatrix.from_function(flavor1, flavor2, function=func)
+    return _decorator
+
+#define some conversion matrices
+@flavor_matrix(ThreeFlavor,TwoFlavor)
+def convert_3to2(f1,f2):
+    if (f1.name==f2.name):
+        return 1.
+    if (f1.is_neutrino==f2.is_neutrino)and(f2.lepton=='X' and f1.lepton in ['MU','TAU']):
+        return 0.5
+    return 0
+    
+@flavor_matrix(TwoFlavor,ThreeFlavor)
+def convert_2to3(f1,f2):
+    if (f1.name==f2.name):
+        return 1.
+    if (f1.is_neutrino==f2.is_neutrino)and(f1.lepton=='X' and f2.lepton in ['MU','TAU']):
+        return 1
+    return 0
