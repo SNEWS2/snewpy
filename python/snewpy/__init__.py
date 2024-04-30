@@ -21,7 +21,7 @@ src_path = os.path.realpath(__path__[0])
 base_path = os.sep.join(src_path.split(os.sep)[:-2])
 model_path = os.path.join(get_cache_dir(), 'snewpy/models')
 
-def get_models(models=None, download_dir='SNEWPY_models'):
+def get_models(models=None, download_dir=None):
     """Download model files from the snewpy repository.
 
     Parameters
@@ -29,10 +29,14 @@ def get_models(models=None, download_dir='SNEWPY_models'):
     models : list or str
         Models to download. Can be 'all', name of a single model or list of model names.
     download_dir : str
-        Local directory to download model files to.
+        [Deprecated, do not use.]
     """
     from concurrent.futures import ThreadPoolExecutor, as_completed
+    from warnings import warn
     from .models.registry_model import all_models
+
+    if download_dir is not None:
+        warn("The `download_dir` argument to `get_models` is deprecated and will be removed soon.", FutureWarning, stacklevel=2)
 
     all_models = {m.__name__: m for m in all_models}
     all_model_names = sorted(all_models.keys())
@@ -41,7 +45,7 @@ def get_models(models=None, download_dir='SNEWPY_models'):
         models = all_model_names
     elif isinstance(models, str):
         models = [models]
-    elif models == None:
+    elif models is None:
         # Select model(s) to download
         print(f"Available models in SNEWPY v{__version__}: {all_model_names}")
 
@@ -51,11 +55,11 @@ def get_models(models=None, download_dir='SNEWPY_models'):
         elif selected == "":
             exit()
         elif selected in all_model_names:
-            models = [selected]
+            models = {selected}
             while True:
                 selected = input("\nType another model name or <Enter> if you have selected all models you want to download: ").strip()
                 if selected in all_model_names:
-                    models.append(selected)
+                    models.add(selected)
                 elif selected == "":
                     break
                 else:
@@ -68,8 +72,8 @@ def get_models(models=None, download_dir='SNEWPY_models'):
 
     pool = ThreadPoolExecutor(max_workers=8)
     results = []
+    print(f"Downloading files for {models} to '{model_path}' ...")
     for model in models:
-        print(f"Downloading files for '{model}' into '{model_path}' ...")
         for progenitor in all_models[model].get_param_combinations():
             results.append(pool.submit(all_models[model], **progenitor))
 
