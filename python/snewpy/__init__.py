@@ -86,29 +86,3 @@ def get_models(models=None, download_dir=None):
         print("Please check your internet connection and try again later. If this persists, please report it at https://github.com/SNEWS2/snewpy/issues")
         exit(1)
     pool.shutdown(wait=False)
-
-
-def _get_model_urls():
-    """List URLs of model files for the current release.
-
-    When building a snewpy release, generate a dictionary of available models
-    and the URLs at which the respective files are located. Users can then use
-    get_models() to interactively select which model(s) to download.
-    """
-
-    repo_dir = os.path.normpath(os.path.dirname(os.path.abspath(__file__)) + '/../../')
-    url_base = 'https://github.com/SNEWS2/snewpy/raw/v' + __version__
-
-    with open(os.path.dirname(os.path.abspath(__file__)) + '/_model_urls.py', 'w') as f:
-        f.write('model_urls = {\n')
-        for model in sorted(os.listdir(repo_dir + '/models')):
-            urls = []
-            for root, dirs, files in os.walk(repo_dir + '/models/' + model):
-                for file in files:
-                    urls.append(f'{url_base}{root[len(repo_dir):]}/{file}')
-
-            f.write(f'    "{model}": [\n')
-            for url in sorted(urls):
-                f.write(f'        "{url}",\n')
-            f.write('    ],\n')
-        f.write('}\n')

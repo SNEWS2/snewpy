@@ -27,11 +27,8 @@ jobs:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_JM }}
       run: |
-        python -c 'import python.snewpy; python.snewpy._get_model_urls()'
-        cat python/snewpy/_model_urls.py
         pip install .
-        python -c 'import snewpy; snewpy.get_models(models="Bollig_2016")'
-        rm -r SNEWPY_models/
+        python -c 'import snewpy; print(snewpy.__version__)'
         python setup.py sdist bdist_wheel
         twine upload dist/*
 
