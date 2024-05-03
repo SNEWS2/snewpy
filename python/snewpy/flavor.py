@@ -77,7 +77,7 @@ class FlavorMatrix:
     def __init__(self, 
                  array:np.ndarray,
                  flavors:FlavorScheme,
-                 flavors2:FlavorScheme|None = None
+                 flavors2:FlavorScheme = None
                 ):
                     self.array = np.asarray(array)
                     self.flavors1 = flavors
@@ -112,28 +112,28 @@ class FlavorMatrix:
         
     #methods for creating matrix
     @classmethod
-    def zeros(cls, flavors1:FlavorScheme, flavors2:FlavorScheme|None = None):
+    def zeros(cls, flavors1:FlavorScheme, flavors2:FlavorScheme = None):
         flavors2 = flavors2 or flavors1
         shape = (len(flavors2), len(flavors1))
         data = np.zeros(shape)
         return cls(data, flavors1, flavors2)
         
     @classmethod
-    def eye(cls, flavors1:FlavorScheme, flavors2:FlavorScheme|None = None):
+    def eye(cls, flavors1:FlavorScheme, flavors2:FlavorScheme = None):
         flavors2 = flavors2 or flavors1
         shape = (len(flavors2), len(flavors1))
         data = np.eye(*shape)
         return cls(data, flavors1, flavors2)
 
     @classmethod
-    def from_function(cls, flavors1:FlavorScheme, flavors2:FlavorScheme|None = None, *, function):
+    def from_function(cls, flavors1:FlavorScheme, flavors2:FlavorScheme = None, *, function):
         flavors2 = flavors2 or flavors1
         data = [[function(f1,f2)
                  for f1 in flavors1]
                 for f2 in flavors2]
         return cls(np.array(data,dtype=float), flavors1, flavors2)
     @classmethod
-    def identity(cls, flavors1:FlavorScheme, flavors2:FlavorScheme|None = None):
+    def identity(cls, flavors1:FlavorScheme, flavors2:FlavorScheme = None):
         return cls.from_function(flavors1, flavors2, lambda f1,f2: 1.*(f1.name==f2.name))
 
 
@@ -160,3 +160,4 @@ def convert_2to3(f1,f2):
     if (f1.is_neutrino==f2.is_neutrino)and(f1.lepton=='X' and f2.lepton in ['MU','TAU']):
         return 1
     return 0
+
