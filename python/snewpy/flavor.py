@@ -2,7 +2,28 @@ import enum
 import numpy as np
 import typing
 
-class FlavorScheme:
+class EnumMeta(enum.EnumMeta):
+    def __getitem__(cls, key):
+        print(cls)
+        #if this is from a flavor scheme: check that it's ours
+        if isinstance(key, FlavorScheme):
+            if not isinstance(key, cls):
+                raise TypeError(f'Value {repr(key)} is not from {cls.__name__} sheme!')
+            return key
+        #if this is a string find it by name
+        if isinstance(key, str):
+            try:
+                return super().__getitem__(key)
+            except KeyError as e:
+                    raise KeyError(
+                        f'Cannot find key "{key}" in {cls.__name__} sheme! Valid options are {list(cls)}'
+                    )
+        #if this is an iterable: apply to each value, and construct a tuple
+        if isinstance(key, typing.Iterable):
+            return tuple(map(cls.__getitem__, key))
+        #if this is an int value: find a matching
+
+class FlavorScheme(enum.IntEnum, metaclass=EnumMeta):
     def to_tex(self):
         """LaTeX-compatible string representations of flavor."""
         base = r'\nu'
@@ -12,23 +33,6 @@ class FlavorScheme:
         if self.is_muon or self.is_tauon:
             lepton = '\\'+lepton
         return f"${base}_{{{lepton}}}$"
-
-    @classmethod
-    def _to_value(cls,key)->int:
-        if isinstance(key, str):
-            try:
-                return cls[key].value
-            except KeyError as e:
-                raise KeyError(
-                    f'Cannot find key "{key}" in {cls.__name__} sheme! Valid options are {list(cls)}'
-                )
-        elif isinstance(key, FlavorScheme):
-            if not isinstance(key, cls):
-                raise TypeError(f'Value {repr(key)} is not from {cls.__name__} sheme!')
-            return key.value
-        elif isinstance(key, typing.Iterable):
-            return tuple(map(cls._to_value, key))
-        return key
         
     @property
     def is_neutrino(self):
@@ -63,7 +67,7 @@ class FlavorScheme:
     
 
 def _makeFlavorScheme(name:str, leptons:list):
-    enum_class =  enum.IntEnum(name, start=0, type=FlavorScheme,
+    enum_class =  FlavorScheme(name, start=0,
                    names = [f'NU_{L}{BAR}' for L in leptons for BAR in ['','_BAR']]
                   )
     return enum_class
@@ -89,8 +93,7 @@ class FlavorMatrix:
     def _convert_index(self, index):
         if isinstance(index, str) or (not isinstance(index,typing.Iterable)):
             index = [index]
-        new_idx = [flavors._to_value(idx) for idx,flavors in zip(index, [self.flavors2,self.flavors1])]
-        print(new_idx)
+        new_idx = [flavors[idx] for idx,flavors in zip(index, [self.flavors2,self.flavors1])]
         return tuple(new_idx)
         
     def __getitem__(self, index):
