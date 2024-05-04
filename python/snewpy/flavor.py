@@ -71,7 +71,7 @@ def makeFlavorScheme(name:str, leptons:list):
 
 TwoFlavor = makeFlavorScheme('TwoFlavor',['E','X'])
 ThreeFlavor = makeFlavorScheme('ThreeFlavor',['E','MU','TAU'])
-FourFlavor = makeFlavorScheme('ThreeFlavor',['E','MU','TAU','S'])
+FourFlavor = makeFlavorScheme('FourFlavor',['E','MU','TAU','S'])
 
 
 class FlavorMatrix:
@@ -98,16 +98,20 @@ class FlavorMatrix:
         
     def __setitem__(self, index, value):
         self.array[self._convert_index(index)] = value
-        
+
+    def _repr_short(self):
+        return f'{self.__class__.__name__}:<{self.flavors1.__name__}->{self.flavors2.__name__}> shape={self.shape}'
     def __repr__(self):
-        s = f'{self.__class__.__name__}:<{self.flavors1.__name__}->{self.flavors2.__name__}>:'
-        s+='\n'+repr(self.array)
+        s=self._repr_short()+'\n'+repr(self.array)
         return s
     
     def __matmul__(self, other):
         if isinstance(other, FlavorMatrix):
-            data = np.tensordot(self.array, other.array, axes=[1,0])
-            return FlavorMatrix(data, other.flavors1, self.flavors2)
+            try:
+                data = np.tensordot(self.array, other.array, axes=[1,0])
+                return FlavorMatrix(data, other.flavors1, self.flavors2)
+            except:
+                raise ValueError(f"Cannot multiply {self._repr_short()} by {other._repr_short()}")
         raise TypeError(f"Cannot multiply object of {self.__class__} by {other.__class__}")
     #properties
     @property
@@ -160,22 +164,36 @@ def flavor_matrix(flavor1:FlavorScheme, flavor2:FlavorScheme=None):
     return _decorator
 
 #define the conversion matrices
-M_convert = {}
+def _define_the_conversion_matrices():
+    flavor_schemes = (TwoFlavor, ThreeFlavor, FourFlavor)
+    #define the basic matrices, where we can just make 1 if the names are the same
+    M = {fs1:
+         {fs2: flavor_matrix(fs1,fs2)(lambda f1,f2:1.0*(f1.name==f2.name))
+            for fs2 in flavor_schemes[1:]}
+         for fs1 in flavor_schemes[1:]
+        }
+    #define special cases
+    @flavor_matrix(ThreeFlavor,TwoFlavor)
+    def M_3to2(f1,f2):
+        if (f1.name==f2.name):
+            return 1.
+        if (f1.is_neutrino==f2.is_neutrino)and(f2.lepton=='X' and f1.lepton in ['MU','TAU']):
+            return 0.5
+        return 0
+        
+    @flavor_matrix(TwoFlavor,ThreeFlavor)
+    def M_2to3(f1,f2):
+        if (f1.name==f2.name):
+            return 1.
+        if (f1.is_neutrino==f2.is_neutrino)and(f1.lepton=='X' and f2.lepton in ['MU','TAU']):
+            return 1
+        return 0
+    #override the matrix for these special cases
+    M[TwoFlavor] = {}
+    for fs2 in flavor_schemes[1:]:
+        M[TwoFlavor][fs2] = M[ThreeFlavor][fs2] @ M_2to3
+    for fs1 in flavor_schemes[1:]:
+        M[fs1][TwoFlavor] = M_3to2 @ M[fs1][ThreeFlavor]
+    return M
 
-@flavor_matrix(ThreeFlavor,TwoFlavor)
-def convert_3to2(f1,f2):
-    if (f1.name==f2.name):
-        return 1.
-    if (f1.is_neutrino==f2.is_neutrino)and(f2.lepton=='X' and f1.lepton in ['MU','TAU']):
-        return 0.5
-    return 0
-    
-@flavor_matrix(TwoFlavor,ThreeFlavor)
-def convert_2to3(f1,f2):
-    if (f1.name==f2.name):
-        return 1.
-    if (f1.is_neutrino==f2.is_neutrino)and(f1.lepton=='X' and f2.lepton in ['MU','TAU']):
-        return 1
-    return 0
-
-#other conversion matrices can be defined
+M_convert = _define_the_conversion_matrices()
