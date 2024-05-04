@@ -4,7 +4,9 @@ import typing
 
 class EnumMeta(enum.EnumMeta):
     def __getitem__(cls, key):
-        print(cls)
+        #if this is an iterable: apply to each value, and construct a tuple
+        if isinstance(key, typing.Iterable) and not isinstance(key, str):
+            return tuple(map(cls.__getitem__, key))
         #if this is from a flavor scheme: check that it's ours
         if isinstance(key, FlavorScheme):
             if not isinstance(key, cls):
@@ -18,9 +20,7 @@ class EnumMeta(enum.EnumMeta):
                     raise KeyError(
                         f'Cannot find key "{key}" in {cls.__name__} sheme! Valid options are {list(cls)}'
                     )
-        #if this is an iterable: apply to each value, and construct a tuple
-        if isinstance(key, typing.Iterable):
-            return tuple(map(cls.__getitem__, key))
+        
         #if this is an int value: find a matching
 
 class FlavorScheme(enum.IntEnum, metaclass=EnumMeta):
@@ -44,17 +44,14 @@ class FlavorScheme(enum.IntEnum, metaclass=EnumMeta):
 
     @property
     def is_electron(self):
-        """Return ``True`` for ``TwoFlavor.NU_E`` and ``TwoFlavor.NU_E_BAR``."""
         return self.lepton=='E'
 
     @property
     def is_muon(self):
-        """Return ``True`` for ``TwoFlavor.NU_E`` and ``TwoFlavor.NU_E_BAR``."""
         return self.lepton=='MU'
 
     @property
     def is_tauon(self):
-        """Return ``True`` for ``TwoFlavor.NU_E`` and ``TwoFlavor.NU_E_BAR``."""
         return self.lepton=='TAU'
 
     @property
@@ -66,15 +63,15 @@ class FlavorScheme(enum.IntEnum, metaclass=EnumMeta):
         return self.name.split('_')[1]
     
 
-def _makeFlavorScheme(name:str, leptons:list):
+def makeFlavorScheme(name:str, leptons:list):
     enum_class =  FlavorScheme(name, start=0,
                    names = [f'NU_{L}{BAR}' for L in leptons for BAR in ['','_BAR']]
                   )
     return enum_class
 
-TwoFlavor = _makeFlavorScheme('TwoFlavor',['E','X'])
-ThreeFlavor = _makeFlavorScheme('ThreeFlavor',['E','MU','TAU'])
-FourFlavor = _makeFlavorScheme('ThreeFlavor',['E','MU','TAU','S'])
+TwoFlavor = makeFlavorScheme('TwoFlavor',['E','X'])
+ThreeFlavor = makeFlavorScheme('ThreeFlavor',['E','MU','TAU'])
+FourFlavor = makeFlavorScheme('ThreeFlavor',['E','MU','TAU','S'])
 
 
 class FlavorMatrix:
@@ -87,8 +84,8 @@ class FlavorMatrix:
                     self.flavors1 = flavors
                     self.flavors2 = flavors2 or flavors
                     expected_shape = (len(self.flavors2), len(self.flavors1))
-                    assert self.array.shape == expected_shape, \
-                    f"Array shape {self.array.shape} mismatch expected {expected_shape}"
+                    if(self.array.shape != expected_shape):
+                        raise ValueError(f"FlavorMatrix array shape {self.array.shape} mismatch expected {expected_shape}")
 
     def _convert_index(self, index):
         if isinstance(index, str) or (not isinstance(index,typing.Iterable)):
@@ -109,10 +106,25 @@ class FlavorMatrix:
     
     def __matmul__(self, other):
         if isinstance(other, FlavorMatrix):
-            data = np.tensordot(self.array, other.array, axes=[0,1])
-            return FlavorMatrix(data, self.flavors1, other.flavors2)
+            data = np.tensordot(self.array, other.array, axes=[1,0])
+            return FlavorMatrix(data, other.flavors1, self.flavors2)
         raise TypeError(f"Cannot multiply object of {self.__class__} by {other.__class__}")
-        
+    #properties
+    @property
+    def shape(self):
+        return self.array.shape
+    @property
+    def flavors_right(self):
+        return self.flavors1
+    @property
+    def flavors_left(self):
+        return self.flavors2
+    @property
+    def flavors_from(self):
+        return self.flavors_right
+    @property
+    def flavors_to(self):
+        return self.flavors_left
     #methods for creating matrix
     @classmethod
     def zeros(cls, flavors1:FlavorScheme, flavors2:FlavorScheme = None):
@@ -147,7 +159,9 @@ def flavor_matrix(flavor1:FlavorScheme, flavor2:FlavorScheme=None):
         return FlavorMatrix.from_function(flavor1, flavor2, function=func)
     return _decorator
 
-#define some conversion matrices
+#define the conversion matrices
+M_convert = {}
+
 @flavor_matrix(ThreeFlavor,TwoFlavor)
 def convert_3to2(f1,f2):
     if (f1.name==f2.name):
@@ -164,3 +178,4 @@ def convert_2to3(f1,f2):
         return 1
     return 0
 
+#other conversion matrices can be defined
