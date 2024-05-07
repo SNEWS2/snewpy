@@ -139,3 +139,32 @@ class Kato_2017(SupernovaModel):
         flux = self.interpolated(t, E) / (u.MeV * u.s)
         return {f: flux[f] for f in flavors}
 
+class Yoshida_2016(SupernovaModel):
+    """Set up a presupernova model based on 
+    [Yoshida et al. (2016), PRD 93, 123012.]
+    """
+    def __init__(self, filename):
+        with open(self.request_file(filename)) as f:
+            data = []
+            T = []
+            while (line := f.readline()):
+                if(not line):break
+                N_step,T_step,logT_c,logRho_c = [conv(token) for conv,token in zip([int,float,float,float],line.split())]
+                data += [[np.loadtxt(f, max_rows=100).flatten() for i in range(4)]]
+                T+=[T_step]
+        times = np.array(T)
+        energies = np.concatenate([
+                np.linspace(0,10,1001)[1:],
+                np.linspace(10,20,501)[1:]
+            ])
+        dNdEdT = np.stack(data, axis=1)
+        self.interpolated = _interp_TE(
+            times, energies, dNdEdT, ax_t=1, ax_e=2
+        )
+        super().__init__(times << u.s, self.metadata)
+
+    def get_initial_spectra(self, t, E, flavors=Flavor):
+        t = np.array(-t.to_value("s"), ndmin=1)
+        E = np.array(E.to_value("MeV"), ndmin=1)
+        flux = self.interpolated(t, E) / (u.MeV * u.s)
+        return {f: flux[f] for f in flavors}

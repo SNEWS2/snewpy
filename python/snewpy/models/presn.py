@@ -45,3 +45,17 @@ class Kato_2017(loaders.Kato_2017):
     def __init__(self, progenitor_mass:u.Quantity):
         path=f"pre_collapse/m{progenitor_mass.to_value('Msun'):.0f}"
         super().__init__(path)
+
+
+@RegistryModel(
+    progenitor_mass = [12, 15, 20]<<u.Msun
+)
+class Yoshida_2016(loaders.Yoshida_2016):
+    """Presupernova model based on
+    `Yoshida et al. (2016), PRD 93, 123012`_
+    
+    Dataset available on `Zenodo <https://zenodo.org/records/3778014>`__
+    """
+    def __init__(self, progenitor_mass:u.Quantity):
+        path=f"t_spc_m{progenitor_mass.to_value('Msun'):.0f}_1.2.txt"
+        super().__init__(path)
