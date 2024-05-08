@@ -313,14 +313,16 @@ class ThreeFlavorMixingParameters(Mapping):
            N.B. This is a 6 x 6 matrix
         """
 
-        U = self.ComplexRotationMatrix(1,2,self.theta23,0) \
+        Utemp = self.ComplexRotationMatrix(1,2,self.theta23,0) \
             @ self.ComplexRotationMatrix(0,2,self.theta13,self.deltaCP) \
             @ self.ComplexRotationMatrix(0,1,self.theta12,0) 
 
         """Reorder rows to match SNEWPY's flavor ordering convention"""
+        U = np.zeros((6,6),dtype = 'complex_')  
+        
         U[ThreeFlavor.NU_E], U[ThreeFlavor.NU_MU], U[ThreeFlavor.NU_TAU], \
             U[ThreeFlavor.NU_E_BAR], U[ThreeFlavor.NU_MU_BAR], U[ThreeFlavor.NU_TAU_BAR] = \
-                U[0], U[1], U[2], U[3], U[4], U[5]
+                Utemp[0], Utemp[1], Utemp[2], Utemp[3], Utemp[4], Utemp[5]
 
         return U
 
@@ -402,7 +404,7 @@ class FourFlavorMixingParameters(ThreeFlavorMixingParameters):
            N.B. This is a 8 x 8 matrix
         """
 
-        U = self.ComplexRotationMatrix(2,3,self.theta34,0) \
+        Utemp = self.ComplexRotationMatrix(2,3,self.theta34,0) \
             @ self.ComplexRotationMatrix(1,3,self.theta24,self.delta24) \
             @ self.ComplexRotationMatrix(0,3,self.theta14,0) \
             @ self.ComplexRotationMatrix(1,2,self.theta23,0) \
@@ -410,9 +412,11 @@ class FourFlavorMixingParameters(ThreeFlavorMixingParameters):
             @ self.ComplexRotationMatrix(0,1,self.theta12,self.delta12) 
 
         """Reorder rows to match SNEWPY's flavor ordering convention"""
+        U = np.zeros((8,8),dtype = 'complex_')  
+        
         U[FourFlavor.NU_E], U[FourFlavor.NU_MU], U[FourFlavor.NU_TAU], U[FourFlavor.NU_S], \
             U[FourFlavor.NU_E_BAR], U[FourFlavor.NU_MU_BAR], U[FourFlavor.NU_TAU_BAR], U[FourFlavor.NU_S_BAR] = \
-                U[0], U[1], U[2], U[3], U[4], U[5], U[6], U[7]
+                Utemp[0], Utemp[1], Utemp[2], Utemp[3], Utemp[4], Utemp[5], Utemp[6], Utemp[7]
 
         return U
 
