@@ -55,6 +55,9 @@ class TwoFlavor(IntEnum):
     @property
     def is_antineutrino(self):
         return self.value in (TwoFlavor.NU_E_BAR.value, TwoFlavor.NU_X_BAR.value)
+
+    def __hash__(self):
+        return self.value
         
     def __eq__(self, other):
         if isinstance(other,ThreeFlavor) == True or isinstance(other,FourFlavor) == True:
@@ -71,10 +74,24 @@ class ThreeFlavor(IntEnum):
     NU_TAU_BAR = 5
     
     def to_tex(self):
-        """LaTeX-compatible string representations of flavor."""
-        if '_BAR' in self.name:
-            return r'$\overline{{\nu}}_{0}$'.format(self.name[3].lower())
-        return r'$\{0}$'.format(self.name.lower())
+        """LaTeX-compatible string representations of flavor.
+        """
+        tex = r'$'
+        if 'BAR' in self.name:
+            tex += r'\overline{{\nu}}' 
+        else:
+            tex += r'{\nu}' 
+
+        if 'MU' in self.name:
+            tex += r'_{\mu}'         
+        elif 'TAU' in self.name:
+            tex += r'_{\tau}'         
+        else:
+            tex += r'_{' + r'{0}'.format(self.name[3].lower()) + r'}'
+                
+        tex += r'$'                                        
+        
+        return tex
 
     @property
     def is_electron(self):
@@ -99,6 +116,9 @@ class ThreeFlavor(IntEnum):
     @property
     def is_antineutrino(self):
         return self.value in (ThreeFlavor.NU_E_BAR.value, ThreeFlavor.NU_MU_BAR.value, ThreeFlavor.NU_TAU_BAR.value)
+
+    def __hash__(self):
+        return self.value
         
     def __eq__(self, other):
         if isinstance(other,FourFlavor) == True:
@@ -127,10 +147,24 @@ class FourFlavor(IntEnum):
     NU_S_BAR = 7
     
     def to_tex(self):
-        """LaTeX-compatible string representations of flavor."""
-        if '_BAR' in self.name:
-            return r'$\overline{{\nu}}_{0}$'.format(self.name[3].lower())
-        return r'$\{0}$'.format(self.name.lower())
+        """LaTeX-compatible string representations of flavor.
+        """
+        tex = r'$'
+        if 'BAR' in self.name:
+            tex += r'\overline{{\nu}}' 
+        else:
+            tex += r'{\nu}' 
+
+        if 'MU' in self.name:
+            tex += r'_{\mu}'         
+        elif 'TAU' in self.name:
+            tex += r'_{\tau}'         
+        else:
+            tex += r'_{' + r'{0}'.format(self.name[3].lower()) + r'}'
+                
+        tex += r'$'                                        
+        
+        return tex
 
     @property
     def is_electron(self):
@@ -162,6 +196,8 @@ class FourFlavor(IntEnum):
     def is_antineutrino(self):
         return self.value in (FourFlavor.NU_E_BAR.value, FourFlavor.NU_MU_BAR.value, FourFlavor.NU_TAU_BAR.value, FourFlavor.NU_S_BAR.value)
         
+    def __hash__(self):
+        return self.value
         
     def __eq__(self, other):
         f = self.value 
@@ -172,8 +208,6 @@ class FourFlavor(IntEnum):
             return True
         else:
             return False
-
-
         
 
 """The mapping of SNEWPY's flavor values for the active flavors from the FourFlavor values to the ThreeFlavor values"""
