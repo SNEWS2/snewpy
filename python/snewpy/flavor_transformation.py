@@ -12,7 +12,7 @@ from astropy import units as u
 from astropy import constants as c
 from astropy.coordinates import AltAz
 
-from .neutrino import MassHierarchy, ThreeFlavor, FourFlavor
+from .neutrino import MassHierarchy, ThreeFlavor, FourFlavor, ThreeFlavorMixingParameters, FourFlavorMixingParameters
 
 ###############################################################################
 
