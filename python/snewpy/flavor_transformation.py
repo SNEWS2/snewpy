@@ -80,11 +80,11 @@ class ThreeFlavorTransformation(FlavorTransformation):
         HV = U @ M2 @ np.conjugate(np.transpose(U))
 
         T = np.real( ( HV[NU_MU,NU_MU] + HV[NU_TAU,NU_TAU] ) / 2 )
-        D = np.abs( HV[NU_MU,NU_TAU] )**2 - np.abs( HV[NU_MU,NU_MU]-HV[NU_TAU,NU_TAU] )**2 / 4 
+        D = np.abs( HV[NU_MU,NU_TAU] )**2 + np.abs( HV[NU_MU,NU_MU]-HV[NU_TAU,NU_TAU] )**2 / 4 
 
         Tbar = np.real( ( HV[NU_MU_BAR,NU_MU_BAR] + HV[NU_TAU_BAR,NU_TAU_BAR] ) / 2 )
         Dbar = np.abs( HV[NU_MU_BAR,NU_TAU_BAR] )**2 \
-              -np.abs( HV[NU_MU_BAR,NU_MU_BAR]-HV[NU_TAU_BAR,NU_TAU_BAR] )**2 / 4 
+              +np.abs( HV[NU_MU_BAR,NU_MU_BAR]-HV[NU_TAU_BAR,NU_TAU_BAR] )**2 / 4 
 
         """ The NMO case. Matter state 3 is the electron neutrino, matter state 1bar is the electron 
         antineutrino. 
@@ -177,11 +177,11 @@ class FourFlavorTransformation:
             HV[:,:,m] = U @ M2 @ np.conjugate(np.transpose(U)) / ( 2 * E[m] )
 
         T = np.real( (HV[NU_MU,NU_MU] + HV[NU_TAU,NU_TAU]) / 2 )
-        D = np.abs( HV[NU_MU,NU_TAU] )**2 - np.abs( HV[NU_MU,NU_MU]-HV[NU_TAU,NU_TAU] )**2 / 4 
+        D = np.abs( HV[NU_MU,NU_TAU] )**2 + np.abs( HV[NU_MU,NU_MU]-HV[NU_TAU,NU_TAU] )**2 / 4 
 
         Tbar = np.real( ( HV[NU_MU_BAR,NU_MU_BAR] + HV[NU_TAU_BAR,NU_TAU_BAR] ) / 2 )
         Dbar = np.abs( HV[NU_MU_BAR,NU_TAU_BAR] )**2 \
-              -np.abs( HV[NU_MU_BAR,NU_MU_BAR]-HV[NU_TAU_BAR,NU_TAU_BAR] )**2 / 4 
+              +np.abs( HV[NU_MU_BAR,NU_MU_BAR]-HV[NU_TAU_BAR,NU_TAU_BAR] )**2 / 4 
 
         U = Vacuum_Mixing_Matrix()
 
