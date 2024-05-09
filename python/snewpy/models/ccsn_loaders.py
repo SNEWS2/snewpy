@@ -57,10 +57,10 @@ class GarchingArchiveModel(PinchedModel):
             _flav = Flavor.NU_X if flavor == Flavor.NU_X_BAR else flavor
             _sfx = _flav.name.replace('_', '').lower()
             _filename = '{}_{}_{}'.format(filename, eos, _sfx)
-            _lname = 'L_{}'.format(flavor.name)
-            _ename = 'E_{}'.format(flavor.name)
-            _e2name = 'E2_{}'.format(flavor.name)
-            _aname = 'ALPHA_{}'.format(flavor.name)
+            _lname = 'L_{}'.format(_flav.name)
+            _ename = 'E_{}'.format(_flav.name)
+            _e2name = 'E2_{}'.format(_flav.name)
+            _aname = 'ALPHA_{}'.format(_flav.name)
 
             # Open the requested filename using the model downloader.
             datafile = self.request_file(_filename)
