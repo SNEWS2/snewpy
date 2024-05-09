@@ -62,6 +62,10 @@ class TwoFlavor(IntEnum):
     def __eq__(self, other):
         if isinstance(other,ThreeFlavor) == True or isinstance(other,FourFlavor) == True:
             return other == self
+        elif self.value == other.value:
+            return True
+        else:
+            return False             
 
             
 class ThreeFlavor(IntEnum):
