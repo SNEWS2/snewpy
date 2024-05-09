@@ -46,6 +46,18 @@ from textwrap import dedent
 
 @legacy_filename_initialization
 @RegistryModel(
+    progenitor_mass= [18 * u.Msun],
+    eos = ['HS(DD2)']
+)
+class Fischer_2020(loaders.Fischer_2020):
+    """Model based on simulations from `Fischer et al. (2020) <https://arxiv.org/abs/1804.10890>`
+    """
+    def __init__(self, progenitor_mass:u.Quantity, eos:str):
+        filename='Fischer_2020.zip'
+        return super().__init__(filename, metadata=self.metadata)    
+
+@legacy_filename_initialization
+@RegistryModel(
     progenitor_mass = [13, 20, 30, 50] * u.Msun,
     revival_time = [0, 100, 200, 300] * u.ms,
     metallicity = [0.02, 0.004],
