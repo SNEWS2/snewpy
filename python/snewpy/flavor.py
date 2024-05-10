@@ -156,7 +156,6 @@ class FlavorMatrix:
     #flavor conversion utils
     
 def conversion_matrix(from_flavor:FlavorScheme, to_flavor:FlavorScheme):
-    print(from_flavor, to_flavor)
     if(from_flavor==TwoFlavor):
         #define special cases
         @FlavorMatrix.from_function(to_flavor, from_flavor)
