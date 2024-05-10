@@ -87,11 +87,12 @@ class _ContainerBase:
     unit = None
     def __init__(self, 
                  data: u.Quantity,
-                 flavor: List[Flavor],
+                 flavor: List[FlavorScheme],
                  time: u.Quantity[u.s], 
                  energy: u.Quantity[u.MeV],
                  *,
-                 integrable_axes: Optional[Set[Axes]] = None
+                 integrable_axes: Optional[Set[Axes]] = None,
+                 flavor_scheme:Optional[FlavorScheme] = None
     ):
         """A container class storing the physical quantity (flux, fluence, rate...), which depends on flavor, time and energy.
 
@@ -113,7 +114,11 @@ class _ContainerBase:
     
         integrable_axes: set of :class:`Axes` or None
             List of axes which can be integrated.
-            If None (default) this set will be derived from the axes shapes 
+            If None (default) this set will be derived from the axes shapes
+            
+        flavor_scheme: a subclass of :class:`snewpy.flavor.FlavorSchemes` or None
+            A class which lists all the allowed flavors. 
+            If None (default) this value will be retrieved from the ``flavor`` arguemnt.
         """
         if self.unit is not None:
             #try to convert to the unit
@@ -122,28 +127,15 @@ class _ContainerBase:
         self.array = u.Quantity(data)
         self.time = u.Quantity(time, ndmin=1)
         self.energy = u.Quantity(energy, ndmin=1)
-        
-        if not isinstance(flavor, type):
-            #convert to array
-            flavor_array = np.sort(np.array(flavor, ndmin=1, dtype=object))
-            #try to get the flavor schemes
-            flavor_schemes = set(f.__class__ for f in flavor_array)
-            if len(flavor_schemes)!=1:
+        self.flavor = np.array(flavor,ndmin=1, dtype=object)
+        self.flavor_scheme = flavor_scheme
+        #define the flavor scheme
+        if not flavor_scheme:
+            flavor_schemes = set(f.__class__ for f in self.flavor)
+            if len(flavor_schemes)>1:
                 raise ValueError(f"Flavors {flavor} must be from a single flavor scheme, but are from {flavor_schemes}")
-            flavor_scheme = list(flavor_schemes)[0]
-            #check if we have the full set of flavors from this scheme
-            if(len(flavor_array)==len(flavor_scheme))and all(flavor_array==flavor_scheme[:]):
-                self.flavor = flavor_scheme
-            else:
-                self.flavor = flavor_array
-            
-        else:    
-            if issubclass(flavor, FlavorScheme):
-                self.flavor = flavor
-            else:
-                raise TypeError(f"Wrong type of flavor={flavor}, should be a FlavorScheme")
-        
-            
+            elif len(flavor_schemes)==1:
+                self.flavor_scheme = flavor_schemes.pop()
             
         Nf,Nt,Ne = len(self.flavor), len(self.time), len(self.energy)
         #list all valid shapes of the input array
@@ -185,24 +177,27 @@ class _ContainerBase:
     def __getitem__(self, args)->'Container':
         """Slice the flux array and produce a new Flux object"""
         if not isinstance(args, tuple):
-            args = tuple([args],)
-        print(args)
-        try: 
-            iter(args)
-        except TypeError:
-            args = [args]
-        #args = [a if isinstance(a, slice) else slice(a, a + 1) for a in args]
-        #expand args to match axes
-        args+=[slice(None)]*(len(Axes)-len(args))
-        array = self.array.__getitem__(tuple(args))
-        newaxes = [ax.__getitem__(arg) for arg, ax in zip(args, self.axes)]
+            args = list([args],)
+        
+        arg_slices = [slice(None)]*len(Axes)
+        if isinstance(args[0],str) or isinstance(args[0],FlavorScheme):
+            args[0] = self.flavor_scheme[args[0]]
+        for n,arg in enumerate(args):
+            if not isinstance(arg, slice):
+                arg = slice(arg, arg + 1)
+            arg_slices[n] = arg
+
+        array = self.array.__getitem__(tuple(arg_slices))
+        newaxes = [ax.__getitem__(arg) for arg, ax in zip(arg_slices, self.axes)]
         return self.__class__(array, *newaxes)
 
     def __repr__(self) -> str:
         """print information about the container"""
-        s = [f"{len(values)} {label.name}({values.min()};{values.max()})" if isinstance(values, np.ndarray)
-             else f"{len(values)} {label.name}({repr(values)})"
-            for label, values in zip(Axes,self.axes)]
+        s = [f"{len(values)} {label.name}({values.min()};{values.max()})"
+             if label!=Axes.flavor
+             else f"{len(values)} {label.name}[{self.flavor_scheme.__name__}]({values.min()};{values.max()})"
+             for label, values in zip(Axes,self.axes)
+        ]
         return f"{self.__class__.__name__} {self.array.shape} [{self.array.unit}]: <{' x '.join(s)}>"
     
     def sum(self, axis: Union[Axes,str])->'Container':
@@ -344,8 +339,9 @@ class _ContainerBase:
         axes = list(self.axes)
         return Container(array, *axes)
 
-    def __rmatmul__(self, matrix:FlavorMatrix) -> 'Container':
-        
+    def convert_to_flavor_scheme(new_flavor:FlavorScheme):
+        M = self.flavor.conversion_matrix(new_flavor)
+        return M @ self
         
     def save(self, fname:str)->None:
         """Save container data to a given file (using `numpy.savez`)"""
@@ -391,8 +387,9 @@ class _ContainerBase:
         result = self.__class__==other.__class__ and \
                  self.unit == other.unit and \
                  np.allclose(self.array, other.array) and \
-                 type(self.flavor[0])==type(other.flavor[0]) and \
-                 all(self.flavor[:]==other.flavor) and \
+                 self.flavor_scheme==other.flavor_scheme and \
+                 len(self.flavor)==len(other.flavor) and \
+                 all(self.flavor==other.flavor) and \
                  all([np.allclose(self.axes[ax], other.axes[ax]) for ax in list(Axes)[1:]])
         return result
 
