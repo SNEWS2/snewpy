@@ -61,36 +61,34 @@ class FlavorScheme(enum.IntEnum, metaclass=EnumMeta):
     @property
     def lepton(self):
         return self.name.split('_')[1]
-    
 
-def makeFlavorScheme(name:str, leptons:list):
-    enum_class =  FlavorScheme(name, start=0,
-                   names = [f'NU_{L}{BAR}' for L in leptons for BAR in ['','_BAR']]
-                  )
-    return enum_class
+    @classmethod
+    def from_lepton_names(cls, name:str, leptons:list):
+        enum_class =  cls(name, start=0, names = [f'NU_{L}{BAR}' for L in leptons for BAR in ['','_BAR']])
+        return enum_class
 
-TwoFlavor = makeFlavorScheme('TwoFlavor',['E','X'])
-ThreeFlavor = makeFlavorScheme('ThreeFlavor',['E','MU','TAU'])
-FourFlavor = makeFlavorScheme('FourFlavor',['E','MU','TAU','S'])
+TwoFlavor = FlavorScheme.from_lepton_names('TwoFlavor',['E','X'])
+ThreeFlavor = FlavorScheme.from_lepton_names('ThreeFlavor',['E','MU','TAU'])
+FourFlavor = FlavorScheme.from_lepton_names('FourFlavor',['E','MU','TAU','S'])
 
 
 class FlavorMatrix:
     def __init__(self, 
                  array:np.ndarray,
-                 flavors:FlavorScheme,
-                 flavors2:FlavorScheme = None
+                 flavor:FlavorScheme,
+                 from_flavor:FlavorScheme = None
                 ):
                     self.array = np.asarray(array)
-                    self.flavors1 = flavors
-                    self.flavors2 = flavors2 or flavors
-                    expected_shape = (len(self.flavors2), len(self.flavors1))
+                    self.flavor_out = flavor
+                    self.flavor_in = from_flavor or flavor
+                    expected_shape = (len(self.flavor_out), len(self.flavor_in))
                     if(self.array.shape != expected_shape):
                         raise ValueError(f"FlavorMatrix array shape {self.array.shape} mismatch expected {expected_shape}")
-
+       
     def _convert_index(self, index):
         if isinstance(index, str) or (not isinstance(index,typing.Iterable)):
             index = [index]
-        new_idx = [flavors[idx] for idx,flavors in zip(index, [self.flavors2,self.flavors1])]
+        new_idx = [flavors[idx] for idx,flavors in zip(index, self.flavors)]
         return tuple(new_idx)
         
     def __getitem__(self, index):
@@ -100,7 +98,8 @@ class FlavorMatrix:
         self.array[self._convert_index(index)] = value
 
     def _repr_short(self):
-        return f'{self.__class__.__name__}:<{self.flavors1.__name__}->{self.flavors2.__name__}> shape={self.shape}'
+        return f'{self.__class__.__name__}:<{self.flavor_in.__name__}->{self.flavor_out.__name__}> shape={self.shape}'
+        
     def __repr__(self):
         s=self._repr_short()+'\n'+repr(self.array)
         return s
@@ -109,91 +108,64 @@ class FlavorMatrix:
         if isinstance(other, FlavorMatrix):
             try:
                 data = np.tensordot(self.array, other.array, axes=[1,0])
-                return FlavorMatrix(data, other.flavors1, self.flavors2)
-            except:
-                raise ValueError(f"Cannot multiply {self._repr_short()} by {other._repr_short()}")
+                return FlavorMatrix(data, self.flavor_out, from_flavor = other.flavor_in)
+            except Exception as e:
+                raise ValueError(f"Cannot multiply {self._repr_short()} by {other._repr_short()}") from e
+                
         raise TypeError(f"Cannot multiply object of {self.__class__} by {other.__class__}")
     #properties
     @property
     def shape(self):
         return self.array.shape
     @property
-    def flavors_right(self):
-        return self.flavors1
-    @property
-    def flavors_left(self):
-        return self.flavors2
-    @property
-    def flavors_from(self):
-        return self.flavors_right
-    @property
-    def flavors_to(self):
-        return self.flavors_left
-    #methods for creating matrix
+    def flavor(self):
+        return self.flavor_out
+        
     @classmethod
-    def zeros(cls, flavors1:FlavorScheme, flavors2:FlavorScheme = None):
-        flavors2 = flavors2 or flavors1
-        shape = (len(flavors2), len(flavors1))
+    def zeros(cls, flavor:FlavorScheme, from_flavor:FlavorScheme = None):
+        from_flavor = from_flavor or flavor
+        shape = (len(from_flavor), len(flavor))
         data = np.zeros(shape)
-        return cls(data, flavors1, flavors2)
+        return cls(data, flavor, from_flavor)
         
     @classmethod
-    def eye(cls, flavors1:FlavorScheme, flavors2:FlavorScheme = None):
-        flavors2 = flavors2 or flavors1
-        shape = (len(flavors2), len(flavors1))
+    def eye(cls, flavor:FlavorScheme, from_flavor:FlavorScheme = None):
+        from_flavor = from_flavor or flavor
+        shape = (len(from_flavor), len(flavor))
         data = np.eye(*shape)
-        return cls(data, flavors1, flavors2)
+        return cls(data, flavor, from_flavor)
 
     @classmethod
-    def from_function(cls, flavors1:FlavorScheme, flavors2:FlavorScheme = None, *, function):
-        flavors2 = flavors2 or flavors1
-        data = [[function(f1,f2)
-                 for f1 in flavors1]
-                for f2 in flavors2]
-        return cls(np.array(data,dtype=float), flavors1, flavors2)
+    def from_function(cls, flavor:FlavorScheme, from_flavor:FlavorScheme = None):
+        """A decorator for creating the flavor matrix from the given function"""
+        from_flavor = from_flavor or flavor
+        def _decorator(function):
+            data = [[function(f1,f2)
+                     for f2 in from_flavor]
+                    for f1 in flavor]
+                    
+            return cls(np.array(data,dtype=float),  flavor, from_flavor)
+        return _decorator
+
     @classmethod
-    def identity(cls, flavors1:FlavorScheme, flavors2:FlavorScheme = None):
-        return cls.from_function(flavors1, flavors2, lambda f1,f2: 1.*(f1.name==f2.name))
-
-
-def flavor_matrix(flavor1:FlavorScheme, flavor2:FlavorScheme=None):
-    """A decorator for creating the flavor matrix from the given function"""
-    flavor2 = flavor2 or flavor1
-    def _decorator(func):
-        return FlavorMatrix.from_function(flavor1, flavor2, function=func)
-    return _decorator
-
-#define the conversion matrices
-def _define_the_conversion_matrices():
-    flavor_schemes = (TwoFlavor, ThreeFlavor, FourFlavor)
-    #define the basic matrices, where we can just make 1 if the names are the same
-    M = {fs1:
-         {fs2: flavor_matrix(fs1,fs2)(lambda f1,f2:1.0*(f1.name==f2.name))
-            for fs2 in flavor_schemes[1:]}
-         for fs1 in flavor_schemes[1:]
-        }
-    #define special cases
-    @flavor_matrix(ThreeFlavor,TwoFlavor)
-    def M_3to2(f1,f2):
-        if (f1.name==f2.name):
-            return 1.
-        if (f1.is_neutrino==f2.is_neutrino)and(f2.lepton=='X' and f1.lepton in ['MU','TAU']):
-            return 0.5
-        return 0
-        
-    @flavor_matrix(TwoFlavor,ThreeFlavor)
-    def M_2to3(f1,f2):
-        if (f1.name==f2.name):
-            return 1.
-        if (f1.is_neutrino==f2.is_neutrino)and(f1.lepton=='X' and f2.lepton in ['MU','TAU']):
-            return 1
-        return 0
-    #override the matrix for these special cases
-    M[TwoFlavor] = {}
-    for fs2 in flavor_schemes[1:]:
-        M[TwoFlavor][fs2] = M[ThreeFlavor][fs2] @ M_2to3
-    for fs1 in flavor_schemes[1:]:
-        M[fs1][TwoFlavor] = M_3to2 @ M[fs1][ThreeFlavor]
-    return M
-
-M_convert = _define_the_conversion_matrices()
+    def conversion_matrix(cls, flavor:FlavorScheme, from_flavor:FlavorScheme = None):
+        from_flavor = from_flavor or flavor
+        if(flavor==TwoFlavor):
+            #define special cases
+            @FlavorMatrix.from_function(flavor, from_flavor)
+            def convert_Nto2(f1,f2):
+                if (f1.name==f2.name):
+                    return 1.
+                if (f1.is_neutrino==f2.is_neutrino)and(f2.lepton=='X' and f1.lepton in ['MU','TAU']):
+                    return 0.5
+                return 0
+            return convert_Nto2
+        else:
+            @FlavorMatrix.from_function(flavor, from_flavor)
+            def convert_2toN(f1,f2):
+                if (f1.name==f2.name):
+                    return 1.
+                if (f1.is_neutrino==f2.is_neutrino)and(f1.lepton=='X' and f2.lepton in ['MU','TAU']):
+                    return 1
+                return 0
+            return convert_2toN
