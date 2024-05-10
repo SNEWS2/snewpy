@@ -53,6 +53,7 @@ Reference
 """
 from typing import Union, Optional, Set, List
 from snewpy.neutrino import Flavor
+from snewpy.flavor import FlavorScheme
 from astropy import units as u
 
 import numpy as np
@@ -121,8 +122,15 @@ class _ContainerBase:
         self.array = u.Quantity(data)
         self.time = u.Quantity(time, ndmin=1)
         self.energy = u.Quantity(energy, ndmin=1)
-        self.flavor = np.sort(np.array(flavor, ndmin=1))
         
+        if isinstance(flavor, type):
+            if issubclass(flavor, FlavorScheme):
+                self.flavor = flavor
+            else:
+                raise TypeError(f"Wrong type of flavor={flavor}, should be a FlavorScheme")
+        else:
+            self.flavor = np.sort(np.array(flavor, ndmin=1, dtype=object))
+            
         Nf,Nt,Ne = len(self.flavor), len(self.time), len(self.energy)
         #list all valid shapes of the input array
         expected_shapes=[(nf,nt,ne) for nf in (Nf,Nf-1) for nt in (Nt,Nt-1) for ne in (Ne,Ne-1)]
@@ -162,11 +170,14 @@ class _ContainerBase:
         
     def __getitem__(self, args)->'Container':
         """Slice the flux array and produce a new Flux object"""
+        if not isinstance(args, tuple):
+            args = tuple([args],)
+        print(args)
         try: 
             iter(args)
         except TypeError:
             args = [args]
-        args = [a if isinstance(a, slice) else slice(a, a + 1) for a in args]
+        #args = [a if isinstance(a, slice) else slice(a, a + 1) for a in args]
         #expand args to match axes
         args+=[slice(None)]*(len(Axes)-len(args))
         array = self.array.__getitem__(tuple(args))
@@ -175,7 +186,8 @@ class _ContainerBase:
 
     def __repr__(self) -> str:
         """print information about the container"""
-        s = [f"{len(values)} {label.name}({values.min()};{values.max()})"
+        s = [f"{len(values)} {label.name}({values.min()};{values.max()})" if isinstance(values, np.ndarray)
+             else f"{len(values)} {label.name}({repr(values)})"
             for label, values in zip(Axes,self.axes)]
         return f"{self.__class__.__name__} {self.array.shape} [{self.array.unit}]: <{' x '.join(s)}>"
     
@@ -329,8 +341,9 @@ class _ContainerBase:
             except:
                 return {name:values}
         data_dict = {}
-        for name in ['array','time','energy','flavor']:
+        for name in ['array','time','energy']:
             data_dict.update(_save_quantity(name))
+        data_dict['flavor'] = np.array(self.flavor, dtype=object)
         np.savez(fname,
                  _class_name=self.__class__.__name__, 
                  **data_dict,
@@ -340,7 +353,7 @@ class _ContainerBase:
     @classmethod
     def load(cls, fname:str)->'Container':
         """Load container from a given file"""
-        with np.load(fname) as f:
+        with np.load(fname, allow_pickle=True) as f:
             def _load_quantity(name):
                 array = f[name]
                 try:
@@ -361,7 +374,8 @@ class _ContainerBase:
         result = self.__class__==other.__class__ and \
                  self.unit == other.unit and \
                  np.allclose(self.array, other.array) and \
-                 all([np.allclose(self.axes[ax], other.axes[ax]) for ax in Axes])
+                 all(self.flavor==other.flavor) and \ 
+                 all([np.allclose(self.axes[ax], other.axes[ax]) for ax in list(Axes)[1:]])
         return result
 
 class Container(_ContainerBase):
