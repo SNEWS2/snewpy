@@ -102,14 +102,16 @@ class TestFlavorMatrix:
     @staticmethod
     def test_conversion_matrices_for_same_flavor_are_unity():
         for flavor in [TwoFlavor,ThreeFlavor,FourFlavor]:
-            matrix = FlavorMatrix.conversion_matrix(flavor,flavor)
-            print(matrix)
+            matrix = flavor>>flavor
+            assert isinstance(matrix, FlavorMatrix)
             assert np.allclose(matrix.array, np.eye(len(flavor)))
 
     @staticmethod
     @pytest.mark.parametrize('flavor_in',flavor_schemes)
     @pytest.mark.parametrize('flavor_out',flavor_schemes)
     def test_conversion_matrices(flavor_in, flavor_out):
-        M = FlavorMatrix.conversion_matrix(flavor_out,flavor_in)
+        M = flavor_in>>flavor_out
+        assert M==flavor_out<<flavor_in
+        assert isinstance(M, FlavorMatrix)
         assert M.flavor_in == flavor_in
         assert M.flavor_out == flavor_out

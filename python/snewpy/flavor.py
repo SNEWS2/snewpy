@@ -67,6 +67,7 @@ class FlavorScheme(enum.IntEnum, metaclass=EnumMeta):
     def from_lepton_names(cls, name:str, leptons:list):
         enum_class =  cls(name, start=0, names = [f'NU_{L}{BAR}' for L in leptons for BAR in ['','_BAR']])
         return enum_class
+        
     @classmethod
     def take(cls, index):
         return cls[index]
@@ -74,7 +75,6 @@ class FlavorScheme(enum.IntEnum, metaclass=EnumMeta):
 TwoFlavor = FlavorScheme.from_lepton_names('TwoFlavor',['E','X'])
 ThreeFlavor = FlavorScheme.from_lepton_names('ThreeFlavor',['E','MU','TAU'])
 FourFlavor = FlavorScheme.from_lepton_names('FourFlavor',['E','MU','TAU','S'])
-
 
 class FlavorMatrix:
     def __init__(self, 
@@ -107,7 +107,9 @@ class FlavorMatrix:
     def __repr__(self):
         s=self._repr_short()+'\n'+repr(self.array)
         return s
-    
+    def __eq__(self,other):
+        return self.flavor_in==other.flavor_in and self.flavor_out==other.flavor_out and np.allclose(self.array,other.array)
+                
     def __matmul__(self, other):
         if isinstance(other, FlavorMatrix):
             try:
@@ -150,26 +152,30 @@ class FlavorMatrix:
                     
             return cls(np.array(data,dtype=float),  flavor, from_flavor)
         return _decorator
+    #flavor conversion utils
+    
+def conversion_matrix(from_flavor:FlavorScheme, to_flavor:FlavorScheme):
+    print(from_flavor, to_flavor)
+    if(from_flavor==TwoFlavor):
+        #define special cases
+        @FlavorMatrix.from_function(to_flavor, from_flavor)
+        def convert_2toN(f1,f2):
+            if (f1.name==f2.name):
+                return 1.
+            if (f1.is_neutrino==f2.is_neutrino)and(f2.lepton=='X' and f1.lepton in ['MU','TAU']):
+                return 0.5
+            return 0
+        return convert_2toN
+    else:
+        @FlavorMatrix.from_function(to_flavor, from_flavor)
+        def convert_Nto2(f1,f2):
+            if (f1.name==f2.name):
+                return 1.
+            if (f1.is_neutrino==f2.is_neutrino)and(f1.lepton=='X' and f2.lepton in ['MU','TAU']):
+                return 1.
+            return 0.
+        return convert_Nto2
 
-    @classmethod
-    def conversion_matrix(cls, flavor:FlavorScheme, from_flavor:FlavorScheme = None):
-        from_flavor = from_flavor or flavor
-        if(flavor==TwoFlavor):
-            #define special cases
-            @FlavorMatrix.from_function(flavor, from_flavor)
-            def convert_Nto2(f1,f2):
-                if (f1.name==f2.name):
-                    return 1.
-                if (f1.is_neutrino==f2.is_neutrino)and(f2.lepton=='X' and f1.lepton in ['MU','TAU']):
-                    return 0.5
-                return 0
-            return convert_Nto2
-        else:
-            @FlavorMatrix.from_function(flavor, from_flavor)
-            def convert_2toN(f1,f2):
-                if (f1.name==f2.name):
-                    return 1.
-                if (f1.is_neutrino==f2.is_neutrino)and(f1.lepton=='X' and f2.lepton in ['MU','TAU']):
-                    return 1
-                return 0
-            return convert_2toN
+FlavorScheme.conversion_matrix = classmethod(conversion_matrix)
+EnumMeta.__rshift__ = conversion_matrix
+EnumMeta.__lshift__ = lambda f1,f2:conversion_matrix(f2,f1)
