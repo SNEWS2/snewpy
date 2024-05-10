@@ -52,8 +52,8 @@ Reference
 
 """
 from typing import Union, Optional, Set, List
-from snewpy.neutrino import Flavor
-from snewpy.flavor import FlavorScheme
+#from snewpy.neutrino import Flavor
+from snewpy.flavor import FlavorScheme, FlavorMatrix
 from astropy import units as u
 
 import numpy as np
@@ -344,6 +344,9 @@ class _ContainerBase:
         axes = list(self.axes)
         return Container(array, *axes)
 
+    def __rmatmul__(self, matrix:FlavorMatrix) -> 'Container':
+        
+        
     def save(self, fname:str)->None:
         """Save container data to a given file (using `numpy.savez`)"""
         def _save_quantity(name):
