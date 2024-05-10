@@ -117,7 +117,8 @@ class FlavorMatrix:
                 return FlavorMatrix(data, self.flavor_out, from_flavor = other.flavor_in)
             except Exception as e:
                 raise ValueError(f"Cannot multiply {self._repr_short()} by {other._repr_short()}") from e
-                
+        elif hasattr(other, '__rmatmul__'):
+            return other.__rmatmul__(self)        
         raise TypeError(f"Cannot multiply object of {self.__class__} by {other.__class__}")
     #properties
     @property

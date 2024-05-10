@@ -341,10 +341,6 @@ class _ContainerBase:
         array = self.array*factor
         axes = list(self.axes)
         return Container(array, *axes)
-
-    def convert_to_flavor_scheme(new_flavor:FlavorScheme):
-        M = self.flavor.conversion_matrix(new_flavor)
-        return M @ self
         
     def save(self, fname:str)->None:
         """Save container data to a given file (using `numpy.savez`)"""
@@ -396,6 +392,23 @@ class _ContainerBase:
                  all([np.allclose(self.axes[ax], other.axes[ax]) for ax in list(Axes)[1:]])
         return result
 
+    def _is_full_flavor(self):
+        return all(self.flavor==list(self.flavor_scheme))
+                   
+    def convert_to_flavor(self, flavor:FlavorScheme):
+        if(self.flavor_scheme==flavor):
+            return self
+        return (self.flavor_scheme>>flavor)@self
+    def __rshift__(self, flavor:FlavorScheme):
+        return self.convert_to_flavor(flavor)
+        
+    def __rmatmul__(self, matrix:FlavorMatrix):
+        if not self._is_full_flavor():
+            raise RuntimeError(f"Cannot multiply flavor matrix object {self}, expected {len(self.flavor_scheme)} flavors")
+        if matrix.flavor_in!=self.flavor_scheme:
+            raise ValueError(f"Cannot multiply flavor matrix {matrix} by {self} - flavor scheme mismatch!")
+        array = np.tensordot(matrix.array,self.array, axes=[1,0])
+        return Container(array, flavor=matrix.flavor_out, time=self.time, energy=self.energy)
 class Container(_ContainerBase):
     #a dictionary holding classes for each unit
     _unit_classes = {}
