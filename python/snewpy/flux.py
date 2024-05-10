@@ -374,7 +374,7 @@ class _ContainerBase:
         result = self.__class__==other.__class__ and \
                  self.unit == other.unit and \
                  np.allclose(self.array, other.array) and \
-                 all(self.flavor==other.flavor) and \ 
+                 all(self.flavor==other.flavor) and \
                  all([np.allclose(self.axes[ax], other.axes[ax]) for ax in list(Axes)[1:]])
         return result
 
