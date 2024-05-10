@@ -163,7 +163,7 @@ def conversion_matrix(from_flavor:FlavorScheme, to_flavor:FlavorScheme):
             if (f1.name==f2.name):
                 return 1.
             if (f1.is_neutrino==f2.is_neutrino)and(f2.lepton=='X' and f1.lepton in ['MU','TAU']):
-                return 0.5
+                return 1.
             return 0
         return convert_2toN
     else:
@@ -172,7 +172,7 @@ def conversion_matrix(from_flavor:FlavorScheme, to_flavor:FlavorScheme):
             if (f1.name==f2.name):
                 return 1.
             if (f1.is_neutrino==f2.is_neutrino)and(f1.lepton=='X' and f2.lepton in ['MU','TAU']):
-                return 1.
+                return 0.5
             return 0.
         return convert_Nto2
 
