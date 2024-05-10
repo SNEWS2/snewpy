@@ -123,13 +123,27 @@ class _ContainerBase:
         self.time = u.Quantity(time, ndmin=1)
         self.energy = u.Quantity(energy, ndmin=1)
         
-        if isinstance(flavor, type):
+        if not isinstance(flavor, type):
+            #convert to array
+            flavor_array = np.sort(np.array(flavor, ndmin=1, dtype=object))
+            #try to get the flavor schemes
+            flavor_schemes = set(f.__class__ for f in flavor_array)
+            if len(flavor_schemes)!=1:
+                raise ValueError(f"Flavors {flavor} must be from a single flavor scheme, but are from {flavor_schemes}")
+            flavor_scheme = list(flavor_schemes)[0]
+            #check if we have the full set of flavors from this scheme
+            if(len(flavor_array)==len(flavor_scheme))and all(flavor_array==flavor_scheme[:]):
+                self.flavor = flavor_scheme
+            else:
+                self.flavor = flavor_array
+            
+        else:    
             if issubclass(flavor, FlavorScheme):
                 self.flavor = flavor
             else:
                 raise TypeError(f"Wrong type of flavor={flavor}, should be a FlavorScheme")
-        else:
-            self.flavor = np.sort(np.array(flavor, ndmin=1, dtype=object))
+        
+            
             
         Nf,Nt,Ne = len(self.flavor), len(self.time), len(self.energy)
         #list all valid shapes of the input array
@@ -374,7 +388,8 @@ class _ContainerBase:
         result = self.__class__==other.__class__ and \
                  self.unit == other.unit and \
                  np.allclose(self.array, other.array) and \
-                 all(self.flavor==other.flavor) and \
+                 type(self.flavor[0])==type(other.flavor[0]) and \
+                 all(self.flavor[:]==other.flavor) and \
                  all([np.allclose(self.axes[ax], other.axes[ax]) for ax in list(Axes)[1:]])
         return result
 
