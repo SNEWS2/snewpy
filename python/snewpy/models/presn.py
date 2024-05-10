@@ -52,7 +52,7 @@ class Kato_2017(loaders.Kato_2017):
 )
 class Yoshida_2016(loaders.Yoshida_2016):
     """Presupernova model based on
-    `Yoshida et al. (2016), PRD 93, 123012`_
+    `Yoshida et al. (2016), PRD 93, 123012 <https://doi.org/10.1103/PhysRevD.93.123012>`_
     
     Dataset available on `Zenodo <https://zenodo.org/records/3778014>`__
     """
