@@ -21,7 +21,8 @@ class EnumMeta(enum.EnumMeta):
                         f'Cannot find key "{key}" in {cls.__name__} sheme! Valid options are {list(cls)}'
                     )
         
-        #if this is an int value: find a matching
+        #if this is anything else - treat it as a slice
+        return np.array(list(cls.__members__.values()),dtype=object)[key]
 
 class FlavorScheme(enum.IntEnum, metaclass=EnumMeta):
     def to_tex(self):
@@ -66,6 +67,9 @@ class FlavorScheme(enum.IntEnum, metaclass=EnumMeta):
     def from_lepton_names(cls, name:str, leptons:list):
         enum_class =  cls(name, start=0, names = [f'NU_{L}{BAR}' for L in leptons for BAR in ['','_BAR']])
         return enum_class
+    @classmethod
+    def take(cls, index):
+        return cls[index]
 
 TwoFlavor = FlavorScheme.from_lepton_names('TwoFlavor',['E','X'])
 ThreeFlavor = FlavorScheme.from_lepton_names('ThreeFlavor',['E','MU','TAU'])
