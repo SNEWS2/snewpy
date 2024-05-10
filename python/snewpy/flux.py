@@ -129,14 +129,17 @@ class _ContainerBase:
         self.energy = u.Quantity(energy, ndmin=1)
         self.flavor = np.array(flavor,ndmin=1, dtype=object)
         self.flavor_scheme = flavor_scheme
-        #define the flavor scheme
         if not flavor_scheme:
-            flavor_schemes = set(f.__class__ for f in self.flavor)
-            if len(flavor_schemes)>1:
-                raise ValueError(f"Flavors {flavor} must be from a single flavor scheme, but are from {flavor_schemes}")
-            elif len(flavor_schemes)==1:
-                self.flavor_scheme = flavor_schemes.pop()
-            
+            #guess the flavor scheme
+            if isinstance(flavor, type) and issubclass(flavor, FlavorScheme):
+                self.flavor_scheme = flavor
+            else:
+                #get schemes from the data
+                flavor_schemes = set(f.__class__ for f in self.flavor)
+                if len(flavor_schemes)!=1:
+                    raise ValueError(f"Flavors {flavor} must be from a single flavor scheme, but are from {flavor_schemes}")
+                else:
+                    self.flavor_scheme = flavor_schemes.pop()
         Nf,Nt,Ne = len(self.flavor), len(self.time), len(self.energy)
         #list all valid shapes of the input array
         expected_shapes=[(nf,nt,ne) for nf in (Nf,Nf-1) for nt in (Nt,Nt-1) for ne in (Ne,Ne-1)]
@@ -176,9 +179,9 @@ class _ContainerBase:
         
     def __getitem__(self, args)->'Container':
         """Slice the flux array and produce a new Flux object"""
-        if not isinstance(args, tuple):
-            args = list([args],)
-        
+        if not isinstance(args,tuple):
+            args = [args]
+        args = list(args)
         arg_slices = [slice(None)]*len(Axes)
         if isinstance(args[0],str) or isinstance(args[0],FlavorScheme):
             args[0] = self.flavor_scheme[args[0]]
@@ -189,13 +192,13 @@ class _ContainerBase:
 
         array = self.array.__getitem__(tuple(arg_slices))
         newaxes = [ax.__getitem__(arg) for arg, ax in zip(arg_slices, self.axes)]
-        return self.__class__(array, *newaxes)
+        return self.__class__(array, *newaxes, flavor_scheme=self.flavor_scheme)
 
     def __repr__(self) -> str:
         """print information about the container"""
         s = [f"{len(values)} {label.name}({values.min()};{values.max()})"
              if label!=Axes.flavor
-             else f"{len(values)} {label.name}[{self.flavor_scheme.__name__}]({values.min()};{values.max()})"
+             else f"{len(values)} {label.name}[{self.flavor_scheme}]({values.min()};{values.max()})"
              for label, values in zip(Axes,self.axes)
         ]
         return f"{self.__class__.__name__} {self.array.shape} [{self.array.unit}]: <{' x '.join(s)}>"
