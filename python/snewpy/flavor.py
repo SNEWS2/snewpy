@@ -156,25 +156,18 @@ class FlavorMatrix:
     #flavor conversion utils
     
 def conversion_matrix(from_flavor:FlavorScheme, to_flavor:FlavorScheme):
-    if(from_flavor==TwoFlavor):
-        #define special cases
-        @FlavorMatrix.from_function(to_flavor, from_flavor)
-        def convert_2toN(f1,f2):
-            if (f1.name==f2.name):
-                return 1.
-            if (f1.is_neutrino==f2.is_neutrino)and(f2.lepton=='X' and f1.lepton in ['MU','TAU']):
-                return 1.
-            return 0
-        return convert_2toN
-    else:
-        @FlavorMatrix.from_function(to_flavor, from_flavor)
-        def convert_Nto2(f1,f2):
-            if (f1.name==f2.name):
-                return 1.
-            if (f1.is_neutrino==f2.is_neutrino)and(f1.lepton=='X' and f2.lepton in ['MU','TAU']):
-                return 0.5
-            return 0.
-        return convert_Nto2
+    @FlavorMatrix.from_function(to_flavor, from_flavor)
+    def convert(f1, f2):
+        if f1.name == f2.name:
+            return 1.
+        if (f1.is_neutrino == f2.is_neutrino) and (f2.lepton == 'X' and f1.lepton in ['MU', 'TAU']):
+            # convert from TwoFlavor to more flavors
+            return 1.
+        if (f1.is_neutrino == f2.is_neutrino) and (f1.lepton == 'X' and f2.lepton in ['MU', 'TAU']):
+            # convert from more flavors to TwoFlavor
+            return 0.5
+        return 0.
+    return convert
 
 FlavorScheme.conversion_matrix = classmethod(conversion_matrix)
 EnumMeta.__rshift__ = conversion_matrix
