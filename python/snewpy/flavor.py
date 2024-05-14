@@ -5,6 +5,8 @@ import typing
 class EnumMeta(enum.EnumMeta):
     def __getitem__(cls, key):
         #if this is an iterable: apply to each value, and construct a tuple
+        if isinstance(key, slice):
+            return slice(cls[key.start],cls[key.stop],key.step)
         if isinstance(key, typing.Iterable) and not isinstance(key, str):
             return tuple(map(cls.__getitem__, key))
         #if this is from a flavor scheme: check that it's ours
@@ -21,6 +23,8 @@ class EnumMeta(enum.EnumMeta):
                         f'Cannot find key "{key}" in {cls.__name__} sheme! Valid options are {list(cls)}'
                     )
         
+        if key is None:
+            return None
         #if this is anything else - treat it as a slice
         return np.array(list(cls.__members__.values()),dtype=object)[key]
 
@@ -92,7 +96,7 @@ class FlavorMatrix:
     def _convert_index(self, index):
         if isinstance(index, str) or (not isinstance(index,typing.Iterable)):
             index = [index]
-        new_idx = [flavors[idx] for idx,flavors in zip(index, self.flavors)]
+        new_idx = [flavors[idx] for idx,flavors in zip(index, [self.flavor_out, self.flavor_in])]
         return tuple(new_idx)
         
     def __getitem__(self, index):
@@ -127,13 +131,6 @@ class FlavorMatrix:
     @property
     def flavor(self):
         return self.flavor_out
-        
-    @classmethod
-    def zeros(cls, flavor:FlavorScheme, from_flavor:FlavorScheme = None):
-        from_flavor = from_flavor or flavor
-        shape = (len(from_flavor), len(flavor))
-        data = np.zeros(shape)
-        return cls(data, flavor, from_flavor)
         
     @classmethod
     def eye(cls, flavor:FlavorScheme, from_flavor:FlavorScheme = None):
