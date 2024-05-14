@@ -89,6 +89,28 @@ class TestFlavorMatrix:
         assert m.shape == (4,4)
         assert m.flavor_in == TwoFlavor
         assert m.flavor_out == TwoFlavor
+
+    @staticmethod
+    def test_getitem():
+        m = FlavorMatrix.eye(TwoFlavor,TwoFlavor)
+        assert m[TwoFlavor.NU_E, TwoFlavor.NU_E]==1
+        assert m['NU_E','NU_E']==1
+        assert m['NU_E','NU_X']==0
+        assert np.allclose(m['NU_E'], [1,0,0,0])
+        assert np.allclose(m['NU_E'], m['NU_E',:])
+        assert np.allclose(m[:,:], m.array)
+
+    @staticmethod
+    def test_setitem():
+        m = FlavorMatrix.eye(TwoFlavor,TwoFlavor)
+        m['NU_E']=[2,3,4,5]
+        assert m['NU_E','NU_E']==2
+        assert m['NU_E','NU_X']==4
+        #check that nothing changed in other parts
+        assert m['NU_X','NU_E']==0
+        assert m['NU_X','NU_X']==1
+        m['NU_E','NU_E_BAR']=123
+        assert m['NU_E','NU_E_BAR']==123
         
     @staticmethod
     def test_init_square_matrix_with_wrong_shape_raises_ValueError():
