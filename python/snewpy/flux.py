@@ -131,8 +131,9 @@ class _ContainerBase:
         self.flavor_scheme = flavor_scheme
         if not flavor_scheme:
             #guess the flavor scheme
-            if isinstance(flavor, type) and issubclass(flavor, FlavorScheme):
-                self.flavor_scheme = flavor
+            if isinstance(flavor, type):#issubclass without isinstance(type) check raises TypeError
+                if issubclass(flavor, FlavorScheme): 
+                    self.flavor_scheme = flavor
             else:
                 #get schemes from the data
                 flavor_schemes = set(f.__class__ for f in self.flavor)
