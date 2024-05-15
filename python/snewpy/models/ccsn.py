@@ -87,8 +87,7 @@ class Nakazato_2013(loaders.Nakazato_2013):
             filename = f"nakazato-{eos}-z{metallicity}-t_rev{int(revival_time)}ms-s{progenitor_mass:3.1f}.fits"
         else:
             filename = f"nakazato-{eos}-BH-z{metallicity}-s{progenitor_mass:3.1f}.fits"
-        #modify metadata if needed...
-        #self.metadata['name']=value
+        self.metadata['Black hole']=(revival_time==0)
         return super().__init__(filename, self.metadata)
 
 
