@@ -14,25 +14,25 @@ class TestNeutrino(unittest.TestCase):
         """
         Neutrino flavor types
         """
-        nue  = Flavor.NU_E
+        nue = Flavor.NU_E
         self.assertTrue(nue.is_electron)
         self.assertTrue(nue.is_neutrino)
         self.assertFalse(nue.is_antineutrino)
 
-        nux  = Flavor.NU_X
-        self.assertFalse(nux.is_electron)
-        self.assertTrue(nux.is_neutrino)
-        self.assertFalse(nux.is_antineutrino)
+        numu = Flavor.NU_MU
+        self.assertFalse(numu.is_electron)
+        self.assertTrue(numu.is_neutrino)
+        self.assertFalse(numu.is_antineutrino)
 
         nueb = Flavor.NU_E_BAR
         self.assertTrue(nueb.is_electron)
         self.assertFalse(nueb.is_neutrino)
         self.assertTrue(nueb.is_antineutrino)
 
-        nuxb = Flavor.NU_X_BAR
-        self.assertFalse(nuxb.is_electron)
-        self.assertFalse(nuxb.is_neutrino)
-        self.assertTrue(nuxb.is_antineutrino)
+        numub = Flavor.NU_MU_BAR
+        self.assertFalse(numub.is_electron)
+        self.assertFalse(numub.is_neutrino)
+        self.assertTrue(numub.is_antineutrino)
 
 
     def test_mixing_nmo(self):

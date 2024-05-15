@@ -235,11 +235,14 @@ class PinchedModel(SupernovaModel):
         metadata: dict
             Model parameters dict
         """
-        if not 'L_NU_X_BAR' in simtab.colnames:
-            # table only contains NU_E, NU_E_BAR, and NU_X, so double up
-            # the use of NU_X for NU_X_BAR.
+        if not 'L_NU_MU' in simtab.colnames:
+            # table only contains NU_E, NU_E_BAR, and NU_X, so re-use NU_X for MU/TAU (anti)neutrinos.
             for val in ['L','E','ALPHA']:
-                simtab[f'{val}_NU_X_BAR'] = simtab[f'{val}_NU_X']
+                simtab[f'{val}_NU_MU'] = simtab[f'{val}_NU_X']
+                simtab[f'{val}_NU_MU_BAR'] = simtab[f'{val}_NU_X']
+                simtab[f'{val}_NU_TAU'] = simtab[f'{val}_NU_X']
+                simtab[f'{val}_NU_TAU_BAR'] = simtab[f'{val}_NU_X']
+                del simtab[f'{val}_NU_X']
         # Get grid of model times.
         time = simtab['TIME'] << u.s
         # Set up dictionary of luminosity, mean energy and shape parameter
