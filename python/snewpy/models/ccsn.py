@@ -259,7 +259,7 @@ class Zha_2021(loaders.Zha_2021):
     def __init__(self, *, progenitor_mass:u.Quantity):
         filename = f's{progenitor_mass.value:g}.dat'
         #tag if this simulation forms a black hole
-        self.metadata['Black hole'] = self.filename[:-4] not in ['s18','s25']
+        self.metadata['Black hole'] = filename[:-4] not in ['s18','s25']
         return super().__init__(filename, self.metadata)
 
 @deprecated('eos')
