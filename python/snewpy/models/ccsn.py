@@ -237,6 +237,8 @@ class OConnor_2015(loaders.OConnor_2015):
     def __init__(self, progenitor_mass:u.Quantity):
         # Filename is currently the same regardless of parameters
         filename = 'M1_neutrinos.dat'
+        #this model forms BH
+        self.metadata['Black hole']=True 
         return super().__init__(filename, self.metadata)
 
 @deprecated('eos')
@@ -256,6 +258,8 @@ class Zha_2021(loaders.Zha_2021):
         
     def __init__(self, *, progenitor_mass:u.Quantity):
         filename = f's{progenitor_mass.value:g}.dat'
+        #tag if this simulation forms a black hole
+        self.metadata['Black hole'] = self.filename[:-4] not in ['s18','s25']
         return super().__init__(filename, self.metadata)
 
 @deprecated('eos')
