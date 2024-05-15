@@ -253,7 +253,10 @@ class Warren_2020(PinchedModel):
 
         # Set model metadata.
         self.filename = os.path.basename(filename)
-
+        #A simulation is considered to explode if its diagnostic explosion energy
+        #exceeds 1e49 ergs. This is in line with the definition of explosion time
+        #in arXiv:1902.01340v2, p. 16.
+        metadata['Black hole'] = f['sim_data']['expl_energy'][-1][1] <= 1e49
         super().__init__(simtab, metadata)
 
 
