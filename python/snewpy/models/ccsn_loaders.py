@@ -24,7 +24,6 @@ except ImportError:
 
 from snewpy.models.base import PinchedModel, SupernovaModel
 from snewpy.neutrino import Flavor
-from snewpy.flavor import TwoFlavor
 from snewpy import _model_downloader
 
 class GarchingArchiveModel(PinchedModel):
@@ -55,8 +54,7 @@ class GarchingArchiveModel(PinchedModel):
         # merge the data into one giant table.
         mergtab = None
         for flavor in Flavor:
-            _flav = TwoFlavor.NU_X if not flavor.is_electron else flavor
-            _sfx = _flav.name.replace('_', '').lower()
+            _sfx = flavor.name.replace('_', '').lower() if flavor.is_electron else "nux"
             _filename = '{}_{}_{}'.format(filename, eos, _sfx)
             _lname = 'L_{}'.format(flavor.name)
             _ename = 'E_{}'.format(flavor.name)
@@ -274,12 +272,12 @@ class Kuroda_2020(PinchedModel):
 
         # Get grid of model times.
         simtab['TIME'] = simtab['Tpb[ms]'] << u.ms
-        for f in [Flavor.NU_E, Flavor.NU_E_BAR, TwoFlavor.NU_X]:
-            fkey = re.sub('(E|X)_BAR', r'A\g<1>', f.name).lower()
-            simtab[f'L_{f.name}'] = simtab[f'<L{fkey}>'] * 1e51 << u.erg / u.s
-            simtab[f'E_{f.name}'] = simtab[f'<E{fkey}>'] << u.MeV
+        for f in ["NU_E", "NU_E_BAR", "NU_X"]:
+            fkey = re.sub('(E|X)_BAR', r'A\g<1>', f).lower()
+            simtab[f'L_{f}'] = simtab[f'<L{fkey}>'] * 1e51 << u.erg / u.s
+            simtab[f'E_{f}'] = simtab[f'<E{fkey}>'] << u.MeV
             # There is no pinch parameter so use alpha=2.0.
-            simtab[f'ALPHA_{f.name}'] = np.full_like(simtab[f'E_{f.name}'].value, 2.)
+            simtab[f'ALPHA_{f}'] = np.full_like(simtab[f'E_{f}'].value, 2.)
 
         self.filename = os.path.basename(filename)
 
@@ -831,8 +829,8 @@ class Mori_2023(PinchedModel):
 
         # Get grid of model times.
         simtab['TIME'] = simtab['2:t_pb[s]'] << u.s
-        for j, (f, fkey) in enumerate(zip([Flavor.NU_E, Flavor.NU_E_BAR, TwoFlavor.NU_X], 'ebx')):
-            simtab[f'L_{f.name}'] = simtab[f'{6+j}:Le{fkey}[e/s]'] << u.erg / u.s
+        for j, (f, fkey) in enumerate(zip(["NU_E", "NU_E_BAR", "NU_X"], 'ebx')):
+            simtab[f'L_{f}'] = simtab[f'{6+j}:Le{fkey}[e/s]'] << u.erg / u.s
             # Compute the pinch parameter from E_rms and E_avg
             # <E^2> / <E>^2 = (2+a)/(1+a), where
             # E_rms^2 = <E^2> - <E>^2.
@@ -842,9 +840,9 @@ class Mori_2023(PinchedModel):
             x = E2 / Eavg**2
             alpha = (2-x) / (x-1)
 
-            simtab[f'E_{f.name}'] = Eavg << u.MeV
-            simtab[f'E2_{f.name}'] = E2 << u.MeV**2
-            simtab[f'ALPHA_{f.name}'] = alpha
+            simtab[f'E_{f}'] = Eavg << u.MeV
+            simtab[f'E2_{f}'] = E2 << u.MeV**2
+            simtab[f'ALPHA_{f}'] = alpha
 
 #            simtab[f'E_{f.name}'] = simtab[f'{9+j}:Em{fkey}[MeV]'] << u.MeV
 #            Erms = simtab[f'{12+j}:Er{fkey}[MeV]'] * u.MeV
