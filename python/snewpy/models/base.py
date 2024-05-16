@@ -239,10 +239,12 @@ class PinchedModel(SupernovaModel):
             # table only contains NU_E, NU_E_BAR, and NU_X, so re-use NU_X for MU/TAU (anti)neutrinos.
             for val in ['L','E','ALPHA']:
                 simtab[f'{val}_NU_MU'] = simtab[f'{val}_NU_X']
-                simtab[f'{val}_NU_MU_BAR'] = simtab[f'{val}_NU_X']
+                simtab[f'{val}_NU_MU_BAR'] = simtab.columns.get(f'{val}_NU_X_BAR', simtab[f'{val}_NU_X'])
                 simtab[f'{val}_NU_TAU'] = simtab[f'{val}_NU_X']
-                simtab[f'{val}_NU_TAU_BAR'] = simtab[f'{val}_NU_X']
+                simtab[f'{val}_NU_TAU_BAR'] = simtab.columns.get(f'{val}_NU_X_BAR', simtab[f'{val}_NU_X'])
                 del simtab[f'{val}_NU_X']
+                if f'{val}_NU_X_BAR' in simtab.colnames:
+                    del simtab[f'{val}_NU_X_BAR']
         # Get grid of model times.
         time = simtab['TIME'] << u.s
         # Set up dictionary of luminosity, mean energy and shape parameter

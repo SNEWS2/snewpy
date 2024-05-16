@@ -303,6 +303,14 @@ class Fornax_2019(SupernovaModel):
         self.fluxunit = 1e50 * u.erg/(u.s*u.MeV)
         self.time = None
 
+        # Conversion of flavor to key name in the model HDF5 file.
+        self._flavorkeys = {Flavor.NU_E: 'nu0',
+                            Flavor.NU_E_BAR: 'nu1',
+                            Flavor.NU_MU: 'nu2',
+                            Flavor.NU_MU_BAR: 'nu2',
+                            Flavor.NU_TAU: 'nu2',
+                            Flavor.NU_TAU_BAR: 'nu2'}
+
         # Read a cached flux file in FITS format or generate one.
         self.is_cached = cache_flux and 'healpy' in sys.modules
         if cache_flux and not 'healpy' in sys.modules:
@@ -329,14 +337,6 @@ class Fornax_2019(SupernovaModel):
                 self.nside = hp.npix2nside(npix)
             else:
                 with h5py.File(filename, 'r') as _h5file:
-                    # Conversion of flavor to key name in the model HDF5 file.
-                    self._flavorkeys = {Flavor.NU_E: 'nu0',
-                                        Flavor.NU_E_BAR: 'nu1',
-                                        Flavor.NU_MU: 'nu2',
-                                        Flavor.NU_MU_BAR: 'nu2',
-                                        Flavor.NU_TAU: 'nu2',
-                                        Flavor.NU_TAU_BAR: 'nu2'}
-
                     if self.time is None:
                         self.time = _h5file['nu0']['g0'].attrs['time'] * u.s
 
@@ -394,14 +394,6 @@ class Fornax_2019(SupernovaModel):
                     # Write output to FITS.
                     self._write_fits(fitsfile, overwrite=True)
         else:
-            # Conversion of flavor to key name in the model HDF5 file.
-            self._flavorkeys = {Flavor.NU_E: 'nu0',
-                                Flavor.NU_E_BAR: 'nu1',
-                                Flavor.NU_MU: 'nu2',
-                                Flavor.NU_MU_BAR: 'nu2',
-                                Flavor.NU_TAU: 'nu2',
-                                Flavor.NU_TAU_BAR: 'nu2'}
-
             # Open the requested filename using the model downloader.
             datafile = self.request_file(filename)
             # Open HDF5 data file.
