@@ -178,6 +178,7 @@ class Walk_2019(loaders.Walk_2019):
     """
     def __init__(self, * ,progenitor_mass:u.Quantity, direction:int):
         filename = f's{progenitor_mass.value:3.1f}c_3DBH_dir{direction}'
+        self.metadata['Black hole']=True
         return super().__init__(filename=filename, metadata=self.metadata)
 
 
