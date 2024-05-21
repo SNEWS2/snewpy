@@ -117,7 +117,7 @@ class SnowglobesData:
                 # Format 2: explicit binning, differs per channel
                 tokens = l.split()[6:]
                 df = pd.read_table(f, delim_whitespace=True, index_col=1, comment='%', names=['name','n','parity','flavor','weight'], usecols=range(1,6))
-                # drop coherent scattering channels if channel is argon_400bins, mixing channels which have different binning
+                # drop coherent scattering channels if material is argon_400bins, mixing channels which have different binning
                 if material=='argon_400bins':
                     df = df[df["name"].str.contains('_coh') == False]
             else:
