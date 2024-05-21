@@ -41,7 +41,7 @@ class Odrzywolek_2010(SupernovaModel):
     def __init__(self, filename:str):
         df = pd.read_csv(
             self.request_file(filename),
-            delim_whitespace=True,
+            sep='\s+',
             skiprows=1,
             usecols=[1,6,7,8],
             names=["time","a","alpha","b"],
@@ -55,7 +55,7 @@ class Odrzywolek_2010(SupernovaModel):
                 self.factor[f] = 1.0
             else:
                 # nuX/nuE ratio from Odrzywolek paper: (arXiv:astro-ph/0311012)
-                self.factor[f] = 0.36
+                self.factor[f] = 0.19
         time = -df.index.to_numpy() << u.s
         super().__init__(time, self.metadata)
 
@@ -83,7 +83,7 @@ class Patton_2017(SupernovaModel):
         df = pd.read_csv(
             self.request_file(filename),
             comment="#",
-            delim_whitespace=True,
+            sep='\s+',
             names=["time","Enu",Flavor.NU_E,Flavor.NU_E_BAR,Flavor.NU_X,Flavor.NU_X_BAR],
             usecols=range(6),
         )

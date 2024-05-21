@@ -826,11 +826,6 @@ class Mori_2023(PinchedModel):
         """
         # Open the requested filename using the model downloader.
         datafile = self.request_file(filename)
-        # Set up model metadata
-        self.axion_mass = metadata['Axion mass']
-        self.axion_coupling = metadata['Axion coupling']
-        self.progenitor_mass = metadata['Progenitor mass']
-        self.pns_mass = metadata['PNS mass']
 
         self.metadata = metadata
 

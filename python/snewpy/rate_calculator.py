@@ -13,7 +13,6 @@ from snewpy.flux import Container
 from astropy import units as u
 from warnings import warn
 from typing import Dict
-from dataclasses import dataclass
 from typing import Callable
 import scipy.stats as st
 

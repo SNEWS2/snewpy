@@ -23,9 +23,9 @@ jobs:
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
@@ -38,3 +38,14 @@ jobs:
         run: |
           python -m unittest python/snewpy/test/simplerate_integrationtest.py
           pytest -m 'snowglobes'
+      - name: Run Jupyter notebooks
+        run: |
+          pip install nbclient ipykernel
+          jupyter kernelspec list
+          cd doc/nb/
+          jupyter execute ccsn/*.ipynb
+          jupyter execute presn/*.ipynb
+          jupyter execute AnalyticFluence.ipynb FlavorTransformation.ipynb
+          # Download necessary progenitor file, before executing the notebook
+          python -c 'from snewpy.models.ccsn import Zha_2021; from astropy import units as u; _ = Zha_2021(progenitor_mass=17*u.solMass)'
+          jupyter execute SNOwGLoBES_usage.ipynb
