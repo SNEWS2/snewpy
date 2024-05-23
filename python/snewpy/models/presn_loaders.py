@@ -158,6 +158,10 @@ class Yoshida_2016(SupernovaModel):
                 np.linspace(10,20,501)[1:]
             ])
         dNdEdT = np.stack(data, axis=1)
+        #rearrange flavors from NU_E, NU_E_BAR,_NU_X, NU_X_BAR to current 
+        indices = np.argsort([Flavor.NU_E,Flavor.NU_E_BAR, Flavor.NU_X, Flavor.NU_X_BAR]) 
+        dNdEdT = dNdEdT.take(indices, axis=0)
+        
         self.interpolated = _interp_TE(
             times, energies, dNdEdT, ax_t=1, ax_e=2
         )
