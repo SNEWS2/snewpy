@@ -148,10 +148,9 @@ class Yoshida_2016(SupernovaModel):
             data = []
             T = []
             while (line := f.readline()):
-                if(not line):break
-                N_step,T_step,logT_c,logRho_c = [conv(token) for conv,token in zip([int,float,float,float],line.split())]
+                if not line: break
+                T += [float(line.split()[1])]
                 data += [[np.loadtxt(f, max_rows=100).flatten() for i in range(4)]]
-                T+=[T_step]
         times = np.array(T)
         energies = np.concatenate([
                 np.linspace(0,10,1001)[1:],
