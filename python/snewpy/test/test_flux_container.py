@@ -1,3 +1,6 @@
+import os
+from tempfile import TemporaryDirectory
+
 from hypothesis import given, assume, note
 from hypothesis import strategies as st
 from hypothesis.extra.numpy import arrays, array_shapes
@@ -7,6 +10,7 @@ from snewpy.neutrino import Flavor
 import numpy as np
 import astropy.units as u
 import pytest
+
 #define strategies to generate float values
 def float_values(shape=array_shapes(max_dims=1),**kwargs):
     return arrays(float, shape=shape, 
@@ -111,7 +115,8 @@ def test_integration_over_axes(f:Container, axis):
 
 @given(f=random_flux_containers())
 def test_save_and_load(f):
-    fname = '/tmp/flux.npz'
-    f.save(fname)
-    f1 = Container.load(fname)
-    assert f1==f
+    with TemporaryDirectory() as tmpdir:
+        fname = os.path.join(tmpdir, 'flux.npz')
+        f.save(fname)
+        f1 = Container.load(fname)
+        assert f1 == f
