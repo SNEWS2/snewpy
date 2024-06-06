@@ -6,9 +6,13 @@ name: Integration Tests
 # events but only for the main branch
 on:
   push:
-    branches: [ main ]
+    branches: 
+      - main
+      - release_*
   pull_request:
-    branches: [ main ]
+    branches: 
+      - main
+      - release_*
     types: [opened, synchronize, reopened, ready_for_review]
 
 jobs:
