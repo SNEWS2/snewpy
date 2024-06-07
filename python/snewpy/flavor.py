@@ -131,6 +131,10 @@ class FlavorMatrix:
     @property
     def flavor(self):
         return self.flavor_out
+    @property
+    def T(self):
+        "transposed version of the matrix: reverse the flavor dimensions"
+        return FlavorMatrix(array = self.swapaxes(0,1), flavor = self.flavor_in, from_flavor=self.flavor_out)
         
     @classmethod
     def eye(cls, flavor:FlavorScheme, from_flavor:FlavorScheme = None):
@@ -138,7 +142,12 @@ class FlavorMatrix:
         shape = (len(from_flavor), len(flavor))
         data = np.eye(*shape)
         return cls(data, flavor, from_flavor)
-
+    @classmethod
+    def zeros(cls, flavor:FlavorScheme, from_flavor:FlavorScheme = None):
+        from_flavor = from_flavor or flavor
+        shape = (len(from_flavor), len(flavor))
+        data = np.zeros(shape)
+        return cls(data, flavor, from_flavor)
     @classmethod
     def from_function(cls, flavor:FlavorScheme, from_flavor:FlavorScheme = None):
         """A decorator for creating the flavor matrix from the given function"""
