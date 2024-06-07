@@ -36,9 +36,13 @@ jobs:
           python -m pip install --upgrade pip
       - name: Install SNEWPY
         run: |
-          pip install ".[dev]"
+          pip install ".[dev,docs]"
       
-      # Run the unit tests
-      - name: Test with pytest
+      - name: Run unit tests with pytest
         run: |
           pytest -m 'not snowglobes'
+
+      - name: Build HTML docs
+        run: |
+          cd doc/
+          make html
