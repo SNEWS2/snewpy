@@ -13,13 +13,16 @@ from astropy import constants as c
 from astropy.coordinates import AltAz
 
 from .neutrino import MassHierarchy
-from .flavor  import ThreeFlavor, FourFlavor, FlavorMatrix
+from .flavor  import TwoFlavor,ThreeFlavor, FourFlavor, FlavorMatrix
 
 ###############################################################################
 
 class FlavorTransformation(ABC):
     """Generic interface to compute neutrino and antineutrino survival probability."""
 
+    def __str__(self):
+        return self.__class__.__name__
+        
     @abstractmethod
     def get_probabilities(self, t, E)->FlavorMatrix:
         """neutrino and antineutrino transition probabilities.
@@ -55,7 +58,9 @@ class ThreeFlavorTransformation(FlavorTransformation):
         else:
             self.mix_params = mix_params
 
-
+    def __str__(self):
+        return self.__class__.__name__+"_"+str(self.mix_params.mass_order)
+    
     def Pmf_HighDensityLimit(self):
         """ The probability that a given flavor state is a particular matter state in the 
         infinite density limit.  
@@ -148,6 +153,9 @@ class FourFlavorTransformation:
         else:
             self.mix_params = mix_params
 
+    def __str__(self):
+        return self.__class__.__name__+"_"+str(self.mix_params.mass_order)
+        
     def Pmf_HighDensityLimit(self):
         """ The probability that a given flavor state is 'detected' as a particular matter state in the 
         infinite density limit. This method assumes the 4th matter state is the 
@@ -242,18 +250,8 @@ class FourFlavorTransformation:
 class NoTransformation(FlavorTransformation):
     """Survival probabilities for no oscillation case."""
 
-    def __init__(self):
-        pass
-
-    def __str__(self):
-        return f'NoTransformation'
-
-    def get_probabilities(self, t, E):
-        
-        p = np.zeros((6,6,len(E)))
-        for f in ThreeFlavor:
-            p[f,f] = np.ones(len(E))
-
+    def get_probabilities(self, t, E):       
+        p = FlavorMatrix.eye(ThreeFlavor)
         return p
 
 ###############################################################################
@@ -262,63 +260,20 @@ class CompleteExchange(FlavorTransformation):
     """Survival probabilities for the case when the electron flavors 
        are half exchanged with the mu flavors and the half with the tau flavors.
     """
-
-    def __init__(self):
-        pass
-
-    def __str__(self):
-        return f'CompleteExchange'
-
     def get_probabilities(self, t, E):
-        """neutrino and antineutrino transition probabilities.
-
-        Parameters
-        ----------
-        t : float or ndarray
-            List of times.
-        E : float or ndarray
-            List of energies.
-
-        Returns
-        -------
-        p : 6 x 6 array or array of 6 x 6 arrays 
-        """    
-        p = np.zeros((6,6,len(E))) 
-
-        p[ThreeFlavor.NU_E,ThreeFlavor.NU_MU] = np.ones(len(E)) / 2
-        p[ThreeFlavor.NU_E,ThreeFlavor.NU_TAU] = np.ones(len(E)) / 2
-        p[ThreeFlavor.NU_MU,ThreeFlavor.NU_E] = np.ones(len(E)) / 2
-        p[ThreeFlavor.NU_MU,ThreeFlavor.NU_MU] = np.ones(len(E)) / 2
-        p[ThreeFlavor.NU_TAU,ThreeFlavor.NU_E] = np.ones(len(E)) / 2
-        p[ThreeFlavor.NU_TAU,ThreeFlavor.NU_TAU] = np.ones(len(E)) / 2
-
-        p[ThreeFlavor.NU_E_BAR,ThreeFlavor.NU_MU_BAR] = np.ones(len(E)) / 2
-        p[ThreeFlavor.NU_E_BAR,ThreeFlavor.NU_TAU_BAR] = np.ones(len(E)) / 2
-        p[ThreeFlavor.NU_MU_BAR,ThreeFlavor.NU_E_BAR] = np.ones(len(E)) / 2
-        p[ThreeFlavor.NU_MU_BAR,ThreeFlavor.NU_MU_BAR] = np.ones(len(E)) / 2
-        p[ThreeFlavor.NU_TAU_BAR,ThreeFlavor.NU_E_BAR] = np.ones(len(E)) / 2
-        p[ThreeFlavor.NU_TAU_BAR,ThreeFlavor.NU_TAU_BAR] = np.ones(len(E)) / 2
-
-        return p        
+        p = FlavorMatrix.zeros(TwoFlavor)
+        p['NU_X','NU_E'] = 1
+        p['NU_E','NU_X'] = 1
+        p['NU_E_BAR','NU_X_BAR'] = 1
+        p['NU_X_BAR','NU_E_BAR'] = 1
+        return (ThreeFlavor<<TwoFlavor)@p@(TwoFlavor<<ThreeFlavor)
         
 ###############################################################################
 
 class AdiabaticMSW(ThreeFlavorTransformation):
     """Adiabatic MSW effect."""
 
-    def __init__(self, mix_params = None):
-        """Initialize flavor transformation
-        
-        Parameters
-        ----------
-        mix_params : ThreeFlavorMixingParameters instance or None
-        """
-        super().__init__(mix_params)        
-
-    def __str__(self):
-        return f'AdiabaticMSW_' + str(self.mix_params.mass_order)
-
-    def get_SNprobabilities(self, t, E): 
+    def _get_SNprobabilities(self, t, E): 
         """neutrino and antineutrino transition probabilities in the supernova
 
         Parameters
@@ -340,22 +295,8 @@ class AdiabaticMSW(ThreeFlavorTransformation):
 
         return Pmf
 
-    def get_probabilities(self, t, E):         
-        """neutrino and antineutrino transition probabilities from the 
-        neutrinosphere to Earth
-
-        Parameters
-        ----------
-        t : float or ndarray
-            List of times.
-        E : float or ndarray
-            List of energies.
-
-        Returns
-        -------
-        p : array of 6 x 6 arrays 
-        """    
-        Pmf = self.get_SNprobabilities(t,E)
+    def get_probabilities(self, t, E):
+        Pmf = self._get_SNprobabilities(t,E)
         D = ThreeFlavorNoEarthMatter(self.mix_params).get_probabilities(t,E)
 
         p = np.empty((6,6,len(E))) 
@@ -369,19 +310,7 @@ class AdiabaticMSW(ThreeFlavorTransformation):
 class NonAdiabaticMSWH(ThreeFlavorTransformation):
     """Nonadiabatic MSW H resonance"""
 
-    def __init__(self, mix_params = None):
-        """Initialize flavor transformation
-        
-        Parameters
-        ----------
-        mix_params : ThreeFlavorMixingParameters instance or None
-        """
-        super().__init__(mix_params)  
-
-    def __str__(self):
-        return f'NonAdiabaticMSWH_' + str(self.mix_params.mass_order)
-
-    def get_SNprobabilities(self, t, E): 
+    def _get_SNprobabilities(self, t, E): 
         """neutrino and antineutrino transition probabilities in the supernova
 
         Parameters
@@ -394,7 +323,7 @@ class NonAdiabaticMSWH(ThreeFlavorTransformation):
         Returns
         -------
         Pmf : 6 x 6 array
-        """            
+        """
         PHDL = self.Pmf_HighDensityLimit()
         Pmf = np.empty((r,6,len(E)))
 
@@ -410,21 +339,7 @@ class NonAdiabaticMSWH(ThreeFlavorTransformation):
         return Pmf
 
     def get_probabilities(self, t, E):         
-        """neutrino and antineutrino transition probabilities.
-
-        Parameters
-        ----------
-        t : float or ndarray
-            List of times.
-        E : float or ndarray
-            List of energies.
-            
-        Returns
-        -------
-        p : 6 x 6 array or array of 6 x 6 arrays 
-        """    
-
-        Pmf = self.get_SNprobabilities(t,E)      
+        Pmf = self._get_SNprobabilities(t,E)      
         D = ThreeFlavorNoEarthMatter(self.mix_params).get_probabilities(t,E)        
         
         p = np.empty((6,6,len(E))) 
@@ -437,19 +352,7 @@ class NonAdiabaticMSWH(ThreeFlavorTransformation):
 
 class TwoFlavorDecoherence(ThreeFlavorTransformation):
     """equal mixing of whatever two matter states form the MSW H resonance"""
-
-    def __init__(self, mix_params = None):
-        """Initialize flavor transformation
-        
-        Parameters
-        ----------
-        mix_params : ThreeFlavorMixingParameters instance or None
-        """
-        super().__init__(mix_params)    
-
-    def __str__(self):
-        return f'TwoFlavorDecoherence_' + str(self.mix_params.mass_order)
-
+    
     def get_SNprobabilities(self, t, E): 
         """neutrino and antineutrino transition probabilities.
 
@@ -478,21 +381,7 @@ class TwoFlavorDecoherence(ThreeFlavorTransformation):
 
         return Pmf
 
-    def get_probabilities(self, t, E):         
-        """neutrino and antineutrino transition probabilities.
-
-        Parameters
-        ----------
-        t : float or ndarray
-            List of times.
-        E : float or ndarray
-            List of energies.
-            
-        Returns
-        -------
-        p : 6 x 6 array or array of 6 x 6 arrays 
-        """    
-
+    def get_probabilities(self, t, E):
         Pmf = self.get_SNprobabilities(t,E)      
         D = ThreeFlavorNoEarthMatter(self.mix_params).get_probabilities(t,E)        
         
