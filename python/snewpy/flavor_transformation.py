@@ -12,7 +12,8 @@ from astropy import units as u
 from astropy import constants as c
 from astropy.coordinates import AltAz
 
-from .neutrino import MassHierarchy, ThreeFlavor, FourFlavor
+from .neutrino import MassHierarchy
+from .flavor  import ThreeFlavor, FourFlavor, FlavorMatrix
 
 ###############################################################################
 
@@ -20,7 +21,7 @@ class FlavorTransformation(ABC):
     """Generic interface to compute neutrino and antineutrino survival probability."""
 
     @abstractmethod
-    def get_probabilities(self, t, E):
+    def get_probabilities(self, t, E)->FlavorMatrix:
         """neutrino and antineutrino transition probabilities.
 
         Parameters
@@ -32,8 +33,8 @@ class FlavorTransformation(ABC):
 
         Returns
         -------
-        p : a N x N array, or an array of N x N arrays 
-            where N is either 6 or 8
+        p : a [N x N] array or [N x N x len(E) x len(t)] array
+            where N is number of neutrino flavors(6 or 8)
         """    
         pass
 
@@ -248,19 +249,7 @@ class NoTransformation(FlavorTransformation):
         return f'NoTransformation'
 
     def get_probabilities(self, t, E):
-        """neutrino and antineutrino transition probabilities.
-
-        Parameters
-        ----------
-        t : float or ndarray
-            List of times.
-        E : float or ndarray
-            List of energies.
-
-        Returns
-        -------
-        p : 6 x 6 array or array of 6 x 6 arrays 
-        """    
+        
         p = np.zeros((6,6,len(E)))
         for f in ThreeFlavor:
             p[f,f] = np.ones(len(E))
