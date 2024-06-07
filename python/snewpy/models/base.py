@@ -190,8 +190,8 @@ class SupernovaModel(ABC, LocalFileLoader):
         factor = 1/(4*np.pi*(distance.to('cm'))**2)
         f = self.get_transformed_spectra(t, E, flavor_xform)
 
-        array = np.stack([f[flv] for flv in sorted(Flavor)])
-        return  Flux(data=array*factor, flavor=np.sort(Flavor), time=t, energy=E)
+        array = np.stack([f[flv] for flv in Flavor])
+        return  Flux(data=array*factor, flavor=Flavor, time=t, energy=E)
 
 
 

@@ -4,6 +4,7 @@ from hypothesis.extra.numpy import arrays, array_shapes
 
 from snewpy.flux import Container,Axes
 from snewpy.neutrino import Flavor
+from snewpy.flavor import TwoFlavor,ThreeFlavor,FourFlavor
 import numpy as np
 import astropy.units as u
 import pytest
@@ -29,12 +30,23 @@ def quantities(draw, values, unit):
     return draw(values)<<unit
 
 #how to generate axes values
-flavors = st.lists(elements=st.sampled_from(Flavor),
-                   unique=True,min_size=1,max_size=len(Flavor)).map(sorted)
+flavor_schemes = st.sampled_from([TwoFlavor,ThreeFlavor,FourFlavor])
+
 units = st.sampled_from(['1/MeV','1/(MeV*s)','1/(MeV*s*m**2)']).map(u.Unit)
 energies = quantities(sorted_floats(shape=array_shapes(max_dims=1)),u.MeV)
 times    = quantities(sorted_floats(shape=array_shapes(max_dims=1)),u.s)
 integrable_axess = st.lists(st.sampled_from(list(Axes)[1:]))
+
+@st.composite
+def flavor_subsets(draw, flavor_schemes):
+    flavor_scheme = draw(flavor_schemes)
+    flv_list = draw(
+        st.lists(elements=st.sampled_from(flavor_scheme),
+            unique=True,min_size=1,max_size=len(flavor_scheme)).map(sorted)
+    )
+    return flv_list
+
+flavors = st.one_of(flavor_schemes, flavor_subsets(flavor_schemes))
 
 @st.composite
 def random_flux_containers(draw, times=times, energies=energies, units=units, axes=st.just(None)):
@@ -71,6 +83,21 @@ def test_construction_with_wrong_dimensions_raises_ValueError(flavor, energy, ti
     data = np.ones([len(flavor)+1,len(time), len(energy)])<<unit
     with pytest.raises(ValueError):
         Container[unit](data, flavor, time, energy)
+
+@given(f=random_flux_containers())
+def test_getitem_with_flavor_names(f):
+    f['NU_E',:,:] == f[0]
+    assert f['NU_E'].flavor_scheme==f.flavor_scheme
+    if f.flavor_scheme!=TwoFlavor:
+        with pytest.raises(KeyError):
+            f['NU_X']
+        with pytest.raises(TypeError):
+            f[TwoFlavor.NU_E]
+        with pytest.raises(TypeError):
+            f[TwoFlavor.NU_X]
+    else:
+        assert f['NU_X'] == f[TwoFlavor.NU_X]
+        assert f['NU_E'] == f[TwoFlavor.NU_E]
 
 @given(f=random_flux_containers())
 def test_summation_over_flavor(f:Container):

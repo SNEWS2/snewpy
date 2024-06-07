@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Optional
 import numpy as np
 from collections.abc import Mapping
+from .flavor import TwoFlavor as Flavor
 
 class MassHierarchy(IntEnum):
     """Neutrino mass ordering: ``NORMAL`` or ``INVERTED``."""
@@ -23,32 +24,6 @@ class MassHierarchy(IntEnum):
         else:
             return MassHierarchy.INVERTED
             
-class Flavor(IntEnum):
-    """Enumeration of CCSN Neutrino flavors."""
-    NU_E = 0
-    NU_X = 1
-    NU_E_BAR = 2
-    NU_X_BAR = 3
-    
-    def to_tex(self):
-        """LaTeX-compatible string representations of flavor."""
-        if '_BAR' in self.name:
-            return r'$\overline{{\nu}}_{0}$'.format(self.name[3].lower())
-        return r'$\{0}$'.format(self.name.lower())
-
-    @property
-    def is_electron(self):
-        """Return ``True`` for ``Flavor.NU_E`` and ``Flavor.NU_E_BAR``."""
-        return self.value in (Flavor.NU_E.value, Flavor.NU_E_BAR.value)
-
-    @property
-    def is_neutrino(self):
-        """Return ``True`` for ``Flavor.NU_E`` and ``Flavor.NU_X``."""
-        return self.value in (Flavor.NU_E.value, Flavor.NU_X.value)
-
-    @property
-    def is_antineutrino(self):
-        return self.value in (Flavor.NU_E_BAR.value, Flavor.NU_X_BAR.value)
         
 @dataclass
 class MixingParameters3Flavor(Mapping):
