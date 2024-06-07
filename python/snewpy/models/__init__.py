@@ -1,7 +1,5 @@
-import logging
 from warnings import warn
 
-from snewpy import get_models, model_path
 from . import ccsn, presn
 
 
@@ -12,18 +10,13 @@ def __getattr__(name):
     raise AttributeError(f"module {__name__} has no attribute {name}")
 
 
-def _init_model(model_name, download=True, download_dir=model_path, **user_param):
+def _init_model(model_name, **user_param):
     """Attempts to retrieve instantiated SNEWPY model using model class name and model parameters.
-    If a model name is valid, but is not found and `download`=True, this function will attempt to download the model
 
     Parameters
     ----------
     model_name : str
         Name of SNEWPY model to import, must exactly match the name of the corresponding model class
-    download : bool
-        Switch for attempting to download model data if the first load attempt failed due to a missing file.
-    download_dir : str
-        Local directory to download model files to.
     user_param : varies
         User-requested model parameters used to initialize the model, if one is found.
         Error checking is performed during model initialization
@@ -57,13 +50,4 @@ def _init_model(model_name, download=True, download_dir=model_path, **user_param
     else:
         raise ValueError(f"Unable to find model with name '{model_name}' in snewpy.models.ccsn or snewpy.models.presn")
 
-    try:
-        return getattr(module, model_name)(**user_param)
-    except FileNotFoundError as e:
-        logger = logging.getLogger()
-        logger.warning(f"Unable to find model {model_name} in {download_dir}")
-        if not download:
-            raise e
-        logger.warning(f"Attempting to download model...")
-        get_models(model_name, download_dir)
-        return getattr(module, model_name)(**user_param)
+    return getattr(module, model_name)(**user_param)

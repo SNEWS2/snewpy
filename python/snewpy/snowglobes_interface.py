@@ -36,7 +36,11 @@ def guess_material(detector):
         mat = 'lead'
     elif detector.startswith('scint'):
         mat = 'scint'
-    else: 
+    elif detector.startswith(('ds20','argo')):
+        mat = 'argon_coh'
+    elif detector.startswith('xe'):
+        mat = 'xenon_coh'
+    else:
         raise ValueError(f'Please provide material for {detector}')
 
     if '_he' in detector:
@@ -46,8 +50,8 @@ def guess_material(detector):
 class SnowglobesData:
     def __init__(self, base_dir:Path='', detectors:str="all", detector_effects=True):
         """Interface to SNOwGLoBES data
-        
-        On construction the code will read: 
+
+        On construction the code will read:
 
         * detectors from `<base_dir>/detector_configurations.dat`,
         * channels from `<base_dir>/channels/channel_*.dat`
@@ -62,7 +66,7 @@ class SnowglobesData:
         base_dir:         Path or None
             Path to the directory where the cross-section, detector, and channel files are located
             If empty, try to get it from ``$SNOWGLOBES`` environment var
-            
+
         detectors: str
             Name of detector. If ``"all"``, will use all detectors supported by SNOwGLoBES.
 
@@ -95,7 +99,7 @@ class SnowglobesData:
         self.detectors = df.set_index('name').T.filter(items=detectors)
         logger.info(f'read masses for detectors {list(self.detectors)}')
         logger.debug(f'detectors: {self.detectors}')
-       
+
     def _load_channels(self, chan_dir):
         self.channels = {}
         self.binning = {}
@@ -112,9 +116,11 @@ class SnowglobesData:
             elif l.startswith('SN_nu'):
                 # Format 2: explicit binning, differs per channel
                 tokens = l.split()[6:]
-                df = pd.read_table(f, sep='\s+', index_col=1, comment='%', names=['name','n','parity','flavor','weight'], usecols=range(1,6))
-                # drop coherent scattering channels, which have different binning
-                df = df[df["name"].str.startswith('coh_') == False]
+                df = pd.read_table(f, sep='\s+', index_col=1, comment='%', names=['name','n','parity','flavor','weight'], usecols=range(1,6))              
+                # drop coherent scattering channels if material is argon_400bins, mixing channels which have different binning
+                if material=='argon_400bins':
+                    df = df[df["name"].str.contains('_coh') == False]
+
             else:
                 # Format 3: no binning specified, use SNOwGLoBES default values
                 tokens = '% 200 0.0005 0.100 200 0.0005 0.100'.split()[1:]
@@ -142,7 +148,7 @@ class SnowglobesData:
                     effs = np.fromiter(f.readlines()[0].split("{")[-1].split("}")[0].split(","), float)
                     res_det[channel]= effs
             result[detector]=res_det
-        self.efficiencies = result 
+        self.efficiencies = result
         logger.info(f'read efficiencies for detectors: {list(self.efficiencies.keys())}')
         logger.debug(f'efficiencies: {self.efficiencies}')
 
@@ -162,7 +168,7 @@ class SnowglobesData:
                         matrix[i, int(elements[0]+0.1):int(elements[1]+0.1)+1] = elements[2:]
                     res_det[channel]= matrix
             result[detector]=res_det
-        self.smearings = result 
+        self.smearings = result
         logger.info(f'read smearing matrices for detectors: {list(self.smearings.keys())}')
         logger.debug(f'smearing matrices: {self.smearings}')
 
@@ -189,9 +195,9 @@ class SimpleRate(SnowglobesData):
         base_dir:         Path or None
             Path to the directory where the cross-section, detector, and channel files are located
             If empty, try to get it from ``$SNOWGLOBES`` environment var
-        """    
+        """
         super().__init__(base_dir, detectors=detectors, detector_effects = detector_effects)
-        
+
     def compute_rates(self, detector:str, material:str, fluxes:np.ndarray, flux_energies:np.ndarray):
         """ Calculate the rates for the given neutrino fluxes interacting in the given detector.
 
@@ -215,14 +221,14 @@ class SimpleRate(SnowglobesData):
             Table with Energy (GeV) as index values,
             and number of events for each energy bin, for all interaction channels.
             Columns are hierarchical: (is_weighted, channel),
-            so one can easily access the desired final table. 
+            so one can easily access the desired final table.
         """
         TargetMass = self.detectors[detector].tgt_mass
         data = {}
 
         #load the binning for the smearing
         binning= self.binning[material]
-        #calculate bin centers 
+        #calculate bin centers
         energies_t = 0.5*(binning['e_true'][1:]+ binning['e_true'][:-1])
         energies_s= 0.5*(binning['e_smear'][1:]+binning['e_smear'][:-1])
         binsize = np.diff(binning['e_true'])
@@ -235,7 +241,7 @@ class SimpleRate(SnowglobesData):
             flux = fluxes[flavor]
             # Cross-section in 10^-38 cm^2
             xsecs = np.interp(np.log(energies_t)/np.log(10), xsec[:, 0], xsec[:, 1+flavor], left=0, right=0) * energies_t
-            # Fluence (flux integrated over time bin) in cm^-2 
+            # Fluence (flux integrated over time bin) in cm^-2
             # (must be divided by 0.2 MeV to compensate the multiplication in generate_time_series)
             fluxs = np.interp(energies_t, flux_energies, flux, left=0, right=0)/2e-4
             # Rate computation
@@ -259,7 +265,7 @@ class SimpleRate(SnowglobesData):
         df.index.rename('E', inplace=True)
         df.columns.rename(['channel','is_smeared','is_weighted'], inplace=True)
         return df.reorder_levels([2,1,0], axis='columns')
-       
+
     def run(self, flux_files, detector:str, material:str=None):
         """ Compute expected rates for given configuration,
         collect the resulting data and return it in `pandas.DataFrame`
@@ -277,10 +283,10 @@ class SimpleRate(SnowglobesData):
         --------
         list(pd.DataFrame or Exception)
             List with the data table for each flux_file, keeping the order.
-            Each table containing Energy (GeV) as index values, 
+            Each table containing Energy (GeV) as index values,
             and number of events for each energy bin, for all interaction channels.
             Columns are hierarchical: (is_weighted, channel),
-            so one can easily access the desired final table. 
+            so one can easily access the desired final table.
             If run failed with exception, this exception will be returned (not raised).
 
         Raises

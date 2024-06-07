@@ -18,18 +18,18 @@ Download Supernova Models
 
 SNEWPY includes a large number of supernova models from different simulation groups.
 Since these models have a size of several 100 MB, they are not included in the initial install.
-Instead, SNEWPY automatically loads these files the first time you use a model. By default,
-they are downloaded to a hidden directory given by ``snewpy.model_path``.
-
-Alternatively, you can run the following command to bulk download model files to the current directory:
+Instead, SNEWPY automatically loads these files the first time you use a model. 
+Alternatively, you can run the following command to bulk download model files:
 
 .. code-block:: console
 
    $ python -c 'import snewpy; snewpy.get_models()'
 
+Files are downloaded to a hidden directory given by ``snewpy.model_path``.
+
 .. note::
 
-   Each model includes a README file with more information, usually including a reference to the corresponding publication
+   The documentation for each model includes more information, including a reference to the corresponding publication
    (e.g. DOI or arXiv identifier). If you use one of these models, please always cite the appropriate reference.
 
 
