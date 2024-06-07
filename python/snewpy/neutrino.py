@@ -8,6 +8,8 @@ from typing import Optional
 import numpy as np
 from collections.abc import Mapping
 from .flavor import ThreeFlavor, FourFlavor
+from .flavor import TwoFlavor as Flavor
+
 class MassHierarchy(IntEnum):
     """Neutrino mass ordering: ``NORMAL`` or ``INVERTED``."""
     NORMAL = 1
