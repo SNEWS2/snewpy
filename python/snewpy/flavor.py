@@ -122,7 +122,13 @@ class FlavorMatrix:
             except Exception as e:
                 raise ValueError(f"Cannot multiply {self._repr_short()} by {other._repr_short()}") from e
         elif hasattr(other, '__rmatmul__'):
-            return other.__rmatmul__(self)        
+            return other.__rmatmul__(self)
+        elif isinstance(other, dict):
+            #try to multiply to the dict[Flavor:flux]
+            #we assume that it has the same Flavor scheme!
+            array =  np.stack([other[flv] for flv in self.flavor_in])
+            result = np.tensordot(self.array, array, axes=[1,0])
+            return {flv:result[n] for n,flv in enumerate(self.flavor_out)}
         raise TypeError(f"Cannot multiply object of {self.__class__} by {other.__class__}")
     #properties
     @property
