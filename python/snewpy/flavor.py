@@ -90,7 +90,7 @@ class FlavorMatrix:
                     self.flavor_out = flavor
                     self.flavor_in = from_flavor or flavor
                     expected_shape = (len(self.flavor_out), len(self.flavor_in))
-                    if(self.array.shape != expected_shape):
+                    if(self.array.shape[:2] != expected_shape):
                         raise ValueError(f"FlavorMatrix array shape {self.array.shape} mismatch expected {expected_shape}")
        
     def _convert_index(self, index):
@@ -109,7 +109,9 @@ class FlavorMatrix:
         return f'{self.__class__.__name__}:<{self.flavor_in.__name__}->{self.flavor_out.__name__}> shape={self.shape}'
         
     def __repr__(self):
-        s=self._repr_short()+'\n'+repr(self.array)
+        s=self._repr_short()
+        if(len(self.shape)==2):
+            s+='\n'+repr(self.array)
         return s
     def __eq__(self,other):
         return self.flavor_in==other.flavor_in and self.flavor_out==other.flavor_out and np.allclose(self.array,other.array)
