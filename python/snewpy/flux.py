@@ -51,7 +51,7 @@ Reference
 .. autoclass:: Axes
 
 """
-from typing import Union, Optional, Set, List
+from typing import Union, Optional
 #from snewpy.neutrino import Flavor
 from snewpy.flavor import FlavorScheme, FlavorMatrix
 from astropy import units as u
@@ -87,11 +87,11 @@ class _ContainerBase:
     unit = None
     def __init__(self, 
                  data: u.Quantity,
-                 flavor: List[FlavorScheme],
+                 flavor: list[FlavorScheme],
                  time: u.Quantity[u.s], 
                  energy: u.Quantity[u.MeV],
                  *,
-                 integrable_axes: Optional[Set[Axes]] = None,
+                 integrable_axes: Optional[set[Axes]] = None,
                  flavor_scheme:Optional[FlavorScheme] = None
     ):
         """A container class storing the physical quantity (flux, fluence, rate...), which depends on flavor, time and energy.
