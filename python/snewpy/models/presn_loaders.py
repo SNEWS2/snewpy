@@ -84,9 +84,12 @@ class Patton_2017(SupernovaModel):
             self.request_file(filename),
             comment="#",
             sep='\s+',
-            names=["time","Enu",Flavor.NU_E,Flavor.NU_E_BAR,Flavor.NU_X,Flavor.NU_X_BAR],
+            names=["time","Enu",Flavor.NU_E,Flavor.NU_E_BAR,Flavor.NU_MU,Flavor.NU_MU_BAR],
             usecols=range(6),
         )
+
+        df[Flavor.NU_TAU] = df[Flavor.NU_MU]
+        df[Flavor.NU_TAU_BAR] = df[Flavor.NU_MU_BAR]
 
         df = df.set_index(["time", "Enu"])
         times = df.index.levels[0].to_numpy()
@@ -115,10 +118,12 @@ class Kato_2017(SupernovaModel):
         times, step = np.loadtxt(self.request_file(f"{path}/total_nue/lightcurve_nue_all.dat"), usecols=[0, 3]).T
 
         file_base = {Flavor.NU_E: 'total_nue/spe_all',
-                 Flavor.NU_E_BAR:'total_nueb/spe_all',
-                 Flavor.NU_X:    'total_nux/spe_sum_mu_nu',
-                 Flavor.NU_X_BAR:'total_nux/spe_sum_mu'
-                 }
+                     Flavor.NU_E_BAR: 'total_nueb/spe_all',
+                     Flavor.NU_MU: 'total_nux/spe_sum_mu_nu',
+                     Flavor.NU_MU_BAR: 'total_nux/spe_sum_mu',
+                     Flavor.NU_TAU: 'total_nux/spe_sum_mu_nu',
+                     Flavor.NU_TAU_BAR: 'total_nux/spe_sum_mu'
+                     }
         for flv,file_base in file_base.items():
             d2NdEdT = []
             for s in step:
