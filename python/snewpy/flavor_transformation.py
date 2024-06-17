@@ -14,7 +14,7 @@ from astropy.coordinates import AltAz
 
 from .neutrino import MassHierarchy
 from .flavor  import TwoFlavor,ThreeFlavor, FourFlavor, FlavorMatrix
-
+from .neutrino import MixingParameters, ThreeFlavorMixingParameters, FourFlavorMixingParameters
 ###############################################################################
 
 class FlavorTransformation(ABC):
@@ -38,9 +38,12 @@ class FlavorTransformation(ABC):
         -------
         p : a [N x N] array or [N x N x len(E) x len(t)] array
             where N is number of neutrino flavors(6 or 8)
-        """    
+        """
         pass
-
+    
+    def apply(self, flux):
+        M = self.get_probabilities(flux.time, flux.energy)
+        return M@flux
 ###############################################################################
 
 class ThreeFlavorTransformation(FlavorTransformation):
@@ -53,11 +56,8 @@ class ThreeFlavorTransformation(FlavorTransformation):
         ----------
         mix_params : ThreeFlavorMixingParameters instance or None
         """
-        if mix_params == None:
-            self.mix_params = ThreeFlavorMixingParameters(MassHierarchy.NORMAL)
-        else:
-            self.mix_params = mix_params
-
+        self.mix_params = mix_params or MixingParameters(MassHierarchy.NORMAL)
+        
     def __str__(self):
         return self.__class__.__name__+"_"+str(self.mix_params.mass_order)
     
@@ -250,9 +250,12 @@ class FourFlavorTransformation:
 class NoTransformation(FlavorTransformation):
     """Survival probabilities for no oscillation case."""
 
-    def get_probabilities(self, t, E):       
+    def get_probabilities(self, t, E):
         p = FlavorMatrix.eye(ThreeFlavor)
         return p
+
+    def apply(self, flux):
+        return flux
 
 ###############################################################################
 
@@ -273,37 +276,9 @@ class CompleteExchange(FlavorTransformation):
 class AdiabaticMSW(ThreeFlavorTransformation):
     """Adiabatic MSW effect."""
 
-    def _get_SNprobabilities(self, t, E): 
-        """neutrino and antineutrino transition probabilities in the supernova
-
-        Parameters
-        ----------
-        t : float or ndarray
-            List of times.
-        E : float or ndarray
-            List of energies.
-
-        Returns
-        -------
-        Pmf : array of 6 x 6 arrays
-        """    
+    def get_probabilities(self, t, E): 
         PHDL = self.Pmf_HighDensityLimit()
-        Pmf = np.empty((6,6,len(E))) 
-
-        for m in range(len(E)):
-            Pmf[:,:,m] = PHDL[:,:]
-
-        return Pmf
-
-    def get_probabilities(self, t, E):
-        Pmf = self._get_SNprobabilities(t,E)
-        D = ThreeFlavorNoEarthMatter(self.mix_params).get_probabilities(t,E)
-
-        p = np.empty((6,6,len(E))) 
-        for m in range(len(E)):
-            p[:,:,m] = D[:,:,m] @ Pmf[:,:,m]
-
-        return p
+        return FlavorMatrix(PHDL,ThreeFlavor)
         
 ###############################################################################
 
@@ -382,7 +357,7 @@ class TwoFlavorDecoherence(ThreeFlavorTransformation):
         return Pmf
 
     def get_probabilities(self, t, E):
-        Pmf = self.get_SNprobabilities(t,E)      
+        Pmf = self.get_SNprobabilities(t,E)
         D = ThreeFlavorNoEarthMatter(self.mix_params).get_probabilities(t,E)        
         
         p = np.empty((6,6,len(E))) 
@@ -936,14 +911,8 @@ class ThreeFlavorNoEarthMatter(ThreeFlavorTransformation):
         D : an array of length of the E array of 6 x 6 matrices
         """
         U = self.mix_params.VacuumMixingMatrix()
-
-        D = np.zeros((6,6,len(E))) # note the first index is a flavor, the second is a mass state
-        for f in ThreeFlavor:
-            for i in range(6):
-                for m in range(len(E)): 
-                    D[f,i,m] = float(np.abs(U[f,i])**2)    
-                    
-        return D
+        P = np.abs(U**2)
+        return FlavorMatrix(P, ThreeFlavor)
 
 ###############################################################################
 
@@ -976,15 +945,8 @@ class FourFlavorNoEarthMatter(FourFlavorTransformation):
         D : an array of 8 x 8 matrices of length equal to the length of the E array
         """
         U = self.mix_params.VacuumMixingMatrix()
-
-        D = np.zeros((8,8,len(E))) # note the first index is a flavor, the second is a mass state
-        for f in FourFlavor:
-            for i in range(8):
-                for m in range(len(E)): 
-                    D[f,i,m] = float(np.abs(U[f,i])**2)    
-                    
-        return D
-
+        P = np.abs(U**2)
+        return FlavorMatrix(P, FourFlavor)
 ###############################################################################
 
 try:
