@@ -51,7 +51,6 @@ Reference
 .. autoclass:: Axes
 
 """
-from typing import Union, Optional
 #from snewpy.neutrino import Flavor
 from snewpy.flavor import FlavorScheme, FlavorMatrix
 from astropy import units as u
@@ -73,8 +72,8 @@ class Axes(IntEnum):
     energy=2, #Energy dimension
     
     @classmethod
-    def get(cls, value:Union['Axes',int,str])->'Axes':
-        "convert string,int or Axes value to Axes"
+    def get(cls, value: 'Axes' | int | str)->'Axes':
+        "convert string, int or Axes value to Axes"
         if isinstance(value,str):
             return cls[value]
         else:
@@ -85,14 +84,14 @@ class _ContainerBase:
     :noindex:
     """
     unit = None
-    def __init__(self, 
+    def __init__(self,
                  data: u.Quantity,
                  flavor: list[FlavorScheme],
-                 time: u.Quantity[u.s], 
+                 time: u.Quantity[u.s],
                  energy: u.Quantity[u.MeV],
                  *,
-                 integrable_axes: Optional[set[Axes]] = None,
-                 flavor_scheme:Optional[FlavorScheme] = None
+                 integrable_axes: set[Axes] | None = None,
+                 flavor_scheme: FlavorScheme | None = None
     ):
         """A container class storing the physical quantity (flux, fluence, rate...), which depends on flavor, time and energy.
 
@@ -204,7 +203,7 @@ class _ContainerBase:
         ]
         return f"{self.__class__.__name__} {self.array.shape} [{self.array.unit}]: <{' x '.join(s)}>"
     
-    def sum(self, axis: Union[Axes,str])->'Container':
+    def sum(self, axis: Axes | str)->'Container':
         """Sum along given axis, producing a Container with the summary quantity.
         
         Parameters
@@ -249,7 +248,7 @@ class _ContainerBase:
         axes[axis] = axes[axis].take([0,-1])
         return Container(array,*axes, integrable_axes = self._integrable_axes.difference({axis}))
 
-    def integrate(self, axis:Union[Axes,str], limits:np.ndarray=None)->'Container':
+    def integrate(self, axis: Axes | str, limits:np.ndarray=None)->'Container':
         """Integrate along given axis, producing a Container with the integral quantity.
         
         Parameters
@@ -317,7 +316,7 @@ class _ContainerBase:
         #choose the proper class
         return Container(array, *axes, integrable_axes=self._integrable_axes.difference({axis}))
 
-    def integrate_or_sum(self, axis:Union[Axes,str])->'Container':
+    def integrate_or_sum(self, axis: Axes | str)->'Container':
         if self.can_integrate(axis):
             return self.integrate(axis)
         else:
