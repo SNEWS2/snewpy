@@ -1,6 +1,7 @@
 import enum
 import numpy as np
 import typing
+import snewpy.utils
 
 class EnumMeta(enum.EnumMeta):
     def __getitem__(cls, key):
@@ -90,7 +91,7 @@ class FlavorMatrix:
                     self.flavor_out = flavor
                     self.flavor_in = from_flavor or flavor
                     expected_shape = (len(self.flavor_out), len(self.flavor_in))
-                    if(self.array.shape != expected_shape):
+                    if(self.array.shape[:2] != expected_shape):
                         raise ValueError(f"FlavorMatrix array shape {self.array.shape} mismatch expected {expected_shape}")
        
     def _convert_index(self, index):
@@ -109,7 +110,9 @@ class FlavorMatrix:
         return f'{self.__class__.__name__}:<{self.flavor_in.__name__}->{self.flavor_out.__name__}> shape={self.shape}'
         
     def __repr__(self):
-        s=self._repr_short()+'\n'+repr(self.array)
+        s=self._repr_short()
+        if(len(self.shape)==2):
+            s+='\n'+repr(self.array)
         return s
     def __eq__(self,other):
         return self.flavor_in==other.flavor_in and self.flavor_out==other.flavor_out and np.allclose(self.array,other.array)
@@ -117,12 +120,22 @@ class FlavorMatrix:
     def __matmul__(self, other):
         if isinstance(other, FlavorMatrix):
             try:
-                data = np.tensordot(self.array, other.array, axes=[1,0])
-                return FlavorMatrix(data, self.flavor_out, from_flavor = other.flavor_in)
+                m0, m1 = self.array, other.array
+                ndims = max(m0.ndim, m1.ndim)
+                m0,m1 = [snewpy.utils.expand_dimensions_to(m, ndim=ndims) for m in [m0,m1]]
+                array = np.einsum('ij...,jk...->ik...',m0,m1)
+                np.tensordot(self.array, other.array, axes=[1,0])
+                return FlavorMatrix(array, self.flavor_out, from_flavor = other.flavor_in)
             except Exception as e:
                 raise ValueError(f"Cannot multiply {self._repr_short()} by {other._repr_short()}") from e
         elif hasattr(other, '__rmatmul__'):
-            return other.__rmatmul__(self)        
+            return other.__rmatmul__(self)
+        elif isinstance(other, dict):
+            #try to multiply to the dict[Flavor:flux]
+            #we assume that it has the same Flavor scheme!
+            array =  np.stack([other[flv] for flv in self.flavor_in])
+            result = np.tensordot(self.array, array, axes=[1,0])
+            return {flv:result[n] for n,flv in enumerate(self.flavor_out)}
         raise TypeError(f"Cannot multiply object of {self.__class__} by {other.__class__}")
     #properties
     @property
@@ -131,6 +144,10 @@ class FlavorMatrix:
     @property
     def flavor(self):
         return self.flavor_out
+    @property
+    def T(self):
+        "transposed version of the matrix: reverse the flavor dimensions"
+        return FlavorMatrix(array = self.swapaxes(0,1), flavor = self.flavor_in, from_flavor=self.flavor_out)
         
     @classmethod
     def eye(cls, flavor:FlavorScheme, from_flavor:FlavorScheme = None):
@@ -138,7 +155,12 @@ class FlavorMatrix:
         shape = (len(from_flavor), len(flavor))
         data = np.eye(*shape)
         return cls(data, flavor, from_flavor)
-
+    @classmethod
+    def zeros(cls, flavor:FlavorScheme, from_flavor:FlavorScheme = None):
+        from_flavor = from_flavor or flavor
+        shape = (len(from_flavor), len(flavor))
+        data = np.zeros(shape)
+        return cls(data, flavor, from_flavor)
     @classmethod
     def from_function(cls, flavor:FlavorScheme, from_flavor:FlavorScheme = None):
         """A decorator for creating the flavor matrix from the given function"""
