@@ -12,7 +12,6 @@ from snewpy.neutrino import Flavor
 from snewpy.flux import Container
 from astropy import units as u
 from warnings import warn
-from typing import Dict
 from typing import Callable
 import scipy.stats as st
 
@@ -245,7 +244,7 @@ class DetectionChannel:
 class Detector:
     """A detector configuration for the rate calculation. """
     
-    def __init__(self, name:str, mass: u.Quantity, channels: Dict[str,DetectionChannel]):
+    def __init__(self, name:str, mass: u.Quantity, channels: dict[str,DetectionChannel]):
         """
         Parameters
         ----------
@@ -253,7 +252,7 @@ class Detector:
             Detector name
         mass: Quantity[mass]
             Detector mass
-        channels: Dict[str,DetectionChannel]
+        channels: dict[str,DetectionChannel]
             Dictionary of detection channels in the format {name:channel}
     
         Note
@@ -267,7 +266,7 @@ class Detector:
     def __repr__(self):
         return f'Detector(name="{self.name}", mass={self.mass}, channels={list(self.channels)})'
     
-    def run(self, flux:Container, detector_effects:bool=True)->Dict[str, Container]:
+    def run(self, flux:Container, detector_effects:bool=True)->dict[str, Container]:
         """Calculate the interaction rates for all channels in the detector.
 
         Parameters
@@ -279,7 +278,7 @@ class Detector:
 
         Returns
         -------
-        Dict[str,Container]
+        dict[str,Container]
             Event rate for each detection channel in as dictionary {channel name: event rate}
         """
         result = {}
@@ -401,7 +400,7 @@ class RateCalculator(SnowglobesData):
                         mass=self.detectors[name].mass<<u.kt,
                         channels=channels
                        )
-    def run(self, flux:Container, detector:str, material:str=None, detector_effects:bool = True)->Dict[str, Container]:
+    def run(self, flux:Container, detector:str, material:str=None, detector_effects:bool = True)->dict[str, Container]:
         """Run the rate calculation for the given detector.    
         
         Parameters
