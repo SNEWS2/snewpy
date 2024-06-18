@@ -51,7 +51,8 @@ Reference
 .. autoclass:: Axes
 
 """
-#from snewpy.neutrino import Flavor
+from typing import Union
+# from snewpy.neutrino import Flavor
 from snewpy.flavor import FlavorScheme, FlavorMatrix
 from astropy import units as u
 
@@ -72,7 +73,7 @@ class Axes(IntEnum):
     energy=2, #Energy dimension
     
     @classmethod
-    def get(cls, value: 'Axes' | int | str)->'Axes':
+    def get(cls, value: Union['Axes', int, str])->'Axes':
         "convert string, int or Axes value to Axes"
         if isinstance(value,str):
             return cls[value]
