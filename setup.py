@@ -35,7 +35,7 @@ if os.path.exists('README.md'):
 # See https://setuptools.readthedocs.io/en/latest/userguide/entry_point.html
 # setup_keywords['entry_points'] = {'console_scripts': ['to_snowglobes = snewpy.to_snowglobes:generate_time_series', ], },
 setup_keywords['provides'] = [setup_keywords['name']]
-setup_keywords['python_requires'] = '>=3.9'
+setup_keywords['python_requires'] = '>=3.10'
 setup_keywords['zip_safe'] = False
 setup_keywords['packages'] = find_packages('python')
 setup_keywords['package_dir'] = {'': 'python'}
