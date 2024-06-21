@@ -173,14 +173,14 @@ class SupernovaModel(ABC):
             transformation_matrix[NU_E_BAR, NU_TAU_BAR] * initial_spectra[NU_TAU_BAR]
 
         transformed_spectra[NU_MU_BAR] = \
-            transformation_matrix[NU_MU, NU_E_BAR] * initial_spectra[NU_E_BAR] + \
-            transformation_matrix[NU_MU, NU_MU_BAR] * initial_spectra[NU_MU_BAR] + \
-            transformation_matrix[NU_MU, NU_TAU_BAR] * initial_spectra[NU_TAU_BAR]
-
+            transformation_matrix[NU_MU_BAR, NU_E_BAR] * initial_spectra[NU_E_BAR] + \
+            transformation_matrix[NU_MU_BAR, NU_MU_BAR] * initial_spectra[NU_MU_BAR] + \
+            transformation_matrix[NU_MU_BAR, NU_TAU_BAR] * initial_spectra[NU_TAU_BAR]
+            
         transformed_spectra[NU_TAU_BAR] = \
-            transformation_matrix[NU_TAU, NU_E_BAR] * initial_spectra[NU_E_BAR] + \
-            transformation_matrix[NU_TAU, NU_MU_BAR] * initial_spectra[NU_MU_BAR] + \
-            transformation_matrix[NU_TAU, NU_TAU_BAR] * initial_spectra[NU_TAU_BAR]
+            transformation_matrix[NU_TAU_BAR, NU_E_BAR] * initial_spectra[NU_E_BAR] + \
+            transformation_matrix[NU_TAU_BAR, NU_MU_BAR] * initial_spectra[NU_MU_BAR] + \
+            transformation_matrix[NU_TAU_BAR, NU_TAU_BAR] * initial_spectra[NU_TAU_BAR]
 
         return transformed_spectra    
 
