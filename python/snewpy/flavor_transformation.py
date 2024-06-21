@@ -407,7 +407,7 @@ class NonAdiabaticMSWH(ThreeFlavorTransformation):
         Pmf : 6 x 6 array
         """            
         PHDL = self.Pmf_HighDensityLimit()
-        Pmf = np.empty((r,6,len(E)))
+        Pmf = np.empty((6,6,len(E)))
 
         for m in range(len(E)):
             Pmf[:,:,m] = PHDL[:,:]
