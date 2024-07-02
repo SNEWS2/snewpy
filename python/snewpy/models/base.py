@@ -253,25 +253,30 @@ class PinchedModel(SupernovaModel):
         metadata: dict
             Model parameters dict
         """
+        #- Case 1: nu_x is defined, so define nu_mu and nu_tau flavors.
         if 'L_NU_X' in simtab.colnames:
             for val in ['L','E','ALPHA']:
+                #- Define nu_mu and nu_tau luminosities/energies/pinch values.
                 simtab[f'{val}_NU_MU'] = simtab[f'{val}_NU_X']
                 simtab[f'{val}_NU_TAU'] = simtab[f'{val}_NU_X']
-                if 'L_NU_X_BAR' in simtab.colnames:
-                    for val in ['L','E','ALPHA']:
-                        simtab[f'{val}_NU_MU_BAR'] = simtab[f'{val}_NU_X_BAR']
-                        simtab[f'{val}_NU_TAU_BAR'] = simtab[f'{val}_NU_X_BAR']
-                else: 
-                    for val in ['L','E','ALPHA']:
-                        simtab[f'{val}_NU_MU_BAR'] = simtab[f'{val}_NU_MU']
-                        simtab[f'{val}_NU_TAU_BAR'] = simtab[f'{val}_NU_TAU']
 
-        if not 'L_NU_MU_BAR' in simtab.colnames:
-            for val in ['L','E','ALPHA']:
-                simtab[f'{val}_NU_MU_BAR'] = simtab[f'{val}_NU_MU']
-        if not 'L_NU_TAU_BAR' in simtab.colnames:
-            for val in ['L','E','ALPHA']:
-                simtab[f'{val}_NU_TAU_BAR'] = simtab[f'{val}_NU_TAU']
+                #- nu_x_bar values are defined:
+                if 'L_NU_X_BAR' in simtab.colnames:
+                    simtab[f'{val}_NU_MU_BAR'] = simtab[f'{val}_NU_X_BAR']
+                    simtab[f'{val}_NU_TAU_BAR'] = simtab[f'{val}_NU_X_BAR']
+                #- nu_x_bar values are undefined; use nu_x.
+                else:
+                    simtab[f'{val}_NU_MU_BAR'] = simtab[f'{val}_NU_MU']
+                    simtab[f'{val}_NU_TAU_BAR'] = simtab[f'{val}_NU_TAU']
+        #- Case 2: nu_mu and nu_tau already defined in model.
+        else:
+            #- In case antineutrino fluxes not defined:
+            if not 'L_NU_MU_BAR' in simtab.colnames:
+                for val in ['L','E','ALPHA']:
+                    simtab[f'{val}_NU_MU_BAR'] = simtab[f'{val}_NU_MU']
+            if not 'L_NU_TAU_BAR' in simtab.colnames:
+                for val in ['L','E','ALPHA']:
+                    simtab[f'{val}_NU_TAU_BAR'] = simtab[f'{val}_NU_TAU']
 
         # Get grid of model times.
         time = simtab['TIME'] << u.s
