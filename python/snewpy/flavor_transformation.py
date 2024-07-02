@@ -12,7 +12,7 @@ from astropy import units as u
 from astropy import constants as c
 from astropy.coordinates import AltAz
 
-from .neutrino import MassHierarchy, ThreeFlavor, FourFlavor, MixingParameters
+from .neutrino import MassHierarchy, ThreeFlavor, FourFlavor, MixingParameters, ThreeFlavorMixingParameters, parameter_presets
 
 ###############################################################################
 
@@ -50,7 +50,9 @@ class ThreeFlavorTransformation(FlavorTransformation):
         mix_params : ThreeFlavorMixingParameters instance or None
         """
         if mix_params == None:
-            self.mix_params = ThreeFlavorMixingParameters(MassHierarchy.NORMAL)
+            self.mix_params = ThreeFlavorMixingParameters(
+                                **MixingParameters(mass_order=MassHierarchy.NORMAL)
+                              )  
         else:
             self.mix_params = mix_params
 
