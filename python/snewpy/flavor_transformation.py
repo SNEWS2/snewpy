@@ -172,7 +172,7 @@ class FourFlavorTransformation:
         M2[2+4,2+4] = self.mix_params.dm31_2.value 
         M2[3+4,3+4] = self.mix_params.dm41_2.value 
 
-        U = VacuumMixingMatrix()
+        U = self.mix_params.VacuumMixingMatrix()
 
         HV = np.zeros((6,6,len(E)))        
         for m in range(len(E)):
