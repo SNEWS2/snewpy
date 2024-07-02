@@ -174,7 +174,7 @@ class FourFlavorTransformation:
 
         U = self.mix_params.VacuumMixingMatrix()
 
-        HV = np.zeros((6,6,len(E)))        
+        HV = np.zeros((8,8,len(E)))        
         for m in range(len(E)):
             HV[:,:,m] = U @ M2 @ np.conjugate(np.transpose(U)) / ( 2 * E[m] )
 
