@@ -133,7 +133,24 @@ class FlavorMatrix:
     
     def __eq__(self,other):
         return self.flavor_in==other.flavor_in and self.flavor_out==other.flavor_out and np.allclose(self.array,other.array)
-                
+    @property
+    def real(self):
+        return FlavorMatrix(self.array.real, self.flavor_out, from_flavor = self.flavor_in)
+    @property
+    def imag(self):
+        return FlavorMatrix(self.array.imag, self.flavor_out, from_flavor = self.flavor_in)
+    
+    def abs(self):
+        return FlavorMatrix(np.abs(self.array), self.flavor_out, from_flavor = self.flavor_in)
+    def abs2(self):
+        return FlavorMatrix(np.abs(self.array**2), self.flavor_out, from_flavor = self.flavor_in)
+        
+    def __mul__(self, other):
+        if isinstance(other, FlavorMatrix):
+            if not ((other.flavor_in==self.flavor_in)and(other.flavor_out==self.flavor_out)):
+                raise TypeError(f"Cannot multiply matrices with different flavor schemes: {self._repr_short()} and {other._repr_short()}")
+            other = other.array
+        return FlavorMatrix(self.array*other, self.flavor_out, from_flavor = self.flavor_in)
     def __matmul__(self, other):
         if isinstance(other, FlavorMatrix):
             assert self.flavor_in==other.flavor_out, f"Incompatible spaces {self.flavor_in}!={other.flavor_out}"
@@ -174,7 +191,7 @@ class FlavorMatrix:
         "apply complex conjugate"
         return FlavorMatrix(array = self.array.conjugate(), 
                             flavor = self.flavor_out, from_flavor=self.flavor_in)
-        
+
     @classmethod
     def eye(cls, flavor:FlavorScheme, from_flavor:FlavorScheme = None):
         from_flavor = from_flavor or flavor
