@@ -138,7 +138,7 @@ class ThreeFlavorMixingParameters(Mapping):
         """A complex rotation matrix. N.B. the minus sign in the complex exponential matches PDG convention"""
         theta = (theta<<u.radian).value
         phase = (phase<<u.radian).value
-        V = np.ones((6,6),dtype = 'complex_')
+        V = np.eye(6,dtype = 'complex_')
         V[j,j] = V[i,i] = np.cos(theta)
         V[i,j] = np.sin(theta) * np.exp(-1j*phase)
         V[j,i] = -np.conjugate(V[i,j])
@@ -147,7 +147,7 @@ class ThreeFlavorMixingParameters(Mapping):
         return V
 
     def Pmf_HighDensityLimit(self):
-         """ The probability that a given flavor state is a particular matter state in the 
+        """ The probability that a given flavor state is a particular matter state in the 
         infinite density limit.  
 
         Returns
@@ -411,5 +411,7 @@ parameter_presets = {
 }
    
 
-def MixingParameters(mass_order:MassHierarchy=MassHierarchy.NORMAL, version:str='NuFIT5.0'):
+def MixingParameters(mass_order:MassHierarchy|str='NORMAL', version:str='NuFIT5.0'):
+    if isinstance(mass_order,str):
+        mass_order = MassHierarchy[mass_order]
     return parameter_presets[version][mass_order]
