@@ -119,6 +119,7 @@ class FlavorMatrix:
                 
     def __matmul__(self, other):
         if isinstance(other, FlavorMatrix):
+            assert self.flavor_in==other.flavor_out, f"Incompatible spaces {self.flavor_in}!={other.flavor_out}"
             try:
                 m0, m1 = self.array, other.array
                 ndims = max(m0.ndim, m1.ndim)
@@ -146,8 +147,16 @@ class FlavorMatrix:
         return self.flavor_out
     @property
     def T(self):
+        return self.transpose()
+    
+    def transpose(self):
         "transposed version of the matrix: reverse the flavor dimensions"
-        return FlavorMatrix(array = self.swapaxes(0,1), flavor = self.flavor_in, from_flavor=self.flavor_out)
+        return FlavorMatrix(array = self.array.swapaxes(0,1), 
+                            flavor = self.flavor_in, from_flavor=self.flavor_out)
+    def conjugate(self):
+        "apply complex conjugate"
+        return FlavorMatrix(array = self.array.conjugate(), 
+                            flavor = self.flavor_out, from_flavor=self.flavor_in)
         
     @classmethod
     def eye(cls, flavor:FlavorScheme, from_flavor:FlavorScheme = None):
