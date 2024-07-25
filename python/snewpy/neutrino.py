@@ -164,13 +164,13 @@ class FourFlavorMixingParameters(ThreeFlavorMixingParameters):
     """
     #sterile neutrino mixing angles. 
     theta14: u.Quantity[u.deg] = 0<<u.deg
-    theta24: Optional[u.Quantity[u.deg]] = 0<<u.deg
-    theta34: Optional[u.Quantity[u.deg]] = 0<<u.deg
+    theta24: u.Quantity[u.deg]|None = 0<<u.deg
+    theta34: u.Quantity[u.deg]|None = 0<<u.deg
 
     #sterile CP violating phases
-    delta12: Optional[u.Quantity[u.deg]] = 0<<u.deg
+    delta12: u.Quantity[u.deg]|None = 0<<u.deg
     #delta13: u.Quantity[u.deg] '''same as deltaCP in 3Flavor Mixing'''
-    delta24: Optional[u.Quantity[u.deg]] = 0<<u.deg
+    delta24: u.Quantity[u.deg]|None = 0<<u.deg
 
     #sterile neutrino mass squared differences
     dm41_2: u.Quantity[u.eV**2] = 0<<u.eV**2
