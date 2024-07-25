@@ -22,7 +22,7 @@ class FlavorTransformation(ABC):
 
     def __str__(self):
         return self.__class__.__name__
-        
+    
     @abstractmethod
     def get_probabilities(self, t, E)->FlavorMatrix:
         """neutrino and antineutrino transition probabilities.
@@ -44,6 +44,9 @@ class FlavorTransformation(ABC):
     def apply(self, flux):
         M = self.get_probabilities(flux.time, flux.energy)
         return M@flux
+        
+    def P(self, t, E):
+        return self.get_probabilities(t,E)
 ###############################################################################
 
 class ThreeFlavorTransformation(FlavorTransformation):
@@ -60,81 +63,6 @@ class ThreeFlavorTransformation(FlavorTransformation):
         
     def __str__(self):
         return self.__class__.__name__+"_"+str(self.mix_params.mass_order)
-    
-    def Pmf_HighDensityLimit(self):
-        """ The probability that a given flavor state is a particular matter state in the 
-        infinite density limit.  
-
-        Returns
-        -------
-        6 x 6 matrix
-        """
-        PmfHDL = np.zeros((6,6))
-
-        NU_E, NU_MU, NU_TAU, NU_E_BAR, NU_MU_BAR, NU_TAU_BAR = \
-             ThreeFlavor.NU_E, ThreeFlavor.NU_MU, ThreeFlavor.NU_TAU, \
-             ThreeFlavor.NU_E_BAR, ThreeFlavor.NU_MU_BAR, ThreeFlavor.NU_TAU_BAR
-
-        M2 = np.zeros((6,6)) 
-        M2[1,1] = self.mix_params.dm21_2.value 
-        M2[2,2] = self.mix_params.dm31_2.value 
-        M2[1+3,1+3] = self.mix_params.dm21_2.value 
-        M2[2+3,2+3] = self.mix_params.dm31_2.value 
-
-        U = self.mix_params.VacuumMixingMatrix()
-
-        HV = U @ M2 @ np.conjugate(np.transpose(U))
-
-        T = np.real( ( HV[NU_MU,NU_MU] + HV[NU_TAU,NU_TAU] ) / 2 )
-        D = np.abs( HV[NU_MU,NU_TAU] )**2 - np.abs( HV[NU_MU,NU_MU]-HV[NU_TAU,NU_TAU] )**2 / 4 
-
-        Tbar = np.real( ( HV[NU_MU_BAR,NU_MU_BAR] + HV[NU_TAU_BAR,NU_TAU_BAR] ) / 2 )
-        Dbar = np.abs( HV[NU_MU_BAR,NU_TAU_BAR] )**2 \
-              -np.abs( HV[NU_MU_BAR,NU_MU_BAR]-HV[NU_TAU_BAR,NU_TAU_BAR] )**2 / 4 
-
-        """ The NMO case. Matter state 3 is the electron neutrino, matter state 1bar is the electron 
-        antineutrino. 
-        """
-        if self.mix_params.mass_order == MassHierarchy.NORMAL:
-            k1 = T - np.sqrt(D)
-            k2 = T + np.sqrt(D)
-            k2bar = Tbar - np.sqrt(Dbar)
-            k3bar = Tbar + np.sqrt(Dbar)
-
-            PmfHDL[0,NU_MU] = ( np.real(HV[NU_TAU,NU_TAU]) - k1 ) / ( k2 - k1 )
-            PmfHDL[0,NU_TAU] = ( np.real(HV[NU_MU,NU_MU]) - k1 ) / ( k2 - k1 )
-            PmfHDL[1,NU_MU] = ( np.real(HV[NU_TAU,NU_TAU]) - k2 ) / ( k1 - k2 )
-            PmfHDL[1,NU_TAU] = ( np.real(HV[NU_MU,NU_MU]) - k2 ) / ( k1 - k2 )
-            PmfHDL[2,NU_E] = 1             
-
-            PmfHDL[3,NU_E_BAR] = 1
-            PmfHDL[4,NU_MU_BAR] = ( np.real(HV[NU_TAU_BAR,NU_TAU_BAR]) - k2bar ) / ( k3bar - k2bar )
-            PmfHDL[4,NU_TAU_BAR] = ( np.real(HV[NU_MU_BAR,NU_MU_BAR]) - k2bar ) / ( k3bar - k2bar )
-            PmfHDL[5,NU_MU_BAR] = ( np.real(HV[NU_TAU_BAR,NU_TAU_BAR]) - k3bar ) / ( k2bar - k3bar )
-            PmfHDL[5,NU_TAU_BAR] = ( np.real(HV[NU_MU_BAR,NU_MU_BAR]) - k3bar ) / ( k2bar - k3bar )
-
-        """ The IMO case. Matter state 2 is the electron neutrino, matter state 3bar is the electron 
-        antineutrino. 
-        """
-        if self.mix_params.mass_order == MassHierarchy.INVERTED:
-            k1 = T + np.sqrt(D)
-            k3 = T - np.sqrt(D)
-            k1bar = Tbar - np.sqrt(Dbar)
-            k2bar = Tbar + np.sqrt(Dbar)
-
-            PmfHDL[0,NU_MU] = ( np.real(HV[NU_TAU,NU_TAU]) - k1 ) / ( k3 - k1 )
-            PmfHDL[0,NU_TAU] = ( np.real(HV[NU_MU,NU_MU]) - k1 ) / ( k3 - k1 )
-            PmfHDL[1,NU_E] = 1             
-            PmfHDL[2,NU_MU] = ( np.real(HV[NU_TAU,NU_TAU]) - k3 ) / ( k1 - k3 )
-            PmfHDL[2,NU_TAU] = ( np.real(HV[NU_MU,NU_MU]) - k3 ) / ( k1 - k3 )
-
-            PmfHDL[3,NU_MU_BAR] = ( np.real(HV[NU_TAU_BAR,NU_TAU_BAR]) - k1bar ) / ( k2bar - k1bar )
-            PmfHDL[3,NU_TAU_BAR] = ( np.real(HV[NU_MU_BAR,NU_MU_BAR]) - k1bar ) / ( k2bar - k1bar )            
-            PmfHDL[4,NU_MU_BAR] = ( np.real(HV[NU_TAU_BAR,NU_TAU_BAR]) - k2bar ) / ( k1bar - k2bar )
-            PmfHDL[4,NU_TAU_BAR] = ( np.real(HV[NU_MU_BAR,NU_MU_BAR]) - k2bar ) / ( k1bar - k2bar )
-            PmfHDL[5,NU_E_BAR] = 1            
-
-        return PmfHDL
 
 ###############################################################################
 
@@ -255,6 +183,7 @@ class NoTransformation(FlavorTransformation):
         return p
 
     def apply(self, flux):
+        """This transformation returns the object without transform"""
         return flux
 
 ###############################################################################
@@ -277,7 +206,7 @@ class AdiabaticMSW(ThreeFlavorTransformation):
     """Adiabatic MSW effect."""
 
     def get_probabilities(self, t, E): 
-        PHDL = self.Pmf_HighDensityLimit()
+        PHDL = self.mix_params.Pmf_HighDensityLimit()
         return FlavorMatrix(PHDL,ThreeFlavor)
         
 ###############################################################################
