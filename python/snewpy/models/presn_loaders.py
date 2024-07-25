@@ -41,7 +41,7 @@ class Odrzywolek_2010(SupernovaModel):
     def __init__(self, filename:str):
         df = pd.read_csv(
             self.request_file(filename),
-            sep='\s+',
+            sep=r'\s+',
             skiprows=1,
             usecols=[1,6,7,8],
             names=["time","a","alpha","b"],
@@ -83,7 +83,7 @@ class Patton_2017(SupernovaModel):
         df = pd.read_csv(
             self.request_file(filename),
             comment="#",
-            sep='\s+',
+            sep=r'\s+',
             names=["time","Enu",Flavor.NU_E,Flavor.NU_E_BAR,Flavor.NU_MU,Flavor.NU_MU_BAR],
             usecols=range(6),
         )
