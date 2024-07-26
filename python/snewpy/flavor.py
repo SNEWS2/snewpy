@@ -207,7 +207,8 @@ class FlavorMatrix:
     @classmethod
     def from_function(cls, flavor:FlavorScheme, from_flavor:FlavorScheme = None):
         """A decorator for creating the flavor matrix from the given function"""
-        from_flavor = from_flavor or flavor
+        if from_flavor is None: 
+            from_flavor = flavor
         def _decorator(function):
             data = [[function(f1,f2)
                      for f2 in from_flavor]
