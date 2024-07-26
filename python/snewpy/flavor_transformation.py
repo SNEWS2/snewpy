@@ -52,7 +52,7 @@ class FlavorTransformation(ABC):
 class ThreeFlavorTransformation(FlavorTransformation):
     """Base class defining common data and methods for all three flavor transformations"""
 
-    def __init__(self, mix_params):
+    def __init__(self, mix_params=None):
         """Initialize flavor transformation
         
         Parameters
@@ -205,95 +205,58 @@ class CompleteExchange(FlavorTransformation):
 class AdiabaticMSW(ThreeFlavorTransformation):
     """Adiabatic MSW effect."""
 
-    def get_probabilities(self, t, E): 
-        PHDL = self.mix_params.Pmf_HighDensityLimit()
-        return FlavorMatrix(PHDL,ThreeFlavor)
+    def get_probabilities(self, t, E):
+        Pmf = self.mix_params.Pmf_HighDensityLimit()
+         
+        D = self.mix_params.VacuumMixingMatrix().abs2()
+        return D@Pmf
+        
         
 ###############################################################################
 
 class NonAdiabaticMSWH(ThreeFlavorTransformation):
-    """Nonadiabatic MSW H resonance"""
-
-    def _get_SNprobabilities(self, t, E): 
-        """neutrino and antineutrino transition probabilities in the supernova
-
-        Parameters
-        ----------
-        t : float or ndarray
-            List of times.
-        E : float or ndarray
-            List of energies.
-
-        Returns
-        -------
-        Pmf : 6 x 6 array
-        """
-        PHDL = self.Pmf_HighDensityLimit()
-        Pmf = np.empty((r,6,len(E)))
-
-        for m in range(len(E)):
-            Pmf[:,:,m] = PHDL[:,:]
-            if self.mix_params.mass_order == MassHierarchy.NORMAL:
-                for f in ThreeFlavor:
-                    Pmf[1,f,m], Pmf[2,f,m] = Pmf[2,f,m], Pmf[1,f,m]
-            if self.mix_params.mass_order == MassHierarchy.INVERTED:
-                for f in ThreeFlavor:
-                    Pmf[3,f,m], Pmf[5,f,m] = Pmf[5,f,m], Pmf[3,f,m]
-
-        return Pmf
-
-    def get_probabilities(self, t, E):         
-        Pmf = self._get_SNprobabilities(t,E)      
-        D = ThreeFlavorNoEarthMatter(self.mix_params).get_probabilities(t,E)        
+    """Nonadiabatic MSW H resonance. 
+    The NonAdiabaticMSWH transformation assumes that the H resonance mixing is nonadiabatic.
+    This case is relevant when a shock is present at the H resonance densities (Schirato & Fuller 2002).
+    
+    For the NMO the H resonance occurs in the neutrinos (Kneller & McLaughlin 2009) between ‘matter’
+    states ν2 and ν3.
+    In the IMO the H resonance mixes the antineutrino matter states ν̄1 and ν̄3.
+    """
+    def get_probabilities(self, t, E):
+        Pmf = self.mix_params.Pmf_HighDensityLimit()
+        if self.mix_params.mass_order == MassHierarchy.NORMAL:       
+            Pmf[['NU_2','NU_3'],:] = Pmf[['NU_3','NU_2'],:]
+        else:
+            Pmf[['NU_1_BAR','NU_3_BAR'],:] = Pmf[['NU_3_BAR','NU_1_BAR'],:]
         
-        p = np.empty((6,6,len(E))) 
-        for m in range(len(E)):
-            p[:,:,m] = D[:,:,m] @ Pmf[:,:,m]
-        
-        return p
+        D = self.mix_params.VacuumMixingMatrix().abs2()
+        return D@Pmf
 
 ###############################################################################
 
 class TwoFlavorDecoherence(ThreeFlavorTransformation):
-    """equal mixing of whatever two matter states form the MSW H resonance"""
+    """equal mixing of whatever two matter states form the MSW H resonance.
+
+    The TwoFlavorDecoherence transformation is relevant when the size of the density fluctuations
+    is ≲ 10% for densities around the H resonance density —see Kneller (2010); Kneller & Mauney (2013). 
+    This prescription models the effect of the turbulence as leading to 50% mixing between the
+    matter states which participate in the H resonance. 
     
-    def get_SNprobabilities(self, t, E): 
-        """neutrino and antineutrino transition probabilities.
-
-        Parameters
-        ----------
-        t : float or ndarray
-            List of times.
-        E : float or ndarray
-            List of energies.
-
-        Returns
-        -------
-        p : 6 x 6 array or array of 6 x 6 arrays 
-        """    
-        PHDL = self.Pmf_HighDensityLimit(E)  
-        Pmf = np.empty((6,6,len(E)))
-
-        for m in range(len(E)):
-            Pmf[:,:,m] = PHDL[:,:]
-            if self.mix_params.mass_order == MassHierarchy.NORMAL:
-                for f in ThreeFlavor:
-                    Pmf[1,f,m], Pmf[2,f,m] = 0.5 * ( Pmf[1,f,m] + Pmf[2,f,m] ), 0.5 * ( Pmf[1,f,m] + Pmf[2,f,m] )
-            if self.mix_params.mass_order == MassHierarchy.INVERTED:
-                for f in ThreeFlavor:
-                    Pmf[3,f,m], Pmf[5,f,m] = 0.5 * ( Pmf[3,f,m] + Pmf[5,f,m] ), 0.5 * ( Pmf[3,f,m] + Pmf[5,f,m] )
-
-        return Pmf
-
+    In the NMO this is ν2 and ν3,
+    For the IMO, the H resonance occurs in the antineutrinos between antineutrino matter states ν̄1
+and ν̄3. 
+    """
+    
     def get_probabilities(self, t, E):
-        Pmf = self.get_SNprobabilities(t,E)
-        D = ThreeFlavorNoEarthMatter(self.mix_params).get_probabilities(t,E)        
-        
-        p = np.empty((6,6,len(E))) 
-        for m in range(len(E)):
-            p[:,:,m] = D[:,:,m] @ Pmf[:,:,m]
-        
-        return p
+        Pmf = self.mix_params.Pmf_HighDensityLimit()
+        if self.mix_params.mass_order == MassHierarchy.NORMAL:
+            Pmf['NU_2']=Pmf['NU_3']=0.5*(Pmf['NU_2']+Pmf['NU_3'])
+        else:
+            Pmf['NU_1_BAR']=Pmf['NU_3_BAR']=0.5*(Pmf['NU_1_BAR']+Pmf['NU_3_BAR'])
+
+        D = self.mix_params.VacuumMixingMatrix().abs2()
+        return D@Pmf
 
 ###############################################################################
 
@@ -307,27 +270,12 @@ class ThreeFlavorDecoherence(ThreeFlavorTransformation):
     def __str__(self):
         return f'ThreeFlavorDecoherence'
 
-    def get_SNprobabilities(self, t, E): 
-        """neutrino and antineutrino transition probabilities.
-
-        Parameters
-        ----------
-        t : float or ndarray
-            List of times.
-        E : float or ndarray
-            List of energies.
-
-        Returns
-        -------
-        p : 6 x 6 array or array of 6 x 6 arrays 
-        """    
-        p = np.ones((6,6,len(E))) / 3
-
-        return p
-
     def get_probabilities(self, t, E): 
         """Equal mixing so Earth matter has no effect"""
-        return self.get_SNprobabilities(t,E) 
+        @FlavorMatrix.from_function(ThreeFlavor)
+        def Prob_ff(f1,f2):
+            return (f1.is_neutrino==f2.is_neutrino)*1/3.
+        return Prob_ff
 
 ###############################################################################
 
@@ -361,20 +309,9 @@ class MSWEffect(ThreeFlavorTransformation):
         rmax : the ending radius of the calculation. rmax will be corrected by SNOSHEWS to the maximum radius of the profile if rmax is greater than that value
         """
         self.SNprofile = SNprofile
-     
-        super().__init__(mix_params) 
-
-        if rmin == None:
-            rmin = 0 
-        else: 
-            self.rmin = rmin
-
-        if rmax == None:
-            rmax = 1e99 
-        else: 
-            self.rmax = rmax
-
-        super().__init__(mix_params)        
+        super().__init__(mix_params)
+        self.rmin = rmin or 0
+        self.rmax = rmax or 1e99
 
     def __str__(self):
         return f'MSW_' + str(self.mix_params.mass_order)
@@ -432,7 +369,7 @@ class MSWEffect(ThreeFlavorTransformation):
         pSN = SNOSHEWS.Run(ID)
 
         # restructure the results
-        Pmf = np.zeros((6,6,ID.NE))
+        Pmf = FlavorMatrix(np.zeros((6,6,ID.NE))
 
         for m in range(ID.NE):
             Pmf[0,ThreeFlavor.NU_E,m] = pSN[0][m][0][0] 
