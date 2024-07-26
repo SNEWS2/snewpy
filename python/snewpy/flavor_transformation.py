@@ -43,6 +43,7 @@ class FlavorTransformation(ABC):
     
     def apply(self, flux):
         M = self.get_probabilities(flux.time, flux.energy)
+        M = (flux.flavor_scheme<<M.flavor_out)@M@(M.flavor_in<<flux.flavor_scheme)
         return M@flux
         
     def P(self, t, E):
@@ -369,7 +370,7 @@ class MSWEffect(ThreeFlavorTransformation):
         pSN = SNOSHEWS.Run(ID)
 
         # restructure the results
-        Pmf = FlavorMatrix(np.zeros((6,6,ID.NE))
+        Pmf = FlavorMatrix(np.zeros((6,6,ID.NE)))
 
         for m in range(ID.NE):
             Pmf[0,ThreeFlavor.NU_E,m] = pSN[0][m][0][0] 
