@@ -67,113 +67,18 @@ class ThreeFlavorTransformation(FlavorTransformation):
 
 ###############################################################################
 
-class FourFlavorTransformation:
+class FourFlavorTransformation(ThreeFlavorTransformation):
     """Base class defining common data and method for all four flavor transformations"""
 
-    def __init__(self, mix_params):
+    def __init__(self, mix_params=None):
         """Initialize flavor transformation
         
         Parameters
         ----------
         mix_params : FourFlavorMixingParameters instance
         """
-        if mix_params == None:
-            self.mix_params = FourFlavorMixingParameters(MassHierarchy.NORMAL)
-        else:
-            self.mix_params = mix_params
-
-    def __str__(self):
-        return self.__class__.__name__+"_"+str(self.mix_params.mass_order)
-        
-    def Pmf_HighDensityLimit(self):
-        """ The probability that a given flavor state is 'detected' as a particular matter state in the 
-        infinite density limit. This method assumes the 4th matter state is the 
-        heaviest and that the electron fraction remains larger than 1/3
-
-        Returns
-        -------
-        8 x 8 matrix
-        """
-        PmfHDL = np.zeros((8,8))
-
-        NU_E, NU_MU, NU_TAU, NU_S, NU_E_BAR, NU_MU_BAR, NU_TAU_BAR, NU_S_BAR = \
-             FourFlavor.NU_E, FourFlavor.NU_MU, FourFlavor.NU_TAU, FourFlavor.NU_S, \
-             FourFlavor.NU_E_BAR, FourFlavor.NU_MU_BAR, FourFlavor.NU_TAU_BAR, FourFlavor.NU_S_BAR
-
-        M2 = np.zeros((8,8)) 
-        M2[1,1] = self.mix_params.dm21_2.value 
-        M2[2,2] = self.mix_params.dm31_2.value 
-        M2[3,3] = self.mix_params.dm41_2.value 
-        M2[1+4,1+4] = self.mix_params.dm21_2.value 
-        M2[2+4,2+4] = self.mix_params.dm31_2.value 
-        M2[3+4,3+4] = self.mix_params.dm41_2.value 
-
-        U = VacuumMixingMatrix()
-
-        HV = np.zeros((6,6,len(E)))        
-        for m in range(len(E)):
-            HV[:,:,m] = U @ M2 @ np.conjugate(np.transpose(U)) / ( 2 * E[m] )
-
-        T = np.real( (HV[NU_MU,NU_MU] + HV[NU_TAU,NU_TAU]) / 2 )
-        D = np.abs( HV[NU_MU,NU_TAU] )**2 - np.abs( HV[NU_MU,NU_MU]-HV[NU_TAU,NU_TAU] )**2 / 4 
-
-        Tbar = np.real( ( HV[NU_MU_BAR,NU_MU_BAR] + HV[NU_TAU_BAR,NU_TAU_BAR] ) / 2 )
-        Dbar = np.abs( HV[NU_MU_BAR,NU_TAU_BAR] )**2 \
-              -np.abs( HV[NU_MU_BAR,NU_MU_BAR]-HV[NU_TAU_BAR,NU_TAU_BAR] )**2 / 4 
-
-        U = Vacuum_Mixing_Matrix()
-
-        """ The NMO case. Matter state 4 is the electron neutrino, matter state 1bar is the electron 
-        antineutrino. Matter state 3 is the sterile neutrino, matter state 2bar is the sterile 
-        antineutrino. 
-        """
-        if self.mix_params.mass_order == MassHierarchy.NORMAL:
-            k1 = T - np.sqrt(D)
-            k2 = T + np.sqrt(D)
-            k3bar = Tbar - np.sqrt(Dbar)
-            k4bar = Tbar + np.sqrt(Dbar)
-
-            PmfHDL[0,NU_MU] = ( np.real(HV[NU_TAU,NU_TAU]) - k1 ) / ( k2 - k1 )
-            PmfHDL[0,NU_TAU] = ( np.real(HV[NU_MU,NU_MU]) - k1 ) / ( k2 - k1 )            
-            PmfHDL[1,NU_MU] = ( np.real(HV[NU_TAU,NU_TAU]) - k2 ) / ( k1 - k2 )
-            PmfHDL[1,NU_TAU] = ( np.real(HV[NU_MU,NU_MU]) - k2 ) / ( k1 - k2 )
-            PmfHDL[2,NU_S] = 1
-            PmfHDL[3,NU_E] = 1             
-
-            PmfHDL[4,NU_E_BAR] = 1
-            PmfHDL[5,NU_S_BAR] = 1            
-            PmfHDL[6,NU_MU_BAR] = ( np.real(HV[NU_TAU_BAR,NU_TAU_BAR]) - k3bar ) / ( k4bar - k3bar )
-            PmfHDL[6,NU_TAU_BAR] = ( np.real(HV[NU_MU_BAR,NU_MU_BAR]) - k3bar ) / ( k4bar - k3bar )
-            PmfHDL[7,NU_MU_BAR] = ( np.real(HV[NU_TAU_BAR,NU_TAU_BAR]) - k4bar ) / ( k3bar - k4bar )
-            PmfHDL[7,NU_TAU_BAR] = ( np.real(HV[NU_MU_BAR,NU_MU_BAR]) - k4bar ) / ( k3bar - k4bar )
-
-
-        """ The IMO case. Matter state 4 is the electron neutrino, matter state 3bar is the electron 
-        antineutrino. Matter state 2 is the sterile neutrino, matter state 1bar is the sterile 
-        antineutrino. 
-        """
-        if self.mix_params.mass_order == MassHierarchy.INVERTED:
-            k1 = T + np.sqrt(D)
-            k3 = T - np.sqrt(D)
-            k2bar = Tbar - np.sqrt(Dbar)
-            k4bar = Tbar + np.sqrt(Dbar)
-
-            PmfHDL[0,NU_MU] = ( np.real(HV[NU_TAU,NU_TAU]) - k1 ) / ( k3 - k1 )
-            PmfHDL[0,NU_TAU] = ( np.real(HV[NU_MU,NU_MU]) - k1 ) / ( k3 - k1 )            
-            PmfHDL[1,NU_S] = 1             
-            PmfHDL[2,NU_MU] = ( np.real(HV[NU_TAU,NU_TAU]) - k3 ) / ( k1 - k3 )
-            PmfHDL[2,NU_TAU] = ( np.real(HV[NU_MU,NU_MU]) - k3 ) / ( k1 - k3 )
-            PmfHDL[3,NU_E] = 1 
-
-            PmfHDL[4,NU_S_BAR] = 1            
-            PmfHDL[5,NU_MU_BAR] = ( np.real(HV[NU_TAU_BAR,NU_TAU_BAR]) - k2bar ) / ( k4bar - k2bar )
-            PmfHDL[5,NU_TAU_BAR] = ( np.real(HV[NU_MU_BAR,NU_MU_BAR]) - k2bar ) / ( k4bar - k2bar )            
-            PmfHDL[6,NU_E_BAR] = 1
-            PmfHDL[7,NU_TAU_BAR] = ( np.real(HV[NU_MU_BAR,NU_MU_BAR]) - k4bar ) / ( k2bar - k4bar )
-            PmfHDL[7,NU_MU_BAR] = ( np.real(HV[NU_TAU_BAR,NU_TAU_BAR]) - k4bar ) / ( k2bar - k4bar )    
-
-        return PmfHDL
-
+        self.mix_params = mix_params or FourFlavorMixingParameters(**MixingParameters(MassHierarchy.NORMAL))
+    
 ###############################################################################
 
 class NoTransformation(FlavorTransformation):
@@ -433,69 +338,10 @@ class AdiabaticMSWes(FourFlavorTransformation):
     For further insight see, for example, Esmaili, Peres, and Serpico, 
         Phys. Rev. D 90, 033013 (2014).
     """
-    def __init__(self, mix_params = None):
-        """Initialize flavor transformation
-        
-        Parameters
-        ----------
-        mix_params : FourFlavorMixingParameters instance or None
-        """
-        super().__init__(mix_params)   
-
-    def __str__(self):
-        return f'AdiabaticMSWes_' + str(self.mix_params.mass_order)
-    
-    def get_SNprobabilities(self, t, E): 
-        """neutrino and antineutrino transition probabilities.
-
-        Parameters
-        ----------
-        t : float or ndarray
-            List of times.
-        E : float or ndarray
-            List of energies.
-
-        Returns
-        -------
-        Pmf : 8 x 8 matrix
-        """   
-        PHDL = self.Pmf_HighDensityLimit()
-        Pmf = np.empty((8,8,len(E))) 
-
-        for m in range(len(E)):
-            Pmf[:,:,m] = PHDL[:,:]
-
-        return Pmf
-
-
-    def get_probabilities(self, t, E):         
-        """neutrino and antineutrino transition probabilities.
-
-        Parameters
-        ----------
-        t : float or ndarray
-            List of times.
-        E : float or ndarray
-            List of energies.
-
-        Returns
-        -------
-        p : 6 x 6 matrix
-        """   
-        p = np.empty((8,8,len(E)))
-        
-        D = FourFlavorNoEarthMatter(self.mix_params).get_probabilities(t,E)                                     
-        Pmf = self.get_SNprobabilities(t,E)
-        
-        # multiply the D matrix and the Pmf matrix together
-        for m in range(len(E)):
-            p[:,:,m] = D[:,:,m] @ Pmf[:,:,m]
-
-        # remove sterile rows/columns: A is a 6 x 8 matrix
-        A = Remove_Steriles()
-        p = A @ p @ np.transpose(A)
-
-        return p 
+    def get_probabilities(self, t, E):
+        Pmf = self.mix_params.Pmf_HighDensityLimit()
+        D = self.mix_params.VacuumMixingMatrix().abs2()
+        return D@Pmf
         
 ###############################################################################
 
@@ -511,77 +357,18 @@ class NonAdiabaticMSWes(FourFlavorTransformation):
     For further insight see, for example, Esmaili, Peres, and Serpico, 
         Phys. Rev. D 90, 033013 (2014).
     """
-    def __init__(self, mix_params = None):
-        """Initialize flavor transformation
-        
-        Parameters
-        ----------
-        mix_params : FourFlavorMixingParameters instance or None
-        """
-        super().__init__(mix_params)   
-
-    def __str__(self):
-        return f'NonAdiabaticMSWes_' + str(self.mix_params.mass_order)
-    
-    def get_SNprobabilities(self, t, E): 
-        """neutrino and antineutrino transition probabilities.
-
-        Parameters
-        ----------
-        t : float or ndarray
-            List of times.
-        E : float or ndarray
-            List of energies.
-
-        Returns
-        -------
-        Pmf : an 8 x 8 matrix
-        """                
-        PHDL = self.Pmf_HighDensityLimit()
-        Pmf = np.empty((8,8,len(E)))
-
-        for m in range(len(E)):
-            Pmf[:,:,m] = PHDL[:,:]
-
-            if self.mix_params.mass_order == MassHierarchy.NORMAL:
-                for f in ThreeFlavor:
-                    Pmf[2,f,m], Pmf[3,f,m] = Pmf[3,f,m], Pmf[2,f,m]
-                    Pmf[5,f,m], Pmf[6,f,m], Pmf[7,f,m] = Pmf[6,f,m], Pmf[7,f,m], Pmf[5,f,m]
-
-            if self.mix_params.mass_order == MassHierarchy.INVERTED:
-                for f in ThreeFlavor:
-                    Pmf[1,f,m], Pmf[3,f,m] = Pmf[3,f,m], Pmf[1,f,m]
-                    Pmf[4,f,m], Pmf[5,f,m], Pmf[7,f,m] = Pmf[5,f,m], Pmf[7,f,m], Pmf[4,f,m]
-
-        return Pmf
 
     def get_probabilities(self, t, E): 
-        """neutrino and antineutrino transition probabilities.
+        Pmf = self.mix_params.Pmf_HighDensityLimit()
+        if self.mix_params.mass_order == MassHierarchy.NORMAL:
+            Pmf[['NU_3','NU_4'],:] = Pmf[['NU_4','NU_3'],:]
+            Pmf[['NU_2_BAR','NU_3_BAR','NU_4_BAR'],:] = Pmf[['NU_3_BAR','NU_4_BAR','NU_2_BAR'],:]
+        else:
+            Pmf[['NU_2','NU_4'],:] = Pmf[['NU_4','NU_2'],:]
+            Pmf[['NU_1_BAR','NU_2_BAR','NU_4_BAR'],:] = Pmf[['NU_2_BAR','NU_4_BAR','NU_1_BAR'],:]
 
-        Parameters
-        ----------
-        t : float or ndarray
-            List of times.
-        E : float or ndarray
-            List of energies.
-
-        Returns
-        -------
-        p : 6 x 6 array or array of 6 x 6 arrays       
-        """
-
-        D = FourFlavorNoEarthMatter(self.mix_params).get_probabilities(t,E)                                     
-        Pmf = self.get_SNprobabilities(t,E)
-
-        p = np.empty((8,8,len(E))) 
-        for m in range(len(E)):
-            p[:,:,m] = D[:,:,m] @ Pmf[:,:,m]
-
-        # remove sterile rows/columns
-        A = Remove_Steriles()
-        p = A @ p @ np.transpose(A)
-        
-        return p        
+        D = self.mix_params.VacuumMixingMatrix().abs2()
+        return D@Pmf
 
 ###############################################################################
 
