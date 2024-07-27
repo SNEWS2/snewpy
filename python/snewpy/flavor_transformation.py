@@ -194,12 +194,11 @@ class CompleteExchange(FlavorTransformation):
        are half exchanged with the mu flavors and the half with the tau flavors.
     """
     def get_probabilities(self, t, E):
-        p = FlavorMatrix.zeros(TwoFlavor)
-        p['NU_X','NU_E'] = 1
-        p['NU_E','NU_X'] = 1
-        p['NU_E_BAR','NU_X_BAR'] = 1
-        p['NU_X_BAR','NU_E_BAR'] = 1
-        return (ThreeFlavor<<TwoFlavor)@p@(TwoFlavor<<ThreeFlavor)
+        @FlavorMatrix.from_function(ThreeFlavor)
+        def P(f1,f2):
+            return (f1.is_neutrino==f2.is_neutrino)*(f1!=f2)*0.5
+
+        return P
         
 ###############################################################################
 
