@@ -231,7 +231,12 @@ class FourFlavorMixingParameters(ThreeFlavorMixingParameters):
     dm41_2: u.Quantity[u.eV**2] = 0<<u.eV**2
     dm42_2: u.Quantity | None = None
     dm43_2: u.Quantity | None = None
-    
+
+    #define the basis states
+    basis_mass = FlavorScheme("ThreeFlavor_MassBasis", start=0,
+                                names=['NU_1','NU_2','NU_3','NU_4','NU_1_BAR','NU_2_BAR','NU_3_BAR','NU_4_BAR'])
+    basis_flavor = FlavorScheme("ThreeFlavor_FlavorBasis", start=0,
+                                names=['NU_E','NU_MU','NU_TAU','NU_S','NU_E_BAR','NU_MU_BAR','NU_TAU_BAR','NU_S_BAR'])
     def __post_init__(self):
         super().__post_init__()
         self.dm42_2 = self.dm42_2 or self.dm41_2 - self.dm21_2
@@ -274,32 +279,92 @@ class FourFlavorMixingParameters(ThreeFlavorMixingParameters):
             @ self.ComplexRotationMatrix(0,2,self.theta13,self.deltaCP) \
             @ self.ComplexRotationMatrix(0,1,self.theta12,self.delta12) 
 
-        """Reorder rows to match SNEWPY's flavor ordering convention"""
-        U[FourFlavor.NU_E], U[FourFlavor.NU_MU], U[FourFlavor.NU_TAU], U[FourFlavor.NU_S], \
-            U[FourFlavor.NU_E_BAR], U[FourFlavor.NU_MU_BAR], U[FourFlavor.NU_TAU_BAR], U[FourFlavor.NU_S_BAR] = \
-                U[0], U[1], U[2], U[3], U[4], U[5], U[6], U[7]
-
-        return U
+        return FlavorMatrix(U, flavor=self.basis_flavor, from_flavor=self.basis_mass)
 
 
     def ComplexRotationMatrix(self,i,j,theta,phase):
         """A complex rotation matrix. N.B. the minus sign in the complex exponential matches PDG convention"""
-        V = np.zeros((8,8),dtype = 'complex_')
-        for k in range(8): 
-            V[k,k] = 1
-
-        V[i,i] = np.cos(theta) 
-        V[j,j] = V[i,i]
-        V[i,j] = np.sin(theta) * ( np.cos(phase) - 1j * np.sin(phase) )
-        V[j,i] = - np.conjugate(V[i,j])
-
-        V[i+4,i+4] = V[i,i]
-        V[j+4,j+4] = V[j,j]
-        V[i+4,j+4] = np.conjugate(V[i,j]) 
-        V[j+4,i+4] = np.conjugate(V[j,i])
-
+        theta = (theta<<u.radian).value
+        phase = (phase<<u.radian).value
+        V = np.eye(8,dtype = 'complex_')
+        V[j,j] = V[i,i] = np.cos(theta)
+        V[i,j] = np.sin(theta) * np.exp(-1j*phase)
+        V[j,i] = -np.conjugate(V[i,j])
+        #making the block matrix
+        V[4:,4:] = np.conjugate(V[:4,:4])
         return V
 
+    def Pmf_HighDensityLimit(self):
+        """ The probability that a given flavor state is a particular matter state in the 
+        infinite density limit.  This method assumes the 4th matter state is the 
+        heaviest and that the electron fraction remains larger than 1/3
+
+        Returns
+        -------
+        8 x 8 matrix
+        """
+        M2 = FlavorMatrix.zeros(self.basis_mass)
+        M2[1,1] = self.dm21_2.value
+        M2[2,2] = self.dm31_2.value
+        M2[3,3] = self.dm41_2.value
+        M2[4:,4:]=M2[:4,:4]
+        
+        U = self.VacuumMixingMatrix()
+        HV = U @ M2 @ np.conjugate(U.T)
+        
+        T = np.real( ( HV['NU_MU','NU_MU'] + HV['NU_TAU','NU_TAU'] ) / 2 )
+        D = np.abs( HV['NU_MU','NU_TAU'] )**2 \
+           -np.abs( HV['NU_MU','NU_MU']-HV['NU_TAU','NU_TAU'] )**2 / 4
+        Tbar = np.real( ( HV["NU_MU_BAR","NU_MU_BAR"] + HV["NU_TAU_BAR","NU_TAU_BAR"] ) / 2 )
+        Dbar = np.abs( HV["NU_MU_BAR","NU_TAU_BAR"] )**2 \
+              -np.abs( HV["NU_MU_BAR","NU_MU_BAR"]-HV["NU_TAU_BAR","NU_TAU_BAR"] )**2 / 4
+    
+        PmfHDL = FlavorMatrix.zeros(self.basis_mass, self.basis_flavor)
+        
+        if self.mass_order == MassHierarchy.NORMAL:
+            # The NMO case. Matter state 4 is the electron neutrino, matter state 1bar is the electron antineutrino.
+            # Matter state 3 is the sterile neutrino, matter state 2bar is the sterile antineutrino. 
+            k1 = T - np.sqrt(D)
+            k2 = T + np.sqrt(D)
+            k3bar = Tbar - np.sqrt(Dbar)
+            k4bar = Tbar + np.sqrt(Dbar)
+            
+            PmfHDL['NU_1','NU_MU'] =  (HV['NU_TAU','NU_TAU'].real - k1)/(k2-k1)
+            PmfHDL['NU_1','NU_TAU'] = (HV['NU_MU','NU_MU'].real - k1)/(k2-k1)
+            PmfHDL['NU_2','NU_MU'] =  (HV['NU_TAU','NU_TAU'].real - k2)/(k1-k2)
+            PmfHDL['NU_2','NU_TAU'] = (HV['NU_MU','NU_MU'].real - k2)/(k1-k2)
+            PmfHDL['NU_3','NU_S'] = 1
+            PmfHDL['NU_4','NU_E'] = 1
+        
+            PmfHDL['NU_1_BAR','NU_E_BAR'] = 1
+            PmfHDL['NU_2_BAR','NU_S_BAR'] = 1
+            PmfHDL['NU_3_BAR','NU_MU_BAR'] =  (HV['NU_TAU_BAR','NU_TAU_BAR'].real - k3bar ) / ( k4bar - k3bar )
+            PmfHDL['NU_3_BAR','NU_TAU_BAR'] = (HV['NU_MU_BAR','NU_MU_BAR'].real - k3bar ) / ( k4bar - k3bar )
+            PmfHDL['NU_4_BAR','NU_MU_BAR'] =  (HV['NU_TAU_BAR','NU_TAU_BAR'].real - k4bar ) / ( k3bar - k4bar )
+            PmfHDL['NU_4_BAR','NU_TAU_BAR'] = (HV['NU_MU_BAR','NU_MU_BAR'].real - k4bar ) / ( k3bar - k4bar )
+        
+        elif self.mass_order == MassHierarchy.INVERTED:
+            # The IMO case. Matter state 4 is the electron neutrino, matter state 3bar is the electron antineutrino.
+            # Matter state 2 is the sterile neutrino, matter state 1bar is the sterile antineutrino.
+            k1 = T + np.sqrt(D)
+            k3 = T - np.sqrt(D)
+            k2bar = Tbar - np.sqrt(Dbar)
+            k4bar = Tbar + np.sqrt(Dbar)
+        
+            PmfHDL['NU_1','NU_MU'] = ( HV['NU_TAU','NU_TAU'].real - k1 ) / ( k3 - k1 )
+            PmfHDL['NU_1','NU_TAU'] = ( HV['NU_MU','NU_MU'].real - k1 ) / ( k3 - k1 )
+            PmfHDL['NU_2','NU_S'] = 1
+            PmfHDL['NU_3','NU_MU'] = ( HV['NU_TAU','NU_TAU'].real - k3) / ( k1 - k3 )
+            PmfHDL['NU_3','NU_TAU'] = ( HV['NU_MU','NU_MU'].real - k3 ) / ( k1 - k3 )
+            PmfHDL['NU_4','NU_E'] = 1
+        
+            PmfHDL['NU_1_BAR','NU_S_BAR'] = 1
+            PmfHDL['NU_2_BAR','NU_MU_BAR'] = ( HV['NU_TAU_BAR','NU_TAU_BAR'].real - k2bar ) / ( k4bar - k2bar )
+            PmfHDL['NU_2_BAR','NU_TAU_BAR'] = ( HV['NU_MU_BAR','NU_MU_BAR'].real - k2bar ) / ( k4bar - k2bar )
+            PmfHDL['NU_3_BAR','NU_E_BAR'] = 1
+            PmfHDL['NU_4_BAR','NU_MU_BAR'] = ( HV['NU_TAU_BAR','NU_TAU_BAR'].real - k4bar ) / ( k2bar - k4bar )
+            PmfHDL['NU_4_BAR','NU_TAU_BAR'] = ( HV['NU_MU_BAR','NU_MU_BAR'].real - k4bar ) / ( k2bar - k4bar )
+        return PmfHDL
 
 parameter_presets = {
     'NuFIT5.0': {
