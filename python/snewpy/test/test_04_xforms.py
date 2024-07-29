@@ -328,9 +328,9 @@ class TestFlavorTransformations:
         assert (abs(P['x','e'] - 1./3) < 1e-12)
 
         assert np.isclose(P['e_bar','e_bar'] , 1./3)
-        assert (abs(P['e_bar','xbar_bar'] - 2./3) < 1e-12)
-        assert (abs(P['x_bar','xbar_bar'] - 2./3) < 1e-12)
-        assert (abs(P['x_bar','ebar_bar'] - 1./3) < 1e-12)
+        assert (abs(P['e_bar','x_bar'] - 2./3) < 1e-12)
+        assert (abs(P['x_bar','x_bar'] - 2./3) < 1e-12)
+        assert (abs(P['x_bar','e_bar'] - 1./3) < 1e-12)
 
     def test_nudecay_nmo(self):
         """
@@ -358,8 +358,8 @@ class TestFlavorTransformations:
         prob_exbar = np.asarray([De1*(1.-exp(-xform.gamma(_E)*self.distance)) + De2 + De3*exp(-xform.gamma(_E)*self.distance) for _E in self.E])
 
         assert np.isclose(P['e_bar','e_bar'], De3)
-        assert (np.array_equal(P['e_bar','xbar_bar'], prob_exbar))
-        assert (np.array_equal(P['x_bar','xbar_bar'], 1. - 0.5*prob_exbar))
+        assert (np.array_equal(P['e_bar','x_bar'], prob_exbar))
+        assert (np.array_equal(P['x_bar','x_bar'], 1. - 0.5*prob_exbar))
         assert np.isclose(P['x_bar','e_bar'], 0.5*(1. - De3))
 
     def test_nudecay_nmo_default_mixing(self):
@@ -387,8 +387,8 @@ class TestFlavorTransformations:
         prob_exbar = np.asarray([De1*(1.-exp(-xform.gamma(_E)*self.distance)) + De2 + De3*exp(-xform.gamma(_E)*self.distance) for _E in self.E])
 
         assert np.isclose(P['e_bar','e_bar'], De3)
-        assert (np.array_equal(P['e_bar','xbar_bar'], prob_exbar))
-        assert (np.array_equal(P['x_bar','xbar_bar'], 1. - 0.5*prob_exbar))
+        assert (np.array_equal(P['e_bar','x_bar'], prob_exbar))
+        assert (np.array_equal(P['x_bar','x_bar'], 1. - 0.5*prob_exbar))
         assert np.isclose(P['x_bar','e_bar'], 0.5*(1. - De3))
 
     def test_nudecay_imo(self):
@@ -414,8 +414,8 @@ class TestFlavorTransformations:
                                  De3*(1-np.exp(-xform.gamma(_E)*self.distance)) for _E in self.E])
 
         assert np.isclose(P['e_bar','e_bar'], De3)
-        assert (np.array_equal(P['e_bar','xbar_bar'], prob_exbar))
-        assert (np.array_equal(P['x_bar','xbar_bar'], 1. - 0.5*prob_exbar))
+        assert (np.array_equal(P['e_bar','x_bar'], prob_exbar))
+        assert (np.array_equal(P['x_bar','x_bar'], 1. - 0.5*prob_exbar))
         assert np.isclose(P['x_bar','e_bar'], 0.5*(1. - De3))
 
     def test_nudecay_imo_default_mixing(self):
@@ -445,8 +445,8 @@ class TestFlavorTransformations:
                                  De3*(1-np.exp(-xform.gamma(_E)*self.distance)) for _E in self.E])
 
         assert np.isclose(P['e_bar','e_bar'], De3)
-        assert (np.array_equal(P['e_bar','xbar_bar'], prob_exbar))
-        assert (np.array_equal(P['x_bar','xbar_bar'], 1. - 0.5*prob_exbar))
+        assert (np.array_equal(P['e_bar','x_bar'], prob_exbar))
+        assert (np.array_equal(P['x_bar','x_bar'], 1. - 0.5*prob_exbar))
         assert np.isclose(P['x_bar','e_bar'], 0.5*(1. - De3))
 
     def test_quantumdecoherence_nmo(self):
@@ -479,9 +479,9 @@ class TestFlavorTransformations:
 
         prob_eebar = np.asarray([xform.P11(_E)*De1 + xform.P21(_E)*De2 + xform.P31(_E)*De3 for _E in self.E])
 
-        assert (np.array_equal(P['e_bar','xbar_bar'], 1 - prob_eebar))
-        assert (np.array_equal(P['x_bar','xbar_bar'], 1. - 0.5*(1 - prob_eebar)))
-        assert (np.array_equal(P['x_bar','ebar_bar'], 0.5*(1. - prob_eebar)))
+        assert (np.array_equal(P['e_bar','x_bar'], 1 - prob_eebar))
+        assert (np.array_equal(P['x_bar','x_bar'], 1. - 0.5*(1 - prob_eebar)))
+        assert (np.array_equal(P['x_bar','e_bar'], 0.5*(1. - prob_eebar)))
 
     def test_quantumdecoherence_nmo_default_mixing(self):
         """
@@ -507,9 +507,9 @@ class TestFlavorTransformations:
 
         prob_eebar = np.asarray([xform.P11(_E)*De1 + xform.P21(_E)*De2 + xform.P31(_E)*De3 for _E in self.E])
 
-        assert (np.array_equal(P['e_bar','xbar_bar'], 1 - prob_eebar))
-        assert (np.array_equal(P['x_bar','xbar_bar'], 1. - 0.5*(1 - prob_eebar)))
-        assert (np.array_equal(P['x_bar','ebar_bar'], 0.5*(1. - prob_eebar)))
+        assert (np.array_equal(P['e_bar','x_bar'], 1 - prob_eebar))
+        assert (np.array_equal(P['x_bar','x_bar'], 1. - 0.5*(1 - prob_eebar)))
+        assert (np.array_equal(P['x_bar','e_bar'], 0.5*(1. - prob_eebar)))
 
     def test_quantumdecoherence_imo(self):
         """
@@ -541,9 +541,9 @@ class TestFlavorTransformations:
 
         prob_eebar = np.asarray([xform.P31(_E)*De1 + xform.P32(_E)*De2 + xform.P33(_E)*De3 for _E in self.E])
 
-        assert (np.array_equal(P['e_bar','xbar_bar'], 1 - prob_eebar))
-        assert (np.array_equal(P['x_bar','xbar_bar'], 1. - 0.5*(1 - prob_eebar)))
-        assert (np.array_equal(P['x_bar','ebar_bar'], 0.5*(1. - prob_eebar)))
+        assert (np.array_equal(P['e_bar','x_bar'], 1 - prob_eebar))
+        assert (np.array_equal(P['x_bar','x_bar'], 1. - 0.5*(1 - prob_eebar)))
+        assert (np.array_equal(P['x_bar','e_bar'], 0.5*(1. - prob_eebar)))
 
     def test_quantumdecoherence_imo_default_mixing(self):
         """
@@ -569,6 +569,6 @@ class TestFlavorTransformations:
 
         prob_eebar = np.asarray([xform.P31(_E)*De1 + xform.P32(_E)*De2 + xform.P33(_E)*De3 for _E in self.E])
 
-        assert (np.array_equal(P['e_bar','xbar_bar'], 1 - prob_eebar))
-        assert (np.array_equal(P['x_bar','xbar_bar'], 1. - 0.5*(1 - prob_eebar)))
-        assert (np.array_equal(P['x_bar','ebar_bar'], 0.5*(1. - prob_eebar)))
+        assert (np.array_equal(P['e_bar','x_bar'], 1 - prob_eebar))
+        assert (np.array_equal(P['x_bar','x_bar'], 1. - 0.5*(1 - prob_eebar)))
+        assert (np.array_equal(P['x_bar','e_bar'], 0.5*(1. - prob_eebar)))
