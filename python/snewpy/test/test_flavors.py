@@ -17,8 +17,14 @@ class TestFlavorScheme:
     def test_getitem_string():
         assert TwoFlavor['NU_E'] == TwoFlavor.NU_E
         assert TwoFlavor['NU_X'] == TwoFlavor.NU_X
+        #short notations
+        assert ThreeFlavor['E'] == ThreeFlavor['e'] == ThreeFlavor.NU_E
+        assert ThreeFlavor['MU'] == ThreeFlavor['mu'] == ThreeFlavor.NU_MU
+        assert ThreeFlavor['MU_BAR'] == ThreeFlavor['mu_bar'] == ThreeFlavor.NU_MU_BAR
         with pytest.raises(KeyError):
             TwoFlavor['NU_MU']
+        with pytest.raises(KeyError):
+            ThreeFlavor['NU_X']
             
     @staticmethod
     def test_getitem_enum():
@@ -100,6 +106,14 @@ class TestFlavorMatrix:
         assert np.allclose(m['NU_E'], m['NU_E',:])
         assert np.allclose(m[:,:], m.array)
 
+    @staticmethod
+    def test_getitem_short():
+        m = FlavorMatrix.eye(ThreeFlavor,ThreeFlavor)
+        assert m['NU_E','NU_E']==m['e','e']
+        assert m['NU_MU','NU_E']==m['mu','e']
+        assert m['NU_E_BAR','NU_E']==m['e_bar','e']
+        assert m['NU_TAU_BAR','NU_TAU']==m['tau_bar','tau']
+        
     @staticmethod
     def test_setitem():
         m = FlavorMatrix.eye(TwoFlavor,TwoFlavor)
