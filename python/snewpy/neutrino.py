@@ -141,7 +141,7 @@ class ThreeFlavorMixingParameters(Mapping):
         """A complex rotation matrix. N.B. the minus sign in the complex exponential matches PDG convention"""
         theta = (theta<<u.radian).value
         phase = (phase<<u.radian).value
-        V = np.eye(6,dtype = 'complex_')
+        V = np.eye(6,dtype = 'cdouble')
         V[j,j] = V[i,i] = np.cos(theta)
         V[i,j] = np.sin(theta) * np.exp(-1j*phase)
         V[j,i] = -np.conjugate(V[i,j])
@@ -289,7 +289,7 @@ class FourFlavorMixingParameters(ThreeFlavorMixingParameters):
         """A complex rotation matrix. N.B. the minus sign in the complex exponential matches PDG convention"""
         theta = (theta<<u.radian).value
         phase = (phase<<u.radian).value
-        V = np.eye(8,dtype = 'complex_')
+        V = np.eye(8,dtype = 'cdouble')
         V[j,j] = V[i,i] = np.cos(theta)
         V[i,j] = np.sin(theta) * np.exp(-1j*phase)
         V[j,i] = -np.conjugate(V[i,j])
