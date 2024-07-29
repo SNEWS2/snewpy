@@ -17,6 +17,11 @@ class EnumMeta(enum.EnumMeta):
             return key
         #if this is a string find it by name
         if isinstance(key, str):
+            #prepare the string
+            key=key.upper()
+            if not key.startswith('NU_'):
+                key = 'NU_'+key
+            #try to get the proper values
             try:
                 return super().__getitem__(key)
             except KeyError as e:
