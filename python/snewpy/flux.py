@@ -189,7 +189,7 @@ class _ContainerBase:
         if isinstance(args[0],str) or isinstance(args[0],FlavorScheme):
             args[0] = self.flavor_scheme[args[0]]
         for n,arg in enumerate(args):
-            if not isinstance(arg, slice):
+            if isinstance(arg, int):
                 arg = slice(arg, arg + 1)
             arg_slices[n] = arg
 
@@ -445,12 +445,21 @@ class Container(_ContainerBase):
             cls._unit_classes[unit] = type(name,(cls,),{'unit':unit})
         return cls._unit_classes[unit]
 
-    def plot(flux, projection='energy', styles=None, **kwargs):
-        if projection=='energy':
-            fP = flux.integrate_or_sum('time')
+    def project_to(self, axis='energy', squeeze=False):
+        if axis=='energy':
+            fP = self.integrate_or_sum('time')
         else:
-            fP = flux.integrate_or_sum('energy')
-        x = fP.__dict__[projection]
+            fP = self.integrate_or_sum('energy')
+        x = fP.__dict__[axis]
+        if squeeze:
+            return x, fP.array.squeeze().T
+        else:
+            return x, fP
+        
+        
+    def plot(flux, projection='energy', styles=None, **kwargs):
+        x, fP = flux.project_to(projection, squeeze=False)
+
         if isinstance(styles, dict):
             styles = styles.get
         elif styles==None:
