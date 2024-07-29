@@ -162,12 +162,12 @@ class ThreeFlavorMixingParameters(Mapping):
         U = self.VacuumMixingMatrix()
         HV = U @ M2 @ np.conjugate(U.T)
         
-        T = np.real( ( HV['NU_MU','NU_MU'] + HV['NU_TAU','NU_TAU'] ) / 2 )
-        D = np.abs( HV['NU_MU','NU_TAU'] )**2 \
-           -np.abs( HV['NU_MU','NU_MU']-HV['NU_TAU','NU_TAU'] )**2 / 4
-        Tbar = np.real( ( HV["NU_MU_BAR","NU_MU_BAR"] + HV["NU_TAU_BAR","NU_TAU_BAR"] ) / 2 )
-        Dbar = np.abs( HV["NU_MU_BAR","NU_TAU_BAR"] )**2 \
-              -np.abs( HV["NU_MU_BAR","NU_MU_BAR"]-HV["NU_TAU_BAR","NU_TAU_BAR"] )**2 / 4
+        T = np.real( ( HV['mu','mu'] + HV['tau','tau'] ) / 2 )
+        D = np.abs( HV['mu','tau'] )**2 \
+           -np.abs( HV['mu','mu']-HV['tau','tau'] )**2 / 4
+        Tbar = np.real( ( HV['mu_bar','mu_bar'] + HV['tau_bar','tau_bar'] ) / 2 )
+        Dbar = np.abs( HV['mu_bar','tau_bar'] )**2 \
+              -np.abs( HV['mu_bar','mu_bar']-HV['tau_bar','tau_bar'] )**2 / 4
     
         PmfHDL = FlavorMatrix.zeros(self.basis_mass, self.basis_flavor)
         
@@ -177,17 +177,17 @@ class ThreeFlavorMixingParameters(Mapping):
             k2 = T + np.sqrt(D)
             k2bar = Tbar - np.sqrt(Dbar)
             k3bar = Tbar + np.sqrt(Dbar)
-            PmfHDL['NU_1','NU_MU'] =  (HV['NU_TAU','NU_TAU'].real - k1)/(k2-k1)
-            PmfHDL['NU_1','NU_TAU'] = (HV['NU_MU','NU_MU'].real - k1)/(k2-k1)
-            PmfHDL['NU_2','NU_MU'] =  (HV['NU_TAU','NU_TAU'].real - k2)/(k1-k2)
-            PmfHDL['NU_2','NU_TAU'] = (HV['NU_MU','NU_MU'].real - k2)/(k1 -k2)
-            PmfHDL['NU_3','NU_E'] = 1
+            PmfHDL['1','mu'] =  (HV['tau','tau'].real - k1)/(k2-k1)
+            PmfHDL['1','tau'] = (HV['mu','mu'].real - k1)/(k2-k1)
+            PmfHDL['2','mu'] =  (HV['tau','tau'].real - k2)/(k1-k2)
+            PmfHDL['2','tau'] = (HV['mu','mu'].real - k2)/(k1 -k2)
+            PmfHDL['3','e'] = 1
         
-            PmfHDL['NU_1_BAR','NU_E_BAR'] = 1
-            PmfHDL['NU_2_BAR','NU_MU_BAR'] =  (HV['NU_TAU_BAR','NU_TAU_BAR'].real - k2bar ) / ( k3bar - k2bar )
-            PmfHDL['NU_2_BAR','NU_TAU_BAR'] = (HV['NU_MU_BAR','NU_MU_BAR'].real - k2bar ) / ( k3bar - k2bar )
-            PmfHDL['NU_3_BAR','NU_MU_BAR'] =  (HV['NU_TAU_BAR','NU_TAU_BAR'].real - k3bar ) / ( k2bar - k3bar )
-            PmfHDL['NU_3_BAR','NU_TAU_BAR'] = (HV['NU_MU_BAR','NU_MU_BAR'].real - k3bar ) / ( k2bar - k3bar )
+            PmfHDL['1_bar','e_bar'] = 1
+            PmfHDL['2_bar','mu_bar'] =  (HV['tau_bar','tau_bar'].real - k2bar ) / ( k3bar - k2bar )
+            PmfHDL['2_bar','tau_bar'] = (HV['mu_bar','mu_bar'].real - k2bar ) / ( k3bar - k2bar )
+            PmfHDL['3_bar','mu_bar'] =  (HV['tau_bar','tau_bar'].real - k3bar ) / ( k2bar - k3bar )
+            PmfHDL['3_bar','tau_bar'] = (HV['mu_bar','mu_bar'].real - k3bar ) / ( k2bar - k3bar )
         
         elif self.mass_order == MassHierarchy.INVERTED:
             # The IMO case. Matter state 2 is the electron neutrino, matter state 3bar is the electron antineutrino. 
@@ -196,17 +196,17 @@ class ThreeFlavorMixingParameters(Mapping):
             k1bar = Tbar - np.sqrt(Dbar)
             k2bar = Tbar + np.sqrt(Dbar)
         
-            PmfHDL['NU_1','NU_MU'] = ( HV['NU_TAU','NU_TAU'].real - k1 ) / ( k3 - k1 )
-            PmfHDL['NU_1','NU_TAU'] = ( HV['NU_MU','NU_MU'].real - k1 ) / ( k3 - k1 )
-            PmfHDL['NU_2','NU_E'] = 1
-            PmfHDL['NU_3','NU_MU'] = ( HV['NU_TAU','NU_TAU'].real - k3) / ( k1 - k3 )
-            PmfHDL['NU_3','NU_TAU'] = ( HV['NU_MU','NU_MU'].real - k3 ) / ( k1 - k3 )
+            PmfHDL['1','mu'] = ( HV['tau','tau'].real - k1 ) / ( k3 - k1 )
+            PmfHDL['1','tau'] = ( HV['mu','mu'].real - k1 ) / ( k3 - k1 )
+            PmfHDL['2','e'] = 1
+            PmfHDL['3','mu'] = ( HV['tau','tau'].real - k3) / ( k1 - k3 )
+            PmfHDL['3','tau'] = ( HV['mu','mu'].real - k3 ) / ( k1 - k3 )
         
-            PmfHDL['NU_1_BAR','NU_MU_BAR'] = ( HV['NU_TAU_BAR','NU_TAU_BAR'].real - k1bar ) / ( k2bar - k1bar )
-            PmfHDL['NU_1_BAR','NU_TAU_BAR'] = ( HV['NU_MU_BAR','NU_MU_BAR'].real - k1bar ) / ( k2bar - k1bar )
-            PmfHDL['NU_2_BAR','NU_MU_BAR'] = ( HV['NU_TAU_BAR','NU_TAU_BAR'].real - k2bar ) / ( k1bar - k2bar )
-            PmfHDL['NU_2_BAR','NU_TAU_BAR'] = ( HV['NU_MU_BAR','NU_MU_BAR'].real - k2bar ) / ( k1bar - k2bar )
-            PmfHDL['NU_3_BAR','NU_E_BAR'] = 1
+            PmfHDL['1_bar','mu_bar'] = ( HV['tau_bar','tau_bar'].real - k1bar ) / ( k2bar - k1bar )
+            PmfHDL['1_bar','tau_bar'] = ( HV['mu_bar','mu_bar'].real - k1bar ) / ( k2bar - k1bar )
+            PmfHDL['2_bar','mu_bar'] = ( HV['tau_bar','tau_bar'].real - k2bar ) / ( k1bar - k2bar )
+            PmfHDL['2_bar','tau_bar'] = ( HV['mu_bar','mu_bar'].real - k2bar ) / ( k1bar - k2bar )
+            PmfHDL['3_bar','e_bar'] = 1
         return PmfHDL
 
 @dataclass
@@ -233,9 +233,9 @@ class FourFlavorMixingParameters(ThreeFlavorMixingParameters):
     dm43_2: u.Quantity | None = None
 
     #define the basis states
-    basis_mass = FlavorScheme("ThreeFlavor_MassBasis", start=0,
+    basis_mass = FlavorScheme("FourFlavor_MassBasis", start=0,
                                 names=['NU_1','NU_2','NU_3','NU_4','NU_1_BAR','NU_2_BAR','NU_3_BAR','NU_4_BAR'])
-    basis_flavor = FlavorScheme("ThreeFlavor_FlavorBasis", start=0,
+    basis_flavor = FlavorScheme("FourFlavor_FlavorBasis", start=0,
                                 names=['NU_E','NU_MU','NU_TAU','NU_S','NU_E_BAR','NU_MU_BAR','NU_TAU_BAR','NU_S_BAR'])
     def __post_init__(self):
         super().__post_init__()
@@ -312,13 +312,11 @@ class FourFlavorMixingParameters(ThreeFlavorMixingParameters):
         U = self.VacuumMixingMatrix()
         HV = U @ M2 @ np.conjugate(U.T)
         
-        T = np.real( ( HV['NU_MU','NU_MU'] + HV['NU_TAU','NU_TAU'] ) / 2 )
-        D = np.abs( HV['NU_MU','NU_TAU'] )**2 \
-           -np.abs( HV['NU_MU','NU_MU']-HV['NU_TAU','NU_TAU'] )**2 / 4
-        Tbar = np.real( ( HV["NU_MU_BAR","NU_MU_BAR"] + HV["NU_TAU_BAR","NU_TAU_BAR"] ) / 2 )
-        Dbar = np.abs( HV["NU_MU_BAR","NU_TAU_BAR"] )**2 \
-              -np.abs( HV["NU_MU_BAR","NU_MU_BAR"]-HV["NU_TAU_BAR","NU_TAU_BAR"] )**2 / 4
-    
+        T = np.real( ( HV['mu','mu'] + HV['tau','tau'] ) / 2 )
+        D = np.abs(HV['mu','tau'])**2-np.abs( HV['mu','mu']-HV['tau','tau'] )**2 / 4
+        Tbar = np.real( ( HV['mu_bar','mu_bar'] + HV['tau_bar','tau_bar'] ) / 2 )
+        Dbar = np.abs( HV['mu_bar','tau_bar'] )**2 \
+              -np.abs( HV['mu_bar','mu_bar']-HV['tau_bar','tau_bar'] )**2 / 4
         PmfHDL = FlavorMatrix.zeros(self.basis_mass, self.basis_flavor)
         
         if self.mass_order == MassHierarchy.NORMAL:
@@ -329,19 +327,19 @@ class FourFlavorMixingParameters(ThreeFlavorMixingParameters):
             k3bar = Tbar - np.sqrt(Dbar)
             k4bar = Tbar + np.sqrt(Dbar)
             
-            PmfHDL['NU_1','NU_MU'] =  (HV['NU_TAU','NU_TAU'].real - k1)/(k2-k1)
-            PmfHDL['NU_1','NU_TAU'] = (HV['NU_MU','NU_MU'].real - k1)/(k2-k1)
-            PmfHDL['NU_2','NU_MU'] =  (HV['NU_TAU','NU_TAU'].real - k2)/(k1-k2)
-            PmfHDL['NU_2','NU_TAU'] = (HV['NU_MU','NU_MU'].real - k2)/(k1-k2)
-            PmfHDL['NU_3','NU_S'] = 1
-            PmfHDL['NU_4','NU_E'] = 1
+            PmfHDL['1','mu'] =  (HV['tau','tau'].real - k1)/(k2-k1)
+            PmfHDL['1','tau'] = (HV['mu','mu'].real - k1)/(k2-k1)
+            PmfHDL['2','mu'] =  (HV['tau','tau'].real - k2)/(k1-k2)
+            PmfHDL['2','tau'] = (HV['mu','mu'].real - k2)/(k1-k2)
+            PmfHDL['3','S'] = 1
+            PmfHDL['4','e'] = 1
         
-            PmfHDL['NU_1_BAR','NU_E_BAR'] = 1
-            PmfHDL['NU_2_BAR','NU_S_BAR'] = 1
-            PmfHDL['NU_3_BAR','NU_MU_BAR'] =  (HV['NU_TAU_BAR','NU_TAU_BAR'].real - k3bar ) / ( k4bar - k3bar )
-            PmfHDL['NU_3_BAR','NU_TAU_BAR'] = (HV['NU_MU_BAR','NU_MU_BAR'].real - k3bar ) / ( k4bar - k3bar )
-            PmfHDL['NU_4_BAR','NU_MU_BAR'] =  (HV['NU_TAU_BAR','NU_TAU_BAR'].real - k4bar ) / ( k3bar - k4bar )
-            PmfHDL['NU_4_BAR','NU_TAU_BAR'] = (HV['NU_MU_BAR','NU_MU_BAR'].real - k4bar ) / ( k3bar - k4bar )
+            PmfHDL['1_bar','e_bar'] = 1
+            PmfHDL['2_bar','S_bar'] = 1
+            PmfHDL['3_bar','mu_bar'] =  (HV['tau_bar','tau_bar'].real - k3bar ) / ( k4bar - k3bar )
+            PmfHDL['3_bar','tau_bar'] = (HV['mu_bar','mu_bar'].real - k3bar ) / ( k4bar - k3bar )
+            PmfHDL['4_bar','mu_bar'] =  (HV['tau_bar','tau_bar'].real - k4bar ) / ( k3bar - k4bar )
+            PmfHDL['4_bar','tau_bar'] = (HV['mu_bar','mu_bar'].real - k4bar ) / ( k3bar - k4bar )
         
         elif self.mass_order == MassHierarchy.INVERTED:
             # The IMO case. Matter state 4 is the electron neutrino, matter state 3bar is the electron antineutrino.
@@ -351,19 +349,19 @@ class FourFlavorMixingParameters(ThreeFlavorMixingParameters):
             k2bar = Tbar - np.sqrt(Dbar)
             k4bar = Tbar + np.sqrt(Dbar)
         
-            PmfHDL['NU_1','NU_MU'] = ( HV['NU_TAU','NU_TAU'].real - k1 ) / ( k3 - k1 )
-            PmfHDL['NU_1','NU_TAU'] = ( HV['NU_MU','NU_MU'].real - k1 ) / ( k3 - k1 )
-            PmfHDL['NU_2','NU_S'] = 1
-            PmfHDL['NU_3','NU_MU'] = ( HV['NU_TAU','NU_TAU'].real - k3) / ( k1 - k3 )
-            PmfHDL['NU_3','NU_TAU'] = ( HV['NU_MU','NU_MU'].real - k3 ) / ( k1 - k3 )
-            PmfHDL['NU_4','NU_E'] = 1
+            PmfHDL['1','mu'] = ( HV['tau','tau'].real - k1 ) / ( k3 - k1 )
+            PmfHDL['1','tau'] = ( HV['mu','mu'].real - k1 ) / ( k3 - k1 )
+            PmfHDL['2','S'] = 1
+            PmfHDL['3','mu'] = ( HV['tau','tau'].real - k3) / ( k1 - k3 )
+            PmfHDL['3','tau'] = ( HV['mu','mu'].real - k3 ) / ( k1 - k3 )
+            PmfHDL['4','e'] = 1
         
-            PmfHDL['NU_1_BAR','NU_S_BAR'] = 1
-            PmfHDL['NU_2_BAR','NU_MU_BAR'] = ( HV['NU_TAU_BAR','NU_TAU_BAR'].real - k2bar ) / ( k4bar - k2bar )
-            PmfHDL['NU_2_BAR','NU_TAU_BAR'] = ( HV['NU_MU_BAR','NU_MU_BAR'].real - k2bar ) / ( k4bar - k2bar )
-            PmfHDL['NU_3_BAR','NU_E_BAR'] = 1
-            PmfHDL['NU_4_BAR','NU_MU_BAR'] = ( HV['NU_TAU_BAR','NU_TAU_BAR'].real - k4bar ) / ( k2bar - k4bar )
-            PmfHDL['NU_4_BAR','NU_TAU_BAR'] = ( HV['NU_MU_BAR','NU_MU_BAR'].real - k4bar ) / ( k2bar - k4bar )
+            PmfHDL['1_bar','S_bar'] = 1
+            PmfHDL['2_bar','mu_bar'] = ( HV['tau_bar','tau_bar'].real - k2bar ) / ( k4bar - k2bar )
+            PmfHDL['2_bar','tau_bar'] = ( HV['mu_bar','mu_bar'].real - k2bar ) / ( k4bar - k2bar )
+            PmfHDL['3_bar','e_bar'] = 1
+            PmfHDL['4_bar','mu_bar'] = ( HV['tau_bar','tau_bar'].real - k4bar ) / ( k2bar - k4bar )
+            PmfHDL['4_bar','tau_bar'] = ( HV['mu_bar','mu_bar'].real - k4bar ) / ( k2bar - k4bar )
         return PmfHDL
 
 parameter_presets = {
