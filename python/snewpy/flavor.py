@@ -219,15 +219,12 @@ class FlavorMatrix:
                             flavor = self.flavor_out, from_flavor=self.flavor_in)
 
     @classmethod
-    def eye(cls, flavor:FlavorScheme, from_flavor:FlavorScheme = None):
-        from_flavor = from_flavor or flavor
-        shape = (len(from_flavor), len(flavor))
-        data = np.eye(*shape)
-        return cls(data, flavor, from_flavor)
+    def eye(cls, flavor:FlavorScheme, from_flavor:FlavorScheme = None, extra_dims=[]):
+        return cls.from_function(flavor,from_flavor)(lambda f1,f2: f1==f2*np.ones(shape=extra_dims))
     @classmethod
-    def zeros(cls, flavor:FlavorScheme, from_flavor:FlavorScheme = None):
+    def zeros(cls, flavor:FlavorScheme, from_flavor:FlavorScheme = None, extra_dims=[]):
         from_flavor = from_flavor or flavor
-        shape = (len(from_flavor), len(flavor))
+        shape = (len(from_flavor), len(flavor), *extra_dims)
         data = np.zeros(shape)
         return cls(data, flavor, from_flavor)
     @classmethod
