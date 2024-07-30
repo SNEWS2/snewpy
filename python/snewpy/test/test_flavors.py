@@ -141,7 +141,7 @@ class TestFlavorMatrix:
             matrix = flavor>>flavor
             assert isinstance(matrix, FlavorMatrix)
             assert np.allclose(matrix.array, np.eye(len(flavor)))
-
+    
     @staticmethod
     @pytest.mark.parametrize('flavor_in',flavor_schemes)
     @pytest.mark.parametrize('flavor_out',flavor_schemes)
@@ -151,3 +151,23 @@ class TestFlavorMatrix:
         assert isinstance(M, FlavorMatrix)
         assert M.flavor_in == flavor_in
         assert M.flavor_out == flavor_out
+
+    @staticmethod
+    @pytest.mark.parametrize('flavor_in',flavor_schemes)
+    @pytest.mark.parametrize('flavor_out',flavor_schemes)
+    def test_matrix_convert_to_flavor_method(flavor_in, flavor_out):
+        M =  FlavorMatrix.eye(ThreeFlavor,ThreeFlavor)
+        M1 = M.convert_to_flavor(flavor_in=flavor_in)
+        assert M1.flavor_in == flavor_in
+        assert M1.flavor_out == ThreeFlavor
+        M1 = M.convert_to_flavor(flavor_out=flavor_out)
+        assert M1.flavor_out == flavor_out
+        assert M1.flavor_in == ThreeFlavor
+        M1 = M.convert_to_flavor(flavor_in=flavor_in, flavor_out=flavor_out)
+        assert M1.flavor_in == flavor_in
+        assert M1.flavor_out == flavor_out
+        #test lshift conversion methods
+        assert flavor_out<<M == M.convert_to_flavor(flavor_out=flavor_out)
+        assert M<<flavor_in == M.convert_to_flavor(flavor_in=flavor_in)
+        assert flavor_out<<M<<flavor_in == M.convert_to_flavor(flavor_in=flavor_in, flavor_out=flavor_out)
+        
