@@ -400,9 +400,6 @@ class NeutrinoDecay(ThreeFlavorTransformation):
         self.tau = tau
         self.d = dist
 
-    def __str__(self):
-        return f'NeutrinoDecay_' + str(self.mix_params.mass_order)
-
     def gamma(self, E):
         """Decay width of the heaviest neutrino mass.
 
@@ -434,25 +431,19 @@ class NeutrinoDecay(ThreeFlavorTransformation):
         -------
         PND : an array of 6 x 6 matrices
         """        
-        decay_factor = np.exp(-self.gamma(E)*self.d) 
-        PND = np.zeros((6,6,len(E)))  
-
+        decay_factor = np.exp(-self.gamma(E)*self.d)
+        
+        PND = FlavorMatrix.eye(self.mix_params.basis_mass, extra_dims=[len(E)])
+        
         if self.mix_params.mass_order == MassHierarchy.NORMAL:
-            PND[0,0] = 1
-            PND[0,2] = 1 - decay_factor
-            PND[1,1] = 1
-            PND[2,2] = decay_factor
+            PND['NU_1','NU_3'] = 1 - decay_factor
+            PND['NU_3','NU_3'] = decay_factor
 
-        if self.mix_params.mass_order == MassHierarchy.INVERTED:
-            PND[0,0] = 1
-            PND[1,1] = decay_factor
-            PND[2,1] = 1 - decay_factor
-            PND[2,2] = 1
+        else:
+            PND['NU_2','NU_2'] = decay_factor
+            PND['NU_3','NU_2'] = 1 - decay_factor
 
-        for i in range(3):
-            for j in range(3):
-                PND[i+3,j+3] = PND[i,j]        
-
+            PND[3:,3:] = PND[:3,:3]
         return PND
 
 ###############################################################################
