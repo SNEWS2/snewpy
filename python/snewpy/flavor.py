@@ -222,7 +222,21 @@ class FlavorMatrix:
             return cls(np.array(data,dtype=float),  flavor, from_flavor)
         return _decorator
     #flavor conversion utils
+    def convert_to_flavor(self, flavor_out:FlavorScheme|None=None, flavor_in:FlavorScheme|None=None):
+        if flavor_out is None and flavor_in is None:
+            raise ArgumentError('Provide flavor_in and/or flavor_out argument')
+        M = self
+        if flavor_in is not None:
+            M = M@(M.flavor_in<<flavor_in)
+        if flavor_out is not None:
+            M = (flavor_out<<M.flavor_out)@M
+        return M
     
+    def __rshift__(self, flavor:FlavorScheme):
+        return self.convert_to_flavor(flavor_out=flavor)
+    def __lshift__(self, flavor:FlavorScheme):
+        return self.convert_to_flavor(flavor_in=flavor)
+        
 def conversion_matrix(from_flavor:FlavorScheme, to_flavor:FlavorScheme):
     @FlavorMatrix.from_function(to_flavor, from_flavor)
     def convert(f1, f2):
@@ -237,6 +251,23 @@ def conversion_matrix(from_flavor:FlavorScheme, to_flavor:FlavorScheme):
         return 0.
     return convert
 
+def rshift(flv:FlavorScheme, obj:FlavorScheme|FlavorMatrix)->FlavorMatrix:
+    if isinstance(obj, EnumMeta):
+        return conversion_matrix(from_flavor=flv,to_flavor=obj)
+    elif hasattr(obj, '__lshift__'):
+        return obj<<flv
+    else:
+        raise TypeError(f'Cannot apply flavor conversion to object of type {type(obj)}')
+
+def lshift(flv:FlavorScheme, obj:FlavorScheme|FlavorMatrix)->FlavorMatrix:
+    if isinstance(obj, EnumMeta):
+        return conversion_matrix(from_flavor=obj,to_flavor=flv)
+    elif hasattr(obj, '__rshift__'):
+        return obj>>flv
+    else:
+        raise TypeError(f'Cannot apply flavor conversion to object of type {type(obj)}')
+        
+        
 FlavorScheme.conversion_matrix = classmethod(conversion_matrix)
-EnumMeta.__rshift__ = conversion_matrix
-EnumMeta.__lshift__ = lambda f1,f2:conversion_matrix(f2,f1)
+EnumMeta.__rshift__ = rshift
+EnumMeta.__lshift__ = lshift
