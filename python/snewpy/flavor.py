@@ -102,11 +102,20 @@ class FlavorMatrix:
     def _convert_index(self, index):
         if isinstance(index, str) or (not isinstance(index,typing.Iterable)):
             index = [index]
+        #convert flavor dimensions
         new_idx = [flavors[idx] for idx,flavors in zip(index, [self.flavor_out, self.flavor_in])]
+        #add remaining dimensions
+        new_idx+=list(index[2:])
         return tuple(new_idx)
         
     def __getitem__(self, index):
-        return self.array[self._convert_index(index)]
+        index = self._convert_index(index)
+        array = self.array[index]
+        #if requested all the flavors, then return a FlavorMatrix using the remaining index
+        if index[:2]==(slice(None),slice(None)):
+            return FlavorMatrix(array, self.flavor_out, self.flavor_in)
+        else:
+            return array
         
     def __setitem__(self, index, value):
         self.array[self._convert_index(index)] = value
