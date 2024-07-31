@@ -418,23 +418,9 @@ class NeutrinoDecay(ThreeFlavorTransformation):
         return self.m*c.c / (E*self.tau)
 
     def get_probabilities(self, t, E): 
-        """neutrino and antineutrino transition probabilities.
-
-        Parameters
-        ----------
-        t : float or ndarray
-            List of times.
-        E : float or ndarray
-            List of energies.
-
-        Returns
-        -------
-        PND : an array of 6 x 6 matrices
-        """        
         decay_factor = np.exp(-self.gamma(E)*self.d)
-        
         PND = FlavorMatrix.eye(self.mix_params.basis_mass, extra_dims=[len(E)])
-        
+
         if self.mix_params.mass_order == MassHierarchy.NORMAL:
             PND['NU_1','NU_3'] = 1 - decay_factor
             PND['NU_3','NU_3'] = decay_factor
@@ -443,7 +429,7 @@ class NeutrinoDecay(ThreeFlavorTransformation):
             PND['NU_2','NU_2'] = decay_factor
             PND['NU_3','NU_2'] = 1 - decay_factor
 
-            PND[3:,3:] = PND[:3,:3]
+            PND['NU_BAR','NU_BAR'] = PND['NU','NU']
         return PND
 
 ###############################################################################
@@ -482,24 +468,9 @@ class QuantumDecoherence(ThreeFlavorTransformation):
         self.n = n
         self.E0 = E0
 
-    def __str__(self):
-        return f'QuantumDecoherence_' + str(self.mix_params.mass_order)
-
     def get_probabilities(self, t, E): 
-        """neutrino and antineutrino transition probabilities.
 
-        Parameters
-        ----------
-        t : float or ndarray
-            List of times.
-        E : float or ndarray
-            List of energies.
-
-        Returns
-        -------
-        PQD : an array of 6 x 6 matrices
-        """        
-        PQD = np.zeros((6,6,len(E)))
+        PQD = FlavorMatrix.zeros(self.mix_params.basis_mass, extra_dims=(len(E)))
 
         PQD[1,1] = 1/3 + 1/2 * np.exp(-(self.Gamma3 * (E/self.E0)**self.n + self.Gamma8 * (E/self.E0)**self.n / 3) * self.d) \
                   + 1/6 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
@@ -509,7 +480,7 @@ class QuantumDecoherence(ThreeFlavorTransformation):
 
         PQD[1,3] = 1/3 - 1/3 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
 
-        PQD[2,1] = PQD[1,2]
+        PQD[2,[1,2,3]] = PQD[1,[2,1,3]]
         PQD[2,2] = PQD[1,1]
         PQD[2,3] = PQD[1,3]
 
@@ -517,11 +488,7 @@ class QuantumDecoherence(ThreeFlavorTransformation):
         PQD[3,2] = PQD[2,3]
     
         PQD[3,3] = 1/3 + 2/3 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
-
-        for i in range(3):
-            for j in range(3):
-                PQD[i+3,j+3] = PQD[i,j]
-
+        PQD['NU_BAR','NU_BAR'] = PQD['NU','NU']
         return PQD
 
 ###############################################################################
