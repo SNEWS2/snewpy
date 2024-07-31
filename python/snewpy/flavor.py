@@ -258,6 +258,9 @@ def conversion_matrix(from_flavor:FlavorScheme, to_flavor:FlavorScheme):
             # convert from more flavors to TwoFlavor
             return 0.5
         return 0.
+    #check if the conversion matrix is not zero
+    if np.allclose(convert.array, 0):
+        raise RuntimeError(f"Conversion matrix {convert._repr_short()} is zero!")
     return convert
 
 def rshift(flv:FlavorScheme, obj:FlavorScheme|FlavorMatrix)->FlavorMatrix:
