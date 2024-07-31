@@ -19,6 +19,12 @@ class EnumMeta(enum.EnumMeta):
         if isinstance(key, str):
             #prepare the string
             key=key.upper()
+            #check cases for neutrinos and antineutrinos
+            if key=='NU':
+                return tuple([f for f in cls.__members__.values() if f.is_neutrino])
+            elif key=='NU_BAR':
+                return tuple([f for f in cls.__members__.values() if not f.is_neutrino])
+            #add the prefix if needed
             if not key.startswith('NU_'):
                 key = 'NU_'+key
             #try to get the proper values
@@ -104,6 +110,12 @@ class FlavorMatrix:
             index = [index]
         #convert flavor dimensions
         new_idx = [flavors[idx] for idx,flavors in zip(index, [self.flavor_out, self.flavor_in])]
+        #try to convert first index to list of bracketed index
+        try:
+            new_idx[0] = [[f] for f in new_idx[0]]
+        except:
+            #it was not iterable
+            pass 
         #add remaining dimensions
         new_idx+=list(index[2:])
         return tuple(new_idx)

@@ -25,7 +25,12 @@ class TestFlavorScheme:
             TwoFlavor['NU_MU']
         with pytest.raises(KeyError):
             ThreeFlavor['NU_X']
-            
+    @staticmethod
+    def test_getitem_collective_names():
+        assert ThreeFlavor['NU']==(ThreeFlavor.NU_E, ThreeFlavor.NU_MU, ThreeFlavor.NU_TAU)
+        assert ThreeFlavor['NU']==ThreeFlavor['e','mu','tau']
+        assert ThreeFlavor['NU_BAR']==(ThreeFlavor.NU_E_BAR, ThreeFlavor.NU_MU_BAR, ThreeFlavor.NU_TAU_BAR)
+        assert ThreeFlavor['NU_BAR']==ThreeFlavor['e_bar','mu_bar','tau_bar']
     @staticmethod
     def test_getitem_enum():
         assert TwoFlavor[TwoFlavor.NU_E] == TwoFlavor.NU_E
@@ -43,7 +48,7 @@ class TestFlavorScheme:
         TestFlavor = FlavorScheme.from_lepton_names('TestFlavor',leptons=['A','B','C'])
         assert len(TestFlavor)==6
         assert [f.name for f in TestFlavor]==['NU_A','NU_A_BAR','NU_B','NU_B_BAR','NU_C','NU_C_BAR']
-
+    
     @staticmethod
     def test_flavor_properties():
         f = ThreeFlavor.NU_E
@@ -104,7 +109,12 @@ class TestFlavorMatrix:
         assert m['NU_E','NU_X']==0
         assert np.allclose(m['NU_E'], [1,0,0,0])
         assert np.allclose(m['NU_E'], m['NU_E',:])
-        assert np.allclose(m[:,:], m.array)
+
+    @staticmethod
+    def test_getitem_submatrix():
+        m = FlavorMatrix.eye(TwoFlavor)
+        assert np.allclose(m[['e','x'],['e','x']], [[1,0],[0,1]])
+        assert np.allclose(m[:,:].array, m.array)
 
     @staticmethod
     def test_getitem_short():
