@@ -62,9 +62,11 @@ from scipy.integrate import cumulative_trapezoid
 from scipy.interpolate import interp1d
 from enum import IntEnum
 from functools import wraps
-
+import snewpy.utils
 #list of units which will be used as units for decomposition inside the Container
 snewpy_unit_bases = [u.MeV, u.m, u.s, u.kg]
+
+import matplotlib.pyplot as plt
 
 class Axes(IntEnum):
     """Enum to keep the number number of the array dimension for each axis""" 
@@ -187,7 +189,7 @@ class _ContainerBase:
         if isinstance(args[0],str) or isinstance(args[0],FlavorScheme):
             args[0] = self.flavor_scheme[args[0]]
         for n,arg in enumerate(args):
-            if not isinstance(arg, slice):
+            if isinstance(arg, int):
                 arg = slice(arg, arg + 1)
             arg_slices[n] = arg
 
@@ -404,11 +406,19 @@ class _ContainerBase:
         return self.convert_to_flavor(flavor)
         
     def __rmatmul__(self, matrix:FlavorMatrix):
+        """Multiply this flux by a FlavorMatrix"""
         if not self._is_full_flavor():
             raise RuntimeError(f"Cannot multiply flavor matrix object {self}, expected {len(self.flavor_scheme)} flavors")
         if matrix.flavor_in!=self.flavor_scheme:
             raise ValueError(f"Cannot multiply flavor matrix {matrix} by {self} - flavor scheme mismatch!")
-        array = np.tensordot(matrix.array,self.array, axes=[1,0])
+        #apply the multiplication:
+        #first add the missing dimensions for the matrix (if needed)
+        f = self.array
+        m = snewpy.utils.expand_dimensions_to(matrix.array, 
+                                              ndim=f.ndim+1)
+        
+        #do the multiplication
+        array = np.einsum('ij...,j...->i...',m,f)
         return Container(array, flavor=matrix.flavor_out, time=self.time, energy=self.energy)
 class Container(_ContainerBase):
     #a dictionary holding classes for each unit
@@ -434,7 +444,36 @@ class Container(_ContainerBase):
             name = name or f'{cls.__name__}[{unit}]'
             cls._unit_classes[unit] = type(name,(cls,),{'unit':unit})
         return cls._unit_classes[unit]
+
+    def project_to(self, axis='energy', squeeze=False):
+        if axis=='energy':
+            fP = self.integrate_or_sum('time')
+        else:
+            fP = self.integrate_or_sum('energy')
+        x = fP.__dict__[axis]
+        if squeeze:
+            return x, fP.array.squeeze().T
+        else:
+            return x, fP
         
+        
+    def plot(flux, projection='energy', styles=None, **kwargs):
+        x, fP = flux.project_to(projection, squeeze=False)
+
+        if isinstance(styles, dict):
+            styles = styles.get
+        elif styles==None:
+            styles = lambda flv: {'ls':'-' if flv.is_neutrino else ':',
+                                  'color':f'C{flv//2:d}'}
+        for flv in fP.flavor:
+            style = styles(flv)
+            style.update(kwargs)
+            y = fP[flv].array.squeeze()
+            plt.plot(x,y,label=flv.to_tex(), **style)
+        plt.legend(ncols=2)
+        plt.xlabel(f'{projection}, {x.unit._repr_latex_()}')
+        plt.ylabel(f'{fP.__class__.__name__}, {x.unit._repr_latex_()}')
+        return
 
 #some standard container classes that can be used for 
 Flux = Container['1/(MeV*s*m**2)', "d2FdEdT"]
