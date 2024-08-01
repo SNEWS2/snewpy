@@ -6,8 +6,11 @@ from astropy import units as u
 from dataclasses import dataclass
 import numpy as np
 from collections.abc import Mapping
+
+from .flavor import ThreeFlavor as Flavor
 from .flavor import TwoFlavor, ThreeFlavor
 from .flavor import FlavorScheme, FlavorMatrix
+
 
 class MassHierarchy(IntEnum):
     """Neutrino mass ordering: ``NORMAL`` or ``INVERTED``."""
