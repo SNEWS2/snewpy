@@ -62,7 +62,7 @@ from scipy.integrate import cumulative_trapezoid
 from scipy.interpolate import interp1d
 from enum import IntEnum
 from functools import wraps
-
+import snewpy.utils
 #list of units which will be used as units for decomposition inside the Container
 snewpy_unit_bases = [u.MeV, u.m, u.s, u.kg]
 
@@ -404,11 +404,19 @@ class _ContainerBase:
         return self.convert_to_flavor(flavor)
         
     def __rmatmul__(self, matrix:FlavorMatrix):
+        """Multiply this flux by a FlavorMatrix"""
         if not self._is_full_flavor():
             raise RuntimeError(f"Cannot multiply flavor matrix object {self}, expected {len(self.flavor_scheme)} flavors")
         if matrix.flavor_in!=self.flavor_scheme:
             raise ValueError(f"Cannot multiply flavor matrix {matrix} by {self} - flavor scheme mismatch!")
-        array = np.tensordot(matrix.array,self.array, axes=[1,0])
+        #apply the multiplication:
+        #first add the missing dimensions for the matrix (if needed)
+        f = self.array
+        m = snewpy.utils.expand_dimensions_to(matrix.array, 
+                                              ndim=f.ndim+1)
+        
+        #do the multiplication
+        array = np.einsum('ij...,j...->i...',m,f)
         return Container(array, flavor=matrix.flavor_out, time=self.time, energy=self.energy)
 class Container(_ContainerBase):
     #a dictionary holding classes for each unit
