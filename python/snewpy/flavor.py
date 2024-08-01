@@ -185,7 +185,6 @@ class FlavorMatrix:
                 ndims = max(m0.ndim, m1.ndim)
                 m0,m1 = [snewpy.utils.expand_dimensions_to(m, ndim=ndims) for m in [m0,m1]]
                 array = np.einsum('ij...,jk...->ik...',m0,m1)
-                np.tensordot(self.array, other.array, axes=[1,0])
                 return FlavorMatrix(array, self.flavor_out, from_flavor = other.flavor_in)
             except Exception as e:
                 raise ValueError(f"Cannot multiply {self._repr_short()} by {other._repr_short()}") from e
