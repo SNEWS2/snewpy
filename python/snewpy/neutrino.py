@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import numpy as np
 from collections.abc import Mapping
 from .flavor import ThreeFlavor as Flavor
-
+from .flavor import ThreeFlavor, FourFlavor
 class MassHierarchy(IntEnum):
     """Neutrino mass ordering: ``NORMAL`` or ``INVERTED``."""
     NORMAL = 1
@@ -22,10 +22,16 @@ class MassHierarchy(IntEnum):
             return MassHierarchy.NORMAL
         else:
             return MassHierarchy.INVERTED
-            
+
+    def __str__(self):
+        if self.value == MassHierarchy.NORMAL: 
+           return f'NMO'
+        if self.value == MassHierarchy.INVERTED: 
+           return f'IMO'
+
         
 @dataclass
-class MixingParameters3Flavor(Mapping):
+class ThreeFlavorMixingParameters(Mapping):
     """Mixing angles and mass differences, assuming three neutrino flavors.
     This class contains the default values used throughout SNEWPY, which are
     based on `NuFIT 5.0 <http://www.nu-fit.org>`_ results from July 2020,
@@ -109,18 +115,61 @@ class MixingParameters3Flavor(Mapping):
         """        
         return (self.dm21_2, self.dm31_2, self.dm32_2)
 
+
+    def VacuumMixingMatrix(self):
+        """The vacuum mixing matrix given the mixing paramters
+           N.B. This is a 6 x 6 matrix
+        """
+
+        U = self.ComplexRotationMatrix(1,2,self.theta23,0) \
+            @ self.ComplexRotationMatrix(0,2,self.theta13,self.deltaCP) \
+            @ self.ComplexRotationMatrix(0,1,self.theta12,0) 
+
+        """Reorder rows to match SNEWPY's flavor ordering convention"""
+        U[ThreeFlavor.NU_E], U[ThreeFlavor.NU_MU], U[ThreeFlavor.NU_TAU], \
+            U[ThreeFlavor.NU_E_BAR], U[ThreeFlavor.NU_MU_BAR], U[ThreeFlavor.NU_TAU_BAR] = \
+                U[0], U[1], U[2], U[3], U[4], U[5]
+
+        return U
+
+
+    def ComplexRotationMatrix(self,i,j,theta,phase):
+        """A complex rotation matrix. N.B. the minus sign in the complex exponential matches PDG convention"""
+        V = np.zeros((6,6),dtype = 'complex_')
+        for k in range(6): 
+            V[k,k] = 1
+
+        V[i,i] = np.cos(theta) 
+        V[j,j] = V[i,i]
+        V[i,j] = np.sin(theta) * ( np.cos(phase) - 1j * np.sin(phase) )
+        V[j,i] = - np.conjugate(V[i,j])
+
+        V[i+3,i+3] = V[i,i]
+        V[j+3,j+3] = V[j,j]
+        V[i+3,j+3] = np.conjugate(V[i,j]) 
+        V[j+3,i+3] = np.conjugate(V[j,i])
+
+        return V
+
+
 @dataclass
-class MixingParameters4Flavor(MixingParameters3Flavor):
+class FourFlavorMixingParameters(ThreeFlavorMixingParameters):
     """A class for four flavor neutrino mixing. 
-    ..Note: it is an extension of :class:`MixingParameters3Flavor`, and can be constructed using it:
+    ..Note: it is an extension of :class:`ThreeFlavorMixingParameters`, and can be constructed using it:
     
-        >>> pars_3f = MixingParameters() #standard 3flavor mixing
-        >>> pars_4f = MixingParameters4Flavor(**pars_3f, theta14=90<<u.deg, dm41_2=1<<u.GeV**2)
+        >>> pars_3f = ThreeFlavorMixingParameters() #standard 3flavor mixing
+        >>> pars_4f = FpourFlavorMixingParameters(**pars_3f, theta14=90<<u.deg, dm41_2=1<<u.GeV**2)
     """
-    #sterile neutrino miging angles
+    #sterile neutrino mixing angles. 
     theta14: u.Quantity[u.deg] = 0<<u.deg
-    theta24: u.Quantity[u.deg] = 0<<u.deg
-    theta34: u.Quantity[u.deg] = 0<<u.deg
+    theta24: Optional[u.Quantity[u.deg]] = 0<<u.deg
+    theta34: Optional[u.Quantity[u.deg]] = 0<<u.deg
+
+    #sterile CP violating phases
+    delta12: Optional[u.Quantity[u.deg]] = 0<<u.deg
+    #delta13: u.Quantity[u.deg] '''same as deltaCP in 3Flavor Mixing'''
+    delta24: Optional[u.Quantity[u.deg]] = 0<<u.deg
+
     #sterile neutrino mass squared differences
     dm41_2: u.Quantity[u.eV**2] = 0<<u.eV**2
     dm42_2: u.Quantity | None = None
@@ -136,12 +185,71 @@ class MixingParameters4Flavor(MixingParameters3Flavor):
         dm2_sum = self.dm41_2 - self.dm43_2 - self.dm31_2
         assert np.isclose(dm2_sum,0), f'dm41_2 - dm43_2 - dm31_2 = {dm2_sum} !=0'
 
+    def get_mixing_angles(self):
+        """Mixing angles of the PMNS matrix.
+        
+        Returns
+        -------
+        tuple
+            Angles theta12, theta13, theta23, theta14, theta24, theta34. 
+        """
+        return (self.theta12, self.theta13, self.theta23, self.theta14, self.theta24, self.theta34)
+        
+    def get_mass_squared_differences(self):
+        """Mass squared differences .
+        
+        Returns
+        -------
+        tuple
+            dm21_2, dm31_2, dm32_2, dm41_2, dm42_2, dm43_2.
+        """        
+        return (self.dm21_2, self.dm31_2, self.dm32_2, self.dm41_2, self.dm42_2, self.dm43_2)
+
+    def VacuumMixingMatrix(self):
+        """The vacuum mixing matrix given the mixing paramters
+           N.B. This is a 8 x 8 matrix
+        """
+
+        U = self.ComplexRotationMatrix(2,3,self.theta34,0) \
+            @ self.ComplexRotationMatrix(1,3,self.theta24,self.delta24) \
+            @ self.ComplexRotationMatrix(0,3,self.theta14,0) \
+            @ self.ComplexRotationMatrix(1,2,self.theta23,0) \
+            @ self.ComplexRotationMatrix(0,2,self.theta13,self.deltaCP) \
+            @ self.ComplexRotationMatrix(0,1,self.theta12,self.delta12) 
+
+        """Reorder rows to match SNEWPY's flavor ordering convention"""
+        U[FourFlavor.NU_E], U[FourFlavor.NU_MU], U[FourFlavor.NU_TAU], U[FourFlavor.NU_S], \
+            U[FourFlavor.NU_E_BAR], U[FourFlavor.NU_MU_BAR], U[FourFlavor.NU_TAU_BAR], U[FourFlavor.NU_S_BAR] = \
+                U[0], U[1], U[2], U[3], U[4], U[5], U[6], U[7]
+
+        return U
+
+
+    def ComplexRotationMatrix(self,i,j,theta,phase):
+        """A complex rotation matrix. N.B. the minus sign in the complex exponential matches PDG convention"""
+        V = np.zeros((8,8),dtype = 'complex_')
+        for k in range(8): 
+            V[k,k] = 1
+
+        V[i,i] = np.cos(theta) 
+        V[j,j] = V[i,i]
+        V[i,j] = np.sin(theta) * ( np.cos(phase) - 1j * np.sin(phase) )
+        V[j,i] = - np.conjugate(V[i,j])
+
+        V[i+4,i+4] = V[i,i]
+        V[j+4,j+4] = V[j,j]
+        V[i+4,j+4] = np.conjugate(V[i,j]) 
+        V[j+4,i+4] = np.conjugate(V[j,i])
+
+        return V
+
+
 parameter_presets = {
     'NuFIT5.0': {
         # Values from http://www.nu-fit.org/?q=node/228; cite as JHEP 09 (2020) 178 [arXiv:2007.14792]
         MassHierarchy.NORMAL:
-        MixingParameters3Flavor(
-            theta12 = 33.44 << u.deg,
+        ThreeFlavorMixingParameters(
+            theta12 = 33.44<< u.deg,
             theta13 = 8.57 << u.deg,
             theta23 = 49.2 << u.deg,
             deltaCP = 197 << u.deg,
@@ -149,7 +257,7 @@ parameter_presets = {
             dm31_2 = 2.517e-3 << u.eV**2
         ),
         MassHierarchy.INVERTED:
-        MixingParameters3Flavor(
+        ThreeFlavorMixingParameters(    
             theta12 = 33.45 << u.deg,
             theta13 = 8.60 << u.deg,
             theta23 = 49.3 << u.deg,
@@ -161,7 +269,7 @@ parameter_presets = {
     'NuFIT5.2': {
         # Values from http://www.nu-fit.org/?q=node/256; cite as JHEP 09 (2020) 178 [arXiv:2007.14792]
         MassHierarchy.NORMAL:
-        MixingParameters3Flavor(
+        ThreeFlavorMixingParameters(
             theta12 = 33.41 << u.deg,
             theta13 = 8.58 << u.deg,
             theta23 = 42.2 << u.deg,
@@ -170,7 +278,7 @@ parameter_presets = {
             dm31_2 = 2.507e-3 << u.eV**2
         ),
         MassHierarchy.INVERTED:
-        MixingParameters3Flavor(
+        ThreeFlavorMixingParameters(        
             theta12 = 33.41 << u.deg,
             theta13 = 8.57 << u.deg,
             theta23 = 49.0 << u.deg,
@@ -182,7 +290,7 @@ parameter_presets = {
     'NuFIT6.0': {
         # Values from http://www.nu-fit.org/?q=node/294; cite as arXiv:2410.05380
         MassHierarchy.NORMAL:
-        MixingParameters3Flavor(
+        ThreeFlavorMixingParameters(
             theta12 = 33.68 << u.deg,
             theta13 = 8.56 << u.deg,
             theta23 = 43.3 << u.deg,
@@ -191,7 +299,7 @@ parameter_presets = {
             dm31_2 = 2.513e-3 << u.eV**2
         ),
         MassHierarchy.INVERTED:
-        MixingParameters3Flavor(
+        ThreeFlavorMixingParameters(
             theta12 = 33.68 << u.deg,
             theta13 = 8.59 << u.deg,
             theta23 = 47.9 << u.deg,
@@ -203,7 +311,7 @@ parameter_presets = {
     'PDG2022':{
         # Cite as R.L. Workman et al. (Particle Data Group), Prog. Theor. Exp. Phys. 2022, 083C01 (2022)
         MassHierarchy.NORMAL:
-        MixingParameters3Flavor(
+        ThreeFlavorMixingParameters(
             theta12 = 33.65 << u.deg,
             theta13 = 8.53 << u.deg,
             theta23 = 47.64 << u.deg,
@@ -212,7 +320,7 @@ parameter_presets = {
             dm32_2 = 2.453e-3 << u.eV**2
         ),
         MassHierarchy.INVERTED:
-        MixingParameters3Flavor(
+        ThreeFlavorMixingParameters(
             theta12 = 33.65 << u.deg,
             theta13 = 8.53 << u.deg,
             theta23 = 47.24 << u.deg,
@@ -246,5 +354,5 @@ parameter_presets = {
 }
    
 
-def MixingParameters(mh:MassHierarchy=MassHierarchy.NORMAL, version:str='NuFIT5.0'):
-    return parameter_presets[version][mh]
+def MixingParameters(mass_order:MassHierarchy=MassHierarchy.NORMAL, version:str='NuFIT5.0'):
+    return parameter_presets[version][mass_order]
