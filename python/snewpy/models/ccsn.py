@@ -182,41 +182,13 @@ class Walk_2019(loaders.Walk_2019):
                                ),
     eos = ['HShen', 'LS220']
 )
-class _OConnor_2013_new(loaders.OConnor_2013):
+class OConnor_2013(loaders.OConnor_2013):
     """Model based on the black hole formation simulation in `O'Connor & Ott (2013) <https://arxiv.org/abs/1207.1100>`_.
     """    
     def __init__(self, eos:str, progenitor_mass:u.Quantity):
         # Load from Parameters
         filename = f'{eos}_timeseries.tar.gz'
         return super().__init__(filename=filename, metadata=self.metadata)
-
-class OConnor_2013(_OConnor_2013_new):
-    _config_path='ccsn.OConnor_2013'
-    
-    @deprecated('base', 'mass')
-    def __init__(self, base=None, mass=None, eos='LS220', *, progenitor_mass=None):
-        """
-        Parameters
-        ----------
-        base : str
-            Absolute or relative path folder with model data. This argument is deprecated.
-        mass: int
-            Mass of model progenitor in units Msun. This argument is deprecated.
-        """
-        if mass:
-            progenitor_mass = mass*u.Msun
-        if base:
-            self.metadata = {'Progenitor mass': progenitor_mass,
-                             'EOS': eos}
-            filename = f'{base}/{eos}_timeseries.tar.gz'
-            return super().__init__(filename=filename, eos=eos, progenitor_mass=progenitor_mass)
-        else:
-            return super().__init__(eos=eos, progenitor_mass=progenitor_mass)
-
-OConnor_2013.__init__.__doc__=dedent(OConnor_2013.__init__.__doc__)+_OConnor_2013_new.__init__.__doc__
-#make sure that only the latest class is present in the models table
-all_models.remove(OConnor_2013.__mro__[1])
-all_models.add(OConnor_2013)
 
 @deprecated('eos')
 @RegistryModel(
