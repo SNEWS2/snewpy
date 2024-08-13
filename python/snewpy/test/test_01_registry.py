@@ -77,19 +77,47 @@ class TestModels(unittest.TestCase):
                         model = Tamborra_2014(progenitor_mass=mass*u.Msun, eos='LS220', direction=angles)
                 else:
                     model = Tamborra_2014(progenitor_mass=mass*u.Msun, eos='LS220',direction=angles)
-                    
+
                     self.assertEqual(model.metadata['EOS'], 'LS220')
                     self.assertEqual(model.metadata['Progenitor mass'], mass*u.Msun)
-                    
+
                     # Check that times are in proper units.
                     t = model.get_time()
                     self.assertTrue(t.unit, u.s)
-                    
+
                     # Check that we can compute flux dictionaries.
                     f = model.get_initial_spectra(0*u.s, 10*u.MeV)
                     self.assertEqual(type(f), dict)
                     self.assertEqual(len(f), len(Flavor))
                     self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
+
+    def test_Bugli_2021(self):
+        """
+        Instantiate a set of 'Bugli 2021' models
+        """
+        for Bfield in ['hydro', 'l1_b12', 'l2_b12_dipdecay']:
+            for direction in ['average','equator','north','south']:
+                if Bfield == 'l2_b12_dipdecay':
+                    for grav in ['gravA','gravB']:
+                        model = Bugli_2021(Bfield=Bfield, grav=grav, rotation='', direction=direction)
+                if Bfield == 'l1_b12' and :
+                    for rotation in ['0deg','90deg']:
+                        model = Bugli_2021(Bfield=Bfield, grav='', rotation=rotation, direction)
+                else:
+                    model = Bugli_2021(Bfield=Bfield, grav='', rotation='', direction)
+
+                self.assertEqual(model.metadata['EOS'], 'LS220')
+                self.assertEqual(model.metadata['Progenitor mass'], 35*u.Msun)
+
+                # Check that times are in proper units.
+                t = model.get_time()
+                self.assertTrue(t.unit, u.s)
+
+                # Check that we can compute flux dictionaries.
+                f = model.get_initial_spectra(0*u.s, 10*u.MeV)
+                self.assertEqual(type(f), dict)
+                self.assertEqual(len(f), len(Flavor))
+                self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
 
     def test_OConnor_2013(self):
         """
@@ -111,7 +139,6 @@ class TestModels(unittest.TestCase):
                 self.assertEqual(type(f), dict)
                 self.assertEqual(len(f), len(Flavor))
                 self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
-
 
     def test_OConnor_2015(self):
         """
@@ -360,7 +387,7 @@ class TestModels(unittest.TestCase):
                         2.37 , 2.25 , 2.25 , 2.36 , 2.23 ,
                         2.1  , 2.16 , 1.98 , 2.01 , 2.1  ,
                         1.98 , 2.11 , 2.18 , 2.14 , 2.2 ]<<u.Msun
-        
+
         for progenitor, m_pns in zip(progenitors, pns_masses):
             model = Fornax_2022(progenitor_mass=progenitor)
 
@@ -392,7 +419,7 @@ class TestModels(unittest.TestCase):
 
             axion_mass = float(am) * u.MeV
             self.assertEqual(model.metadata['Axion mass'], axion_mass)
-    
+
             axion_coupling = float(ac) * 1e-10/u.GeV
             axion_coupling = np.round(axion_coupling.to('1e-10/GeV'))
             self.assertEqual(model.metadata['Axion coupling'], axion_coupling)
@@ -409,4 +436,3 @@ class TestModels(unittest.TestCase):
             self.assertEqual(type(f), dict)
             self.assertEqual(len(f), len(Flavor))
             self.assertEqual(f[Flavor.NU_E].unit, 1./(u.erg * u.s))
-
