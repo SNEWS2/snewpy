@@ -4,6 +4,11 @@ import typing
 import snewpy.utils
 
 class FlavorEnumMeta(enum.EnumMeta):
+    """Meta class for setting flavor enums.
+
+    Needed for calling __getitem__ on subclasses of Enum. See the discussion in
+    https://github.com/SNEWS2/snewpy/pull/324#discussion_r1598833198
+    """
     def __getitem__(cls, key):
         #if this is an iterable: apply to each value, and construct a tuple
         if isinstance(key, slice):
@@ -41,6 +46,9 @@ class FlavorEnumMeta(enum.EnumMeta):
         return np.array(list(cls.__members__.values()),dtype=object)[key]
 
 class FlavorScheme(enum.IntEnum, metaclass=FlavorEnumMeta):
+    """Configurable enumeration for different flavor schems (2, 3, 4, ... flavors).
+    """
+
     def to_tex(self):
         """LaTeX-compatible string representations of flavor."""
         base = r'\nu'
@@ -88,11 +96,14 @@ class FlavorScheme(enum.IntEnum, metaclass=FlavorEnumMeta):
     def take(cls, index):
         return cls[index]
 
+#- Define 2, 3, and 4-flavor schemes for the module.
 TwoFlavor = FlavorScheme.from_lepton_names('TwoFlavor',['E','X'])
 ThreeFlavor = FlavorScheme.from_lepton_names('ThreeFlavor',['E','MU','TAU'])
 FourFlavor = FlavorScheme.from_lepton_names('FourFlavor',['E','MU','TAU','S'])
 
 class FlavorMatrix:
+    """Encapsulate flavor transformations for any FlavorScheme, enabling conversion between an input and output FlavorScheme."""
+
     def __init__(self, 
                  array:np.ndarray,
                  flavor:FlavorScheme,
@@ -159,15 +170,18 @@ class FlavorMatrix:
     
     def __eq__(self,other):
         return self.flavor_in==other.flavor_in and self.flavor_out==other.flavor_out and np.allclose(self.array,other.array)
+
     @property
     def real(self):
         return FlavorMatrix(self.array.real, self.flavor_out, from_flavor = self.flavor_in)
+
     @property
     def imag(self):
         return FlavorMatrix(self.array.imag, self.flavor_out, from_flavor = self.flavor_in)
     
     def abs(self):
         return FlavorMatrix(np.abs(self.array), self.flavor_out, from_flavor = self.flavor_in)
+
     def abs2(self):
         return FlavorMatrix(np.abs(self.array**2), self.flavor_out, from_flavor = self.flavor_in)
         
@@ -177,6 +191,7 @@ class FlavorMatrix:
                 raise TypeError(f"Cannot multiply matrices with different flavor schemes: {self._repr_short()} and {other._repr_short()}")
             other = other.array
         return FlavorMatrix(self.array*other, self.flavor_out, from_flavor = self.flavor_in)
+
     def __matmul__(self, other):
         if isinstance(other, FlavorMatrix):
             assert self.flavor_in==other.flavor_out, f"Incompatible spaces {self.flavor_in}!={other.flavor_out}"
@@ -197,13 +212,16 @@ class FlavorMatrix:
             result = np.tensordot(self.array, array, axes=[1,0])
             return {flv:result[n] for n,flv in enumerate(self.flavor_out)}
         raise TypeError(f"Cannot multiply object of {self.__class__} by {other.__class__}")
+
     #properties
     @property
     def shape(self):
         return self.array.shape
+
     @property
     def flavor(self):
         return self.flavor_out
+
     @property
     def T(self):
         return self.transpose()
@@ -212,6 +230,7 @@ class FlavorMatrix:
         "transposed version of the matrix: reverse the flavor dimensions"
         return FlavorMatrix(array = self.array.swapaxes(0,1), 
                             flavor = self.flavor_in, from_flavor=self.flavor_out)
+
     def conjugate(self):
         "apply complex conjugate"
         return FlavorMatrix(array = self.array.conjugate(), 
@@ -220,12 +239,14 @@ class FlavorMatrix:
     @classmethod
     def eye(cls, flavor:FlavorScheme, from_flavor:FlavorScheme = None, extra_dims=[]):
         return cls.from_function(flavor,from_flavor)(lambda f1,f2: f1==f2*np.ones(shape=extra_dims))
+
     @classmethod
     def zeros(cls, flavor:FlavorScheme, from_flavor:FlavorScheme = None, extra_dims=[]):
         from_flavor = from_flavor or flavor
         shape = (len(from_flavor), len(flavor), *extra_dims)
         data = np.zeros(shape)
         return cls(data, flavor, from_flavor)
+
     @classmethod
     def from_function(cls, flavor:FlavorScheme, from_flavor:FlavorScheme = None):
         """A decorator for creating the flavor matrix from the given function"""
@@ -238,6 +259,7 @@ class FlavorMatrix:
                     
             return cls(np.array(data,dtype=float),  flavor, from_flavor)
         return _decorator
+
     #flavor conversion utils
     def convert_to_flavor(self, flavor_out:FlavorScheme|None=None, flavor_in:FlavorScheme|None=None):
         if flavor_out is None and flavor_in is None:
@@ -251,6 +273,7 @@ class FlavorMatrix:
     
     def __rshift__(self, flavor:FlavorScheme):
         return self.convert_to_flavor(flavor_out=flavor)
+
     def __lshift__(self, flavor:FlavorScheme):
         return self.convert_to_flavor(flavor_in=flavor)
         
@@ -287,7 +310,7 @@ def lshift(flv:FlavorScheme, obj:FlavorScheme|FlavorMatrix)->FlavorMatrix:
     else:
         raise TypeError(f'Cannot apply flavor conversion to object of type {type(obj)}')
         
-        
+# Syntactic sugar for FlavorScheme conversions
 FlavorScheme.conversion_matrix = classmethod(conversion_matrix)
 FlavorEnumMeta.__rshift__ = rshift
 FlavorEnumMeta.__lshift__ = lshift
