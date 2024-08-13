@@ -386,10 +386,8 @@ def RegistryModel(_param_validator=None, **params):
                 1. defines the filename from the given user parameters
                 2. optionally modify the `self.metadata` dictionary, and 
                 3. calls the corresponding loader class constructor
-            * *can* define the ``_metadata_from_filename (self, filename:str)->dict``, to help populate the metadata when a `filename` argument is passed
 
     If a parameter has a single allowed value (i.e. fixed), this value will be default for this parameter in constructor.
-    
     """
     pset:ParameterSet = ParameterSet(param_validator=_param_validator, **params)
     def _wrap(base_class):

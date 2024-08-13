@@ -58,23 +58,6 @@ class Nakazato_2013(loaders.Nakazato_2013):
     (2013), ApJ 804:75 (2015), PASJ 73:639 (2021). See also http://asphwww.ph.noda.tus.ac.jp/snn/.
     """
 
-    def _metadata_from_filename(self, filename:str)->dict:
-            metadata = {'Progenitor mass': float(filename.split('-')[-1].strip('s%.fits')) * u.Msun}
-            if 't_rev' in filename:
-                metadata.update({
-                    'EOS': filename.split('-')[-4].upper(),
-                    'Metallicity': float(filename.split('-')[-3].strip('z%')),
-                    'Revival time': float(filename.split('-')[-2].strip('t_rev%ms')) * u.ms
-                })
-            # No revival time because the explosion "failed" (BH formation).
-            else:
-                metadata.update({
-                    'EOS': filename.split('-')[-4].upper(),
-                    'Metallicity': float(filename.split('-')[-2].strip('z%')),
-                    'Revival time': 0 * u.ms
-                })
-            return metadata
-        
     def __init__(self, progenitor_mass:u.Quantity, revival_time:u.Quantity, metallicity:float, eos:str):
         # Strip units for filename construction
         progenitor_mass = progenitor_mass.to(u.Msun).value
@@ -96,13 +79,6 @@ class Nakazato_2013(loaders.Nakazato_2013):
 class Sukhbold_2015(loaders.Sukhbold_2015):
     """Model based on simulations from Sukhbold et al., ApJ 821:38,2016. Models were shared privately by email.
     """
-    def _metadata_from_filename(self, filename:str):
-        metadata = {
-            'Progenitor mass': float(filename.split('-')[-1].strip('z%.fits')) * u.Msun,
-            'EOS': filename.split('-')[-2]
-        }
-        return metadata
-         
     def __init__(self, progenitor_mass:u.Quantity, eos:str):
         if progenitor_mass.value == 9.6:
             filename = f'sukhbold-{eos}-z{progenitor_mass.value:3.1f}.fits'
@@ -213,10 +189,6 @@ class OConnor_2015(loaders.OConnor_2015):
 class Zha_2021(loaders.Zha_2021):
     """Model based on the hadron-quark phse transition models from `Zha et al. 2021 <https://arxiv.org/abs/2103.02268>`_.
     """
-    def _metadata_from_filename(self, filename:str)->dict:
-        metadata = {'Progenitor mass': float(os.path.splitext(os.path.basename(filename))[0][1:]) * u.Msun}
-        return metadata 
-        
     def __init__(self, *, progenitor_mass:u.Quantity):
         filename = f's{progenitor_mass.value:g}.dat'
         return super().__init__(filename, self.metadata)
@@ -242,13 +214,6 @@ class Warren_2020(loaders.Warren_2020):
     Neutrino fluxes available at https://doi.org/10.5281/zenodo.3667908."""
     # np.arange with decimal increments can produce floating point errors
     # Though it may be more intuitive to use np.arange, these fp-errors quickly become troublesome
-    def _metadata_from_filename(self, filename:str)->dict:
-        _, _, turbmixing_param, progenitor_mass = os.path.splitext(os.path.basename(filename))[0].split('_')
-        metadata = {'Progenitor mass': float(progenitor_mass[1:]) * u.Msun,
-                    'Turb. mixing param.': float(turbmixing_param[1:]),
-                    'EOS': 'SFHo'}
-        return metadata
-
     def __init__(self, *, progenitor_mass, turbmixing_param):
         if progenitor_mass.value.is_integer() and progenitor_mass.value <= 30.:
             fname = os.path.join(f'stir_a{turbmixing_param:3.2f}',
@@ -271,17 +236,6 @@ class Warren_2020(loaders.Warren_2020):
 )
 class Kuroda_2020(loaders.Kuroda_2020):
     """Model based on simulations from `Kuroda et al. (2020) <https://arxiv.org/abs/2009.07733>`_."""
-    
-    def _metadata_from_filename(self, filename:str)->dict:
-        _, rotational_velocity, magnetic_field_exponent = re.split('R|B', os.path.splitext(os.path.basename(filename))[0])
-        metadata = {
-            'Progenitor mass': 20 * u.Msun,
-            'Rotational Velocity': int(rotational_velocity[0]),
-            'B_0 Exponent': int(magnetic_field_exponent),
-            'EOS': 'LS220'
-        }
-        return metadata
-
     def __init__(self, mass=None, *, rotational_velocity, magnetic_field_exponent):
         filename = f'LnuR{int(rotational_velocity.value):1d}0B{int(magnetic_field_exponent):02d}.dat'
         return super().__init__(filename, self.metadata)
@@ -293,11 +247,6 @@ class Fornax_2019(loaders.Fornax_2019):
     """Model based on 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019. 
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/
     """
-    def _metadata_from_filename(self, filename:str)->dict:
-        progenitor_mass = os.path.splitext(os.path.basename(filename))[0].split('_')[2]
-        metadata = {'Progenitor mass': int(progenitor_mass[:-1]) * u.Msun}
-        return metadata
-        
     def __init__(self, cache_flux=False, *, progenitor_mass):
         """
         Parameters
@@ -319,11 +268,6 @@ class Fornax_2021(loaders.Fornax_2021):
     """Model based on 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019. 
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/
         """
-    def _metadata_from_filename(self, filename:str)->dict:
-        progenitor_mass = os.path.splitext(os.path.basename(filename))[0].split('_')[2]
-        metadata = {'Progenitor mass': float(progenitor_mass[:-1]) * u.Msun}
-        return metadata
-        
     def __init__(self, progenitor_mass:u.Quantity):
         # Load from Parameters
         if progenitor_mass.value.is_integer():
