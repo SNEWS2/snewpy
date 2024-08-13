@@ -466,11 +466,11 @@ class Mori_2023(loaders.Mori_2023):
 @RegistryModel(
     Bfield = ['hydro','l1_b12','l2_b12_dipdecay'],
     direction = ['average','equator','north','south'],
-    grav=['gravA','gravB',''],
-    rotation=['','0deg','90deg'],
-    _param_validator = lambda p: (p['Bfield'] == 'hydro' and p['grav'] == '' and p['rotation'] == '' ) or
-        (p['Bfield'] == 'l1_b12' and p['grav'] == '' and p['rotation'] in ['0deg','90deg']) or
-        (p['Bfield'] == 'l2_b12_dipdecay' and p['rotation'] == '' and p['grav'] in ['gravA','gravB'])
+    grav=['gravA','gravB','None'],
+    rotation=['0deg','90deg','None'],
+    _param_validator = lambda p: (p['Bfield'] == 'hydro' and p['grav'] == 'None' and p['rotation'] == 'None' ) or
+        (p['Bfield'] == 'l1_b12' and p['grav'] == 'None' and p['rotation'] in ['0deg','90deg']) or
+        (p['Bfield'] == 'l2_b12_dipdecay' and p['rotation'] == 'None' and p['grav'] in ['gravA','gravB'])
 )
 class Bugli_2021(loaders.Bugli_2021):
     """Model based on `Buggli (2021) <https://arxiv.org/abs/2105.00665>`_.
