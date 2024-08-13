@@ -7,7 +7,7 @@ from snewpy.neutrino import Flavor
 from snewpy.models.ccsn_loaders import Nakazato_2013, Tamborra_2014, OConnor_2013, OConnor_2015, \
                                   Sukhbold_2015, Bollig_2016, Walk_2018, \
                                   Walk_2019, Fornax_2019, Warren_2020, \
-                                  Kuroda_2020, Fornax_2021, Zha_2021
+                                  Kuroda_2020, Fornax_2021, Zha_2021, Bugli_2021
 from astropy import units as u
 from snewpy import model_path
 import os
