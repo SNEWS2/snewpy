@@ -87,9 +87,9 @@ data['Mass [kt]'] = [32, 220, 51600, 69366*3, 1, 1, 0.278, 20, 0.78, 14, 0.240, 
 data['Location'] = ["Japan", "Japan", "South Pole", "Italy", "Italy", "Japan", "Italy", "China",
                     "Canada", "USA", "Russia", "Canada", "Italy", "USA", "USA", "USA", "Italy", "Italy", "USA", "China"]
 
-data['\\ {11.2}{M_\odot}'] = []
-data['\\ {27.0}{M_\odot}'] = []
-data['\\ {40.0}{M_\odot}'] = []
+data['\\ {11.2}{M_\\odot}'] = []
+data['\\ {27.0}{M_\\odot}'] = []
+data['\\ {40.0}{M_\\odot}'] = []
 
 
 for experiment in range(len(data['Experiment'])):
@@ -124,11 +124,11 @@ for experiment in range(len(data['Experiment'])):
         counts_HCI = int(counts_HCI / 1000 + 0.5)
         post[5] = 'K'
 
-    data['\\ {11.2}{M_\odot}'].append(
+    data['\\ {11.2}{M_\\odot}'].append(
         str(round_to_2(counts_LCN)) + post[0] + "/" + str(round_to_2(counts_LCI)) + post[1])
-    data['\\ {27.0}{M_\odot}'].append(
+    data['\\ {27.0}{M_\\odot}'].append(
         str(round_to_2(counts_MCN)) + post[2] + "/" + str(round_to_2(counts_MCI)) + post[3])
-    data['\\ {40.0}{M_\odot}'].append(
+    data['\\ {40.0}{M_\\odot}'].append(
         str(round_to_2(counts_HCN)) + post[4] + "/" + str(round_to_2(counts_HCI)) + post[5])
 
 # For IceCube & KM3NeT, the effective masses in SNOwGLoBES are artificially high.  This is because the
@@ -152,7 +152,7 @@ data['Mass [kt]'][3] = "~"+str(100*int(0.01*(mass*total_events['s27.0']['Adiabat
 
 # Formatting the dictionary to be compatible with MathJax (useful for html)
 def dictMathJax(dictionary):
-    table = f'{chr(92)}' + 'begin{array} {|r|r|}\hline '
+    table = r'\begin{array} {|r|r|}\hline '
 
     # Writes the header row
     is_first_column = True
@@ -161,7 +161,7 @@ def dictMathJax(dictionary):
             table = table + ' & '
         table = table + columnHeader
         is_first_column = False
-    table = table+f'\\{chr(92)} \hline '
+    table = table+r'\\ \hline '
 
     # Writes the center rows
     tempVal = list(dictionary)[0]   # Calls an arbitrary key's stored data (list)
@@ -174,9 +174,9 @@ def dictMathJax(dictionary):
                 table = table + ' & '
             table = table + str(dictionary[col][det])
             is_first_column = False
-        table = table + f'\\{chr(92)} \hline '
+        table = table + r'\\ \hline '
 
-    table = table + ' \end{array}'
+    table = table + r' \end{array}'
 
     return table
 
