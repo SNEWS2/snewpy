@@ -102,9 +102,9 @@ class TestModels(unittest.TestCase):
                         model = Bugli_2021(Bfield=Bfield, grav=grav, rotation='', direction=direction)
                 if Bfield == 'l1_b12':
                     for rotation in ['0deg','90deg']:
-                        model = Bugli_2021(Bfield=Bfield, grav='', rotation=rotation, direction)
+                        model = Bugli_2021(Bfield=Bfield, grav='', rotation=rotation, direction=direction)
                 else:
-                    model = Bugli_2021(Bfield=Bfield, grav='', rotation='', direction)
+                    model = Bugli_2021(Bfield=Bfield, grav='', rotation='', direction=direction)
 
                 self.assertEqual(model.metadata['EOS'], 'LS220')
                 self.assertEqual(model.metadata['Progenitor mass'], 35*u.Msun)
