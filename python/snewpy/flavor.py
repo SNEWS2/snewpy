@@ -3,7 +3,7 @@ import numpy as np
 import typing
 import snewpy.utils
 
-class EnumMeta(enum.EnumMeta):
+class FlavorEnumMeta(enum.EnumMeta):
     def __getitem__(cls, key):
         #if this is an iterable: apply to each value, and construct a tuple
         if isinstance(key, slice):
@@ -40,7 +40,7 @@ class EnumMeta(enum.EnumMeta):
         #if this is anything else - treat it as a slice
         return np.array(list(cls.__members__.values()),dtype=object)[key]
 
-class FlavorScheme(enum.IntEnum, metaclass=EnumMeta):
+class FlavorScheme(enum.IntEnum, metaclass=FlavorEnumMeta):
     def to_tex(self):
         """LaTeX-compatible string representations of flavor."""
         base = r'\nu'
@@ -272,7 +272,7 @@ def conversion_matrix(from_flavor:FlavorScheme, to_flavor:FlavorScheme):
     return convert
 
 def rshift(flv:FlavorScheme, obj:FlavorScheme|FlavorMatrix)->FlavorMatrix:
-    if isinstance(obj, EnumMeta):
+    if isinstance(obj, FlavorEnumMeta):
         return conversion_matrix(from_flavor=flv,to_flavor=obj)
     elif hasattr(obj, '__lshift__'):
         return obj<<flv
@@ -280,7 +280,7 @@ def rshift(flv:FlavorScheme, obj:FlavorScheme|FlavorMatrix)->FlavorMatrix:
         raise TypeError(f'Cannot apply flavor conversion to object of type {type(obj)}')
 
 def lshift(flv:FlavorScheme, obj:FlavorScheme|FlavorMatrix)->FlavorMatrix:
-    if isinstance(obj, EnumMeta):
+    if isinstance(obj, FlavorEnumMeta):
         return conversion_matrix(from_flavor=obj,to_flavor=flv)
     elif hasattr(obj, '__rshift__'):
         return obj>>flv
@@ -289,5 +289,5 @@ def lshift(flv:FlavorScheme, obj:FlavorScheme|FlavorMatrix)->FlavorMatrix:
         
         
 FlavorScheme.conversion_matrix = classmethod(conversion_matrix)
-EnumMeta.__rshift__ = rshift
-EnumMeta.__lshift__ = lshift
+FlavorEnumMeta.__rshift__ = rshift
+FlavorEnumMeta.__lshift__ = lshift
