@@ -466,8 +466,8 @@ class Mori_2023(loaders.Mori_2023):
 @RegistryModel(
     Bfield = ['hydro','l1_b12','l2_b12_dipdecay'],
     direction = ['average','equator','north','south'],
-    grav=['gravA','gravB','']
-    rotation=['','0deg','90deg']
+    grav=['gravA','gravB',''],
+    rotation=['','0deg','90deg'],
     _param_validator = lambda p: (p['Bfield'] == 'hydro' and p['grav'] == '' and and p['rotation'] == '' ) or
         (p['Bfield'] == 'l1_b12' and p['grav'] == '' and p['rotation'] in ['0deg','90deg']) or
         (p['Bfield'] == 'l2_b12_dipdecay' and p['rotation'] == '' and p['grav'] in ['gravA','gravB'])
