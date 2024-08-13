@@ -139,48 +139,44 @@ for experiment in range(len(data['Experiment'])):
 
 dettype='icecube'
 mass=51600
-data['Mass [kt]'][2] = "~"+str(100*int(0.01*(mass*total_events['s27.0']['AdiabaticMSW_NMO'][dettype+"smeared"]/
-      total_events['s27.0']['AdiabaticMSW_NMO'][dettype+"unsmeared"]+50)))+"*"
+data['Mass [kt]'][2] = "~"+str(int(round(mass*total_events['s27.0']['AdiabaticMSW_NMO'][dettype+"smeared"]/
+      total_events['s27.0']['AdiabaticMSW_NMO'][dettype+"unsmeared"], -2)))+"*"
 # +50 in line 143 is for rounding so we have a nice number for the table
 
 dettype='km3net'
 mass=69366 * 3
 data['Mass [kt]'][3] = "~"+str(100*int(0.01*(mass*total_events['s27.0']['AdiabaticMSW_NMO'][dettype+"smeared"]/
       total_events['s27.0']['AdiabaticMSW_NMO'][dettype+"unsmeared"]))+50)+"*"
-# +50 in line 145 to get 150 as an output, the average between normal (100) & inverted (200)
+# +50 in line 145 to get 150 as an output, the average between normal (100) & inverted (200) based on private
+# communication with KM3NeT members
 
 # Formatting the dictionary to be compatible with MathJax (useful for html)
 def dictMathJax(dictionary):
     table = f'{chr(92)}' + 'begin{array} {|r|r|}\hline '
 
     # Writes the header row
-    tableog = table     # To know if the table has been edited or not during the loop (reoccurring)
-    for r1 in list(dictionary):
-        if table != tableog:
-            table = table + ' ' + '&' + ' '
-        table = table + r1
+    is_first_column = True
+    for columnHeader in dictionary:
+        if not is_first_column:
+            table = table + ' & '
+        table = table + columnHeader
+        is_first_column = False
     table = table+f'\\{chr(92)} \hline '
 
     # Writes the center rows
-    tableog = table
     tempVal = list(dictionary)[0]   # Calls an arbitrary key's stored data (list)
-    numRows = len(dictionary[tempVal])  # Uses the list's length to calculate the number of rows needed (num detectors)
+    numDetectors = len(dictionary[tempVal])  # Uses the list's length to calculate the number of rows needed (num detectors)
 
-    for r in range(0, (numRows-1)):    # Iterates through all data in a row/ for each detector
-        for c in list(dictionary):  # Iterates through all column titles/ dictionary keys
-            if table != tableog:
-                table = table + ' ' + '&' + ' '
-            table = table + str(dictionary[c][r])
+    for det in range(numDetectors):    # Iterates through all data in a row/ for each detector
+        is_first_column = True
+        for col in dictionary:  # Iterates through all column titles/ dictionary keys
+            if not is_first_column:
+                table = table + ' & '
+            table = table + str(dictionary[col][det])
+            is_first_column = False
         table = table + f'\\{chr(92)} \hline '
-        tableog = table
 
-    # Writes the final row
-    tableog = table
-    for rL in list(dictionary):
-        if table != tableog:
-            table = table + ' ' + '&' + ' '
-        table = table + str(dictionary[rL][(numRows)-1])
-    table = table + f'\\{chr(92)} \hline' + ' \end{array}'
+    table = table + ' \end{array}'
 
     return table
 
