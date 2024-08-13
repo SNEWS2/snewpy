@@ -159,11 +159,13 @@ class FlavorMatrix:
         res = [f'**{self.__class__.__name__}**:<`{self.flavor_in.__name__}`->`{self.flavor_out.__name__}`> shape={self.shape}','']
         flavors0 = [f.to_tex() for f in self.flavor_in]
         flavors1 = [f.to_tex() for f in self.flavor_out]
-        res+=['|'.join(['*']+flavors1)]
+        hdr = '|'.join(['*']+flavors1)
+        res+=[hdr]
         res+=['|'.join(['-:',]*(len(flavors1)+1))]
         for f0 in self.flavor_in:
             line = [f0.to_tex()]+[f'{v:.3g}' for v in self[:,f0]]
             res+=['|'.join(line)]
+        res+=['---------']
         return '\n'.join(res)
     
     def __eq__(self,other):
