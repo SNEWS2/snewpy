@@ -100,7 +100,7 @@ class TestModels(unittest.TestCase):
                 if Bfield == 'l2_b12_dipdecay':
                     for grav in ['gravA','gravB']:
                         model = Bugli_2021(Bfield=Bfield, grav=grav, rotation='', direction=direction)
-                if Bfield == 'l1_b12' and :
+                if Bfield == 'l1_b12':
                     for rotation in ['0deg','90deg']:
                         model = Bugli_2021(Bfield=Bfield, grav='', rotation=rotation, direction)
                 else:

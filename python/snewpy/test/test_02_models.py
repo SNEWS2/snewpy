@@ -73,7 +73,7 @@ class TestModels(unittest.TestCase):
                 if Bfield == 'l2_b12_dipdecay':
                     for grav in ['gravA','gravB']:
                         mfile = 'Bugli_2021/{}_3d_{}_snewpy_{}'.format(Bfield, grav, direction)
-                if Bfield == 'l1_b12' and :
+                if Bfield == 'l1_b12':
                     for rotation in ['0deg','90deg']:
                         mfile = 'Bugli_2021/{}_3d_{}_snewpy_{}'.format(Bfield, rotation, direction)
                 model = Bugli_2021(os.path.join(model_path, mfile),metadata=metadata)
