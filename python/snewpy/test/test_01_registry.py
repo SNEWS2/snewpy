@@ -95,16 +95,16 @@ class TestModels(unittest.TestCase):
         """
         Instantiate a set of 'Bugli 2021' models
         """
-        for Bfield in ['hydro', 'l1_b12', 'l2_b12_dipdecay']:
+        for Bfield in ['hydro', 'l1', 'l2']:
             for direction in ['average','equator','north','south']:
-                if Bfield == 'l2_b12_dipdecay':
-                    for grav in ['gravA','gravB']:
-                        model = Bugli_2021(Bfield=Bfield, grav=grav, rotation='None', direction=direction)
-                if Bfield == 'l1_b12':
-                    for rotation in ['0deg','90deg']:
-                        model = Bugli_2021(Bfield=Bfield, grav='None', rotation=rotation, direction=direction)
+                if Bfield == 'l2':
+                    for grav in ['A','B']:
+                        model = Bugli_2021(Bfield=Bfield, grav=grav, rotation=None, direction=direction)
+                if Bfield == 'l1':
+                    for rotation in [0,90]:
+                        model = Bugli_2021(Bfield=Bfield, grav=None, rotation=rotation, direction=direction)
                 else:
-                    model = Bugli_2021(Bfield=Bfield, grav='None', rotation='None', direction=direction)
+                    model = Bugli_2021(Bfield=Bfield, grav=None, rotation=None, direction=direction)
 
                 self.assertEqual(model.metadata['EOS'], 'LS220')
                 self.assertEqual(model.metadata['Progenitor mass'], 35*u.Msun)

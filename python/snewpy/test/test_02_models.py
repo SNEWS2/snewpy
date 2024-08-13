@@ -67,15 +67,15 @@ class TestModels(unittest.TestCase):
             'Progenitor mass': 35 * u.Msun,
             'EOS': 'LS220',
         }
-        for Bfield in ['hydro', 'l1_b12', 'l2_b12_dipdecay']:
+        for Bfield in ['hydro', 'l1', 'l2']:
             for direction in ['average','equator','north','south']:
                 mfile = 'Bugli_2021/{}_3d_snewpy_{}'.format(Bfield, direction)
-                if Bfield == 'l2_b12_dipdecay':
-                    for grav in ['gravA','gravB']:
-                        mfile = 'Bugli_2021/{}_3d_{}_snewpy_{}'.format(Bfield, grav, direction)
-                if Bfield == 'l1_b12':
-                    for rotation in ['0deg','90deg']:
-                        mfile = 'Bugli_2021/{}_3d_{}_snewpy_{}'.format(Bfield, rotation, direction)
+                if Bfield == 'l2':
+                    for grav in ['A','B']:
+                        mfile = 'Bugli_2021/{}_b12_dipdecay_3d_grav{}_snewpy_{}'.format(Bfield, grav, direction)
+                if Bfield == 'l1':
+                    for rotation in [0,90]:
+                        mfile = 'Bugli_2021/{}_b12_3d_{}deg_snewpy_{}'.format(Bfield, rotation, direction)
                 model = Bugli_2021(os.path.join(model_path, mfile),metadata=metadata)
 
                 # Check that times are in proper units.
