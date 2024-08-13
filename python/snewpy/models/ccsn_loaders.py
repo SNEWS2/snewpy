@@ -88,7 +88,7 @@ class GarchingArchiveModel(PinchedModel):
                 'EOS': eos,
             }
         super().__init__(simtab, metadata)
-        
+
 class Nakazato_2013(PinchedModel):
     def __init__(self, filename, metadata={}):
         """Model initialization.
@@ -210,6 +210,36 @@ class OConnor_2015(PinchedModel):
 class Zha_2021(OConnor_2015):
     pass
 
+
+class OConnor_2015(PinchedModel):
+    """Model based on the black hole formation simulation in `O'Connor (2015) <https://arxiv.org/abs/1411.7058>`_.
+    """
+
+    def __init__(self, filename, metadata={}):
+        """
+        Parameters
+        ----------
+        filename : str
+            Absolute or relative path to FITS file with model data.
+        """
+
+        datafile = self.request_file(filename)
+        simtab = Table.read(datafile,
+                            names=['TIME', 'L_NU_E', 'L_NU_E_BAR', 'L_NU_X',
+                                    'E_NU_E', 'E_NU_E_BAR', 'E_NU_X',
+                                    'RMS_NU_E', 'RMS_NU_E_BAR', 'RMS_NU_X'],
+                            format='ascii')
+
+        simtab['ALPHA_NU_E'] = (2.0*simtab['E_NU_E']**2 - simtab['RMS_NU_E']**2) / \
+            (simtab['RMS_NU_E']**2 - simtab['E_NU_E']**2)
+        simtab['ALPHA_NU_E_BAR'] = (2.0*simtab['E_NU_E_BAR']**2 - simtab['RMS_NU_E_BAR']**2) / \
+            (simtab['RMS_NU_E_BAR']**2 - simtab['E_NU_E_BAR']**2)
+        simtab['ALPHA_NU_X'] = (2.0*simtab['E_NU_X']**2 - simtab['RMS_NU_X']**2) / \
+            (simtab['RMS_NU_X']**2 - simtab['E_NU_X']**2)
+
+        self.filename = os.path.basename(filename)
+
+        super().__init__(simtab, metadata)
 
 class Warren_2020(PinchedModel):
     def __init__(self, filename, metadata={}):
@@ -864,3 +894,33 @@ class Mori_2023(PinchedModel):
 
         super().__init__(simtab, metadata)
 
+
+class Bugli_2021(PinchedModel):
+    """Model based on `Buggli (2021) <https://arxiv.org/abs/2105.00665>`_.
+    """
+
+    def __init__(self, filename, metadata={}):
+        """
+        Parameters
+        ----------
+        filename : str
+            Absolute or relative path to FITS file with model data.
+        """
+
+        datafile = self.request_file(filename)
+        simtab = Table.read(datafile,
+                            names=['TIME', 'L_NU_E', 'L_NU_E_BAR', 'L_NU_X',
+                                    'E_NU_E', 'E_NU_E_BAR', 'E_NU_X',
+                                    'RMS_NU_E', 'RMS_NU_E_BAR', 'RMS_NU_X'],
+                            format='ascii')
+
+        simtab['ALPHA_NU_E'] = (2.0*simtab['E_NU_E']**2 - simtab['RMS_NU_E']**2) / \
+            (simtab['RMS_NU_E']**2 - simtab['E_NU_E']**2)
+        simtab['ALPHA_NU_E_BAR'] = (2.0*simtab['E_NU_E_BAR']**2 - simtab['RMS_NU_E_BAR']**2) / \
+            (simtab['RMS_NU_E_BAR']**2 - simtab['E_NU_E_BAR']**2)
+        simtab['ALPHA_NU_X'] = (2.0*simtab['E_NU_X']**2 - simtab['RMS_NU_X']**2) / \
+            (simtab['RMS_NU_X']**2 - simtab['E_NU_X']**2)
+
+        self.filename = os.path.basename(filename)
+
+        super().__init__(simtab, metadata)
