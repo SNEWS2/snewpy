@@ -1,7 +1,6 @@
 import itertools as it
 import os
 from abc import ABC, abstractmethod
-from warnings import warn
 
 import numpy as np
 from astropy import units as u
@@ -119,14 +118,6 @@ class SupernovaModel(ABC, LocalFileLoader):
         """
         pass
 
-    def get_initialspectra(self, *args):
-        """DO NOT USE! Only for backward compatibility!
-
-        :meta private:
-        """
-        warn("Please use `get_initial_spectra()` instead of `get_initialspectra()`!", FutureWarning)
-        return self.get_initial_spectra(*args)
-
     def get_transformed_spectra(self, t, E, flavor_xform):
         """Get neutrino spectra after applying oscillation.
 
@@ -193,15 +184,6 @@ class SupernovaModel(ABC, LocalFileLoader):
         array = np.stack([f[flv] for flv in Flavor])
         return  Flux(data=array*factor, flavor=Flavor, time=t, energy=E)
 
-
-
-    def get_oscillatedspectra(self, *args):
-        """DO NOT USE! Only for backward compatibility!
-
-        :meta private:
-        """
-        warn("Please use `get_transformed_spectra()` instead of `get_oscillatedspectra()`!", FutureWarning)
-        return self.get_transformed_spectra(*args)
 
 def get_value(x):
     """If quantity x has is an astropy Quantity with units, return just the
