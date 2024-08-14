@@ -313,7 +313,7 @@ class TestModels(unittest.TestCase):
         Instantiate a set of 'Fischer 2020' models
         """
         model = Fischer_2020()
-        self.assertEqual(model.metadata['Progenitor mass'], [18] * u.Msun])
+        self.assertEqual(model.metadata['Progenitor mass'], [18 * u.Msun])
         self.assertEqual(model.metadata['EOS'], ['HS(DD2)'])
 
         # Check that times are in proper units.

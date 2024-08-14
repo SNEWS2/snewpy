@@ -64,7 +64,7 @@ class TestModels(unittest.TestCase):
         Instantiate a set of 'Fischer 2020' models
         """
         metadata = {
-            'Progenitor mass': [18] * u.Msun],
+            'Progenitor mass': [18 * u.Msun],
             'EOS': ['HS(DD2)'],
         }
         mfile = 'Fischer_2020.tar.gz'
