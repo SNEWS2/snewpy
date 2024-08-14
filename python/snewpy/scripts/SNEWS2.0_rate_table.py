@@ -2,9 +2,22 @@ import numpy as np
 import os
 from snewpy import snowglobes
 
+#Select output format, Mathjax or LaTeX
+selection = False
+while selection == False:
+    outputFormat = input('Enter 1 for Mathjax format\nEnter 0 for LaTeX format\n')
+    if outputFormat == '1':
+        mathjax = True
+        selection = True
+    if outputFormat == '0':
+        mathjax = False
+        selection = True
+    if outputFormat != '1' and outputFormat != '0':
+        print('Please enter 1 or 0.')
+
 home_directory = os.getcwd()
 SNOwGLoBES_path = None  # change to SNOwGLoBES directory if using a custom detector configuration
-SNEWPY_models_base = "C:/path/to/snewpy/models/"  # local directory containing model input files ("SNEWPY_models")
+SNEWPY_models_base = "Your/SNEWPY/Models/Path/Here"  # local directory containing model input files ("SNEWPY_models")
 
 d = 10  # distance of supernova in kpc
 
@@ -36,8 +49,8 @@ if (have_data_saved is False):
 
             tarredfile = snowglobes.generate_fluence(model_dir + file_name, modeltype, transformation, d, outfile)
             for det in dets:
-                snowglobes.simulate(SNOwGLoBES_path, tarredfile, detector_input=det)
-                tables = snowglobes.collate(SNOwGLoBES_path, tarredfile, skip_plots=True)
+                snowglobes.simulate(SNOwGLoBES_path, tarredfile, detector_input = det)
+                tables = snowglobes.collate(SNOwGLoBES_path, tarredfile, skip_plots = True)
 
                 # for our table, interesting number is the smeared total number of events
                 key = "Collated_" + outfile + "_" + det + "_events_smeared_weighted.dat"
@@ -53,7 +66,7 @@ if (have_data_saved is False):
     os.chdir(home_directory)
     np.save("SNEWS2.0_whitepaper_table_data.npy", total_events)
 else:
-    total_events = np.load("SNEWS2.0_whitepaper_table_data.npy", allow_pickle=True).tolist()
+    total_events = np.load("SNEWS2.0_whitepaper_table_data.npy", allow_pickle = True).tolist()
 
 
 # Now lets make the table:
@@ -137,22 +150,19 @@ for experiment in range(len(data['Experiment'])):
 # the unweighted mass (the entry in SNOwGLoBES), see below for details.  Here we take the
 # effective mass of the s27 normal scenario and discuss the range in the table caption.
 
-dettype='icecube'
-mass=51600
+dettype = 'icecube'
+mass = 51600
 data['Mass [kt]'][2] = "~"+str(int(round(mass*total_events['s27.0']['AdiabaticMSW_NMO'][dettype+"smeared"]/
       total_events['s27.0']['AdiabaticMSW_NMO'][dettype+"unsmeared"], -2)))+"*"
-# +50 in line 143 is for rounding so we have a nice number for the table
 
-dettype='km3net'
-mass=69366 * 3
-data['Mass [kt]'][3] = "~"+str(100*int(0.01*(mass*total_events['s27.0']['AdiabaticMSW_NMO'][dettype+"smeared"]/
-      total_events['s27.0']['AdiabaticMSW_NMO'][dettype+"unsmeared"]))+50)+"*"
-# +50 in line 145 to get 150 as an output, the average between normal (100) & inverted (200) based on private
-# communication with KM3NeT members
+dettype = 'km3net'
+mass = 69366 * 3
+data['Mass [kt]'][3] = "~"+str(int(round(mass*total_events['s27.0']['AdiabaticMSW_NMO'][dettype+"smeared"]/
+      total_events['s27.0']['AdiabaticMSW_NMO'][dettype+"unsmeared"], -1)))+"*"
 
-# Formatting the dictionary to be compatible with MathJax (useful for html)
-def dictMathJax(dictionary):
-    table = r'\begin{array} {|r|r|}\hline '
+# Formatting the dictionary to be compatible with LaTeX & MathJax (useful for html)
+def dictArray(dictionary):
+    table = r'\begin{array} {|r|c|r|c|c|c|c|}\hline '
 
     # Writes the header row
     is_first_column = True
@@ -181,9 +191,15 @@ def dictMathJax(dictionary):
     return table
 
 # Prints out code for html that puts the data into a table (MathJax array)
-print('<body>')
-print('  <script id="MathJax-script" async')
-print('          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">\n  </script>\n<p>')
-print(dictMathJax(data))
-print('\n</p>\n</body>')
+if mathjax is True:
+    print('<body>')
+    print('  <script id="MathJax-script" async')
+    print('          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">\n  </script>\n<p>')
+    print(dictArray(data))
+    print('\n</p>\n</body>')
 # Just copy & paste the output into any html page to insert the table!
+
+# Prints out data in a LaTeX table (array) script
+if mathjax is False:
+    print(dictArray(data))
+#Just copy & paste the output into LaTeX!
