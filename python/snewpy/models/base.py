@@ -284,14 +284,20 @@ class PinchedModel(SupernovaModel):
             L  = np.expand_dims(L, axis=1)
             Ea = np.expand_dims(Ea,axis=1)
             a  = np.expand_dims(a, axis=1)
+
             # For numerical stability, evaluate log PDF and then exponentiate.
-            result = \
-              np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a)
-                    - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea)) / (u.erg * u.s)
+            # Suppress div-by-zero and other warnings that do not matter here.
+            with np.errstate(divide='ignore', invalid='ignore'):
+                result = \
+                  np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a)
+                        - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea)) / (u.erg * u.s)
+
             #remove bad values
             result[np.isnan(result)] = 0
             result[:, E[0]==0] = 0
+
             #remove unnecessary dimensions, if E or t was scalar:
             result = np.squeeze(result)
             initialspectra[flavor] = result
+
         return initialspectra
