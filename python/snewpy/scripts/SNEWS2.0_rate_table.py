@@ -79,30 +79,30 @@ def round_to_2(x):
 
 det_maps = {"Super-K": "wc100kt30prct", "Hyper-K": "wc100kt30prct", "IceCube": "icecube", "KM3NeT":"km3net",
             "LVD": "scint20kt", "KamLAND": "scint20kt", "Borexino": "scint20kt", "JUNO": "scint20kt",
-            "SNO+": "scint20kt", "NO{\\nu}A": "novaFD", "HALO": "halo1", "HALO-1kT": "halo2", "DUNE": "ar40kt",
+            "SNO+": "scint20kt", "NO${\\nu}$A": "novaFD", "HALO": "halo1", "HALO-1kT": "halo2", "DUNE": "ar40kt",
             "MicroBooNe": "ar40kt", "SBND": "ar40kt", "Baksan": "scint20kt", "DarkSide-20k": "ds20", "XENONnT": "xent",
             "LZ": "lz", "PandaX-4T": "pandax"}
 
 data = {}
 data['Experiment'] = ['Super-K', 'Hyper-K', 'IceCube', 'KM3NeT', 'LVD', 'KamLAND', 'Borexino',
-                      'JUNO', 'SNO+', 'NO{\\nu}A', 'Baksan', 'HALO', 'HALO-1kT', 'DUNE', 'MicroBooNe', 'SBND',
+                      'JUNO', 'SNO+', 'NO${\\nu}$A', 'Baksan', 'HALO', 'HALO-1kT', 'DUNE', 'MicroBooNe', 'SBND',
                       'DarkSide-20k', 'XENONnT', 'LZ', 'PandaX-4T']
 
-data['Type'] = ["H_2O/\\bar{\\nu}_e", "H_2O/\\bar{\\nu}_e", "String/\\bar{\\nu}_e",
-                "String/\\bar{\\nu}_e", 'C_nH_{2n}/\\bar{\\nu}_e', 'C_nH_{2n}/\\bar{\\nu}_e',
-                'C_nH_{2n}/\\bar{\\nu}_e', 'C_nH_{2n}/\\bar{\\nu}_e',
-                'C_nH_{2n}/\\bar{\\nu}_e', 'C_nH_{2n}/\\bar{\\nu}_e', 'C_nH_{2n}/\\bar{\\nu}_e',
-                "Lead/\\nu_e", "Lead/\\nu_e", "Ar/\\nu_e", "Ar/\\nu_e", "Ar/\\nu_e", "Ar/any \\nu", "Xe/any \\nu",
-                "Xe/any \\nu", "Xe/any \\nu"]
+data['Type'] = ["\\text{H$_2$O$/\\bar{\\nu}_e$}", "\\text{H$_2$O$/\\bar{\\nu}_e$}", "\\text{String}/\\bar{\\nu}_e",
+                "\\text{String}/\\bar{\\nu}_e", '\\text{C$_n$H$_{2n}/\\bar{\\nu}_e$}', '\\text{C$_n$H$_{2n}/\\bar{\\nu}_e$}',
+                '\\text{C$_n$H$_{2n}/\\bar{\\nu}_e$}', '\\text{C$_n$H$_{2n}/\\bar{\\nu}_e$}',
+                '\\text{C$_n$H$_{2n}/\\bar{\\nu}_e$}', '\\text{C$_n$H$_{2n}/\\bar{\\nu}_e$}', '\\text{C$_n$H$_{2n}/\\bar{\\nu}_e$}',
+                "\\text{Lead/$\\nu_e$}", "\\text{Lead/$\\nu_e$}", "\\text{Ar/$\\nu_e$}", "\\text{Ar/$\\nu_e$}", "\\text{Ar/$\\nu_e$}", "\\text{Ar/any $\\nu$}", "\\text{Xe/any $\\nu$}",
+                "\\text{Xe/any $\\nu$}", "\\text{Xe/any $\\nu$}"]
 data['Mass [kt]'] = [32, 220, 51600, 69366*3, 1, 1, 0.278, 20, 0.78, 14, 0.240, 0.079, 1, 40, 0.09, 0.12, 0.0386, 0.006,
                      0.007, 0.004]
 
 data['Location'] = ["Japan", "Japan", "South Pole", "Italy", "Italy", "Japan", "Italy", "China",
                     "Canada", "USA", "Russia", "Canada", "Italy", "USA", "USA", "USA", "Italy", "Italy", "USA", "China"]
 
-data['\\ {11.2}{M_\\odot}'] = []
-data['\\ {27.0}{M_\\odot}'] = []
-data['\\ {40.0}{M_\\odot}'] = []
+data['11.2 M$_\\odot$'] = []
+data['27.0 M$_\\odot$'] = []
+data['40.0 M$_\\odot$'] = []
 
 
 for experiment in range(len(data['Experiment'])):
@@ -120,28 +120,28 @@ for experiment in range(len(data['Experiment'])):
     post = ['', '', '', '', '', '']
     if counts_LCN > 10000:
         counts_LCN = int(counts_LCN / 1000.0 + 0.5)
-        post[0] = 'K'
+        post[0] = '\\text{K}'
     if counts_MCN > 10000:
         counts_MCN = int(counts_MCN / 1000 + 0.5)
-        post[2] = 'K'
+        post[2] = '\\text{K}'
     if counts_HCN > 10000:
         counts_HCN = int(counts_HCN / 1000 + 0.5)
-        post[4] = 'K'
+        post[4] = '\\text{K}'
     if counts_LCI > 10000:
         counts_LCI = int(counts_LCI / 1000 + 0.5)
-        post[1] = 'K'
+        post[1] = '\\text{K}'
     if counts_MCI > 10000:
         counts_MCI = int(counts_MCI / 1000 + 0.5)
-        post[3] = 'K'
+        post[3] = '\\text{K}'
     if counts_HCI > 10000:
         counts_HCI = int(counts_HCI / 1000 + 0.5)
-        post[5] = 'K'
+        post[5] = '\\text{K}'
 
-    data['\\ {11.2}{M_\\odot}'].append(
+    data['11.2 M$_\\odot$'].append(
         str(round_to_2(counts_LCN)) + post[0] + "/" + str(round_to_2(counts_LCI)) + post[1])
-    data['\\ {27.0}{M_\\odot}'].append(
+    data['27.0 M$_\\odot$'].append(
         str(round_to_2(counts_MCN)) + post[2] + "/" + str(round_to_2(counts_MCI)) + post[3])
-    data['\\ {40.0}{M_\\odot}'].append(
+    data['40.0 M$_\\odot$'].append(
         str(round_to_2(counts_HCN)) + post[4] + "/" + str(round_to_2(counts_HCI)) + post[5])
 
 # For IceCube & KM3NeT, the effective masses in SNOwGLoBES are artificially high.  This is because the
@@ -164,12 +164,12 @@ data['Mass [kt]'][3] = "~"+str(int(round(mass*total_events['s27.0']['AdiabaticMS
 def dictArray(dictionary):
     table = r'\begin{array} {|r|c|r|c|c|c|c|}\hline '
 
-    # Writes the header row
+    # Writes & formats the header row
     is_first_column = True
     for columnHeader in dictionary:
         if not is_first_column:
             table = table + ' & '
-        table = table + columnHeader
+        table = table + '\\text{' + columnHeader + '}'
         is_first_column = False
     table = table+r'\\ \hline '
 
@@ -179,11 +179,16 @@ def dictArray(dictionary):
 
     for det in range(numDetectors):    # Iterates through all data in a row/ for each detector
         is_first_column = True
+        columnPos = 0   #tracks which column of the row the loop is in
         for col in dictionary:  # Iterates through all column titles/ dictionary keys
             if not is_first_column:
                 table = table + ' & '
-            table = table + str(dictionary[col][det])
+            if columnPos == 0 or columnPos == 3:
+                table = table + '\\text{' + str(dictionary[col][det]) + '}'
+            if columnPos != 0 and columnPos != 3:
+                table = table + str(dictionary[col][det])
             is_first_column = False
+            columnPos += 1
         table = table + r'\\ \hline '
 
     table = table + r' \end{array}'
@@ -201,5 +206,7 @@ if mathjax is True:
 
 # Prints out data in a LaTeX table (array) script
 if mathjax is False:
-    print(dictArray(data))
+    print("\\usepackage{amsmath}\n\\begin{document}")
+    print(f"$$\n{dictArray(data)}\n$$")
+    print("\\end{document}")
 #Just copy & paste the output into LaTeX!
