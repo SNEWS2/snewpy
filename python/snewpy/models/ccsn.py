@@ -53,8 +53,8 @@ class Fischer_2020(loaders.Fischer_2020):
     """Model based on simulations from `Fischer et al. (2020) <https://arxiv.org/abs/1804.10890>`
     """
     def __init__(self, progenitor_mass:u.Quantity, eos:str):
-        filename='Fischer_2020.zip'
-        return super().__init__(filename, metadata=self.metadata)    
+        filename='Fischer_2020.tar.gz'
+        return super().__init__(filename, metadata=self.metadata)
 
 @legacy_filename_initialization
 @RegistryModel(
@@ -62,7 +62,7 @@ class Fischer_2020(loaders.Fischer_2020):
     revival_time = [0, 100, 200, 300] * u.ms,
     metallicity = [0.02, 0.004],
     eos = ['LS220', 'shen', 'togashi'],
-    
+
     _param_validator = lambda p: (p['revival_time'] == 0 * u.ms and p['progenitor_mass'] == 30 * u.Msun
                                   and p['metallicity'] == 0.004) or \
                                  (p['revival_time'] != 0 * u.ms and p['eos'] == 'shen'
@@ -89,7 +89,7 @@ class Nakazato_2013(loaders.Nakazato_2013):
                     'Revival time': 0 * u.ms
                 })
             return metadata
-        
+
     def __init__(self, progenitor_mass:u.Quantity, revival_time:u.Quantity, metallicity:float, eos:str):
         # Strip units for filename construction
         progenitor_mass = progenitor_mass.to(u.Msun).value
@@ -118,7 +118,7 @@ class Sukhbold_2015(loaders.Sukhbold_2015):
             'EOS': filename.split('-')[-2]
         }
         return metadata
-         
+
     def __init__(self, progenitor_mass:u.Quantity, eos:str):
         if progenitor_mass.value == 9.6:
             filename = f'sukhbold-{eos}-z{progenitor_mass.value:3.1f}.fits'
@@ -135,7 +135,7 @@ class Sukhbold_2015(loaders.Sukhbold_2015):
     _param_validator = lambda p: (p['progenitor_mass'] == 11.2 * u.Msun and p['direction'] in (1,)) or \
         (p['progenitor_mass'] == 20. * u.Msun and p['direction'] in (1,)) or \
         (p['progenitor_mass'] == 27. * u.Msun and p['direction'] in (1,2,3))
-)   
+)
 class Tamborra_2014(loaders.Tamborra_2014):
     """Model based on 3D simulations from `Tamborra et al., PRD 90:045032, 2014 <https://arxiv.org/abs/1406.0006>`_.
     Data files are from the `Garching Supernova Archive`_.
@@ -171,7 +171,7 @@ class Walk_2018(loaders.Walk_2018):
     the `Garching Supernova Archive`_.
     """
     def __init__(self, *, progenitor_mass:u.Quantity, rotation:str, direction:int):
-        
+
         filename = f's{progenitor_mass.value:3.1f}c_3D_{rotation}rot_dir{direction}'
         return super().__init__(filename=filename, metadata=self.metadata)
 
@@ -197,14 +197,14 @@ class Walk_2019(loaders.Walk_2019):
 @RegistryModel(
     progenitor_mass = Parameter(values=(list(range(12, 34)) +
                                  list(range(35, 61, 5)) +
-                                 [70, 80, 100, 120]) * u.Msun, 
+                                 [70, 80, 100, 120]) * u.Msun,
                                 desc_values='[12..33, 35..5..60, 70, 80, 100, 120] solMass'
                                ),
     eos = ['HShen', 'LS220']
 )
 class _OConnor_2013_new(loaders.OConnor_2013):
     """Model based on the black hole formation simulation in `O'Connor & Ott (2013) <https://arxiv.org/abs/1207.1100>`_.
-    """    
+    """
     def __init__(self, eos:str, progenitor_mass:u.Quantity):
         # Load from Parameters
         filename = f'{eos}_timeseries.tar.gz'
@@ -212,7 +212,7 @@ class _OConnor_2013_new(loaders.OConnor_2013):
 
 class OConnor_2013(legacy_filename_initialization(_OConnor_2013_new)):
     _config_path='ccsn.OConnor_2013'
-    
+
     @deprecated('base', 'mass')
     def __init__(self, base=None, mass=None, eos='LS220', *, progenitor_mass=None):
         """
@@ -265,8 +265,8 @@ class Zha_2021(loaders.Zha_2021):
     """
     def _metadata_from_filename(self, filename:str)->dict:
         metadata = {'Progenitor mass': float(os.path.splitext(os.path.basename(filename))[0][1:]) * u.Msun}
-        return metadata 
-        
+        return metadata
+
     def __init__(self, *, progenitor_mass:u.Quantity):
         filename = f's{progenitor_mass.value:g}.dat'
         return super().__init__(filename, self.metadata)
@@ -314,17 +314,17 @@ class Warren_2020(loaders.Warren_2020):
 @legacy_filename_initialization
 @RegistryModel(
     rotational_velocity= [0, 1] * u.rad / u.s,
-    magnetic_field_exponent= Parameter([0, 12, 13],                                      
+    magnetic_field_exponent= Parameter([0, 12, 13],
                                       label='B_0 Exponent',
                                       description='Exponent of magnetic field (See Eq. 46)'),
-    eos=['LS220'], 
+    eos=['LS220'],
     progenitor_mass=[20*u.Msun],
     _param_validator = lambda p: (p['rotational_velocity'].value == 1 and p['magnetic_field_exponent'] in (12, 13)) or \
                                (p['rotational_velocity'].value == 0 and p['magnetic_field_exponent'] == 0)
 )
 class Kuroda_2020(loaders.Kuroda_2020):
     """Model based on simulations from `Kuroda et al. (2020) <https://arxiv.org/abs/2009.07733>`_."""
-    
+
     def _metadata_from_filename(self, filename:str)->dict:
         _, rotational_velocity, magnetic_field_exponent = re.split('R|B', os.path.splitext(os.path.basename(filename))[0])
         metadata = {
@@ -344,14 +344,14 @@ class Kuroda_2020(loaders.Kuroda_2020):
     progenitor_mass=[9, 10, 12, 13, 14, 15, 16, 19, 25, 60] * u.Msun,
 )
 class Fornax_2019(loaders.Fornax_2019):
-    """Model based on 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019. 
+    """Model based on 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019.
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/
     """
     def _metadata_from_filename(self, filename:str)->dict:
         progenitor_mass = os.path.splitext(os.path.basename(filename))[0].split('_')[2]
         metadata = {'Progenitor mass': int(progenitor_mass[:-1]) * u.Msun}
         return metadata
-        
+
     def __init__(self, cache_flux=False, *, progenitor_mass):
         """
         Parameters
@@ -371,14 +371,14 @@ class Fornax_2019(loaders.Fornax_2019):
                                 desc_values='[12..23, 25, 26, 26.99] solMass')
 )
 class Fornax_2021(loaders.Fornax_2021):
-    """Model based on 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019. 
+    """Model based on 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019.
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/
         """
     def _metadata_from_filename(self, filename:str)->dict:
         progenitor_mass = os.path.splitext(os.path.basename(filename))[0].split('_')[2]
         metadata = {'Progenitor mass': float(progenitor_mass[:-1]) * u.Msun}
         return metadata
-        
+
     def __init__(self, progenitor_mass:u.Quantity):
         # Load from Parameters
         if progenitor_mass.value.is_integer():
@@ -431,7 +431,7 @@ class Fornax_2022(loaders.Fornax_2022):
                (p['axion_mass'] == 0 and p['axion_coupling'] == 0) or \
                (p['axion_mass'].to_value('MeV') == 100 and p['axion_coupling'].to_value('1e-10/GeV') in (2,4,10,12,14,16,20)) or \
                (p['axion_mass'].to_value('MeV') == 200 and p['axion_coupling'].to_value('1e-10/GeV') in (2,4,6,8,10,20)),
-               
+
                axion_mass = Parameter(values=[0, 100, 200]<<u.MeV,
                                       description='Axion mass in units of MeV'),
                axion_coupling = Parameter(values=[0, 2, 4, 6, 8, 10, 12, 14, 16, 20]<<(1e-10/u.GeV),
