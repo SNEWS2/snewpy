@@ -38,7 +38,6 @@ from snewpy.models import ccsn_loaders as loaders
 from .base import PinchedModel
 
 from snewpy.models.registry_model import RegistryModel, Parameter
-from snewpy.models.registry_model import deprecated
 from snewpy.models.registry_model import all_models
 from textwrap import dedent
 
@@ -166,34 +165,31 @@ class OConnor_2013(loaders.OConnor_2013):
         filename = f'{eos}_timeseries.tar.gz'
         return super().__init__(filename=filename, metadata=self.metadata)
 
-@deprecated('eos')
 @RegistryModel(
     progenitor_mass = [40 * u.Msun],
-    eos=['LS220']
 )
 class OConnor_2015(loaders.OConnor_2015):
     """Model based on the black hole formation simulation in `O'Connor (2015) <https://arxiv.org/abs/1411.7058>`_.
     """
     def __init__(self, progenitor_mass:u.Quantity):
+        self.metadata["EOS"] = "LS220"
         # Filename is currently the same regardless of parameters
         filename = 'M1_neutrinos.dat'
         return super().__init__(filename, self.metadata)
 
-@deprecated('eos')
 @RegistryModel(
     progenitor_mass = Parameter(values=(list(range(16, 27)) + [19.89, 22.39, 30, 33]) * u.Msun,
                                 desc_values = '[16..26, 19.89, 22.39, 30, 33] solMass'
                                ),
-    eos = ['STOS_B145']
 )
 class Zha_2021(loaders.Zha_2021):
     """Model based on the hadron-quark phse transition models from `Zha et al. 2021 <https://arxiv.org/abs/2103.02268>`_.
     """
     def __init__(self, *, progenitor_mass:u.Quantity):
+        self.metadata["EOS"] = "STOS_B145"
         filename = f's{progenitor_mass.value:g}.dat'
         return super().__init__(filename, self.metadata)
 
-@deprecated('eos')
 @RegistryModel(
     progenitor_mass=Parameter(np.concatenate((np.linspace(9.0, 12.75, 16),
                                               np.linspace(13, 30., 171),
@@ -207,7 +203,6 @@ class Zha_2021(loaders.Zha_2021):
                               label='Turb. mixing param.',
                               description='Turbulent mixing parameter alpha_lambda',
                               ),
-    eos=['SFHo']
 )
 class Warren_2020(loaders.Warren_2020):
     """Model based on simulations from Warren et al., ApJ 898:139, 2020.
@@ -215,6 +210,7 @@ class Warren_2020(loaders.Warren_2020):
     # np.arange with decimal increments can produce floating point errors
     # Though it may be more intuitive to use np.arange, these fp-errors quickly become troublesome
     def __init__(self, *, progenitor_mass, turbmixing_param):
+        self.metadata["EOS"] = "SFHo"
         if progenitor_mass.value.is_integer() and progenitor_mass.value <= 30.:
             fname = os.path.join(f'stir_a{turbmixing_param:3.2f}',
                                  f'stir_multimessenger_a{turbmixing_param:3.2f}_m{progenitor_mass.value:.1f}.h5')
@@ -223,20 +219,19 @@ class Warren_2020(loaders.Warren_2020):
                                  f'stir_multimessenger_a{turbmixing_param:3.2f}_m{progenitor_mass.value:g}.h5')
         return super().__init__(fname, self.metadata)
 
-@deprecated('eos','mass')
 @RegistryModel(
     rotational_velocity= [0, 1] * u.rad / u.s,
     magnetic_field_exponent= Parameter([0, 12, 13],                                      
                                       label='B_0 Exponent',
                                       description='Exponent of magnetic field (See Eq. 46)'),
-    eos=['LS220'], 
     progenitor_mass=[20*u.Msun],
     _param_validator = lambda p: (p['rotational_velocity'].value == 1 and p['magnetic_field_exponent'] in (12, 13)) or \
                                (p['rotational_velocity'].value == 0 and p['magnetic_field_exponent'] == 0)
 )
 class Kuroda_2020(loaders.Kuroda_2020):
     """Model based on simulations from `Kuroda et al. (2020) <https://arxiv.org/abs/2009.07733>`_."""
-    def __init__(self, mass=None, *, rotational_velocity, magnetic_field_exponent):
+    def __init__(self, *, rotational_velocity, magnetic_field_exponent):
+        self.metadata["EOS"] = "LS220"
         filename = f'LnuR{int(rotational_velocity.value):1d}0B{int(magnetic_field_exponent):02d}.dat'
         return super().__init__(filename, self.metadata)
 

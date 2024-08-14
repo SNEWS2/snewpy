@@ -64,41 +64,6 @@ def _can_decorate_class_or_func(func_decorator):
         else:
             return func_decorator(obj)
     return _wrapper
-            
-def deprecated(*names, message='Argument `{name}` is deprecated.'):
-    """A function decorator to issue a deprecation warning if a given argument is provided in the wrapped function call.
-    
-    Parameters
-    ----------
-    
-    names: list of str
-        argument names which are deprecated
-    message: str
-        a template with {name} parameter, to make the message for each argument.
-
-    .. Example::
-
-    @deprecated('foo','bar', message='Argument `{name}` is deprecated and will be removed in SNEWPYv2.0!')
-    def test_function(*, foo=1, bar=2, baz=3):
-        pass
-        
-    #calling test_function(foo=1, baz=3) will issue a deprecation warning:
-    #    DeprecationWarning: Argument `foo` is deprecated and will be removed in SNEWPYv2.0!
-    """
-    @_can_decorate_class_or_func
-    def _wrapper(func):
-        #get function signature
-        S = inspect.signature(func)
-        @wraps(func)
-        def _f(*args, **kwargs):
-            #bind signature to find all the parameters
-            params = S.bind(*args,**kwargs)
-            for name in names:
-                if name in params.arguments:
-                    warn(message.format(name=name), category=UserWarning, stacklevel=2)
-            return func(*args,**kwargs)
-        return _f
-    return _wrapper
 
 def map_arguments(**names_dict):
     """map function arguments to create a function with new signature,
