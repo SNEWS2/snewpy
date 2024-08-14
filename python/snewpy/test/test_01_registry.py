@@ -103,7 +103,7 @@ class TestModels(unittest.TestCase):
                 if Bfield == 'L1':
                     for rotation in [0,90]:
                         model = Bugli_2021(Bfield=Bfield, grav=None, rotation=rotation, direction=direction)
-                else:
+                if Bfield == 'hydro':
                     model = Bugli_2021(Bfield=Bfield, grav=None, rotation=None, direction=direction)
 
                 self.assertEqual(model.metadata['EOS'], 'LS220')
