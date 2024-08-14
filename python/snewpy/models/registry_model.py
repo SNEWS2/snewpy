@@ -342,7 +342,6 @@ def RegistryModel(_param_validator=None, **params):
         * Validation of the input user parameters (see :meth:`RegistryModel.validate`)
         * Generated constructor docstring based on allowed parameters
         * Populates the `self.metadata` from the given user parameters
-        * Optional (deprecated) "filename" argument, and calls initialization from the filename
 
         The decorated class:
             * *must* inherit from the loader class
