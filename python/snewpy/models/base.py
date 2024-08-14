@@ -299,8 +299,8 @@ class PinchedModel(SupernovaModel):
             a  = np.expand_dims(a, axis=1)
 
             # For numerical stability, evaluate log PDF and then exponentiate.
-            # Suppress div-by-zero warnings and remove bad values later.
-            with np.errstate(divide='ignore'):
+            # Suppress div-by-zero and other warnings that do not matter here.
+            with np.errstate(divide='ignore', invalid='ignore'):
                 result = \
                   np.exp(np.log(L) - (2+a)*np.log(Ea) + (1+a)*np.log(1+a)
                         - loggamma(1+a) + a*np.log(E) - (1+a)*(E/Ea)) / (u.erg * u.s)
