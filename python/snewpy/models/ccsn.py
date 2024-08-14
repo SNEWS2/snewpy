@@ -475,7 +475,7 @@ class Mori_2023(loaders.Mori_2023):
 class Bugli_2021(loaders.Bugli_2021):
     """Model based on `Buggli (2021) <https://arxiv.org/abs/2105.00665>`_.
     """
-    def __init__(self, *, Bfield:str, direction:str, rotation:int, grav:str):
+    def __init__(self, *, Bfield:str, direction:str, rotation:int=None, grav:str=None):
 
         filename = f'{Bfield}_3d_snewpy_{direction}.dat'
         self.metadata['Progenitor mass'] = 35*u.Msun
