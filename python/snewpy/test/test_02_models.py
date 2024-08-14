@@ -67,13 +67,13 @@ class TestModels(unittest.TestCase):
             'Progenitor mass': 35 * u.Msun,
             'EOS': 'LS220',
         }
-        for Bfield in ['hydro', 'l1', 'l2']:
+        for Bfield in ['hydro', 'L1', 'L2']:
             for direction in ['average','equator','north','south']:
                 mfile = 'Bugli_2021/{}_3d_snewpy_{}'.format(Bfield, direction)
-                if Bfield == 'l2':
+                if Bfield == 'L2':
                     for grav in ['A','B']:
                         mfile = 'Bugli_2021/{}_b12_dipdecay_3d_grav{}_snewpy_{}'.format(Bfield, grav, direction)
-                if Bfield == 'l1':
+                if Bfield == 'L1':
                     for rotation in [0,90]:
                         mfile = 'Bugli_2021/{}_b12_3d_{}deg_snewpy_{}'.format(Bfield, rotation, direction)
                 model = Bugli_2021(os.path.join(model_path, mfile),metadata=metadata)

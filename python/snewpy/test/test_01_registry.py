@@ -95,12 +95,12 @@ class TestModels(unittest.TestCase):
         """
         Instantiate a set of 'Bugli 2021' models
         """
-        for Bfield in ['hydro', 'l1', 'l2']:
+        for Bfield in ['hydro', 'L1', 'L2']:
             for direction in ['average','equator','north','south']:
-                if Bfield == 'l2':
+                if Bfield == 'L2':
                     for grav in ['A','B']:
                         model = Bugli_2021(Bfield=Bfield, grav=grav, rotation=None, direction=direction)
-                if Bfield == 'l1':
+                if Bfield == 'L1':
                     for rotation in [0,90]:
                         model = Bugli_2021(Bfield=Bfield, grav=None, rotation=rotation, direction=direction)
                 else:
