@@ -9,7 +9,7 @@ from snewpy.models.ccsn import Nakazato_2013, Tamborra_2014, OConnor_2013, OConn
                           Sukhbold_2015, Bollig_2016, Walk_2018, \
                           Walk_2019, Fornax_2019, Warren_2020, \
                           Kuroda_2020, Fornax_2021, Zha_2021, \
-                          Fornax_2022, Mori_2023
+                          Fornax_2022, Mori_2023, Fischer_2020
 
 from astropy import units as u
 
