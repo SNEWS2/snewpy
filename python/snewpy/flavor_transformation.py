@@ -82,7 +82,7 @@ class ThreeFlavorDecoherence(FlavorTransformation):
 
     def __init__(self):
         """Initialize ThreeFlavorTransformation to default case"""
-        super().__init__(None) 
+        super().__init__() 
 
     def __str__(self):
         return f'ThreeFlavorDecoherence'
