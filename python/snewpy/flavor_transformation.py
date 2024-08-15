@@ -98,6 +98,9 @@ class ThreeFlavorDecoherence(FlavorTransformation):
 # SN Transformations
 ###############################################################################
 class SNTransformation(ABC):
+    def __init__(self, mixing_params):
+        self.mix_pars = mixing_params
+
     @abstractmethod
     def P_mf(self, t, E)->FlavorMatrix:
         pass
