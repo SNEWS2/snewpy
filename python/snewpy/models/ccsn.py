@@ -3,9 +3,7 @@
 The submodule ``snewpy.models.ccsn`` contains models of core-collapse supernovae
 derived from the :class:`SupernovaModel` base class.
 
-Since SNEWPY v1.3, the prefered method is to initialise a model based on its physics parameters.
-Initialisation from a file name is deprecated.
-
+Models are initialised based on their physics parameters.
 Use the ``param`` class property to view all physics parameters and their possible values:
 
 >>> from snewpy.models.ccsn import Nakazato_2013
@@ -40,11 +38,9 @@ from snewpy.models import ccsn_loaders as loaders
 from .base import PinchedModel
 
 from snewpy.models.registry_model import RegistryModel, Parameter
-from snewpy.models.registry_model import deprecated, legacy_filename_initialization
 from snewpy.models.registry_model import all_models
 from textwrap import dedent
 
-@legacy_filename_initialization
 @RegistryModel(
     progenitor_mass = [13, 20, 30, 50] * u.Msun,
     revival_time = [0, 100, 200, 300] * u.ms,
@@ -61,23 +57,6 @@ class Nakazato_2013(loaders.Nakazato_2013):
     (2013), ApJ 804:75 (2015), PASJ 73:639 (2021). See also http://asphwww.ph.noda.tus.ac.jp/snn/.
     """
 
-    def _metadata_from_filename(self, filename:str)->dict:
-            metadata = {'Progenitor mass': float(filename.split('-')[-1].strip('s%.fits')) * u.Msun}
-            if 't_rev' in filename:
-                metadata.update({
-                    'EOS': filename.split('-')[-4].upper(),
-                    'Metallicity': float(filename.split('-')[-3].strip('z%')),
-                    'Revival time': float(filename.split('-')[-2].strip('t_rev%ms')) * u.ms
-                })
-            # No revival time because the explosion "failed" (BH formation).
-            else:
-                metadata.update({
-                    'EOS': filename.split('-')[-4].upper(),
-                    'Metallicity': float(filename.split('-')[-2].strip('z%')),
-                    'Revival time': 0 * u.ms
-                })
-            return metadata
-        
     def __init__(self, progenitor_mass:u.Quantity, revival_time:u.Quantity, metallicity:float, eos:str):
         # Strip units for filename construction
         progenitor_mass = progenitor_mass.to(u.Msun).value
@@ -92,7 +71,6 @@ class Nakazato_2013(loaders.Nakazato_2013):
         return super().__init__(filename, self.metadata)
 
 
-@legacy_filename_initialization
 @RegistryModel(
     progenitor_mass = [27., 9.6] * u.Msun,
     eos = ['LS220', 'SFHo']
@@ -100,13 +78,6 @@ class Nakazato_2013(loaders.Nakazato_2013):
 class Sukhbold_2015(loaders.Sukhbold_2015):
     """Model based on simulations from Sukhbold et al., ApJ 821:38,2016. Models were shared privately by email.
     """
-    def _metadata_from_filename(self, filename:str):
-        metadata = {
-            'Progenitor mass': float(filename.split('-')[-1].strip('z%.fits')) * u.Msun,
-            'EOS': filename.split('-')[-2]
-        }
-        return metadata
-         
     def __init__(self, progenitor_mass:u.Quantity, eos:str):
         if progenitor_mass.value == 9.6:
             filename = f'sukhbold-{eos}-z{progenitor_mass.value:3.1f}.fits'
@@ -115,7 +86,6 @@ class Sukhbold_2015(loaders.Sukhbold_2015):
         return super().__init__(filename, self.metadata)
 
 
-@legacy_filename_initialization
 @RegistryModel(
     progenitor_mass = [11.2, 20., 27.] * u.Msun,
     direction = [1,2,3],
@@ -133,7 +103,6 @@ class Tamborra_2014(loaders.Tamborra_2014):
         # Metadata is handled by __init__ in _GarchingArchiveModel
         return super().__init__(filename=filename, metadata=self.metadata)
 
-@legacy_filename_initialization
 @RegistryModel(
     progenitor_mass= [11.2, 27.] * u.Msun,
     eos = ['LS220']
@@ -146,7 +115,6 @@ class Bollig_2016(loaders.Bollig_2016):
         filename = f's{progenitor_mass.value:3.1f}c'
         return super().__init__(filename=filename, metadata=self.metadata)
 
-@legacy_filename_initialization
 @RegistryModel(
     progenitor_mass = [15.] * u.Msun,
     rotation = ['fast','slow','non'],
@@ -164,7 +132,6 @@ class Walk_2018(loaders.Walk_2018):
         return super().__init__(filename=filename, metadata=self.metadata)
 
 
-@legacy_filename_initialization
 @RegistryModel(
     progenitor_mass = [40., 75.] * u.Msun,
     direction = [1,2,3],
@@ -190,7 +157,7 @@ class Walk_2019(loaders.Walk_2019):
                                ),
     eos = ['HShen', 'LS220']
 )
-class _OConnor_2013_new(loaders.OConnor_2013):
+class OConnor_2013(loaders.OConnor_2013):
     """Model based on the black hole formation simulation in `O'Connor & Ott (2013) <https://arxiv.org/abs/1207.1100>`_.
     """    
     def __init__(self, eos:str, progenitor_mass:u.Quantity):
@@ -198,69 +165,31 @@ class _OConnor_2013_new(loaders.OConnor_2013):
         filename = f'{eos}_timeseries.tar.gz'
         return super().__init__(filename=filename, metadata=self.metadata)
 
-class OConnor_2013(legacy_filename_initialization(_OConnor_2013_new)):
-    _config_path='ccsn.OConnor_2013'
-    
-    @deprecated('base', 'mass')
-    def __init__(self, base=None, mass=None, eos='LS220', *, progenitor_mass=None):
-        """
-        Parameters
-        ----------
-        base : str
-            Absolute or relative path folder with model data. This argument is deprecated.
-        mass: int
-            Mass of model progenitor in units Msun. This argument is deprecated.
-        """
-        if mass:
-            progenitor_mass = mass*u.Msun
-        if base:
-            self.metadata = {'Progenitor mass': progenitor_mass,
-                             'EOS': eos}
-            filename = f'{base}/{eos}_timeseries.tar.gz'
-            return super().__init__(filename=filename, eos=eos, progenitor_mass=progenitor_mass)
-        else:
-            return super().__init__(eos=eos, progenitor_mass=progenitor_mass)
-
-OConnor_2013.__init__.__doc__=dedent(OConnor_2013.__init__.__doc__)+_OConnor_2013_new.__init__.__doc__
-#make sure that only the latest class is present in the models table
-all_models.remove(OConnor_2013.__mro__[1])
-all_models.add(OConnor_2013)
-
-@deprecated('eos')
-@legacy_filename_initialization
 @RegistryModel(
     progenitor_mass = [40 * u.Msun],
-    eos=['LS220']
 )
 class OConnor_2015(loaders.OConnor_2015):
     """Model based on the black hole formation simulation in `O'Connor (2015) <https://arxiv.org/abs/1411.7058>`_.
     """
     def __init__(self, progenitor_mass:u.Quantity):
+        self.metadata["EOS"] = "LS220"
         # Filename is currently the same regardless of parameters
         filename = 'M1_neutrinos.dat'
         return super().__init__(filename, self.metadata)
 
-@deprecated('eos')
-@legacy_filename_initialization
 @RegistryModel(
     progenitor_mass = Parameter(values=(list(range(16, 27)) + [19.89, 22.39, 30, 33]) * u.Msun,
                                 desc_values = '[16..26, 19.89, 22.39, 30, 33] solMass'
                                ),
-    eos = ['STOS_B145']
 )
 class Zha_2021(loaders.Zha_2021):
     """Model based on the hadron-quark phse transition models from `Zha et al. 2021 <https://arxiv.org/abs/2103.02268>`_.
     """
-    def _metadata_from_filename(self, filename:str)->dict:
-        metadata = {'Progenitor mass': float(os.path.splitext(os.path.basename(filename))[0][1:]) * u.Msun}
-        return metadata 
-        
     def __init__(self, *, progenitor_mass:u.Quantity):
+        self.metadata["EOS"] = "STOS_B145"
         filename = f's{progenitor_mass.value:g}.dat'
         return super().__init__(filename, self.metadata)
 
-@deprecated('eos')
-@legacy_filename_initialization
 @RegistryModel(
     progenitor_mass=Parameter(np.concatenate((np.linspace(9.0, 12.75, 16),
                                               np.linspace(13, 30., 171),
@@ -274,57 +203,36 @@ class Zha_2021(loaders.Zha_2021):
                               label='Turb. mixing param.',
                               description='Turbulent mixing parameter alpha_lambda',
                               ),
-    eos=['SFHo']
 )
 class Warren_2020(loaders.Warren_2020):
     """Model based on simulations from Warren et al., ApJ 898:139, 2020.
     Neutrino fluxes available at https://doi.org/10.5281/zenodo.3667908."""
     # np.arange with decimal increments can produce floating point errors
     # Though it may be more intuitive to use np.arange, these fp-errors quickly become troublesome
-    def _metadata_from_filename(self, filename:str)->dict:
-        _, _, turbmixing_param, progenitor_mass = os.path.splitext(os.path.basename(filename))[0].split('_')
-        metadata = {'Progenitor mass': float(progenitor_mass[1:]) * u.Msun,
-                    'Turb. mixing param.': float(turbmixing_param[1:]),
-                    'EOS': 'SFHo'}
-        return metadata
-
     def __init__(self, *, progenitor_mass, turbmixing_param):
+        self.metadata["EOS"] = "SFHo"
         if progenitor_mass.value.is_integer() and progenitor_mass.value <= 30.:
             fname = f'stir_a{turbmixing_param:3.2f}/stir_multimessenger_a{turbmixing_param:3.2f}_m{progenitor_mass.value:.1f}.h5'
         else:
             fname = f'stir_a{turbmixing_param:3.2f}/stir_multimessenger_a{turbmixing_param:3.2f}_m{progenitor_mass.value:g}.h5'
         return super().__init__(fname, self.metadata)
 
-@deprecated('eos','mass')
-@legacy_filename_initialization
 @RegistryModel(
     rotational_velocity= [0, 1] * u.rad / u.s,
     magnetic_field_exponent= Parameter([0, 12, 13],                                      
                                       label='B_0 Exponent',
                                       description='Exponent of magnetic field (See Eq. 46)'),
-    eos=['LS220'], 
     progenitor_mass=[20*u.Msun],
     _param_validator = lambda p: (p['rotational_velocity'].value == 1 and p['magnetic_field_exponent'] in (12, 13)) or \
                                (p['rotational_velocity'].value == 0 and p['magnetic_field_exponent'] == 0)
 )
 class Kuroda_2020(loaders.Kuroda_2020):
     """Model based on simulations from `Kuroda et al. (2020) <https://arxiv.org/abs/2009.07733>`_."""
-    
-    def _metadata_from_filename(self, filename:str)->dict:
-        _, rotational_velocity, magnetic_field_exponent = re.split('R|B', os.path.splitext(os.path.basename(filename))[0])
-        metadata = {
-            'Progenitor mass': 20 * u.Msun,
-            'Rotational Velocity': int(rotational_velocity[0]),
-            'B_0 Exponent': int(magnetic_field_exponent),
-            'EOS': 'LS220'
-        }
-        return metadata
-
-    def __init__(self, mass=None, *, rotational_velocity, magnetic_field_exponent):
+    def __init__(self, *, rotational_velocity, magnetic_field_exponent):
+        self.metadata["EOS"] = "LS220"
         filename = f'LnuR{int(rotational_velocity.value):1d}0B{int(magnetic_field_exponent):02d}.dat'
         return super().__init__(filename, self.metadata)
 
-@legacy_filename_initialization
 @RegistryModel(
     progenitor_mass=[9, 10, 12, 13, 14, 15, 16, 19, 25, 60] * u.Msun,
 )
@@ -332,11 +240,6 @@ class Fornax_2019(loaders.Fornax_2019):
     """Model based on 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019. 
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/
     """
-    def _metadata_from_filename(self, filename:str)->dict:
-        progenitor_mass = os.path.splitext(os.path.basename(filename))[0].split('_')[2]
-        metadata = {'Progenitor mass': int(progenitor_mass[:-1]) * u.Msun}
-        return metadata
-        
     def __init__(self, cache_flux=False, *, progenitor_mass):
         """
         Parameters
@@ -350,7 +253,6 @@ class Fornax_2019(loaders.Fornax_2019):
             filename = f'lum_spec_{int(progenitor_mass.value):d}M.h5'
         return super().__init__(filename, self.metadata, cache_flux=cache_flux)
 
-@legacy_filename_initialization
 @RegistryModel(
     progenitor_mass = Parameter((list(range(12, 24)) + [25, 26, 26.99]) * u.Msun,
                                 desc_values='[12..23, 25, 26, 26.99] solMass')
@@ -359,11 +261,6 @@ class Fornax_2021(loaders.Fornax_2021):
     """Model based on 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019. 
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/
         """
-    def _metadata_from_filename(self, filename:str)->dict:
-        progenitor_mass = os.path.splitext(os.path.basename(filename))[0].split('_')[2]
-        metadata = {'Progenitor mass': float(progenitor_mass[:-1]) * u.Msun}
-        return metadata
-        
     def __init__(self, progenitor_mass:u.Quantity):
         # Load from Parameters
         if progenitor_mass.value.is_integer():

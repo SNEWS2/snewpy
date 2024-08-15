@@ -12,7 +12,6 @@ Examples usage can be seen in :mod:`snewpy.models.ccsn`.
 from functools import wraps
 import itertools as it
 import inspect
-import os
 from textwrap import dedent
 from warnings import warn
 import numpy as np
@@ -64,41 +63,6 @@ def _can_decorate_class_or_func(func_decorator):
             return obj
         else:
             return func_decorator(obj)
-    return _wrapper
-            
-def deprecated(*names, message='Argument `{name}` is deprecated.'):
-    """A function decorator to issue a deprecation warning if a given argument is provided in the wrapped function call.
-    
-    Parameters
-    ----------
-    
-    names: list of str
-        argument names which are deprecated
-    message: str
-        a template with {name} parameter, to make the message for each argument.
-
-    .. Example::
-
-    @deprecated('foo','bar', message='Argument `{name}` is deprecated and will be removed in SNEWPYv2.0!')
-    def test_function(*, foo=1, bar=2, baz=3):
-        pass
-        
-    #calling test_function(foo=1, baz=3) will issue a deprecation warning:
-    #    DeprecationWarning: Argument `foo` is deprecated and will be removed in SNEWPYv2.0!
-    """
-    @_can_decorate_class_or_func
-    def _wrapper(func):
-        #get function signature
-        S = inspect.signature(func)
-        @wraps(func)
-        def _f(*args, **kwargs):
-            #bind signature to find all the parameters
-            params = S.bind(*args,**kwargs)
-            for name in names:
-                if name in params.arguments:
-                    warn(message.format(name=name), category=UserWarning, stacklevel=2)
-            return func(*args,**kwargs)
-        return _f
     return _wrapper
 
 def map_arguments(**names_dict):
@@ -378,7 +342,6 @@ def RegistryModel(_param_validator=None, **params):
         * Validation of the input user parameters (see :meth:`RegistryModel.validate`)
         * Generated constructor docstring based on allowed parameters
         * Populates the `self.metadata` from the given user parameters
-        * Optional (deprecated) "filename" argument, and calls initialization from the filename
 
         The decorated class:
             * *must* inherit from the loader class
@@ -387,10 +350,8 @@ def RegistryModel(_param_validator=None, **params):
                 1. defines the filename from the given user parameters
                 2. optionally modify the `self.metadata` dictionary, and 
                 3. calls the corresponding loader class constructor
-            * *can* define the ``_metadata_from_filename (self, filename:str)->dict``, to help populate the metadata when a `filename` argument is passed
 
     If a parameter has a single allowed value (i.e. fixed), this value will be default for this parameter in constructor.
-    
     """
     pset:ParameterSet = ParameterSet(param_validator=_param_validator, **params)
     def _wrap(base_class):
@@ -460,48 +421,3 @@ def RegistryModel(_param_validator=None, **params):
         all_models.add(c)
         return c
     return _wrap
-
-def legacy_filename_initialization(c):
-    """Wrap the model class, adding a filename argument in the init"""
-    
-    @deprecated('filename')
-    class c1(c):
-        _loader_class = c.__mro__[2] #store the loader class for later use
-
-        def __init__(self, filename:str=None, *args, **kwargs):
-            if filename is not None:
-                if not hasattr(self,'metadata'):
-                    self.metadata = {}
-                if hasattr(self,'_metadata_from_filename'):
-                    self.metadata.update(self._metadata_from_filename(filename))
-                self._loader_class.__init__(self, filename=os.path.abspath(filename), metadata=self.metadata)
-            else:
-                super().__init__(*args, **kwargs)
-
-    #generate the docstring
-    c1.__doc__ = c.__doc__
-    c1._doc_params_ = {'Parameters':
-                       """filename: str\n    Absolute or relative path to the file with model data. This argument is deprecated.""",
-                       **c._doc_params_}
-    c1.__init__.__doc__ = c1._generate_docstring()
-    #update the call signature
-    S = inspect.signature(c)
-    S1 = inspect.signature(c1.__init__)
-    #set default values to None if they are not set
-    other_params = []
-    for p in S.parameters.values():
-        if p.default==p.empty:
-            p = p.replace(default=None)
-        other_params+=[p]
-    params = [S1.parameters['self'],S1.parameters['filename'],*other_params]
-    #fill the constructor signature
-    c1.__init__.__signature__ = S.replace(parameters=params)
-    #fill the class and module name to be the same as in class
-    c1.__qualname__ = c.__qualname__
-    c1.__name__ = c.__name__
-    c1.__module__ = c.__module__
-    #register the model in the list
-    global all_models
-    all_models.remove(c)
-    all_models.add(c1)
-    return c1
