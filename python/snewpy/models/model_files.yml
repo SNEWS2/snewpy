@@ -4,7 +4,7 @@
 
 config:
     - &snewpy "https://github.com/SNEWS2/snewpy/raw/v{snewpy_version}/models/{model}/{filename}"
-    - &ccsn_repository "https://github.com/SNEWS2/snewpy-models-ccsn/raw/v0.2/models/{model}/{filename}"
+    - &ccsn_repository "https://github.com/SNEWS2/snewpy-models-ccsn/raw/v0.3/models/{model}/{filename}"
     - &presn_repository "https://github.com/SNEWS2/snewpy-models-presn/raw/v0.2/models/{model}/{filename}"
     
 models:
@@ -53,7 +53,10 @@ models:
     
         Mori_2023: 
             repository: *ccsn_repository
-            
+
+        Bugli_2021:
+            repository: *ccsn_repository
+
     presn:
     
         Odrzywolek_2010:
