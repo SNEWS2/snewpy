@@ -106,7 +106,7 @@ class AdiabaticMSW(SNTransformation):
     """Adiabatic MSW effect."""
 
     def P_mf(self, t, E):
-        return self.mix_params.Pmf_HighDensityLimit()
+        return self.mix_pars.Pmf_HighDensityLimit()
 ###############################################################################
 class NonAdiabaticMSWH(SNTransformation):
     """Nonadiabatic MSW H resonance. 
@@ -118,8 +118,8 @@ class NonAdiabaticMSWH(SNTransformation):
     In the IMO the H resonance mixes the antineutrino matter states ν̄1 and ν̄3.
     """
     def P_mf(self, t, E):
-        Pmf = self.mix_params.Pmf_HighDensityLimit()
-        if self.mix_params.mass_order == MassHierarchy.NORMAL:
+        Pmf = self.mix_pars.Pmf_HighDensityLimit()
+        if self.mix_pars.mass_order == MassHierarchy.NORMAL:
             Pmf[['NU_2','NU_3'],:] = Pmf[['NU_3','NU_2'],:]
         else:
             Pmf[['NU_1_BAR','NU_3_BAR'],:] = Pmf[['NU_3_BAR','NU_1_BAR'],:]
@@ -139,8 +139,8 @@ and ν̄3.
     """
     
     def P_mf(self, t, E):
-        Pmf = self.mix_params.Pmf_HighDensityLimit()
-        if self.mix_params.mass_order == MassHierarchy.NORMAL:
+        Pmf = self.mix_pars.Pmf_HighDensityLimit()
+        if self.mix_pars.mass_order == MassHierarchy.NORMAL:
             Pmf['NU_2']=Pmf['NU_3']=0.5*(Pmf['NU_2']+Pmf['NU_3'])
         else:
             Pmf['NU_1_BAR']=Pmf['NU_3_BAR']=0.5*(Pmf['NU_1_BAR']+Pmf['NU_3_BAR'])
@@ -197,7 +197,7 @@ class MSWEffect(SNTransformation):
                      
         if SNOSHEWS == None:
             print("The SNOSHEWS module cannot be found. Returning results using AdiabaticMSW prescription")
-            return AdiabticMSW(self.mix_params).get_probabilities(t,E)
+            return AdiabticMSW(self.mix_pars).get_probabilities(t,E)
         
         #input data object for SNOSHEWS
         ID = SNOSHEWS.InputDataSNOSHEWS()
@@ -216,12 +216,12 @@ class MSWEffect(SNTransformation):
         ID.Emax = E[-1]        # in MeV
 
         #MixingParameters
-        ID.deltam_21 = self.mix_params.dm21_2.value   # in eV^2
-        ID.deltam_32 = self.mix_params.dm32_2.value   # in eV^2
-        ID.theta12 = self.mix_params.theta12.value    # in degrees
-        ID.theta13 = self.mix_params.theta13.value    # in degrees
-        ID.theta23 = self.mix_params.theta23.value    # in degrees
-        ID.deltaCP = self.mix_params.deltaCP.value    # in degrees
+        ID.deltam_21 = self.mix_pars.dm21_2.value   # in eV^2
+        ID.deltam_32 = self.mix_pars.dm32_2.value   # in eV^2
+        ID.theta12 = self.mix_pars.theta12.value    # in degrees
+        ID.theta13 = self.mix_pars.theta13.value    # in degrees
+        ID.theta23 = self.mix_pars.theta23.value    # in degrees
+        ID.deltaCP = self.mix_pars.deltaCP.value    # in degrees
 
         ID.accuracy = 1.01E-009      # controls accuracy of integrator: smaller is more accurate
         ID.stepcounterlimit = 10000  # output frequency if outputflag = True: larger is less frequent
@@ -273,7 +273,7 @@ class AdiabaticMSWes(SNTransformation):
         Phys. Rev. D 90, 033013 (2014).
     """
     def P_mf(self, t, E):
-        Pmf = self.mix_params.Pmf_HighDensityLimit()
+        Pmf = self.mix_pars.Pmf_HighDensityLimit()
         return Pmf
         
 ###############################################################################
@@ -291,8 +291,8 @@ class NonAdiabaticMSWes(SNTransformation):
         Phys. Rev. D 90, 033013 (2014).
     """
     def P_mf(self, t, E): 
-        Pmf = self.mix_params.Pmf_HighDensityLimit()
-        if self.mix_params.mass_order == MassHierarchy.NORMAL:
+        Pmf = self.mix_pars.Pmf_HighDensityLimit()
+        if self.mix_pars.mass_order == MassHierarchy.NORMAL:
             Pmf[['NU_3','NU_4'],:] = Pmf[['NU_4','NU_3'],:]
             Pmf[['NU_2_BAR','NU_3_BAR','NU_4_BAR'],:] = Pmf[['NU_3_BAR','NU_4_BAR','NU_2_BAR'],:]
         else:
@@ -311,7 +311,7 @@ class VacuumTransformation(ABC):
 ###############################################################################
 class NoVacuumTransformation(VacuumTransformation):
     def P_mm(self, t, E)->FlavorMatrix:
-        return FlavorMatrix.eye(self.mix_params.basis_mass)
+        return FlavorMatrix.eye(self.mix_pars.basis_mass)
         
 class NeutrinoDecay(VacuumTransformation):
     """Decay effect, where the heaviest neutrino decays to the lightest
@@ -354,9 +354,9 @@ class NeutrinoDecay(VacuumTransformation):
     def P_mm(self, t, E)->FlavorMatrix:
         
         decay_factor = np.exp(-self.gamma(E)*self.d)
-        PND = FlavorMatrix.eye(self.mix_params.basis_mass, extra_dims=[len(E)])
+        PND = FlavorMatrix.eye(self.mix_pars.basis_mass, extra_dims=[len(E)])
 
-        if self.mix_params.mass_order == MassHierarchy.NORMAL:
+        if self.mix_pars.mass_order == MassHierarchy.NORMAL:
             PND['NU_1','NU_3'] = 1 - decay_factor
             PND['NU_3','NU_3'] = decay_factor
 
@@ -400,7 +400,7 @@ class QuantumDecoherence(VacuumTransformation):
         self.E0 = E0
 
     def P_mm(self, t, E)->FlavorMatrix: 
-        PQD = FlavorMatrix.zeros(self.mix_params.basis_mass, extra_dims=(len(E)))
+        PQD = FlavorMatrix.zeros(self.mix_pars.basis_mass, extra_dims=(len(E)))
 
         PQD[1,1] = 1/3 + 1/2 * np.exp(-(self.Gamma3 * (E/self.E0)**self.n + self.Gamma8 * (E/self.E0)**self.n / 3) * self.d) \
                   + 1/6 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
@@ -433,7 +433,7 @@ class EarthTransformation(ABC):
 
 class NoEarthMatter(EarthTransformation):
     def P_fm(self, t, E)->FlavorMatrix:
-        D = self.mix_params.VacuumMixingMatrix().abs2()
+        D = self.mix_pars.VacuumMixingMatrix().abs2()
         return D
 ###############################################################################
 
@@ -474,7 +474,7 @@ class EarthMatter(EarthTransformation):
         """
         if EMEWS == None:
             print("The EMEWS module cannot be found. Results do not include the Earth-matter effect.")
-            return ThreeFlavorNoEarthMatter(self.mix_params).get_probabilities(t,E)
+            return ThreeFlavorNoEarthMatter(self.mix_pars).get_probabilities(t,E)
 
         if self.prior_E != None:
             if u.allclose(self.prior_E, E) == True:
@@ -499,12 +499,12 @@ class EarthMatter(EarthTransformation):
         ID.Emax = E[-1]        # in MeV
 
         #MixingParameters
-        ID.deltam_21 = self.mix_params.dm21_2.value   # in eV^2
-        ID.deltam_32 = self.mix_params.dm32_2.value   # in eV^2
-        ID.theta12 = self.mix_params.theta12.value    # in degrees
-        ID.theta13 = self.mix_params.theta13.value    # in degrees
-        ID.theta23 = self.mix_params.theta23.value    # in degrees
-        ID.deltaCP = self.mix_params.deltaCP.value    # in degrees
+        ID.deltam_21 = self.mix_pars.dm21_2.value   # in eV^2
+        ID.deltam_32 = self.mix_pars.dm32_2.value   # in eV^2
+        ID.theta12 = self.mix_pars.theta12.value    # in degrees
+        ID.theta13 = self.mix_pars.theta13.value    # in degrees
+        ID.theta23 = self.mix_pars.theta23.value    # in degrees
+        ID.deltaCP = self.mix_pars.deltaCP.value    # in degrees
 
         ID.accuracy = 1.01E-007      # controls accuracy of integrtaor: smaller is more accurate
         ID.stepcounterlimit = 1      # output frequency if outputflag = True: larger is less frequent
