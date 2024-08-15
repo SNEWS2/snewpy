@@ -4,14 +4,14 @@ from snewpy import snowglobes
 
 #Select output format, Mathjax or LaTeX
 while True:
-    outputFormat = input('Enter 1 for Mathjax format\nEnter 0 for LaTeX format\n')
+    outputFormat = input('Enter 1 for Mathjax format or 0 for LaTeX format: ')
     if outputFormat == '1':
         useMathjax = True
         break
-    if outputFormat == '0':
+    elif outputFormat == '0':
         useMathjax = False
         break
-    if outputFormat != '1' and outputFormat != '0':
+    else:
         print('Please enter 1 or 0.')
 
 home_directory = os.getcwd()
