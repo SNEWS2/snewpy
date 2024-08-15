@@ -57,6 +57,9 @@ models:
         Bugli_2021:
             repository: *ccsn_repository
 
+        Fischer_2020:
+            repository: *ccsn_repository
+
     presn:
     
         Odrzywolek_2010:

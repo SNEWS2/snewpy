@@ -7,7 +7,7 @@ from snewpy.neutrino import Flavor
 from snewpy.models.ccsn_loaders import Nakazato_2013, Tamborra_2014, OConnor_2013, OConnor_2015, \
                                   Sukhbold_2015, Bollig_2016, Walk_2018, \
                                   Walk_2019, Fornax_2019, Warren_2020, \
-                                  Kuroda_2020, Fornax_2021, Zha_2021, Bugli_2021
+                                  Kuroda_2020, Fornax_2021, Zha_2021, Bugli_2021, Fischer_2020
 from astropy import units as u
 from snewpy import model_path
 import os
@@ -87,6 +87,27 @@ class TestModels(unittest.TestCase):
                 self.assertEqual(type(f), dict)
                 self.assertEqual(len(f), len(Flavor))
                 self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
+
+    def test_Fischer_2020(self):
+        """
+        Instantiate a set of 'Fischer 2020' models
+        """
+        metadata = {
+            'Progenitor mass': [18 * u.Msun],
+            'EOS': ['HS(DD2)'],
+        }
+        mfile = 'Fischer_2020/Fischer_2020.tar.gz'
+        model = Fischer_2020(os.path.join(model_path, mfile), metadata=metadata)
+
+        # Check that times are in proper units.
+        t = model.get_time()
+        self.assertTrue(t.unit, u.s)
+
+        # Check that we can compute flux dictionaries.
+        f = model.get_initial_spectra(0*u.s, 10*u.MeV)
+        self.assertEqual(type(f), dict)
+        self.assertEqual(len(f), len(Flavor))
+        self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
 
     def test_OConnor_2013(self):
         """
