@@ -44,7 +44,7 @@ class TestFlavorTransformations:
         """
         Survival probabilities for no oscillations
         """
-        P = xforms.NoTransformation().P(t, E)
+        P = xforms.NoTransformation().P_ff(t, E)
         assert P.flavor_in == ThreeFlavor
         assert P.flavor_out == ThreeFlavor
         for f1 in ThreeFlavor:
@@ -55,7 +55,7 @@ class TestFlavorTransformations:
         """
         Survival probabilities for complete electron->X transformation
         """
-        P = xforms.CompleteExchange().P(t, E)
+        P = xforms.CompleteExchange().P_ff(t, E)
         assert P.flavor_in == ThreeFlavor
         assert P.flavor_out == ThreeFlavor
         #general check
