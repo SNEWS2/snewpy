@@ -68,7 +68,7 @@ class TestModels(unittest.TestCase):
             'EOS': ['HS(DD2)'],
         }
         mfile = 'Fischer_2020.tar.gz'
-        model = Tamborra_2014(os.path.join(model_path, mfile), metadata=metadata)
+        model = Fischer_2020(os.path.join(model_path, mfile), metadata=metadata)
 
         # Check that times are in proper units.
         t = model.get_time()
