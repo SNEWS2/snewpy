@@ -3,23 +3,35 @@
 name: tests
 
 # Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
+# events but only for the main branch
 on:
   push:
-    branches: [ main ]
+    branches: 
+      - main
+      - release_*
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
+      - release_*
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
   build:
-    # The type of runner that the job will run on.
-    runs-on: ubuntu-latest
     strategy:
-      # Add a list of python versions we want to use for testing.
       matrix:
+        # Test all supported Python versions under Ubuntu
+        os: [ubuntu-latest]
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        # Additionally, test one Python version under MacOS and Windows, to detect OS-specific issues
+        include:
+          - os: macos-latest
+            python-version: '3.12'
+          - os: windows-latest
+            python-version: '3.12'
+
+    # The type of runner that the job will run on.
+    runs-on: ${{ matrix.os }}
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:

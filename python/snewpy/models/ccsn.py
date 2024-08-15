@@ -303,11 +303,9 @@ class Warren_2020(loaders.Warren_2020):
 
     def __init__(self, *, progenitor_mass, turbmixing_param):
         if progenitor_mass.value.is_integer() and progenitor_mass.value <= 30.:
-            fname = os.path.join(f'stir_a{turbmixing_param:3.2f}',
-                                 f'stir_multimessenger_a{turbmixing_param:3.2f}_m{progenitor_mass.value:.1f}.h5')
+            fname = f'stir_a{turbmixing_param:3.2f}/stir_multimessenger_a{turbmixing_param:3.2f}_m{progenitor_mass.value:.1f}.h5'
         else:
-            fname = os.path.join(f'stir_a{turbmixing_param:3.2f}',
-                                 f'stir_multimessenger_a{turbmixing_param:3.2f}_m{progenitor_mass.value:g}.h5')
+            fname = f'stir_a{turbmixing_param:3.2f}/stir_multimessenger_a{turbmixing_param:3.2f}_m{progenitor_mass.value:g}.h5'
         return super().__init__(fname, self.metadata)
 
 @deprecated('eos','mass')
