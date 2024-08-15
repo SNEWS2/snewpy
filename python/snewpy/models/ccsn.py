@@ -44,15 +44,14 @@ from snewpy.models.registry_model import deprecated, legacy_filename_initializat
 from snewpy.models.registry_model import all_models
 from textwrap import dedent
 
-@legacy_filename_initialization
-@RegistryModel(
-    progenitor_mass= [18 * u.Msun],
-    eos = ['HS(DD2)']
-)
+
+@RegistryModel()
 class Fischer_2020(loaders.Fischer_2020):
     """Model based on simulations from `Fischer et al. (2020) <https://arxiv.org/abs/1804.10890>`
     """
-    def __init__(self, progenitor_mass:u.Quantity, eos:str):
+    def __init__(self):
+        self.metadata["EOS"] = "HS(DD2)"
+        self.metadata["Progenitor mass"] = 18 * u.Msun
         filename='Fischer_2020.tar.gz'
         return super().__init__(filename, metadata=self.metadata)
 
