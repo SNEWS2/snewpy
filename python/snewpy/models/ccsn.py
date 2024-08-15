@@ -126,6 +126,7 @@ class Sukhbold_2015(loaders.Sukhbold_2015):
         return super().__init__(filename, self.metadata)
 
 
+@deprecated('eos')
 @legacy_filename_initialization
 @RegistryModel(
     progenitor_mass = [11.2, 20., 27.] * u.Msun,
@@ -144,6 +145,8 @@ class Tamborra_2014(loaders.Tamborra_2014):
         # Metadata is handled by __init__ in _GarchingArchiveModel
         return super().__init__(filename=filename, metadata=self.metadata)
 
+
+@deprecated('eos')
 @legacy_filename_initialization
 @RegistryModel(
     progenitor_mass= [11.2, 27.] * u.Msun,
@@ -157,6 +160,8 @@ class Bollig_2016(loaders.Bollig_2016):
         filename = f's{progenitor_mass.value:3.1f}c'
         return super().__init__(filename=filename, metadata=self.metadata)
 
+
+@deprecated('eos')
 @legacy_filename_initialization
 @RegistryModel(
     progenitor_mass = [15.] * u.Msun,
@@ -175,6 +180,7 @@ class Walk_2018(loaders.Walk_2018):
         return super().__init__(filename=filename, metadata=self.metadata)
 
 
+@deprecated('eos')
 @legacy_filename_initialization
 @RegistryModel(
     progenitor_mass = [40., 75.] * u.Msun,
