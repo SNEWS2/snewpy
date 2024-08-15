@@ -1,7 +1,6 @@
 import itertools as it
 import os
 from abc import ABC, abstractmethod
-from warnings import warn
 
 import numpy as np
 from astropy import units as u
@@ -12,11 +11,10 @@ from scipy.special import loggamma
 from snewpy._model_downloader import LocalFileLoader
 
 from snewpy.neutrino import Flavor
-from snewpy.flavor import TwoFlavor, ThreeFlavor, FourFlavor
 from snewpy.flavor_transformation import NoTransformation
 from functools import wraps
 
-from snewpy.flux import Flux, Container
+from snewpy.flux import Flux
 from pathlib import Path
 
 def _wrap_init(init, check):
@@ -137,8 +135,25 @@ class SupernovaModel(ABC, LocalFileLoader):
         dict
             Dictionary of transformed spectra, keyed by neutrino flavor.
         """
-        initial_spectra = self.get_initial_spectra(t, E)
-        transformed_spectra = flavor_xform.get_probabilities(t,E) @ (ThreeFlavor<<TwoFlavor) @ initial_spectra 
+        initialspectra = self.get_initial_spectra(t, E)
+        transformed_spectra = {}
+
+        transformed_spectra[Flavor.NU_E] = \
+            flavor_xform.prob_ee(t, E) * initialspectra[Flavor.NU_E] + \
+            flavor_xform.prob_ex(t, E) * initialspectra[Flavor.NU_X]
+
+        transformed_spectra[Flavor.NU_X] = \
+            flavor_xform.prob_xe(t, E) * initialspectra[Flavor.NU_E] + \
+            flavor_xform.prob_xx(t, E) * initialspectra[Flavor.NU_X] 
+
+        transformed_spectra[Flavor.NU_E_BAR] = \
+            flavor_xform.prob_eebar(t, E) * initialspectra[Flavor.NU_E_BAR] + \
+            flavor_xform.prob_exbar(t, E) * initialspectra[Flavor.NU_X_BAR]
+
+        transformed_spectra[Flavor.NU_X_BAR] = \
+            flavor_xform.prob_xebar(t, E) * initialspectra[Flavor.NU_E_BAR] + \
+            flavor_xform.prob_xxbar(t, E) * initialspectra[Flavor.NU_X_BAR] 
+
         return transformed_spectra   
 
     def get_flux (self, t, E, distance, flavor_xform=NoTransformation()):
@@ -168,6 +183,7 @@ class SupernovaModel(ABC, LocalFileLoader):
 
         array = np.stack([f[flv] for flv in Flavor])
         return  Flux(data=array*factor, flavor=Flavor, time=t, energy=E)
+
 
 def get_value(x):
     """If quantity x has is an astropy Quantity with units, return just the
