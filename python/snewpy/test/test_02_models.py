@@ -67,7 +67,7 @@ class TestModels(unittest.TestCase):
             'Progenitor mass': [18 * u.Msun],
             'EOS': ['HS(DD2)'],
         }
-        mfile = 'Fischer_2020.tar.gz'
+        mfile = 'Fischer_2020/Fischer_2020.tar.gz'
         model = Fischer_2020(os.path.join(model_path, mfile), metadata=metadata)
 
         # Check that times are in proper units.
