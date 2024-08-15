@@ -279,7 +279,6 @@ class Zha_2021(loaders.Zha_2021):
 class Warren_2020(loaders.Warren_2020):
     """Model based on simulations from Warren et al., ApJ 898:139, 2020.
     Neutrino fluxes available at https://doi.org/10.5281/zenodo.3667908."""
-    # TODO: (For v2.0) Resolve Zenodo issues (Missing files)
     # np.arange with decimal increments can produce floating point errors
     # Though it may be more intuitive to use np.arange, these fp-errors quickly become troublesome
     def _metadata_from_filename(self, filename:str)->dict:
