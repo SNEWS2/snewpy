@@ -12,6 +12,17 @@ from astropy import units as u
 from astropy import constants as c
 from astropy.coordinates import AltAz
 
+import logging
+logger = logging.getLogger()
+
+try:
+    import BEMEWS
+    import BEMEWS.data
+except ImportError as e:
+    BEMEWS = None
+
+from importlib.resources import files
+
 from .neutrino import MassHierarchy
 from .flavor  import TwoFlavor,ThreeFlavor, FourFlavor, FlavorMatrix
 from .neutrino import MixingParameters, ThreeFlavorMixingParameters, FourFlavorMixingParameters
@@ -429,25 +440,26 @@ class QuantumDecoherence(VacuumTransformation):
 ###############################################################################
 
 class EarthTransformation(ABC):
+    def __init__(self, mix_params):
+        self.mix_pars = mix_params
+
     @abstractmethod
     def P_fm(self, t, E)->FlavorMatrix:
         pass
 ###############################################################################
 
 class NoEarthMatter(EarthTransformation):
+    def __init__(self):
+        super().__init__(None)
+
     def P_fm(self, t, E)->FlavorMatrix:
         D = self.mix_pars.VacuumMixingMatrix().abs2()
         return D
 ###############################################################################
 
-try:
-    import EMEWS
-except:
-    EMEWS = None
-        
 class EarthMatter(EarthTransformation):
 
-    def __init__(self, SNAltAz):
+    def __init__(self, mix_params, SNAltAz):
         """Initialize flavor transformation
         
         Parameters
@@ -455,11 +467,36 @@ class EarthMatter(EarthTransformation):
         mix_params : ThreeFlavorMixingParameters instance or None
         SNAltAz : astropy AltAz object
         """
-           
+
+        super().__init__(mix_params)
+
         self.SNAltAz = SNAltAz
 
         self.prior_E = None # used to store energy array from previous calls to get_probabilities
         self.prior_D = None
+
+        # Initialize BEMEWS input data object
+        self.settings = None
+
+        if BEMEWS is not None:
+            self.settings = BEMEWS.InputDataBEMEWS()
+
+            self.settings.altitude = self.SNAltAz.alt.deg
+            self.settings.azimuth = self.SNAltAz.az.deg
+
+            self.settings.densityprofile = str(files(BEMEWS.data).joinpath('PREM.rho.dat'))
+            self.settings.electronfraction = str(files(BEMEWS.data).joinpath('PREM.Ye.dat'))
+
+            self.settings.deltam_21 = self.mix_pars.dm21_2.to_value('eV**2')
+            self.settings.deltam_32 = self.mix_pars.dm32_2.to_value('eV**2')
+            self.settings.theta12 = self.mix_pars.theta12.to_value('deg')
+            self.settings.theta13 = self.mix_pars.theta13.to_value('deg')
+            self.settings.theta23 = self.mix_pars.theta23.to_value('deg')
+            self.settings.deltaCP = self.mix_pars.deltaCP.to_value('deg')
+
+            self.settings.accuracy = 1.01e-9
+            self.settings.outputflag = False
+            self.settings.stepcounterlimit = False
 
     def P_fm(self, t, E):
         """the D matrix for the case of Earth matter effects
@@ -475,46 +512,26 @@ class EarthMatter(EarthTransformation):
         -------
         D : an array of length of the E array with each element being a 6 x 6 matrix
         """
-        if EMEWS == None:
-            print("The EMEWS module cannot be found. Results do not include the Earth-matter effect.")
-            return ThreeFlavorNoEarthMatter(self.mix_pars).get_probabilities(t,E)
+        if BEMEWS is None:
+            logger.warn('BEMEWS is not found. Not computing Earth-matter effect.')
+            return NoEarthMatter(self.mix_pars).P_fm(t, E)
 
         if self.prior_E != None:
+            # Use cached result if possible
             if u.allclose(self.prior_E, E) == True:
                 return self.prior_D
 
         self.prior_D = np.zeros((6,6,len(E))) 
         self.prior_E = E
         
-        #input data object for EMEWS
-        ID = EMEWS.InputDataEMEWS()
-
-        ID.altitude = self.SNAltAz.alt.deg
-        ID.azimuth = self.SNAltAz.az.deg
-
-        ID.outputfilenamestem = "./out/EMEWS:PREM"   # stem of output filenames 
-        ID.densityprofile = "./PREM.rho.dat"         # PREM density profile    
-        ID.electronfraction = "./PREM.Ye.dat"        # Electron fraction of density profile     
-        
-        ID.NE = len(E)         # number of energy bins
+        #- Set the input energy bins
         E = E.to_value('MeV')
-        ID.Emin = E[0]         # in MeV
-        ID.Emax = E[-1]        # in MeV
+        self.settings.NE = len(E)
+        self.settings.Emin = E[0]
+        self.settings.Emax = E[-1]
 
-        #MixingParameters
-        ID.deltam_21 = self.mix_pars.dm21_2.value   # in eV^2
-        ID.deltam_32 = self.mix_pars.dm32_2.value   # in eV^2
-        ID.theta12 = self.mix_pars.theta12.value    # in degrees
-        ID.theta13 = self.mix_pars.theta13.value    # in degrees
-        ID.theta23 = self.mix_pars.theta23.value    # in degrees
-        ID.deltaCP = self.mix_pars.deltaCP.value    # in degrees
-
-        ID.accuracy = 1.01E-007      # controls accuracy of integrtaor: smaller is more accurate
-        ID.stepcounterlimit = 1      # output frequency if outputflag = True: larger is less frequent
-        ID.outputflag = False        # set to True if output is desired
- 
         #matrix from EMEWS needs to be rearranged to match SNEWPY flavor indicii ordering
-        Pfm = EMEWS.Run(ID)
+        Pfm = BEMEWS.Run(self.settings)
 
         for m in range(len(E)):
             self.prior_D[ThreeFlavor.NU_E,0,m] = Pfm[0][m][0][0] 
