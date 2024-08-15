@@ -3,15 +3,14 @@ import os
 from snewpy import snowglobes
 
 #Select output format, Mathjax or LaTeX
-selection = False
-while selection == False:
+while True:
     outputFormat = input('Enter 1 for Mathjax format\nEnter 0 for LaTeX format\n')
     if outputFormat == '1':
-        mathjax = True
-        selection = True
+        useMathjax = True
+        break
     if outputFormat == '0':
-        mathjax = False
-        selection = True
+        useMathjax = False
+        break
     if outputFormat != '1' and outputFormat != '0':
         print('Please enter 1 or 0.')
 
@@ -196,7 +195,7 @@ def dictArray(dictionary):
     return table
 
 # Prints out code for html that puts the data into a table (MathJax array)
-if mathjax is True:
+if useMathjax:
     print('<body>')
     print('  <script id="MathJax-script" async')
     print('          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">\n  </script>\n<p>')
@@ -205,8 +204,8 @@ if mathjax is True:
 # Just copy & paste the output into any html page to insert the table!
 
 # Prints out data in a LaTeX table (array) script
-if mathjax is False:
-    print("\\usepackage{amsmath}\n\\begin{document}")
+else:
+    print("\\usepackage{amsmath}\n\\begin{document}")   #loads forever without amsmath package
     print(f"$$\n{dictArray(data)}\n$$")
     print("\\end{document}")
 #Just copy & paste the output into LaTeX!
