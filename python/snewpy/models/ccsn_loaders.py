@@ -88,7 +88,7 @@ class GarchingArchiveModel(PinchedModel):
                 'EOS': eos,
             }
         super().__init__(simtab, metadata)
-        
+
 class Nakazato_2013(PinchedModel):
     def __init__(self, filename, metadata={}):
         """Model initialization.
@@ -870,51 +870,53 @@ class Fischer_2020(PinchedModel):
         Parameters
         ----------
         filename : str
-            Absolute or relative path to file 
+            Absolute or relative path to file
         """
-        self.metadata = metadata        
-        
         # Open the requested filename using the model downloader.
-        # datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)       
-        # self.filename = os.path.basename(filename)        
+        datafile = self.request_file(filename)
+        self.metadata = metadata
+
+        # Open the requested filename using the model downloader.
+        # datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
+        # self.filename = os.path.basename(filename)
 
         simtab = Table()
-        
-        tf = tarfile.open(filename)
 
-        # Open luminosity file        
+        tf = tarfile.open(datafile)
+
+        # Open luminosity file
         with tf.extractfile("luminosity.dat") as Lfile:
             Ldata = np.genfromtxt(Lfile,skip_header=2)
-            
+
             simtab['TIME'] = Ldata[:,0]
-        
+
             simtab['L_NU_E'] = Ldata[:,1]
             simtab['L_NU_E_BAR'] = Ldata[:,2]
             simtab['L_NU_X'] = Ldata[:,3]
             simtab['L_NU_X_BAR'] = Ldata[:,4]
-            
+
             Lfile.close()
-        
-        # Open mean energy file        
-        with tf.extractfile("menergy.dat") as Efile:   
-            Edata = np.genfromtxt(Efile,skip_header=2)                
-        
+
+        # Open mean energy file
+        with tf.extractfile("menergy.dat") as Efile:
+            Edata = np.genfromtxt(Efile,skip_header=2)
+
             simtab['E_NU_E'] = Edata[:,1] << u.MeV
             simtab['E_NU_E_BAR'] = Edata[:,2] << u.MeV
             simtab['E_NU_X'] = Edata[:,3] << u.MeV
             simtab['E_NU_X_BAR'] = Edata[:,4] << u.MeV
-            
+
             Efile.close()
-        
-        # Open rms energy file        
+
+        # Open rms energy file
         with tf.extractfile("rmsenergy.dat") as RMSEfile:
-            RMSEdata = np.genfromtxt(RMSEfile,skip_header=2)                
-      
+            RMSEdata = np.genfromtxt(RMSEfile,skip_header=2)
+
             simtab['RMS_NU_E'] = RMSEdata[:,1] << u.MeV
             simtab['RMS_NU_E_BAR'] = RMSEdata[:,2] << u.MeV
             simtab['RMS_NU_X'] = RMSEdata[:,3] << u.MeV
             simtab['RMS_NU_X_BAR'] = RMSEdata[:,4] << u.MeV
-            
+
             RMSEfile.close()
 
         simtab['ALPHA_NU_E'] = (2.0 * simtab['E_NU_E'] ** 2 - simtab['RMS_NU_E'] ** 2) / \
@@ -925,8 +927,7 @@ class Fischer_2020(PinchedModel):
             (simtab['RMS_NU_X'] ** 2 - simtab['E_NU_X'] ** 2)
         simtab['ALPHA_NU_X_BAR'] = (2.0 * simtab['E_NU_X_BAR'] ** 2 - simtab['RMS_NU_X_BAR'] ** 2) / \
             (simtab['RMS_NU_X_BAR'] ** 2 - simtab['E_NU_X_BAR'] ** 2)
-   
+
         tf.close()
 
         super().__init__(simtab, metadata)
-
