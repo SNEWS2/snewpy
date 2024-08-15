@@ -475,6 +475,29 @@ class Mori_2023(loaders.Mori_2023):
         self.metadata['PNS mass'] = pns_mass*u.Msun
         return super().__init__(filename, self.metadata)
 
+@RegistryModel(
+    Bfield = ['hydro','L1','L2'],
+    direction = ['average','equator','north','south'],
+    grav=['A','B',None],
+    rotation=[0,90,None],
+    _param_validator = lambda p: (p['Bfield'] == 'hydro' and p['grav'] == None and p['rotation'] == None ) or
+        (p['Bfield'] == 'L1' and p['grav'] == None and p['rotation'] in [0,90]) or
+        (p['Bfield'] == 'L2' and p['rotation'] == None and p['grav'] in ['A','B'])
+)
+class Bugli_2021(loaders.Bugli_2021):
+    """Model based on `Buggli (2021) <https://arxiv.org/abs/2105.00665>`_.
+    """
+    def __init__(self, *, Bfield:str, direction:str, rotation:int=None, grav:str=None):
+
+        filename = f'{Bfield}_3d_snewpy_{direction}.dat'
+        self.metadata['Progenitor mass'] = 35*u.Msun
+        self.metadata['EOS'] = 'LS220'
+        if Bfield=='L2':
+            filename = f'{Bfield}_b12_dipdecay_3d_grav{grav}_snewpy_{direction}.dat'
+        if Bfield=='L1':
+            filename = f'{Bfield}_b12_3d_{rotation}deg_snewpy_{direction}.dat'
+        return super().__init__(filename=filename, metadata=self.metadata)
+
 class SNOwGLoBES:
     """A model that does not inherit from SupernovaModel (yet) and imports a group of SNOwGLoBES files."""
 

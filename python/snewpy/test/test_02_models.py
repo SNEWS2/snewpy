@@ -7,7 +7,7 @@ from snewpy.neutrino import Flavor
 from snewpy.models.ccsn_loaders import Nakazato_2013, Tamborra_2014, OConnor_2013, OConnor_2015, \
                                   Sukhbold_2015, Bollig_2016, Walk_2018, \
                                   Walk_2019, Fornax_2019, Warren_2020, \
-                                  Kuroda_2020, Fornax_2021, Zha_2021, Fischer_2020
+                                  Kuroda_2020, Fornax_2021, Zha_2021, Bugli_2021, Fischer_2020
 from astropy import units as u
 from snewpy import model_path
 import os
@@ -58,6 +58,35 @@ class TestModels(unittest.TestCase):
                     self.assertEqual(type(f), dict)
                     self.assertEqual(len(f), len(Flavor))
                     self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
+
+    def test_Bugli_2021(self):
+        """
+        Instantiate a set of 'Bugli 2021' models
+        """
+        metadata = {
+            'Progenitor mass': 35 * u.Msun,
+            'EOS': 'LS220',
+        }
+        for Bfield in ['hydro', 'L1', 'L2']:
+            for direction in ['average','equator','north','south']:
+                mfile = 'Bugli_2021/{}_3d_snewpy_{}.dat'.format(Bfield, direction)
+                if Bfield == 'L2':
+                    for grav in ['A','B']:
+                        mfile = 'Bugli_2021/{}_b12_dipdecay_3d_grav{}_snewpy_{}.dat'.format(Bfield, grav, direction)
+                if Bfield == 'L1':
+                    for rotation in [0,90]:
+                        mfile = 'Bugli_2021/{}_b12_3d_{}deg_snewpy_{}.dat'.format(Bfield, rotation, direction)
+                model = Bugli_2021(os.path.join(model_path, mfile),metadata=metadata)
+
+                # Check that times are in proper units.
+                t = model.get_time()
+                self.assertTrue(t.unit, u.s)
+
+                # Check that we can compute flux dictionaries.
+                f = model.get_initial_spectra(0*u.s, 10*u.MeV)
+                self.assertEqual(type(f), dict)
+                self.assertEqual(len(f), len(Flavor))
+                self.assertEqual(f[Flavor.NU_E].unit, 1/(u.erg * u.s))
 
     def test_Fischer_2020(self):
         """

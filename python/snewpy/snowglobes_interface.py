@@ -38,7 +38,7 @@ def guess_material(detector):
         mat = 'scint'
     elif detector.startswith(('ds20','argo')):
         mat = 'argon_coh'
-    elif detector.startswith('xe'):
+    elif detector.startswith(('xe', 'lz', 'pan')):
         mat = 'xenon_coh'
     else:
         raise ValueError(f'Please provide material for {detector}')

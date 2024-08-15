@@ -53,6 +53,10 @@ models:
     
         Mori_2023: 
             repository: *ccsn_repository
+
+        Bugli_2021:
+            repository: *ccsn_repository
+
         Fischer_2020:
             repository: *ccsn_repository
 
