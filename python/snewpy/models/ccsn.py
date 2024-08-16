@@ -44,15 +44,14 @@ from snewpy.models.registry_model import deprecated, legacy_filename_initializat
 from snewpy.models.registry_model import all_models
 from textwrap import dedent
 
-@legacy_filename_initialization
-@RegistryModel(
-    progenitor_mass= [18 * u.Msun],
-    eos = ['HS(DD2)']
-)
+
+@RegistryModel()
 class Fischer_2020(loaders.Fischer_2020):
     """Model based on simulations from `Fischer et al. (2020) <https://arxiv.org/abs/1804.10890>`
     """
-    def __init__(self, progenitor_mass:u.Quantity, eos:str):
+    def __init__(self):
+        self.metadata["EOS"] = "HS(DD2)"
+        self.metadata["Progenitor mass"] = 18 * u.Msun
         filename='Fischer_2020.tar.gz'
         return super().__init__(filename, metadata=self.metadata)
 
@@ -127,6 +126,7 @@ class Sukhbold_2015(loaders.Sukhbold_2015):
         return super().__init__(filename, self.metadata)
 
 
+@deprecated('eos')
 @legacy_filename_initialization
 @RegistryModel(
     progenitor_mass = [11.2, 20., 27.] * u.Msun,
@@ -145,6 +145,8 @@ class Tamborra_2014(loaders.Tamborra_2014):
         # Metadata is handled by __init__ in _GarchingArchiveModel
         return super().__init__(filename=filename, metadata=self.metadata)
 
+
+@deprecated('eos')
 @legacy_filename_initialization
 @RegistryModel(
     progenitor_mass= [11.2, 27.] * u.Msun,
@@ -158,6 +160,8 @@ class Bollig_2016(loaders.Bollig_2016):
         filename = f's{progenitor_mass.value:3.1f}c'
         return super().__init__(filename=filename, metadata=self.metadata)
 
+
+@deprecated('eos')
 @legacy_filename_initialization
 @RegistryModel(
     progenitor_mass = [15.] * u.Msun,
@@ -176,6 +180,7 @@ class Walk_2018(loaders.Walk_2018):
         return super().__init__(filename=filename, metadata=self.metadata)
 
 
+@deprecated('eos')
 @legacy_filename_initialization
 @RegistryModel(
     progenitor_mass = [40., 75.] * u.Msun,
