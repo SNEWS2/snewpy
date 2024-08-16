@@ -2,13 +2,16 @@
 import unittest
 import pytest
 
-from snewpy.neutrino import MassHierarchy, MixingParameters, FourFlavorMixingParameters
+from snewpy.neutrino import MassHierarchy, MixingParameters, ThreeFlavorMixingParameters, FourFlavorMixingParameters
 import snewpy.flavor_transformation as xforms
 
 from snewpy.flavor import ThreeFlavor, FourFlavor, TwoFlavor
 
 from astropy import units as u
 from astropy import constants as c
+from astropy.coordinates import SkyCoord, EarthLocation, AltAz
+from astropy.time import Time
+
 import numpy as np
 from numpy import sin,cos,exp,abs
 
@@ -578,3 +581,55 @@ class TestFlavorTransformations:
         assert (np.array_equal(P['e_bar','x_bar'], 1 - prob_eebar))
         assert (np.array_equal(P['x_bar','x_bar'], 1. - 0.5*(1 - prob_eebar)))
         assert (np.array_equal(P['x_bar','e_bar'], 0.5*(1. - prob_eebar)))
+
+    def test_earthmatter_nmo(self):
+        """Earth matter effects with normal ordering.
+        """
+        src = SkyCoord.from_name('Betelgeuse')
+        det = EarthLocation.of_site('SuperK')
+        obstime = Time('2021-5-26 14:14:00')
+        altaz = src.transform_to(AltAz(obstime=obstime, location=det))
+
+        mixing_params = ThreeFlavorMixingParameters(dm21_2=7.42e-5 * u.eV**2, dm31_2=2.517e-3 * u.eV**2,
+                                                    theta12=33.45*u.deg, theta13=8.57*u.deg, theta23=49.2*u.deg,
+                                                    deltaCP=197*u.deg)
+        
+        t = np.arange(0, 1, 0.01)<<u.s
+        E = np.arange(1, 2, 1)<<u.MeV
+
+        P = xforms.EarthMatter(mixing_params, altaz).P_fm(t, E)[:,:,0]
+        m = np.asarray([
+            [0.68017319, 0.29761409, 0.02221273, 0.,         0.,         0.        ],
+            [0.,         0.,         0.,         0.68295904, 0.29483659, 0.02220437],
+            [0.07398204, 0.36570521, 0.56031275, 0.,         0.,         0.        ],
+            [0.,         0.,         0.,         0.07296648, 0.3667098,  0.56032372],
+            [0.24584477, 0.3366807,  0.41747453, 0.,         0.,         0.,       ],
+            [0.,         0.,         0.,         0.24407448, 0.33845361, 0.41747191]])
+
+        assert(np.all(np.isclose(P, m)))
+
+    def test_earthmatter_imo(self):
+        """Earth matter effects with normal ordering.
+        """
+        src = SkyCoord.from_name('Betelgeuse')
+        det = EarthLocation.of_site('SuperK')
+        obstime = Time('2021-5-26 14:14:00')
+        altaz = src.transform_to(AltAz(obstime=obstime, location=det))
+
+        mixing_params = ThreeFlavorMixingParameters(dm21_2=7.42e-5 * u.eV**2, dm31_2=-2.4238e-3 * u.eV**2,
+                                                    theta12=33.45*u.deg, theta13=8.6*u.deg, theta23=49.3*u.deg,
+                                                    deltaCP=282*u.deg)
+        
+        t = np.arange(0, 1, 0.01)<<u.s
+        E = np.arange(1, 2, 1)<<u.MeV
+
+        P = xforms.EarthMatter(mixing_params, altaz).P_fm(t, E)[:,:,0]
+        m = np.asarray([
+             [0.68007654, 0.29757012, 0.02235334, 0.        , 0.        , 0.        ],
+             [0.        , 0.        , 0.        , 0.68284785, 0.29478826, 0.02236389],
+             [0.15268565, 0.28538995, 0.5619244 , 0.        , 0.        , 0.        ],
+             [0.        , 0.        , 0.        , 0.15143103, 0.2866676 , 0.56190137],
+             [0.16723781, 0.41703993, 0.41572226, 0.        , 0.        , 0.        ],
+             [0.        , 0.        , 0.        , 0.16572112, 0.41854414, 0.41573474]])
+
+        assert(np.all(np.isclose(P, m)))
