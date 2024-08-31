@@ -198,6 +198,24 @@ class ModelRegistry:
 registry = ModelRegistry()
 
 
+class LocalFileLoader:
+    @classmethod
+    def request_file(cls, filename:str)->Path:
+        "Require that the provided filename exists locally"
+        path = Path(filename).absolute()
+        if not path.exists():
+            raise FileNotFoundError(path)
+        return path
+
+class RegistryFileLoader(LocalFileLoader):
+    _registry = registry
+    
+    @classmethod
+    def request_file(cls, filename:str)->Path:
+        "Request file from the model registry"
+        return cls._registry.get_file(cls._config_path, filename)
+        
+        
 def get_model_data(model: str, filename: str) -> Path:
     """Get the requested data file from the models file repository
 

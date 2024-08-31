@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-The submodule ``snewpy.models.loaders`` contains classes to load core-collapse
+The submodule ``snewpy.models.ccsn_loaders`` contains classes to load core-collapse
 supernova models from files stored on disk.
 """
 
@@ -11,7 +11,7 @@ import sys
 import tarfile
 
 from astropy import units as u
-from astropy.table import Table
+from astropy.table import Table, join
 from astropy.io import ascii, fits
 import h5py
 import numpy as np
@@ -22,10 +22,73 @@ try:
 except ImportError:
     pass
 
-from snewpy.models.base import PinchedModel, _GarchingArchiveModel, SupernovaModel
+from snewpy.models.base import PinchedModel, SupernovaModel
 from snewpy.neutrino import Flavor
 from snewpy import _model_downloader
 
+class GarchingArchiveModel(PinchedModel):
+    """Subclass that reads models in the format used in the
+    `Garching Supernova Archive <https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/>`_."""
+    def __init__(self, filename, eos='LS220', metadata={}):
+        """Model Initialization.
+
+        Parameters
+        ----------
+        filename : str
+            Absolute or relative path to file with model data, we add nue/nuebar/nux.  This argument will be deprecated.
+        eos: str
+            Equation of state. Valid value is 'LS220'. This argument will be deprecated.
+
+        Other Parameters
+        ----------------
+        progenitor_mass: astropy.units.Quantity
+            Mass of model progenitor in units Msun. Valid values are {progenitor_mass}.
+        Raises
+        ------
+        FileNotFoundError
+            If a file for the chosen model parameters cannot be found
+        ValueError
+            If a combination of parameters is invalid when loading from parameters
+        """
+        # Read through the several ASCII files for the chosen simulation and
+        # merge the data into one giant table.
+        mergtab = None
+        for flavor in Flavor:
+            _flav = Flavor.NU_X if flavor == Flavor.NU_X_BAR else flavor
+            _sfx = _flav.name.replace('_', '').lower()
+            _filename = '{}_{}_{}'.format(filename, eos, _sfx)
+            _lname = 'L_{}'.format(flavor.name)
+            _ename = 'E_{}'.format(flavor.name)
+            _e2name = 'E2_{}'.format(flavor.name)
+            _aname = 'ALPHA_{}'.format(flavor.name)
+
+            # Open the requested filename using the model downloader.
+            datafile = self.request_file(_filename)
+
+            simtab = Table.read(datafile,
+                                names=['TIME', _lname, _ename, _e2name],
+                                format='ascii')
+            simtab['TIME'].unit = 's'
+            simtab[_lname].unit = '1e51 erg/s'
+            simtab[_aname] = (2*simtab[_ename]**2 - simtab[_e2name]) / (simtab[_e2name] - simtab[_ename]**2)
+            simtab[_ename].unit = 'MeV'
+            del simtab[_e2name]
+
+            if mergtab is None:
+                mergtab = simtab
+            else:
+                mergtab = join(mergtab, simtab, keys='TIME', join_type='left')
+                mergtab[_lname].fill_value = 0.
+                mergtab[_ename].fill_value = 0.
+                mergtab[_aname].fill_value = 0.
+        simtab = mergtab.filled()
+        if not metadata:
+            metadata = {
+                'Progenitor mass': float(os.path.basename(filename).split('s')[1].split('c')[0]) * u.Msun,
+                'EOS': eos,
+            }
+        super().__init__(simtab, metadata)
+        
 class Nakazato_2013(PinchedModel):
     def __init__(self, filename, metadata={}):
         """Model initialization.
@@ -41,7 +104,7 @@ class Nakazato_2013(PinchedModel):
             If a file for the chosen model parameters cannot be found
         """
         # Open the requested filename using the model downloader.
-        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
+        datafile = self.request_file(filename)
         # Read FITS table using the astropy reader.
         simtab = Table.read(datafile)
 
@@ -53,19 +116,19 @@ class Sukhbold_2015(Nakazato_2013):
     pass
 
 
-class Tamborra_2014(_GarchingArchiveModel):
+class Tamborra_2014(GarchingArchiveModel):
     pass
 
 
-class Bollig_2016(_GarchingArchiveModel):
+class Bollig_2016(GarchingArchiveModel):
     pass
 
 
-class Walk_2018(_GarchingArchiveModel):
+class Walk_2018(GarchingArchiveModel):
     pass
 
 
-class Walk_2019(_GarchingArchiveModel):
+class Walk_2019(GarchingArchiveModel):
     pass
 
 
@@ -80,7 +143,7 @@ class OConnor_2013(PinchedModel):
         filename : str
             Absolute or relative path to FITS file with model data.
         """
-        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
+        datafile = self.request_file(filename)
         # Open luminosity file.
         with tarfile.open(datafile) as tf:
             # Extract luminosity data.
@@ -113,7 +176,7 @@ class OConnor_2015(PinchedModel):
             Absolute or relative path to FITS file with model data.
         """
 
-        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
+        datafile = self.request_file(filename)
         simtab = Table.read(datafile,
                             names=['TIME', 'L_NU_E', 'L_NU_E_BAR', 'L_NU_X',
                                     'E_NU_E', 'E_NU_E_BAR', 'E_NU_X',
@@ -157,7 +220,7 @@ class Warren_2020(PinchedModel):
             Absolute or relative path to file prefix, we add nue/nuebar/nux
         """
         # Open the requested filename using the model downloader.
-        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
+        datafile = self.request_file(filename)
 
         # Open luminosity file.
         # Read data from HDF5 files, then store.
@@ -204,7 +267,7 @@ class Kuroda_2020(PinchedModel):
         """
 
         # Open the requested filename using the model downloader.
-        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
+        datafile = self.request_file(filename)
         # Read ASCII data.
         simtab = Table.read(datafile, format='ascii')
 
@@ -335,7 +398,7 @@ class Fornax_2019(SupernovaModel):
                                 Flavor.NU_X_BAR: 'nu2'}
 
             # Open the requested filename using the model downloader.
-            datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
+            datafile = self.request_file(filename)
             # Open HDF5 data file.
             self._h5file = h5py.File(datafile, 'r')
 
@@ -597,12 +660,12 @@ class Fornax_2021(SupernovaModel):
         filename : str
             Absolute or relative path to HDF5 file with model data.
         """
+
+        # Open the requested filename using the model downloader.
+        datafile = self.request_file(filename)
         # Set up model metadata.
         self.progenitor_mass = float(filename.split('/')[-1].split('_')[2][:-1]) * u.Msun
         self.metadata = metadata
-
-        # Open the requested filename using the model downloader.
-        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
         # Open HDF5 data file.
         _h5file = h5py.File(datafile, 'r')
 
@@ -659,8 +722,8 @@ class Fornax_2021(SupernovaModel):
 
         # Make sure the input time uses the same units as the model time grid.
         # Convert input time to a time index.
-        t = t.to(self.time.unit)
-        j = (np.abs(t - self.time)).argmin()
+        t = u.Quantity(t.to(self.time.unit), ndmin=1)
+        j = np.array(list(np.abs(_t - self.time).argmin() for _t in t))
 
         for flavor in flavors:
             # Energy bin centers (in MeV)
@@ -675,27 +738,29 @@ class Fornax_2021(SupernovaModel):
             # Linear interpolation in flux.
             if interpolation.lower() == 'linear':
                 # Pad log(E) array with values where flux is fixed to zero.
-                _logEbins = np.insert(_logE, 0, np.log10(np.finfo(float).eps * E.unit/u.MeV))
-                _logEbins = np.append(_logEbins, _logE[-1] + _dlogE[-1])
+                _logEbins = np.insert(_logE, 0, np.log10(np.finfo(float).eps * E.unit/u.MeV), axis=1)
+                _logEbins = np.append(_logEbins, np.expand_dims(_logE[:,-1] + _dlogE[:,-1], 1), axis=1)
 
                 # Luminosity spectrum _dLdE is in units of 1e50 erg/s/MeV.
                 # Pad with values where flux is fixed to zero, then divide by E to get number luminosity
-                _dNLdE = np.asarray([0.] + [self._dLdE[flavor]['g{}'.format(i)][j] for i in range(12)] + [0.])
-                initialspectra[flavor] = (np.interp(logE, _logEbins, _dNLdE) / E *
-                                          factor * 1e50 * u.erg/u.s/u.MeV).to('1 / (erg s)')
+                _dNLdE = np.asarray([np.zeros(j.shape)] + [self._dLdE[flavor]['g{}'.format(i)][j] for i in range(12)] + [np.zeros(j.shape)]).T
+                interp_values = np.array([np.interp(logE, __logEbins, __dNLdE)
+                                          for __logEbins, __dNLdE in zip(_logEbins, _dNLdE)])
+                initialspectra[flavor] = (interp_values / E * factor * 1e50 * u.erg/u.s/u.MeV).to('1 / (erg s)')
 
             elif interpolation.lower() == 'nearest':
                 # Find edges of energy bins and identify which energy bin (each entry of) E falls into
-                _logEbinEdges = _logE - _dlogE[0] / 2
-                _logEbinEdges = np.concatenate((_logEbinEdges, [_logE[-1] + _dlogE[-1] / 2]))
+                _logEbinEdges = _logE - _dlogE[0,0] / 2
+                _logEbinEdges = np.append(_logEbinEdges, np.expand_dims(_logE[:,-1] + _dlogE[:,-1]/2, 1), axis=1)
                 _EbinEdges = 10**_logEbinEdges
-                idx = np.searchsorted(_EbinEdges, E) - 1
-                select = (idx > 0) & (idx < len(_E))
+                idx = np.array([np.searchsorted(edges, E) - 1 for edges in _EbinEdges])
+                select = np.array([(_idx > 0) & (_idx < len(__E)) for _idx, __E in zip(idx, _E)])
 
                 # Divide luminosity spectrum by energy at bin center to get number luminosity spectrum
-                _dNLdE = np.zeros(len(E))
-                _dNLdE[np.where(select)] = np.asarray(
-                    [self._dLdE[flavor]['g{}'.format(i)][j] / _E[i] for i in idx[select]])
+                _dNLdE = np.zeros([len(j), len(np.atleast_1d(E))])
+                for i in range(len(j)):
+                    _dNLdE[i][np.where(select[i])] = np.asarray([self._dLdE[flavor]['g{}'.format(ebin_idx)][j[i]] / _E[i][ebin_idx]
+                                                                 for ebin_idx in idx[i][select[i]]])
                 initialspectra[flavor] = ((_dNLdE << 1/u.MeV) * factor * 1e50 * u.erg/u.s/u.MeV).to('1 / (erg s)')
 
             else:
@@ -712,14 +777,14 @@ class Fornax_2022(Fornax_2021):
         filename : str
             Absolute or relative path to HDF5 file with model data.
         """
+        # Open the requested filename using the model downloader.
+        datafile = self.request_file(filename)
         # Set up model metadata.
         self.progenitor = os.path.splitext(os.path.basename(filename))[0].split('_')[2]
         self.progenitor_mass = float(self.progenitor[:-3])*u.Msun if self.progenitor.endswith('bh') else float(self.progenitor)*u.Msun
 
         self.metadata = metadata
 
-        # Open the requested filename using the model downloader.
-        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
         # Open HDF5 data file.
         _h5file = h5py.File(datafile, 'r')
 
@@ -759,16 +824,10 @@ class Mori_2023(PinchedModel):
         filename : str
             Absolute or relative path to file prefix.
         """
-        # Set up model metadata
-        self.axion_mass = metadata['Axion mass']
-        self.axion_coupling = metadata['Axion coupling']
-        self.progenitor_mass = metadata['Progenitor mass']
-        self.pns_mass = metadata['PNS mass']
+        # Open the requested filename using the model downloader.
+        datafile = self.request_file(filename)
 
         self.metadata = metadata
-
-        # Open the requested filename using the model downloader.
-        datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
 
         # Read ASCII data.
         simtab = Table.read(datafile, format='ascii')

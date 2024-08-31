@@ -1,6 +1,10 @@
 # SNEWPY Usage Examples
 
-The Jupyter notebooks in this directory contain different examples for how to use SNEWPY. Please see also the example notebooks for each supernova model, which are included in the same directory as the model files when downloading them via `python -c 'import snewpy; snewpy.get_models()'`.
+The Jupyter notebooks in this directory contain different examples for how to use SNEWPY.
+
+## `ccsn` and `presn` Directories
+
+These directories contain notebooks demonstrating how to use the core-collapse and pre-supernova models available through SNEWPY.
 
 ## AnalyticFluence
 

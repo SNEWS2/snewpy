@@ -4,23 +4,16 @@
 import unittest
 
 from snewpy.neutrino import Flavor
-from snewpy.models.loaders import Nakazato_2013, Tamborra_2014, OConnor_2013, OConnor_2015, \
+from snewpy.models.ccsn_loaders import Nakazato_2013, Tamborra_2014, OConnor_2013, OConnor_2015, \
                                   Sukhbold_2015, Bollig_2016, Walk_2018, \
                                   Walk_2019, Fornax_2019, Warren_2020, \
                                   Kuroda_2020, Fornax_2021, Zha_2021
-from snewpy._model_urls import model_urls
 from astropy import units as u
 from snewpy import model_path
 import os
 
 
 class TestModels(unittest.TestCase):
-
-    def test_model_urls(self):
-        """Test that snewpy._model_urls.model_urls is empty. This should be populated if snewpy is downloaded from PyPI.
-        This serves as a guard against accidentally committing/merging a populated model_urls to main.
-        """
-        self.assertFalse(model_urls)
 
     def test_Nakazato_2013(self):
         """
@@ -76,7 +69,8 @@ class TestModels(unittest.TestCase):
                     'Progenitor mass': mass * u.Msun,
                     'EOS': eos,
                 }
-                model = OConnor_2013(filename=f'{eos}_timeseries.tar.gz', metadata=metadata)
+                mfile = f'OConnor_2013/{eos}_timeseries.tar.gz'
+                model = OConnor_2013(filename=os.path.join(model_path,mfile), metadata=metadata)
 
                 self.assertEqual(model.metadata['EOS'], eos)
                 self.assertEqual(model.metadata['Progenitor mass'].value, mass)
@@ -95,8 +89,8 @@ class TestModels(unittest.TestCase):
         """
         Instantiate a set of "O'Connor 2015" models
         """
-        mfile = 'M1_neutrinos.dat'
-        model = OConnor_2015(mfile)
+        mfile = 'OConnor_2015/M1_neutrinos.dat'
+        model = OConnor_2015(filename=os.path.join(model_path,mfile))
 
         # Check that times are in proper units.
         t = model.get_time()
@@ -237,13 +231,13 @@ class TestModels(unittest.TestCase):
 
         for mixing in [1.23, 1.25, 1.27]:
             for mass in masses:
-                mfile = f'stir_a{mixing}/stir_multimessenger_a{mixing}_m{mass}.h5'
+                mfile = f'Warren_2020/stir_a{mixing}/stir_multimessenger_a{mixing}_m{mass}.h5'
                 metadata = {
                     'Progenitor mass': float(mass) * u.Msun,
                     'Turb. mixing param.': mixing,
                     'EOS': 'SFHo',
                 }
-                model = Warren_2020(mfile, metadata)
+                model = Warren_2020(os.path.join(model_path, mfile), metadata)
 
                 # Check that times are in proper units.
                 t = model.get_time()

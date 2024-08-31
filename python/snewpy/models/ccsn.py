@@ -36,36 +36,13 @@ import numpy as np
 from astropy import units as u
 from astropy.table import Table
 
-from snewpy.models import loaders
+from snewpy.models import ccsn_loaders as loaders
 from .base import PinchedModel
 
 from snewpy.models.registry_model import RegistryModel, Parameter
 from snewpy.models.registry_model import deprecated, legacy_filename_initialization
 from snewpy.models.registry_model import all_models
 from textwrap import dedent
-
-class Analytic3Species(PinchedModel):
-    """An analytical model calculating spectra given total luminosity,
-    average energy, and rms or pinch, for each species.
-    """
-
-    param = "There are no input files available for this class. Use `doc/scripts/Analytic.py` in the SNEWPY GitHub repo to create a custom input file."
-
-    def get_param_combinations(cls):
-        print(cls.param)
-        return []
-
-    def __init__(self, filename):
-        """
-        Parameters
-        ----------
-        filename : str
-            Absolute or relative path to file with model data.
-        """
-
-        simtab = Table.read(filename,format='ascii')
-        self.filename = filename
-        super().__init__(simtab, metadata={})
 
 @legacy_filename_initialization
 @RegistryModel(
@@ -222,6 +199,8 @@ class _OConnor_2013_new(loaders.OConnor_2013):
         return super().__init__(filename=filename, metadata=self.metadata)
 
 class OConnor_2013(legacy_filename_initialization(_OConnor_2013_new)):
+    _config_path='ccsn.OConnor_2013'
+    
     @deprecated('base', 'mass')
     def __init__(self, base=None, mass=None, eos='LS220', *, progenitor_mass=None):
         """
@@ -312,11 +291,9 @@ class Warren_2020(loaders.Warren_2020):
 
     def __init__(self, *, progenitor_mass, turbmixing_param):
         if progenitor_mass.value.is_integer() and progenitor_mass.value <= 30.:
-            fname = os.path.join(f'stir_a{turbmixing_param:3.2f}',
-                                 f'stir_multimessenger_a{turbmixing_param:3.2f}_m{progenitor_mass.value:.1f}.h5')
+            fname = f'stir_a{turbmixing_param:3.2f}/stir_multimessenger_a{turbmixing_param:3.2f}_m{progenitor_mass.value:.1f}.h5'
         else:
-            fname = os.path.join(f'stir_a{turbmixing_param:3.2f}',
-                                 f'stir_multimessenger_a{turbmixing_param:3.2f}_m{progenitor_mass.value:g}.h5')
+            fname = f'stir_a{turbmixing_param:3.2f}/stir_multimessenger_a{turbmixing_param:3.2f}_m{progenitor_mass.value:g}.h5'
         return super().__init__(fname, self.metadata)
 
 @deprecated('eos','mass')
@@ -476,8 +453,10 @@ class Mori_2023(loaders.Mori_2023):
                  (200, 8):  1.74,
                  (200, 10): 1.73,
                  (200, 20): 1.62 }
-        am = int(axion_mass.to_value('MeV'))
-        ac = int(axion_coupling.to_value('1e-10/GeV'))
+
+        am = int(axion_mass.to_value('MeV')) if isinstance(axion_mass, u.quantity.Quantity) else int(axion_mass)
+        ac = int(axion_coupling.to_value('1e-10/GeV')) if isinstance(axion_coupling, u.quantity.Quantity) else int(axion_coupling)
+
         pns_mass = mpns[(am,ac)]
 
         # Set the metadata.
@@ -562,3 +541,25 @@ class SNOwGLoBES:
 
         return fluence
 
+class Analytic3Species(PinchedModel):
+    """An analytical model calculating spectra given total luminosity,
+    average energy, and rms or pinch, for each species.
+    """
+
+    param = "There are no input files available for this class. Use `doc/scripts/Analytic.py` in the SNEWPY GitHub repo to create a custom input file."
+
+    def get_param_combinations(cls):
+        print(cls.param)
+        return []
+
+    def __init__(self, filename):
+        """
+        Parameters
+        ----------
+        filename : str
+            Absolute or relative path to file with model data.
+        """
+
+        simtab = Table.read(filename,format='ascii')
+        self.filename = filename
+        super().__init__(simtab, metadata={})
