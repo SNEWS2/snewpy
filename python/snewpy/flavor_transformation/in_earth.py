@@ -7,6 +7,7 @@ from astropy.coordinates import AltAz
 
 from snewpy.flavor  import FlavorMatrix, ThreeFlavor
 from .base import ThreeFlavorTransformation, FourFlavorTransformation
+from snewpy.neutrino import MixingParameters, MassHierarchy
 
 try:
     import BEMEWS
