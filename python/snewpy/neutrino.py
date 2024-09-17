@@ -61,6 +61,13 @@ class ThreeFlavorMixingParameters(Mapping):
                                 names=['NU_1','NU_2','NU_3','NU_1_BAR','NU_2_BAR','NU_3_BAR'])
     basis_flavor = FlavorScheme("ThreeFlavor_FlavorBasis", start=0,
                                 names=['NU_E','NU_MU','NU_TAU','NU_E_BAR','NU_MU_BAR','NU_TAU_BAR'])
+
+    def update(self, **parameters):
+        """Update the parameters which are provided in the input arguments. 
+        Ignore the input parameters, which are not present in this class.
+        """
+        keys_matching = {key:val for key,val in parameters.items() if key in self.__dict__}
+        self.__dict__.update(**keys_matching)
         
     def __iter__(self):
         return iter(self.__dict__)
