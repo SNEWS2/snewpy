@@ -6,4 +6,6 @@ from .transforms import TransformationChain
 AdiabaticMSW = TransformationChain(in_sn.AdiabaticMSW())
 NonAdiabaticMSWH = TransformationChain(in_sn.NonAdiabaticMSWH())
 AdiabaticMSWes = TransformationChain(in_sn.AdiabaticMSWes())
-NonAdiabaticMSWHes = TransformationChain(in_sn.NonAdiabaticMSWes())
+NonAdiabaticMSWes = TransformationChain(in_sn.NonAdiabaticMSWes())
+TwoFlavorDecoherence = TransformationChain(in_sn.TwoFlavorDecoherence())
+NeutrinoDecay = TransformationChain(in_sn.AdiabaticMSW(), in_vacuum.NeutrinoDecay())

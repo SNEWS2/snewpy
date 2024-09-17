@@ -6,6 +6,7 @@ from astropy import constants as c
 from astropy.coordinates import AltAz
 
 from snewpy.flavor  import FlavorMatrix, ThreeFlavor
+from .base import ThreeFlavorTransformation, FourFlavorTransformation
 
 try:
     import BEMEWS
@@ -35,7 +36,7 @@ class NoEarthMatter(EarthTransformation):
         return D
 ###############################################################################
 
-class EarthMatter(EarthTransformation):
+class EarthMatter(EarthTransformation, ThreeFlavorTransformation):
 
     def __init__(self, mixing_params, SNAltAz):
         """Initialize flavor transformation
