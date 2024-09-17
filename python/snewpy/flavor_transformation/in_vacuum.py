@@ -5,6 +5,7 @@ from astropy import constants as c
 
 from snewpy.flavor  import FlavorMatrix, ThreeFlavor
 from .base import ThreeFlavorTransformation, FourFlavorTransformation
+from snewpy.neutrino import MixingParameters, MassHierarchy
 
 ###############################################################################
 # Vacuum transformations
@@ -105,7 +106,7 @@ class QuantumDecoherence(VacuumTransformation, ThreeFlavorTransformation):
         self.E0 = E0
 
     def P_mm(self, t, E)->FlavorMatrix: 
-        PQD = FlavorMatrix.zeros(self.mixing_params.basis_mass, extra_dims=(len(E)))
+        PQD = FlavorMatrix.zeros(self.mixing_params.basis_mass, extra_dims=(len(E),))
 
         PQD[1,1] = 1/3 + 1/2 * np.exp(-(self.Gamma3 * (E/self.E0)**self.n + self.Gamma8 * (E/self.E0)**self.n / 3) * self.d) \
                   + 1/6 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
