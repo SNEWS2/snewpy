@@ -5,8 +5,9 @@ from astropy import units as u
 from astropy import constants as c
 
 from snewpy.flavor  import FlavorMatrix, ThreeFlavor
-from snewpy.neutrino import MixingParameters
+from snewpy.neutrino import MixingParameters, MassHierarchy
 
+from .base import ThreeFlavorTransformation, FourFlavorTransformation
 try:
     import SNOSHEWS
 except:
@@ -15,9 +16,6 @@ except:
 
 class SNTransformation(ABC):
     """Base class for all transformations in SN"""
-    def __init__(self, mixing_params = MixingParameters()):
-        self.mixing_params = mixing_params
-
     @abstractmethod
     def P_mf(self, t, E)->FlavorMatrix:
         pass
@@ -25,13 +23,13 @@ class SNTransformation(ABC):
         
 
 ###############################################################################
-class AdiabaticMSW(SNTransformation):
+class AdiabaticMSW(SNTransformation, ThreeFlavorTransformation):
     """Adiabatic MSW effect."""
 
     def P_mf(self, t, E):
         return self.mixing_params.Pmf_HighDensityLimit()
 ###############################################################################
-class NonAdiabaticMSWH(SNTransformation):
+class NonAdiabaticMSWH(SNTransformation, ThreeFlavorTransformation):
     """Nonadiabatic MSW H resonance. 
     The NonAdiabaticMSWH transformation assumes that the H resonance mixing is nonadiabatic.
     This case is relevant when a shock is present at the H resonance densities (Schirato & Fuller 2002).
@@ -48,7 +46,7 @@ class NonAdiabaticMSWH(SNTransformation):
             Pmf[['NU_1_BAR','NU_3_BAR'],:] = Pmf[['NU_3_BAR','NU_1_BAR'],:]
         return Pmf
 ###############################################################################
-class TwoFlavorDecoherence(SNTransformation):
+class TwoFlavorDecoherence(SNTransformation, ThreeFlavorTransformation):
     """equal mixing of whatever two matter states form the MSW H resonance.
 
     The TwoFlavorDecoherence transformation is relevant when the size of the density fluctuations
@@ -81,7 +79,7 @@ class SNprofile:
         self.rhofilename = rhofilename
         self.Yefilename = Yefilename
         
-class MSWEffect(SNTransformation):
+class MSWEffect(SNTransformation, ThreeFlavorTransformation):
     """The MSW effect using a density profile and electron 
        fraction provided by the user. Uses the SNOSHEWS module.
     """
@@ -177,7 +175,7 @@ class MSWEffect(SNTransformation):
         
 ###############################################################################
 
-class AdiabaticMSWes(SNTransformation):
+class AdiabaticMSWes(SNTransformation, FourFlavorTransformation):
     """A four-neutrino mixing prescription. The assumptions used are that:
 
     1. the fourth neutrino mass is the heaviest but not so large 
@@ -195,7 +193,7 @@ class AdiabaticMSWes(SNTransformation):
         
 ###############################################################################
 
-class NonAdiabaticMSWes(SNTransformation):
+class NonAdiabaticMSWes(SNTransformation, FourFlavorTransformation):
     """A four-neutrino mixing prescription. The assumptions used are that:
 
     1. the fourth neutrino mass is the heaviest but not so large 

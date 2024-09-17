@@ -4,6 +4,7 @@ from astropy import units as u
 from astropy import constants as c
 
 from snewpy.flavor  import FlavorMatrix, ThreeFlavor
+from .base import ThreeFlavorTransformation, FourFlavorTransformation
 
 ###############################################################################
 # Vacuum transformations
@@ -17,7 +18,7 @@ class NoVacuumTransformation(VacuumTransformation):
     def P_mm(self, t, E)->FlavorMatrix:
         return FlavorMatrix.eye(self.mixing_params.basis_mass)
         
-class NeutrinoDecay(VacuumTransformation):
+class NeutrinoDecay(VacuumTransformation, ThreeFlavorTransformation):
     """Decay effect, where the heaviest neutrino decays to the lightest
     neutrino. For a description and typical parameters, see A. de Gouvêa et al.,
     PRD 101:043013, 2020, arXiv:1910.01127.
@@ -73,7 +74,7 @@ class NeutrinoDecay(VacuumTransformation):
 
 ###############################################################################
 
-class QuantumDecoherence(VacuumTransformation):
+class QuantumDecoherence(VacuumTransformation, ThreeFlavorTransformation):
     """Quantum Decoherence, where propagation in vacuum leads to equipartition
     of states. For a description and typical parameters, see M. V. dos Santos et al.,
     2023, arXiv:2306.17591.

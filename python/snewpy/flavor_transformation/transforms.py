@@ -77,19 +77,23 @@ class TransformationChain(FlavorTransformation):
                  in_sn: SNTransformation,
                  in_vacuum: VacuumTransformation=NoVacuumTransformation(),
                  in_earth: EarthTransformation=NoEarthMatter(),
-                 *, mixing_params=MixingParameters()):
+                 *,
+                 mixing_params=MixingParameters()
+                ):
         if in_sn is None:
             return NoTransformation()
         self.in_sn = in_sn
         self.in_vacuum = in_vacuum
         self.in_earth = in_earth
         self.transforms = [in_sn, in_vacuum, in_earth]
+        self.set_mixing_params(mixing_params)
 
-        self.mixing_params = mixing_params
+    def set_mixing_params(self, mixing_params):
         #set the mixing parameters to all the inner classes
+        self.mixing_params = mixing_params
         for t in self.transforms:
             t.mixing_params = mixing_params
-        
+                    
     def P_ff(self, t, E)->FlavorMatrix:
         in_sn, in_vacuum, in_earth = self.transforms
         return in_earth.P_fm(t,E) @ in_vacuum.P_mm(t,E) @ in_sn.P_mf(t,E)
