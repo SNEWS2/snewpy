@@ -38,7 +38,7 @@ bollig = Bollig_2016(progenitor_mass=27*u.solMass)
 
 … and many flavor transformations that neutrinos could experience on the way to Earth …
 ```Python
-from snewpy.flavor_transformations import AdiabaticMSW
+from snewpy.flavor_transformation import AdiabaticMSW
 from snewpy.neutrino import MassHierarchy
 
 # Adiabatic MSW flavor transformation with normal mass ordering
@@ -47,11 +47,13 @@ msw_nmo = AdiabaticMSW(mh=MassHierarchy.NORMAL)
 
 … letting you quickly calculate the neutrino flux reaching Earth:
 ```Python
+times = [0.5, 1] * u.s
+energies = range(5,50) * u.MeV
 # Assume a SN at the fiducial distance of 10 kpc and normal mass ordering.
-flux = bollig.get_flux(distance=10*u.kpc, transformation=msw_nmo)
+flux = bollig.get_flux(times, energies, distance=10*u.kpc, flavor_xform=msw_nmo)
 ```
 
-You can also calculate the observed event rate in all neutrino detectors supported by SNOwGLoBES, use the included SN models and flavor transformations in event generators like sntools, and much more.
+You can also calculate the observed event rate in all neutrino detectors supported by SNOwGLoBES, use the included SN models and flavor transformations in third-party code (like event generators), and much more.
 
 Jupyter notebooks showcasing the downloadable supernova models available through SNEWPY and much of its functionality are available in the `doc/nb/` subfolder.
 Additional example scripts are in the
