@@ -18,10 +18,7 @@ from tqdm.auto import tqdm
 
 import snowglobes_data
 import sys
-if sys.version_info >= (3, 9):
-    from importlib.resources import files
-else:
-    from importlib_resources import files
+from importlib.resources import files
 
 def guess_material(detector):
     if detector.startswith(('wc', 'ice', 'km3net')):
