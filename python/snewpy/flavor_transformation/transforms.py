@@ -13,7 +13,6 @@ from abc import abstractmethod, ABC
 from importlib.resources import files
 
 from snewpy.flavor  import FlavorMatrix, ThreeFlavor
-from snewpy.neutrino import MassHierarchy
 from snewpy.neutrino import MixingParameters
 from .in_sn import SNTransformation
 from .in_vacuum import VacuumTransformation, NoVacuumTransformation
@@ -60,10 +59,6 @@ class CompleteExchange(FlavorTransformation):
 class ThreeFlavorDecoherence(FlavorTransformation):
     """Equal mixing of all threen eutrino matter states and antineutrino matter states"""
 
-    def __init__(self):
-        """Initialize ThreeFlavorTransformation to default case"""
-        super().__init__() 
-
     def P_ff(self, t, E): 
         """Equal mixing so Earth matter has no effect"""
         @FlavorMatrix.from_function(ThreeFlavor)
@@ -87,13 +82,17 @@ class TransformationChain(FlavorTransformation):
         self.in_earth = in_earth
         self.transforms = [in_sn, in_vacuum, in_earth]
         self.set_mixing_params(mixing_params)
-
+    
     def set_mixing_params(self, mixing_params):
         #set the mixing parameters to all the inner classes
         self.mixing_params = mixing_params
         for t in self.transforms:
             t.mixing_params = mixing_params
-                    
+        
+    def __call__(self, mixing_params):
+        self.set_mixing_params(mixing_params)
+        return self
+        
     def P_ff(self, t, E)->FlavorMatrix:
         in_sn, in_vacuum, in_earth = self.transforms
         return in_earth.P_fm(t,E) @ in_vacuum.P_mm(t,E) @ in_sn.P_mf(t,E)
