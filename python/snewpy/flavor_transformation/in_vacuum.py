@@ -58,9 +58,8 @@ class NeutrinoDecay(VacuumTransformation, ThreeFlavorTransformation):
         return self.m*c.c / (E*self.tau)
 
     def P_mm(self, t, E)->FlavorMatrix:
-        
         decay_factor = np.exp(-self.gamma(E)*self.d)
-        PND = FlavorMatrix.eye(self.mixing_params.basis_mass, extra_dims=[len(E)])
+        PND = FlavorMatrix.eye(self.mixing_params.basis_mass, extra_dims=E.shape)
 
         if self.mixing_params.mass_order == MassHierarchy.NORMAL:
             PND['NU_1','NU_3'] = 1 - decay_factor
@@ -69,8 +68,8 @@ class NeutrinoDecay(VacuumTransformation, ThreeFlavorTransformation):
         else:
             PND['NU_2','NU_2'] = decay_factor
             PND['NU_3','NU_2'] = 1 - decay_factor
-
-            PND['NU_BAR','NU_BAR'] = PND['NU','NU']
+            
+        PND['NU_BAR','NU_BAR'] = PND['NU','NU']
         return PND
 
 ###############################################################################
