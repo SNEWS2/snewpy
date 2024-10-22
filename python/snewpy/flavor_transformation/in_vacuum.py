@@ -105,23 +105,23 @@ class QuantumDecoherence(VacuumTransformation, ThreeFlavorTransformation):
         self.E0 = E0
 
     def P_mm(self, t, E)->FlavorMatrix: 
-        PQD = FlavorMatrix.zeros(self.mixing_params.basis_mass, extra_dims=(len(E),))
+        PQD = FlavorMatrix.zeros(self.mixing_params.basis_mass, extra_dims=E.shape)
+        x =  (E/self.E0)**self.n
+        PQD['NU_1','NU_1'] = 1/3 + 1/2 * np.exp(-(self.Gamma3 + self.Gamma8 / 3) * x * self.d) \
+                  + 1/6 * np.exp(-self.Gamma8 * x * self.d)
 
-        PQD[1,1] = 1/3 + 1/2 * np.exp(-(self.Gamma3 * (E/self.E0)**self.n + self.Gamma8 * (E/self.E0)**self.n / 3) * self.d) \
-                  + 1/6 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
+        PQD['NU_1','NU_2'] = 1/3 - 1/2 * np.exp(-(self.Gamma3 + self.Gamma8 / 3) * x * self.d) \
+                  + 1/6 * np.exp(-self.Gamma8 * x * self.d)
 
-        PQD[1,2] = 1/3 - 1/2 * np.exp(-(self.Gamma3 * (E/self.E0)**self.n + self.Gamma8 * (E/self.E0)**self.n / 3) * self.d) \
-                  + 1/6 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
+        PQD['NU_1','NU_3'] = 1/3 - 1/3 * np.exp(-self.Gamma8 * x * self.d)
 
-        PQD[1,3] = 1/3 - 1/3 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
+        PQD['NU_2',['NU_1','NU_2','NU_3']] = PQD['NU_1',['NU_2','NU_1','NU_3']]
+        PQD['NU_2','NU_2'] = PQD['NU_1','NU_1']
+        PQD['NU_2','NU_3'] = PQD['NU_1','NU_3']
 
-        PQD[2,[1,2,3]] = PQD[1,[2,1,3]]
-        PQD[2,2] = PQD[1,1]
-        PQD[2,3] = PQD[1,3]
-
-        PQD[3,1] = PQD[1,3]
-        PQD[3,2] = PQD[2,3]
+        PQD['NU_3','NU_1'] = PQD['NU_1','NU_3']
+        PQD['NU_3','NU_2'] = PQD['NU_2','NU_3']
     
-        PQD[3,3] = 1/3 + 2/3 * np.exp(-self.Gamma8 * (E/self.E0)**self.n * self.d)
+        PQD['NU_3','NU_3'] = 1/3 + 2/3 * np.exp(-self.Gamma8 * x * self.d)
         PQD['NU_BAR','NU_BAR'] = PQD['NU','NU']
         return PQD
