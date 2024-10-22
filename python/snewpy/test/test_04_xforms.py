@@ -477,16 +477,16 @@ class TestFlavorTransformations:
         prob_ee = De1*(1.-P_decay) + De3*P_decay
 
         assert np.allclose(P['e','e'], prob_ee)
-        assert np.allclose(P['e','x'], De1 + De3)
-        assert np.allclose(P['x','x'], 1 - 0.5*(De1 + De3))
+        assert np.allclose(P['e','x'], De1 + De2) #check!
+        assert np.allclose(P['x','x'], 1 - 0.5*(De1 + De2)) #check!
         assert np.allclose(P['x','e'], 0.5*(1 - prob_ee))
 
         prob_exbar = De1*(1.-P_decay) + De2 + De3*P_decay
 
-        assert np.allclose(P['e_bar','e_bar'], De3)
+        assert np.allclose(P['e_bar','e_bar'], De1) #check!
         assert np.allclose(P['e_bar','x_bar'], prob_exbar)
         assert np.allclose(P['x_bar','x_bar'], 1. - 0.5*prob_exbar)
-        assert np.allclose(P['x_bar','e_bar'], 0.5*(1. - De3))
+        assert np.allclose(P['x_bar','e_bar'], 0.5*(1. - De1)) #check!
 
     def test_NeutrinoDecay_IMO(self, t, E):
         """
@@ -524,8 +524,8 @@ class TestFlavorTransformations:
         prob_ee = De2*P_decay + De3*(1-P_decay)
 
         assert np.allclose(P['e','e'], prob_ee)
-        assert np.allclose(P['e','x'], De1 + De2)
-        assert np.allclose(P['x','x'], 1 - 0.5*(De1 + De2))
+        assert np.allclose(P['e','x'], De1 + De3) #check!
+        assert np.allclose(P['x','x'], 1 - 0.5*(De1 + De3)) #check!
         assert np.allclose(P['x','e'], 0.5*(1 - prob_ee))
 
         prob_exbar = De1 + De2*P_decay + De3*(1-P_decay)
