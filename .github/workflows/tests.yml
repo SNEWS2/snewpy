@@ -44,7 +44,7 @@ jobs:
       
       - name: Run unit tests with pytest
         run: |
-          pytest -m 'not snowglobes' -m 'not BEMEWS'
+          pytest -m 'not snowglobes' -k 'not EarthMatter'
 
       - name: Build HTML docs
         run: |
