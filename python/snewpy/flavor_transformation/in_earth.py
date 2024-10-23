@@ -99,7 +99,6 @@ class EarthMatter(ThreeFlavorTransformation, EarthTransformation):
             if u.allclose(self.prior_E, E) == True:
                 return self.prior_D
 
-        self.prior_D = np.zeros((6,6,len(E))) 
         self.prior_E = E
         
         #- Set the input energy bins
@@ -109,27 +108,17 @@ class EarthMatter(ThreeFlavorTransformation, EarthTransformation):
         self.settings.Emax = E[-1]
 
         #matrix from EMEWS needs to be rearranged to match SNEWPY flavor indicii ordering
-        Pfm = BEMEWS.Run(self.settings)
+        Pfm = np.asarray(BEMEWS.Run(self.settings))
+        #Pfm contains P(nu_alpha -> nu_i) index order is (nu/nubar, energy, alpha, i)
+        #We convert the array dimensions: 
+        Pfm = np.swapaxes(Pfm, 1,3) #(nu/nubar, i, alpha, energy)
+    
+        P = FlavorMatrix.zeros(
+            flavor=self.mixing_params.basis_mass,
+            from_flavor=self.mixing_params.basis_flavor,
+            extra_dims=E.shape)
 
-        for m in range(len(E)):
-            self.prior_D[ThreeFlavor.NU_E,0,m] = Pfm[0][m][0][0] 
-            self.prior_D[ThreeFlavor.NU_E,1,m] = Pfm[0][m][0][1]
-            self.prior_D[ThreeFlavor.NU_E,2,m] = Pfm[0][m][0][2]
-            self.prior_D[ThreeFlavor.NU_MU,0,m] = Pfm[0][m][1][0] 
-            self.prior_D[ThreeFlavor.NU_MU,1,m] = Pfm[0][m][1][1]
-            self.prior_D[ThreeFlavor.NU_MU,2,m] = Pfm[0][m][1][2]
-            self.prior_D[ThreeFlavor.NU_TAU,0,m] = Pfm[0][m][2][0] 
-            self.prior_D[ThreeFlavor.NU_TAU,1,m] = Pfm[0][m][2][1]
-            self.prior_D[ThreeFlavor.NU_TAU,2,m] = Pfm[0][m][2][2]
-
-            self.prior_D[ThreeFlavor.NU_E_BAR,3,m] = Pfm[1][m][0][0] 
-            self.prior_D[ThreeFlavor.NU_E_BAR,4,m] = Pfm[1][m][0][1]
-            self.prior_D[ThreeFlavor.NU_E_BAR,5,m] = Pfm[1][m][0][2]
-            self.prior_D[ThreeFlavor.NU_MU_BAR,3,m] = Pfm[1][m][1][0] 
-            self.prior_D[ThreeFlavor.NU_MU_BAR,4,m] = Pfm[1][m][1][1]
-            self.prior_D[ThreeFlavor.NU_MU_BAR,5,m] = Pfm[1][m][1][2]
-            self.prior_D[ThreeFlavor.NU_TAU_BAR,3,m] = Pfm[1][m][2][0] 
-            self.prior_D[ThreeFlavor.NU_TAU_BAR,4,m] = Pfm[1][m][2][1]
-            self.prior_D[ThreeFlavor.NU_TAU_BAR,5,m] = Pfm[1][m][2][2]
-
-        return self.prior_D
+        P["NU","NU"] = Pfm[0]
+        P["NU_BAR","NU_BAR"] = Pfm[1]
+        self.prior_D = P
+        return P

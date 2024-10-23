@@ -11,6 +11,8 @@ NonAdiabaticMSWes = TransformationChain(in_sn.NonAdiabaticMSWes())
 TwoFlavorDecoherence = TransformationChain(in_sn.TwoFlavorDecoherence())
 NeutrinoDecay = TransformationChain(in_sn.AdiabaticMSW(), in_vacuum.NeutrinoDecay())
 QuantumDecoherence = TransformationChain(in_sn.AdiabaticMSW(), in_vacuum.QuantumDecoherence())
-EarthMatter = lambda mixing_params,AltAz: TransformationChain(in_sn.AdiabaticMSW(), 
-                                                              in_earth=in_earth.EarthMatter(SNAltAz=AltAz), 
-                                                              mixing_params=mixing_params)
+EarthMatter = lambda mixing_params,AltAz: TransformationChain(
+    in_sn.AdiabaticMSW(),
+    in_earth=in_earth.EarthMatter(SNAltAz=AltAz), 
+    mixing_params=mixing_params
+)
