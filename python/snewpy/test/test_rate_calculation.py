@@ -5,6 +5,7 @@ from snewpy.models import ccsn
 from snewpy.rate_calculator import RateCalculator
 
 from snewpy import flavor_transformation as ft
+from snewpy.neutrino import MixingParameters
 pytestmark=pytest.mark.snowglobes
 
 #numbers from SNEWSv2 paper - for approximate checks 
@@ -39,7 +40,8 @@ def fluence(snmodel):
     times    = snmodel.get_time()
     energies = np.linspace(0.5,100,201)<<u.MeV
     #get the flux from the model
-    flux = snmodel.get_flux(t=times, E=energies, distance=10<<u.kpc, flavor_xform=ft.AdiabaticMSW())
+    flux = snmodel.get_flux(t=times, E=energies, distance=10<<u.kpc, 
+                            flavor_xform=ft.AdiabaticMSW(MixingParameters('NORMAL')))
     return flux.integrate('time')
 
 @pytest.mark.xfail(reason="Fluence calculation uses `get_transformed_flux`, which is currently hard coded to a TwoFlavor scheme.", raises=AttributeError)
