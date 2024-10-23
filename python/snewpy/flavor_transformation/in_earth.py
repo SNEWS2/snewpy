@@ -9,6 +9,8 @@ from snewpy.flavor  import FlavorMatrix, ThreeFlavor
 from .base import ThreeFlavorTransformation, FourFlavorTransformation
 from snewpy.neutrino import MixingParameters, MassHierarchy
 
+from importlib.resources import files
+
 try:
     import BEMEWS
     import BEMEWS.data
@@ -20,64 +22,61 @@ except ImportError as e:
 # Earth transformations
 ###############################################################################
 class EarthTransformation(ABC):
-    def __init__(self, mixing_params):
-        self.mixing_params = mixing_params
-
     @abstractmethod
     def P_fm(self, t, E)->FlavorMatrix:
         pass
 ###############################################################################
 
 class NoEarthMatter(EarthTransformation):
-    def __init__(self):
-        super().__init__(None)
-
+    def __init__(self, mixing_params=None):
+         self.mixing_params = mixing_params or MixingParameters('NORMAL')
+         
     def P_fm(self, t, E)->FlavorMatrix:
         D = self.mixing_params.VacuumMixingMatrix().abs2()
         return D
 ###############################################################################
 
-class EarthMatter(EarthTransformation, ThreeFlavorTransformation):
+class EarthMatter(ThreeFlavorTransformation, EarthTransformation):
 
-    def __init__(self, mixing_params, SNAltAz):
+    def __init__(self, SNAltAz, mixing_params=None):
         """Initialize flavor transformation
         
         Parameters
         ----------
         mixing_params : ThreeFlavorMixingParameters instance or None
         SNAltAz : astropy AltAz object
-        """
-
-        super().__init__(mixing_params)
-
+        """       
+        if BEMEWS is None:
+            raise ModuleNotFoundError('BEMEWS module is not found. Use NoEarthMatter effect instead')
+        if(mixing_params):
+            self.mixing_params=mixing_params
         self.SNAltAz = SNAltAz
 
         self.prior_E = None # used to store energy array from previous calls to get_probabilities
         self.prior_D = None
 
+        
         # Initialize BEMEWS input data object
-        self.settings = None
+        self.settings = BEMEWS.InputDataBEMEWS()
 
-        if BEMEWS is not None:
-            self.settings = BEMEWS.InputDataBEMEWS()
+        self.settings.altitude = self.SNAltAz.alt.deg
+        self.settings.azimuth = self.SNAltAz.az.deg
 
-            self.settings.altitude = self.SNAltAz.alt.deg
-            self.settings.azimuth = self.SNAltAz.az.deg
-
-            self.settings.densityprofile = str(files(BEMEWS.data).joinpath('PREM.rho.dat'))
-            self.settings.electronfraction = str(files(BEMEWS.data).joinpath('PREM.Ye.dat'))
-
-            self.settings.deltam_21 = self.mixing_params.dm21_2.to_value('eV**2')
-            self.settings.deltam_32 = self.mixing_params.dm32_2.to_value('eV**2')
-            self.settings.theta12 = self.mixing_params.theta12.to_value('deg')
-            self.settings.theta13 = self.mixing_params.theta13.to_value('deg')
-            self.settings.theta23 = self.mixing_params.theta23.to_value('deg')
-            self.settings.deltaCP = self.mixing_params.deltaCP.to_value('deg')
-
-            self.settings.accuracy = 1.01e-9
-            self.settings.outputflag = False
-            self.settings.stepcounterlimit = False
-
+        self.settings.densityprofile = str(files(BEMEWS.data).joinpath('PREM.rho.dat'))
+        self.settings.electronfraction = str(files(BEMEWS.data).joinpath('PREM.Ye.dat'))
+        self.settings.accuracy = 1.01e-9
+        self.settings.outputflag = False
+        self.settings.stepcounterlimit = False
+            
+    def _update_settings(self):
+        """Put the values from mixing_parameters into self.settings"""
+        self.settings.deltam_21 = self.mixing_params.dm21_2.to_value('eV**2')
+        self.settings.deltam_32 = self.mixing_params.dm32_2.to_value('eV**2')
+        self.settings.theta12 = self.mixing_params.theta12.to_value('deg')
+        self.settings.theta13 = self.mixing_params.theta13.to_value('deg')
+        self.settings.theta23 = self.mixing_params.theta23.to_value('deg')
+        self.settings.deltaCP = self.mixing_params.deltaCP.to_value('deg')
+            
     def P_fm(self, t, E):
         """the D matrix for the case of Earth matter effects
 
@@ -92,10 +91,9 @@ class EarthMatter(EarthTransformation, ThreeFlavorTransformation):
         -------
         D : an array of length of the E array with each element being a 6 x 6 matrix
         """
-        if BEMEWS is None:
-            logger.warn('BEMEWS is not found. Not computing Earth-matter effect.')
-            return NoEarthMatter(self.mixing_params).P_fm(t, E)
-
+        #update the settings - in case mixing_params were changed
+        self._update_settings()
+        
         if self.prior_E != None:
             # Use cached result if possible
             if u.allclose(self.prior_E, E) == True:
