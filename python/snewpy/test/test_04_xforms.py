@@ -692,8 +692,12 @@ class TestFlavorTransformations:
         
         t = np.arange(0, 1, 0.01)<<u.s
         E = np.arange(1, 2, 1)<<u.MeV
-
-        P = xforms.EarthMatter(mixing_params, altaz).P_fm(t, E)[:,:,0]
+        
+        xform = xforms.TransformationChain(xforms.in_sn.AdiabaticMSW(), 
+                                           in_earth=xforms.in_earth.EarthMatter(SNAltAz=altaz), 
+                                           mixing_params=mixing_params)
+        
+        Pfm = xforms.in_earth.EarthMatter(SNAltAz=altaz, mixing_params=mixing_params).P_fm(t, E)[:,:,0]
         m = np.asarray([
             [0.68017319, 0.29761409, 0.02221273, 0.,         0.,         0.        ],
             [0.,         0.,         0.,         0.68295904, 0.29483659, 0.02220437],
@@ -702,7 +706,7 @@ class TestFlavorTransformations:
             [0.24584477, 0.3366807,  0.41747453, 0.,         0.,         0.,       ],
             [0.,         0.,         0.,         0.24407448, 0.33845361, 0.41747191]])
 
-        assert np.allclose(P, m)
+        assert np.allclose(Pfm, m)
 
     def test_EarthMatter_IMO(self):
         """Earth matter effects with normal ordering.
@@ -719,7 +723,8 @@ class TestFlavorTransformations:
         t = np.arange(0, 1, 0.01)<<u.s
         E = np.arange(1, 2, 1)<<u.MeV
 
-        P = xforms.EarthMatter(mixing_params, altaz).P_fm(t, E)[:,:,0]
+        Pfm = xforms.in_earth.EarthMatter(SNAltAz=altaz, mixing_params=mixing_params).P_fm(t, E)[:,:,0]
+        
         m = np.asarray([
              [0.68007654, 0.29757012, 0.02235334, 0.        , 0.        , 0.        ],
              [0.        , 0.        , 0.        , 0.68284785, 0.29478826, 0.02236389],
@@ -728,4 +733,4 @@ class TestFlavorTransformations:
              [0.16723781, 0.41703993, 0.41572226, 0.        , 0.        , 0.        ],
              [0.        , 0.        , 0.        , 0.16572112, 0.41854414, 0.41573474]])
 
-        assert np.allclose(P, m)
+        assert np.allclose(Pfm, m)
