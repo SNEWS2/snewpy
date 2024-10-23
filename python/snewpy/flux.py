@@ -82,6 +82,19 @@ class Axes(IntEnum):
         else:
             return cls(value)
 
+def _derive_flavor_scheme(flavor:FlavorScheme|list[FlavorScheme])->FlavorScheme:
+    """Obtain the flavor scheme if provided list of flavors"""
+    if isinstance(flavor, type):#issubclass without isinstance(type) check raises TypeError
+        if issubclass(flavor, FlavorScheme): 
+            return flavor
+    else:
+        #get schemes from the data
+        flavor_schemes = set(f.__class__ for f in flavor)
+        if len(flavor_schemes)!=1:
+            raise ValueError(f"Flavors {flavor} must be from a single flavor scheme, but are from {flavor_schemes}")
+        else:
+            return flavor_schemes.pop()
+            
 class _ContainerBase:
     """base class for internal use
     :noindex:
@@ -132,17 +145,8 @@ class _ContainerBase:
         self.flavor = np.array(flavor,ndmin=1, dtype=object)
         self.flavor_scheme = flavor_scheme
         if not flavor_scheme:
-            #guess the flavor scheme
-            if isinstance(flavor, type):#issubclass without isinstance(type) check raises TypeError
-                if issubclass(flavor, FlavorScheme): 
-                    self.flavor_scheme = flavor
-            else:
-                #get schemes from the data
-                flavor_schemes = set(f.__class__ for f in self.flavor)
-                if len(flavor_schemes)!=1:
-                    raise ValueError(f"Flavors {flavor} must be from a single flavor scheme, but are from {flavor_schemes}")
-                else:
-                    self.flavor_scheme = flavor_schemes.pop()
+            self.flavor_scheme = _derive_flavor_scheme(flavor)
+            
         Nf,Nt,Ne = len(self.flavor), len(self.time), len(self.energy)
         #list all valid shapes of the input array
         expected_shapes=[(nf,nt,ne) for nf in (Nf,Nf-1) for nt in (Nt,Nt-1) for ne in (Ne,Ne-1)]
@@ -420,6 +424,7 @@ class _ContainerBase:
         #do the multiplication
         array = np.einsum('ij...,j...->i...',m,f)
         return Container(array, flavor=matrix.flavor_out, time=self.time, energy=self.energy)
+                  
 class Container(_ContainerBase):
     #a dictionary holding classes for each unit
     _unit_classes = {}
@@ -445,6 +450,22 @@ class Container(_ContainerBase):
             cls._unit_classes[unit] = type(name,(cls,),{'unit':unit})
         return cls._unit_classes[unit]
 
+    @classmethod
+    def from_dict(cls, 
+                  data_dict: dict[FlavorScheme,np.ndarray],
+                  time: u.Quantity[u.s],
+                  energy: u.Quantity[u.MeV],
+                  *,
+                  flavor_scheme: FlavorScheme | None = None,
+                  integrable_axes: set[Axes] | None = None
+                 ):
+        """Create a new Container from given dictionary of type {Flavor: data}"""
+        flavor = list(data_dict.keys())
+        if flavor_scheme is None:
+            flavor_scheme = _derive_flavor_scheme(flavor)
+        array = np.stack([data_dict[flv] for flv in flavor_scheme])
+        return cls(array, flavor, time, energy, flavor_scheme=flavor_scheme, integrable_axes=integrable_axes)
+        
     def project_to(self, axis='energy', squeeze=False):
         if axis=='energy':
             fP = self.integrate_or_sum('time')
