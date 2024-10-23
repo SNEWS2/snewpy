@@ -538,7 +538,7 @@ class TestFlavorTransformations:
   
     def test_QuantumDecoherence_NMO(self, t, E):
         """
-        Quantum Decoherence with NMO and new mixing angles 
+        Quantum Decoherence with NMO
         """
         mixpars = MixingParameters('NORMAL')
         th12, th13, th23 = mixpars.get_mixing_angles()
@@ -556,15 +556,16 @@ class TestFlavorTransformations:
                                                             n=n, 
                                                             E0=energy_ref),
             mixing_params=mixpars)
-
         #check the flavor transformation matrix
         Pmm = xform.in_vacuum.P_mm(t, E)
+        x = (E/energy_ref)**n
         # Test computation survival and transition probabilities of mass states.
-        
-        assert np.allclose(Pmm['1','1'],
+        #check with the formulas (10-13) in snewpy v2.0 paper
+        assert np.allclose(Pmm['1','1'],(
                 1/3 + \
-                1/2 * np.exp(-(gamma3*(E/energy_ref)**n + gamma8*(E/energy_ref)**n/3) * distance) + \
-                1/6 * np.exp(-gamma8*(E/energy_ref)**n * distance))
+                1/2 * np.exp(-(gamma3 + gamma8/3) * (E/energy_ref)**n * distance) + \
+                1/6 * np.exp(-gamma8 * (E/energy_ref)**n * distance))
+                          )
         assert np.allclose(Pmm['2','1'],
                 1/3 - \
                 1/2 * np.exp(-(gamma3*(E/energy_ref)**n + gamma8*(E/energy_ref)**n/3) * distance) + \
@@ -594,81 +595,90 @@ class TestFlavorTransformations:
         
         prob_ee = Pmm['3','1']*De1 + Pmm['3','2']*De2 + Pmm['3','3']*De3
 
-        assert (np.array_equal(P['e','e'], prob_ee))
-        assert (np.array_equal(P['e','x'], 1 - prob_ee))
-        assert (np.array_equal(P['x','x'], 1 - 0.5*(1 - prob_ee)))
-        assert (np.array_equal(P['x','e'], 0.5*(1 - prob_ee)))
+        assert (np.allclose(P['e','e'], prob_ee))
+        assert (np.allclose(P['e','x'], 1 - prob_ee))
+        assert (np.allclose(P['x','x'], 1 - 0.5*(1 - prob_ee)))
+        assert (np.allclose(P['x','e'], 0.5*(1 - prob_ee)))
 
-        prob_eebar = Pmm['1','1']*De1 + Pmm['2','1']*De2 + Pmm['3','1']*De3
+        prob_eebar = Pmm['1_bar','1_bar']*De1 + Pmm['2_bar','1_bar']*De2 + Pmm['3_bar','1_bar']*De3
 
-        assert (np.array_equal(P['e_bar','x_bar'], 1 - prob_eebar))
-        assert (np.array_equal(P['x_bar','x_bar'], 1. - 0.5*(1 - prob_eebar)))
-        assert (np.array_equal(P['x_bar','e_bar'], 0.5*(1. - prob_eebar)))
+        assert (np.allclose(P['e_bar','x_bar'], 1 - prob_eebar))
+        assert (np.allclose(P['x_bar','x_bar'], 1. - 0.5*(1 - prob_eebar)))
+        assert (np.allclose(P['x_bar','e_bar'], 0.5*(1. - prob_eebar)))
 
    
     def test_QuantumDecoherence_IMO(self, t, E):
         """
-        Quantum Decoherence with IMO and new mixing angles 
+        Quantum Decoherence with IMO 
         """
-        # Override the default mixing angles.
-        xform = QuantumDecoherence(mix_angles=(th12, th13, th23), Gamma3=gamma3 * c.hbar * c.c, Gamma8=gamma8 * c.hbar * c.c, dist=distance, n=n, E0=energy_ref, mh=MassHierarchy.INVERTED)
-
-        # Test computation survival and transition probabilities of mass states.
-        _E = 10*u.MeV
-        assert (xform.P11(_E) == 1/3 + 1/2 * np.exp(-(self.gamma3 * (_E/self.energy_ref)**self.n + self.gamma8 * (_E/self.energy_ref)**self.n / 3) * self.distance) + 1/6 * np.exp(-self.gamma8 * (_E/self.energy_ref)**self.n * self.distance))
-        assert (xform.P21(_E) == 1/3 - 1/2 * np.exp(-(self.gamma3 * (_E/self.energy_ref)**self.n + self.gamma8 * (_E/self.energy_ref)**self.n / 3) * self.distance) + 1/6 * np.exp(-self.gamma8 * (_E/self.energy_ref)**self.n * self.distance))
-        assert (xform.P22(_E) == 1/3 + 1/2 * np.exp(-(self.gamma3 * (_E/self.energy_ref)**self.n + self.gamma8 * (_E/self.energy_ref)**self.n / 3) * self.distance) + 1/6 * np.exp(-self.gamma8 * (_E/self.energy_ref)**self.n * self.distance))
-        assert (xform.P31(_E) == 1/3 - 1/3 * np.exp(-self.gamma8 * (_E/self.energy_ref)**self.n * self.distance))
-        assert (xform.P32(_E) == 1/3 - 1/3 * np.exp(-self.gamma8 * (_E/self.energy_ref)**self.n * self.distance))
-        self.assertAlmostEqual(float(xform.P33(_E)), float(1/3 + 2/3 * np.exp(-self.gamma8 * (_E/self.energy_ref)**self.n * self.distance)), places=12)
-
-        De1 = (cos(th12) * cos(th13))**2
-        De2 = (sin(th12) * cos(th13))**2
-        De3 = sin(th13)**2
-
-        # Check transition probabilities.
-        prob_ee = np.asarray([xform.P22(_E)*De2 + xform.P21(_E)*De1 + xform.P32(_E)*De3 for _E in self.E])
-
-        assert (np.array_equal(P['e','e'], prob_ee))
-        assert (np.array_equal(P['e','x'], 1 - prob_ee))
-        assert (np.array_equal(P['x','x'], 1 - 0.5*(1 - prob_ee)))
-        assert (np.array_equal(P['x','e'], 0.5*(1 - prob_ee)))
-
-        prob_eebar = np.asarray([xform.P31(_E)*De1 + xform.P32(_E)*De2 + xform.P33(_E)*De3 for _E in self.E])
-
-        assert (np.array_equal(P['e_bar','x_bar'], 1 - prob_eebar))
-        assert (np.array_equal(P['x_bar','x_bar'], 1. - 0.5*(1 - prob_eebar)))
-        assert (np.array_equal(P['x_bar','e_bar'], 0.5*(1. - prob_eebar)))
-
-    def test_quantumdecoherence_imo_default_mixing(self):
-        """
-        Quantum decoherence with IMO and default mixing angles
-        """
-        # Use default mixing angles defined in the submodule.
-        xform = QuantumDecoherence(Gamma3=self.gamma3 * c.hbar * c.c, Gamma8=self.gamma8 * c.hbar * c.c, dist=self.distance, n=self.n, E0=self.energy_ref, mh=MassHierarchy.INVERTED)
-
-        # Check transition probabilities.
-        mixpars = MixingParameters(MassHierarchy.INVERTED)
+        mixpars = MixingParameters('INVERTED')
         th12, th13, th23 = mixpars.get_mixing_angles()
+        gamma3 = (1e-27 * u.eV / (c.hbar * c.c)).to('1/kpc')
+        gamma8 = (1e-27 * u.eV / (c.hbar * c.c)).to('1/kpc')
+        n = 0
+        energy_ref = 10 * u.MeV
+        distance = 10*u.kpc
+        # Override the default mixing angles.
+        xform = xforms.TransformationChain(
+            in_sn = xforms.in_sn.AdiabaticMSW(),
+            in_vacuum = xforms.in_vacuum.QuantumDecoherence(Gamma3=gamma3 * c.hbar * c.c,
+                                                            Gamma8=gamma8 * c.hbar * c.c,
+                                                            dist=distance, 
+                                                            n=n, 
+                                                            E0=energy_ref),
+            mixing_params=mixpars)
+        #check the flavor transformation matrix
+        Pmm = xform.in_vacuum.P_mm(t, E)
+        x = (E/energy_ref)**n
+        # Test computation survival and transition probabilities of mass states.
+        #check with the formulas (10-13) in snewpy v2.0 paper
+        assert np.allclose(Pmm['1','1'],(
+                1/3 + \
+                1/2 * np.exp(-(gamma3 + gamma8/3) * (E/energy_ref)**n * distance) + \
+                1/6 * np.exp(-gamma8 * (E/energy_ref)**n * distance))
+                          )
+        assert np.allclose(Pmm['2','1'],
+                1/3 - \
+                1/2 * np.exp(-(gamma3*(E/energy_ref)**n + gamma8*(E/energy_ref)**n/3) * distance) + \
+                1/6 * np.exp(-gamma8*(E/energy_ref)**n * distance))
+        assert np.allclose(Pmm['2','2'],
+                1/3 + \
+                1/2 * np.exp(-(gamma3*(E/energy_ref)**n + gamma8*(E/energy_ref)**n/3) * distance) + \
+                1/6 * np.exp(-gamma8*(E/energy_ref)**n * distance))
+        assert np.allclose(Pmm['3','1'],
+                1/3 - \
+                1/3 * np.exp(-gamma8*(E/energy_ref)**n * distance))
+        assert np.allclose(Pmm['3','2'],
+                1/3 - \
+                1/3 * np.exp(-gamma8*(E/energy_ref)**n * distance))
+        assert np.allclose(Pmm['3','3'],
+                1/3 + \
+                2/3 * np.exp(-gamma8 * (E/energy_ref)**n * distance))
 
         De1 = (cos(th12) * cos(th13))**2
         De2 = (sin(th12) * cos(th13))**2
         De3 = sin(th13)**2
 
-        prob_ee = np.asarray([xform.P22(_E)*De2 + xform.P21(_E)*De1 + xform.P32(_E)*De3 for _E in self.E])
+        # Check flavor transition probabilities.
+        P = xform.P_ff(t, E)
+        #convert to TwoFlavor case
+        P = (TwoFlavor<<P<<TwoFlavor)
+        
+        prob_ee = Pmm['2','1']*De1 + Pmm['2','2']*De2 + Pmm['2','3']*De3
 
-        assert (np.array_equal(P['e','e'], prob_ee))
-        assert (np.array_equal(P['e','x'], 1 - prob_ee))
-        assert (np.array_equal(P['x','x'], 1 - 0.5*(1 - prob_ee)))
-        assert (np.array_equal(P['x','e'], 0.5*(1 - prob_ee)))
+        assert (np.allclose(P['e','e'], prob_ee))
+        assert (np.allclose(P['e','x'], 1 - prob_ee))
+        assert (np.allclose(P['x','x'], 1 - 0.5*(1 - prob_ee)))
+        assert (np.allclose(P['x','e'], 0.5*(1 - prob_ee)))
 
-        prob_eebar = np.asarray([xform.P31(_E)*De1 + xform.P32(_E)*De2 + xform.P33(_E)*De3 for _E in self.E])
+        prob_eebar = Pmm['3_bar','1_bar']*De1 + Pmm['3_bar','2_bar']*De2 + Pmm['3_bar','3_bar']*De3
 
-        assert (np.array_equal(P['e_bar','x_bar'], 1 - prob_eebar))
-        assert (np.array_equal(P['x_bar','x_bar'], 1. - 0.5*(1 - prob_eebar)))
-        assert (np.array_equal(P['x_bar','e_bar'], 0.5*(1. - prob_eebar)))
+        assert (np.allclose(P['e_bar','x_bar'], 1 - prob_eebar))
+        assert (np.allclose(P['x_bar','x_bar'], 1. - 0.5*(1 - prob_eebar)))
+        assert (np.allclose(P['x_bar','e_bar'], 0.5*(1. - prob_eebar)))
 
-    def test_earthmatter_nmo(self):
+
+    def test_EarthMatter_NMO(self):
         """Earth matter effects with normal ordering.
         """
         src = SkyCoord.from_name('Betelgeuse')
@@ -692,9 +702,9 @@ class TestFlavorTransformations:
             [0.24584477, 0.3366807,  0.41747453, 0.,         0.,         0.,       ],
             [0.,         0.,         0.,         0.24407448, 0.33845361, 0.41747191]])
 
-        assert(np.all(np.isclose(P, m)))
+        assert np.allclose(P, m)
 
-    def test_earthmatter_imo(self):
+    def test_EarthMatter_IMO(self):
         """Earth matter effects with normal ordering.
         """
         src = SkyCoord.from_name('Betelgeuse')
@@ -718,4 +728,4 @@ class TestFlavorTransformations:
              [0.16723781, 0.41703993, 0.41572226, 0.        , 0.        , 0.        ],
              [0.        , 0.        , 0.        , 0.16572112, 0.41854414, 0.41573474]])
 
-        assert(np.all(np.isclose(P, m)))
+        assert np.allclose(P, m)
