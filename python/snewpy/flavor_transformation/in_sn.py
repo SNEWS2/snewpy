@@ -54,16 +54,15 @@ class NonAdiabaticMSWH(SNTransformation, ThreeFlavorTransformation):
 ###############################################################################
 class TwoFlavorDecoherence(SNTransformation, ThreeFlavorTransformation):
     """Equal mixing of whatever two matter states form the MSW H resonance.
-
+    
     The TwoFlavorDecoherence transformation is relevant when the size of the density fluctuations
     is ≲ 10% for densities around the H resonance density —see Kneller (2010); Kneller & Mauney (2013). 
     This prescription models the effect of the turbulence as leading to 50% mixing between the
     matter states which participate in the H resonance. 
     
-    In the NMO this is ν2 and ν3,
+    In the NMO this is ν2 and ν3.
     For the IMO, the H resonance occurs in the antineutrinos between antineutrino matter states ν̄1
-and ν̄3.
-
+    and ν̄3.
     """
     
     def P_mf(self, t, E):
