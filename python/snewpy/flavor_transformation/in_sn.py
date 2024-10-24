@@ -11,6 +11,7 @@ from astropy import constants as c
 
 from snewpy.flavor  import FlavorMatrix, ThreeFlavor
 from snewpy.neutrino import MixingParameters, MassHierarchy
+from dataclasses import dataclass
 
 from .base import ThreeFlavorTransformation, FourFlavorTransformation
 try:
@@ -52,7 +53,7 @@ class NonAdiabaticMSWH(SNTransformation, ThreeFlavorTransformation):
         return Pmf
 ###############################################################################
 class TwoFlavorDecoherence(SNTransformation, ThreeFlavorTransformation):
-    """equal mixing of whatever two matter states form the MSW H resonance.
+    """Equal mixing of whatever two matter states form the MSW H resonance.
 
     The TwoFlavorDecoherence transformation is relevant when the size of the density fluctuations
     is ≲ 10% for densities around the H resonance density —see Kneller (2010); Kneller & Mauney (2013). 
@@ -61,7 +62,8 @@ class TwoFlavorDecoherence(SNTransformation, ThreeFlavorTransformation):
     
     In the NMO this is ν2 and ν3,
     For the IMO, the H resonance occurs in the antineutrinos between antineutrino matter states ν̄1
-and ν̄3. 
+and ν̄3.
+
     """
     
     def P_mf(self, t, E):
@@ -73,110 +75,78 @@ and ν̄3.
 
         return Pmf
 
-###############################################################################
-
-class SNprofile:
-    """A placeholder class for the density and electron fraction profiles. Currently SNOSHEWS 
-    reads the profiles from files but that might change in the future.
-    """
-
-    def __init__(self, rhofilename, Yefilename):         
-        self.rhofilename = rhofilename
-        self.Yefilename = Yefilename
-        
+###############################################################################       
 class MSWEffect(SNTransformation, ThreeFlavorTransformation):
     """The MSW effect using a density profile and electron 
        fraction provided by the user. Uses the SNOSHEWS module.
     """
-
-    def __init__(self, SNprofile, rmin = 0, rmax = 1e99):
+    @dataclass
+    class SNprofile:
+        """A placeholder class for the density and electron fraction profiles. Currently SNOSHEWS 
+        reads the profiles from files but that might change in the future.
+        """
+        rhofilename:str
+        Yefilename:str
+        radius_min:float = 0
+        radius_max:float = 1e99
+        
+    def __init__(self, SNprofile:SNprofile):
         """Initialize flavor transformation
         
         Parameters
         ----------
         SNprofile : instance of profile class
-        rmin : starting radius for calculation. rmin will be corrected by SNOSHEWS to the minimum radius of the profile if rmin is less than that value        
-        rmax : the ending radius of the calculation. rmax will be corrected by SNOSHEWS to the maximum radius of the profile if rmax is greater than that value
         """
-        self.SNprofile = SNprofile
-
-    def P_mf(self, t, E): 
-        """neutrino and antineutrino transition probabilities.
-
-        Parameters
-        ----------
-        t : float or ndarray
-            List of times.
-        E : float or ndarray
-            List of energies.
-
-        Returns
-        -------
-        Pmf : array of 6 x 6 matrices
-        """
-                     
         if SNOSHEWS == None:
-            print("The SNOSHEWS module cannot be found. Returning results using AdiabaticMSW prescription")
-            return AdiabticMSW(self.mixing_params).get_probabilities(t,E)
-        
+            raise ModuleNotFoundError("The SNOSHEWS module not be found. Please make sure SNOSHEWS is installed to use MSWEffect transformation")
         #input data object for SNOSHEWS
-        ID = SNOSHEWS.InputDataSNOSHEWS()
+        self.settings = SNOSHEWS.InputDataSNOSHEWS()
 
-        ID.outputfilenamestem = "./out/SNOSHEWS"      # stem of output filenames 
+        self.settings.outputfilenamestem = "./out/SNOSHEWS"      # stem of output filenames 
 
-        ID.rmin = self.rmin
-        ID.rmax = self.rmax
+        self.settings.rmin = SNprofile.radius_min
+        self.settings.rmax = SNprofile.radius_max
 
-        ID.densityprofile = self.SNprofile.rhofilename     # mass density profile    
-        ID.electronfraction = self.SNprofile.Yefilename    # electron fraction profile     
+        self.settings.densityprofile = SNprofile.rhofilename     # mass density profile    
+        self.settings.electronfraction = SNprofile.Yefilename    # electron fraction profile     
         
-        ID.NE = len(E)         # number of energy bins
+        self.settings.accuracy = 1.01E-009      # controls accuracy of integrator: smaller is more accurate
+        self.settings.stepcounterlimit = 10000  # output frequency if outputflag = True: larger is less frequent
+        self.settings.outputflag = False        # set to True if output is desired
+        self._update_settings()
+        
+    def _update_settings(self):
+        """Put the values from mixing_parameters into self.settings"""
+        self.settings.deltam_21 = self.mixing_params.dm21_2.to_value('eV**2')
+        self.settings.deltam_32 = self.mixing_params.dm32_2.to_value('eV**2')
+        self.settings.theta12 = self.mixing_params.theta12.to_value('deg')
+        self.settings.theta13 = self.mixing_params.theta13.to_value('deg')
+        self.settings.theta23 = self.mixing_params.theta23.to_value('deg')
+        self.settings.deltaCP = self.mixing_params.deltaCP.to_value('deg')
+        
+    def P_mf(self, t, E): 
+        #update the settings - in case mixing_params were changed
+        self._update_settings()
+        #- Set the input energy bins
         E = E.to_value('MeV')
-        ID.Emin = E[0]         # in MeV
-        ID.Emax = E[-1]        # in MeV
-
-        #MixingParameters
-        ID.deltam_21 = self.mixing_params.dm21_2.value   # in eV^2
-        ID.deltam_32 = self.mixing_params.dm32_2.value   # in eV^2
-        ID.theta12 = self.mixing_params.theta12.value    # in degrees
-        ID.theta13 = self.mixing_params.theta13.value    # in degrees
-        ID.theta23 = self.mixing_params.theta23.value    # in degrees
-        ID.deltaCP = self.mixing_params.deltaCP.value    # in degrees
-
-        ID.accuracy = 1.01E-009      # controls accuracy of integrator: smaller is more accurate
-        ID.stepcounterlimit = 10000  # output frequency if outputflag = True: larger is less frequent
-        ID.outputflag = False        # set to True if output is desired
- 
-        # Do the calculation. The return is a four dimensional 
-        # array of transition probabilities nu_alpha -> nu_i: 
-        # the index order is matter/antimatter, energy, i, alpha
-        pSN = SNOSHEWS.Run(ID)
-
+        self.settings.NE = len(E)         # number of energy bins
+        self.settings.Emin = E[0]         # in MeV
+        self.settings.Emax = E[-1]        # in MeV
+        #run the calculation
+        pSN = SNOSHEWS.Run(self.settings)
+        #matrix from SNOSHEWS needs to be rearranged to match SNEWPY flavor indicii ordering
+        #pSN contains P(nu_i -> nu_alpha) index order is (nu/nubar, energy, i, alpha)
+        #We convert the array dimensions: 
+        pSN = np.swapaxes(pSN, 1,3) #(nu/nubar, alpha, i, energy)
         # restructure the results
-        Pmf = FlavorMatrix(np.zeros((6,6,ID.NE)))
-
-        for m in range(ID.NE):
-            Pmf[0,ThreeFlavor.NU_E,m] = pSN[0][m][0][0] 
-            Pmf[1,ThreeFlavor.NU_E,m] = pSN[0][m][1][0]
-            Pmf[2,ThreeFlavor.NU_E,m] = pSN[0][m][2][0]
-            Pmf[0,ThreeFlavor.NU_MU,m] = pSN[0][m][0][1] 
-            Pmf[1,ThreeFlavor.NU_MU,m] = pSN[0][m][1][1]
-            Pmf[2,ThreeFlavor.NU_MU,m] = pSN[0][m][2][1]
-            Pmf[0,ThreeFlavor.NU_TAU,m] = pSN[0][m][0][2] 
-            Pmf[1,ThreeFlavor.NU_TAU,m] = pSN[0][m][1][2]
-            Pmf[2,ThreeFlavor.NU_TAU,m] = pSN[0][m][2][2]
-
-            Pmf[3,ThreeFlavor.NU_E_BAR,m] = pSN[1][m][0][0] 
-            Pmf[4,ThreeFlavor.NU_E_BAR,m] = pSN[1][m][1][0]
-            Pmf[5,ThreeFlavor.NU_E_BAR,m] = pSN[1][m][2][0]
-            Pmf[3,ThreeFlavor.NU_MU_BAR,m] = pSN[1][m][0][1] 
-            Pmf[4,ThreeFlavor.NU_MU_BAR,m] = pSN[1][m][1][1]
-            Pmf[5,ThreeFlavor.NU_MU_BAR,m] = pSN[1][m][2][1]
-            Pmf[3,ThreeFlavor.NU_TAU_BAR,m] = pSN[1][m][0][2] 
-            Pmf[4,ThreeFlavor.NU_TAU_BAR,m] = pSN[1][m][1][2]
-            Pmf[5,ThreeFlavor.NU_TAU_BAR,m] = pSN[1][m][2][2]
-            
-        return Pmf
+        P = FlavorMatrix.zeros(
+            flavor=self.mixing_params.basis_flavor,
+            from_flavor=self.mixing_params.basis_mass,
+            extra_dims=E.shape)
+        
+        P["NU","NU"] = pSN[0]
+        P["NU_BAR","NU_BAR"] = pSN[1]
+        return P
         
 ###############################################################################
 
