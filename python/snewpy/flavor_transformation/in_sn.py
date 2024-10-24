@@ -1,3 +1,8 @@
+r"""
+Transformations in supernova
+=============================
+Transition of neutrino flavor states to mass states :math:`\nu_\alpha\to\nu_i` inside supernova
+"""
 from abc import abstractmethod, ABC
 
 import numpy as np
