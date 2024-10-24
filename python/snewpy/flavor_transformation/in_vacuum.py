@@ -1,3 +1,9 @@
+r"""
+Transformations in vacuum
+=========================
+
+Transitions of neutrino mass states :math:`\nu_i\to\nu_j` in vacuum
+"""
 from abc import abstractmethod, ABC
 import numpy as np
 from astropy import units as u

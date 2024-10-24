@@ -1,3 +1,9 @@
+r"""
+Transformations in Earth
+=============================
+Transition of neutrino mass states to flavor states :math:`\nu_i\to\nu_\alpha` in the Earth matter
+"""
+
 from abc import abstractmethod, ABC
 
 import numpy as np
