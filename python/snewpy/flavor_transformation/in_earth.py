@@ -53,7 +53,7 @@ class EarthMatter(ThreeFlavorTransformation, EarthTransformation):
         SNAltAz : astropy AltAz object
         """       
         if BEMEWS is None:
-            raise ModuleNotFoundError('BEMEWS module is not found. Use NoEarthMatter effect instead')
+            raise ModuleNotFoundError('BEMEWS module is not found. Please make sure BEMEWS is installed to use EarthMatter transformation')
         if(mixing_params):
             self.mixing_params=mixing_params
         self.SNAltAz = SNAltAz
@@ -84,19 +84,6 @@ class EarthMatter(ThreeFlavorTransformation, EarthTransformation):
         self.settings.deltaCP = self.mixing_params.deltaCP.to_value('deg')
             
     def P_fm(self, t, E):
-        """the D matrix for the case of Earth matter effects
-
-        Parameters
-        ----------
-        t : float or ndarray
-            List of times.
-        E : float or ndarray
-            List of energies.
-
-        Returns
-        -------
-        D : an array of length of the E array with each element being a 6 x 6 matrix
-        """
         #update the settings - in case mixing_params were changed
         self._update_settings()
         
@@ -113,8 +100,9 @@ class EarthMatter(ThreeFlavorTransformation, EarthTransformation):
         self.settings.Emin = E[0]
         self.settings.Emax = E[-1]
 
-        #matrix from EMEWS needs to be rearranged to match SNEWPY flavor indicii ordering
+        #run the calculation
         Pfm = np.asarray(BEMEWS.Run(self.settings))
+        #matrix from BEMEWS needs to be rearranged to match SNEWPY flavor indicii ordering
         #Pfm contains P(nu_alpha -> nu_i) index order is (nu/nubar, energy, alpha, i)
         #We convert the array dimensions: 
         Pfm = np.swapaxes(Pfm, 1,3) #(nu/nubar, i, alpha, energy)
