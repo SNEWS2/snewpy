@@ -10,11 +10,11 @@ from astropy.units.quantity import Quantity
 from scipy.special import loggamma
 from snewpy._model_downloader import LocalFileLoader
 
-from snewpy.neutrino import Flavor
+from snewpy.neutrino import Flavor, ThreeFlavor
 from snewpy.flavor_transformation import NoTransformation
 from functools import wraps
 
-from snewpy.flux import Flux
+from snewpy import flux
 from pathlib import Path
 
 def _wrap_init(init, check):
@@ -135,26 +135,13 @@ class SupernovaModel(ABC, LocalFileLoader):
         dict
             Dictionary of transformed spectra, keyed by neutrino flavor.
         """
-        initialspectra = self.get_initial_spectra(t, E)
-        transformed_spectra = {}
-
-        transformed_spectra[Flavor.NU_E] = \
-            flavor_xform.prob_ee(t, E) * initialspectra[Flavor.NU_E] + \
-            flavor_xform.prob_ex(t, E) * initialspectra[Flavor.NU_X]
-
-        transformed_spectra[Flavor.NU_X] = \
-            flavor_xform.prob_xe(t, E) * initialspectra[Flavor.NU_E] + \
-            flavor_xform.prob_xx(t, E) * initialspectra[Flavor.NU_X] 
-
-        transformed_spectra[Flavor.NU_E_BAR] = \
-            flavor_xform.prob_eebar(t, E) * initialspectra[Flavor.NU_E_BAR] + \
-            flavor_xform.prob_exbar(t, E) * initialspectra[Flavor.NU_X_BAR]
-
-        transformed_spectra[Flavor.NU_X_BAR] = \
-            flavor_xform.prob_xebar(t, E) * initialspectra[Flavor.NU_E_BAR] + \
-            flavor_xform.prob_xxbar(t, E) * initialspectra[Flavor.NU_X_BAR] 
-
-        return transformed_spectra   
+        spectra_dict = self.get_initial_spectra(t, E)
+        initialspectra =  flux.Container['1/(MeV*s)'].from_dict(spectra_dict, 
+                                                                time=t, 
+                                                                energy=E,  
+                                                                flavor_scheme=ThreeFlavor)
+        transformed_spectra = flavor_xform.apply(initialspectra)
+        return transformed_spectra
 
     def get_flux (self, t, E, distance, flavor_xform=NoTransformation()):
         """Get neutrino flux through 1cm^2 surface at the given distance
@@ -177,12 +164,11 @@ class SupernovaModel(ABC, LocalFileLoader):
             keyed by neutrino flavor.
 
         """
+        transformed_spectra = self.get_transformed_spectra(t, E, flavor_xform)
         distance = distance << u.kpc #assume that provided distance is in kpc, or convert
         factor = 1/(4*np.pi*(distance.to('cm'))**2)
-        f = self.get_transformed_spectra(t, E, flavor_xform)
-
-        array = np.stack([f[flv] for flv in Flavor])
-        return  Flux(data=array*factor, flavor=Flavor, time=t, energy=E)
+        
+        return transformed_spectra*factor
 
 
 def get_value(x):
