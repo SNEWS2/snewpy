@@ -290,10 +290,10 @@ class Detector:
 def _get_flavor_index(channel):
     _map = {'+e':Flavor.NU_E,
             '-e':Flavor.NU_E_BAR,
-            '+m':Flavor.NU_X,
-            '-m':Flavor.NU_X_BAR,
-            '+t':Flavor.NU_X,
-            '-t':Flavor.NU_X_BAR
+            '+m':Flavor.NU_MU,
+            '-m':Flavor.NU_MU_BAR,
+            '+t':Flavor.NU_TAU,
+            '-t':Flavor.NU_TAU_BAR
             }
     return _map[channel.parity+channel.flavor]
 
@@ -346,7 +346,7 @@ class RateCalculator(SnowglobesData):
         # Cross-section in 10^-38 cm^2
         xp = xsec[:,0]
         #get the column to read from the file
-        column = {Flavor.NU_E:1, Flavor.NU_X:2, Flavor.NU_E_BAR:4, Flavor.NU_X_BAR:5}[flavor]
+        column = {Flavor.NU_E:1, Flavor.NU_MU:2, Flavor.NU_TAU:3, Flavor.NU_E_BAR:4, Flavor.NU_MU_BAR:5, Flavor.NU_TAU_BAR:6}[flavor]
         yp = xsec[:, column]
         def xsec(energies):
             E = energies.to_value('GeV')
