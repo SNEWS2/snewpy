@@ -163,42 +163,43 @@ class MixingParameters4Flavor(MixingParameters3Flavor):
         assert np.isclose(dm2_sum,0), f'dm41_2 - dm43_2 - dm31_2 = {dm2_sum} !=0'
 
 parameter_presets = {
-    # Values from JHEP 09 (2020) 178 [arXiv:2007.14792] and www.nu-fit.org.
     'NuFIT5.0': {
+        # Values from http://www.nu-fit.org/?q=node/228; cite as JHEP 09 (2020) 178 [arXiv:2007.14792]
         MassHierarchy.NORMAL:
         MixingParameters3Flavor(
-            theta12 = 33.44<< u.deg,
+            theta12 = 33.44 << u.deg,
             theta13 = 8.57 << u.deg,
-            theta23 = 49.20 << u.deg,
-            deltaCP = 197  << u.deg,
-            dm21_2 =  7.42e-5  << u.eV**2,
-            dm31_2 =  2.517e-3 << u.eV**2
+            theta23 = 49.2 << u.deg,
+            deltaCP = 197 << u.deg,
+            dm21_2 = 7.42e-5 << u.eV**2,
+            dm31_2 = 2.517e-3 << u.eV**2
         ),
         MassHierarchy.INVERTED:
-        MixingParameters3Flavor(    
+        MixingParameters3Flavor(
             theta12 = 33.45 << u.deg,
             theta13 = 8.60 << u.deg,
-            theta23 = 49.30 << u.deg,
+            theta23 = 49.3 << u.deg,
             deltaCP = 282 << u.deg,
             dm21_2 = 7.42e-5 << u.eV**2,
             dm32_2 = -2.498e-3 << u.eV**2
         )
     },
     'NuFIT5.2': {
+        # Values from http://www.nu-fit.org/?q=node/256; cite as JHEP 09 (2020) 178 [arXiv:2007.14792]
         MassHierarchy.NORMAL:
         MixingParameters3Flavor(
             theta12 = 33.41 << u.deg,
             theta13 = 8.58 << u.deg,
-            theta23 = 42.20 << u.deg,
+            theta23 = 42.2 << u.deg,
             deltaCP = 232 << u.deg,
             dm21_2 = 7.41e-5 << u.eV**2,
             dm31_2 = 2.507e-3 << u.eV**2
         ),
         MassHierarchy.INVERTED:
-        MixingParameters3Flavor(        
+        MixingParameters3Flavor(
             theta12 = 33.41 << u.deg,
             theta13 = 8.57 << u.deg,
-            theta23 = 49.00 << u.deg,
+            theta23 = 49.0 << u.deg,
             deltaCP = 276 << u.deg,
             dm21_2 = 7.41e-5 << u.eV**2,
             dm32_2 = -2.486e-3 << u.eV**2
@@ -207,7 +208,7 @@ parameter_presets = {
     'NuFIT6.0': {
         # Values from http://www.nu-fit.org/?q=node/294; cite as arXiv:2410.05380
         MassHierarchy.NORMAL:
-        ThreeFlavorMixingParameters(
+        MixingParameters3Flavor(
             theta12 = 33.68 << u.deg,
             theta13 = 8.56 << u.deg,
             theta23 = 43.3 << u.deg,
@@ -216,7 +217,7 @@ parameter_presets = {
             dm31_2 = 2.513e-3 << u.eV**2
         ),
         MassHierarchy.INVERTED:
-        ThreeFlavorMixingParameters(
+        MixingParameters3Flavor(
             theta12 = 33.68 << u.deg,
             theta13 = 8.59 << u.deg,
             theta23 = 47.9 << u.deg,
@@ -226,7 +227,7 @@ parameter_presets = {
         )
     },
     'PDG2022':{
-    # Values from https://pdg.lbl.gov
+        # Cite as R.L. Workman et al. (Particle Data Group), Prog. Theor. Exp. Phys. 2022, 083C01 (2022)
         MassHierarchy.NORMAL:
         MixingParameters3Flavor(
             theta12 = 33.65 << u.deg,
@@ -250,7 +251,7 @@ parameter_presets = {
         # Values from https://pdglive.lbl.gov/Particle.action?node=S067&init=0
         # Cite as S. Navas et al. (Particle Data Group), Phys. Rev. D 110, 030001 (2024)
         MassHierarchy.NORMAL:
-        ThreeFlavorMixingParameters(
+        MixingParameters3Flavor(
             theta12 = 33.65 << u.deg,
             theta13 = 8.51 << u.deg,
             theta23 = 48.33 << u.deg,
@@ -259,7 +260,7 @@ parameter_presets = {
             dm32_2 = 2.455e-3 << u.eV**2
         ),
         MassHierarchy.INVERTED:
-        ThreeFlavorMixingParameters(
+        MixingParameters3Flavor(
             theta12 = 33.65 << u.deg,
             theta13 = 8.51 << u.deg,
             theta23 = 48.04 << u.deg,
