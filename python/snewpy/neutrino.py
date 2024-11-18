@@ -277,7 +277,7 @@ class FourFlavorMixingParameters(ThreeFlavorMixingParameters):
         return (self.dm21_2, self.dm31_2, self.dm32_2, self.dm41_2, self.dm42_2, self.dm43_2)
 
     def VacuumMixingMatrix(self):
-        """The vacuum mixing matrix given the mixing paramters
+        """The vacuum mixing matrix given the mixing parameters
            N.B. This is a 8 x 8 matrix
         """
 
