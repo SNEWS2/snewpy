@@ -8,19 +8,17 @@ from abc import abstractmethod, ABC
 
 import numpy as np
 from astropy import units as u
-from astropy import constants as c
-from astropy.coordinates import AltAz
 
-from snewpy.flavor  import FlavorMatrix, ThreeFlavor
+from snewpy.flavor  import FlavorMatrix
 from .base import ThreeFlavorTransformation, FourFlavorTransformation
-from snewpy.neutrino import MixingParameters, MassHierarchy
+from snewpy.neutrino import MixingParameters
 
 from importlib.resources import files
 
 try:
     import BEMEWS
     import BEMEWS.data
-except ImportError as e:
+except ModuleNotFoundError:
     BEMEWS = None
 
 

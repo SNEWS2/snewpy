@@ -6,17 +6,15 @@ Transition of neutrino flavor states to mass states :math:`\nu_\alpha\to\nu_i` i
 from abc import abstractmethod, ABC
 
 import numpy as np
-from astropy import units as u
-from astropy import constants as c
 
-from snewpy.flavor  import FlavorMatrix, ThreeFlavor
-from snewpy.neutrino import MixingParameters, MassHierarchy
+from snewpy.flavor import FlavorMatrix
+from snewpy.neutrino import MassHierarchy
 from dataclasses import dataclass
 
 from .base import ThreeFlavorTransformation, FourFlavorTransformation
 try:
     import SNOSHEWS
-except:
+except ModuleNotFoundError:
     SNOSHEWS = None
 
 

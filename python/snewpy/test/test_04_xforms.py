@@ -13,7 +13,7 @@ from astropy.coordinates import SkyCoord, EarthLocation, AltAz
 from astropy.time import Time
 
 import numpy as np
-from numpy import sin,cos,exp,abs
+from numpy import sin, cos
 
 # Dummy neutrino decay parameters; see arXiv:1910.01127.
 @pytest.fixture

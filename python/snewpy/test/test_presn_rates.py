@@ -1,8 +1,8 @@
 import astropy.units as u
 import numpy as np
 from snewpy.models import presn
-from snewpy.neutrino import MixingParameters
-from snewpy.flavor_transformation import AdiabaticMSW, MassHierarchy
+from snewpy.neutrino import MassHierarchy, MixingParameters
+from snewpy.flavor_transformation import AdiabaticMSW
 from snewpy.rate_calculator import RateCalculator
 import pytest
 
