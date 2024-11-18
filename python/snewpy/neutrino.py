@@ -224,7 +224,7 @@ class FourFlavorMixingParameters(ThreeFlavorMixingParameters):
     ..Note: it is an extension of :class:`ThreeFlavorMixingParameters`, and can be constructed using it:
     
         >>> pars_3f = ThreeFlavorMixingParameters() #standard 3flavor mixing
-        >>> pars_4f = FpourFlavorMixingParameters(**pars_3f, theta14=90<<u.deg, dm41_2=1<<u.GeV**2)
+        >>> pars_4f = FourFlavorMixingParameters(**pars_3f, theta14=90<<u.deg, dm41_2=1<<u.GeV**2)
     """
     #sterile neutrino mixing angles. 
     theta14: u.Quantity[u.deg] = 0<<u.deg
