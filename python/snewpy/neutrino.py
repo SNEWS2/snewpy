@@ -7,8 +7,7 @@ from dataclasses import dataclass
 import numpy as np
 from collections.abc import Mapping
 
-from .flavor import ThreeFlavor as Flavor
-from .flavor import TwoFlavor, ThreeFlavor
+from .flavor import ThreeFlavor as Flavor # unused import needed for backward compatibility (see example notebooks)
 from .flavor import FlavorScheme, FlavorMatrix
 
 

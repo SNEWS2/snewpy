@@ -9,9 +9,9 @@ import numpy as np
 from astropy import units as u
 from astropy import constants as c
 
-from snewpy.flavor  import FlavorMatrix, ThreeFlavor
+from snewpy.flavor  import FlavorMatrix
 from .base import ThreeFlavorTransformation, FourFlavorTransformation
-from snewpy.neutrino import MixingParameters, MassHierarchy
+from snewpy.neutrino import MassHierarchy
 
 ###############################################################################
 # Vacuum transformations
