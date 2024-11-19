@@ -21,7 +21,7 @@ class ExtendedModel(SupernovaModel):
                 if method_name == 'get_initial_spectra':
                     self._get_initial_spectra = getattr(base_model, method_name)
                 else:
-                    self.method_name = getattr(base_model, method_name)
+                    setattr(self, method_name, getattr(base_model, method_name))
         self.t_final = self.time[-1]
         self.L_final = {Flavor.NU_E: self.luminosity[Flavor.NU_E][-1],
                         Flavor.NU_X: self.luminosity[Flavor.NU_X][-1],
