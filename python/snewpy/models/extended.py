@@ -29,7 +29,7 @@ class ExtendedModel(SupernovaModel):
         """Get neutrino spectra/luminosity curves before oscillation"""
         return self._get_initial_spectra(*args, **kwargs)
 
-    def get_extended_luminosity(self, t, k = -1., A = 1e51 * u.erg / u.s, tau_c = 36. * u.s, alpha = 2.66, flavor = Flavor.NU_E):
+    def get_extended_luminosity(self, t, k=-1., A=1e51 * u.erg/u.s, tau_c=36. * u.s, alpha=2.66, flavor = Flavor.NU_E):
         """Get neutrino luminosity from supernova cooling tail luminosity model.
 
         Parameters
@@ -58,7 +58,7 @@ class ExtendedModel(SupernovaModel):
             A = Lf/((tf.value**k) * np.exp(-1.*((tf/tau_c)**alpha)) * u.erg / u.s)
         return A * (t.value**k) * np.exp(-1.*((t/tau_c)**alpha)) * u.erg / u.s
 
-    def extend(self, ts, k = -1., A = None, tau_c = 36. * u.s, alpha = 2.66):
+    def extend(self, ts, k=-1., A=1e51 * u.erg/u.s, tau_c=36. * u.s, alpha=2.66):
         """Extend supernova model to specific times.
 
         Parameters
