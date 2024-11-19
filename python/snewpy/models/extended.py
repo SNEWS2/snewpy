@@ -55,8 +55,8 @@ class ExtendedModel(SupernovaModel):
         if A is None:
             tf = self.t_final
             Lf = self.L_final[flavor]
-            A = Lf/((tf.value**k) * np.exp(-1.*((tf/tau_c)**alpha)) * u.erg / u.s)
-        return A * (t.value**k) * np.exp(-1.*((t/tau_c)**alpha)) * u.erg / u.s
+            A = Lf / (tf.value**k * np.exp(-(tf/tau_c)**alpha))
+        return A * t.value**k * np.exp(-(t/tau_c)**alpha)
 
     def extend(self, ts, k=-1., A=1e51 * u.erg/u.s, tau_c=36. * u.s, alpha=2.66):
         """Extend supernova model to specific times.
