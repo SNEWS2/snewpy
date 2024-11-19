@@ -25,9 +25,9 @@ class ExtendedModel(SupernovaModel):
         self.t_final = self.time[-1]
         self.L_final = {flv: self.luminosity[flv][-1] for flv in Flavor}}
 
-    def get_initial_spectra(self, *args):
+    def get_initial_spectra(self, *args, **kwargs):
         """Get neutrino spectra/luminosity curves before oscillation"""
-        return self._get_initial_spectra(*args)
+        return self._get_initial_spectra(*args, **kwargs)
 
     def get_extended_luminosity(self, t, k = -1., A = 1e51 * u.erg / u.s, tau_c = 36. * u.s, alpha = 2.66, flavor = Flavor.NU_E):
         """Get neutrino luminosity from supernova cooling tail luminosity model.
