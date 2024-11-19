@@ -76,7 +76,7 @@ class ExtendedModel(SupernovaModel):
         """
         for t in ts:
             self.time = np.append(self.time, t)
-            for flavor in [Flavor.NU_E, Flavor.NU_X, Flavor.NU_E_BAR, Flavor.NU_X_BAR]:
+            for flavor in Flavor:
                 L_ext = self.get_extended_luminosity(t, k = k, A = A, tau_c = tau_c, alpha = alpha, flavor = flavor)
                 self.luminosity[flavor] = np.append(self.luminosity[flavor], L_ext)
                 self.meanE[flavor] = np.append(self.meanE[flavor], self.meanE[flavor][-1])
