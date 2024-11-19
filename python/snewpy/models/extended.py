@@ -23,10 +23,7 @@ class ExtendedModel(SupernovaModel):
                 else:
                     setattr(self, method_name, getattr(base_model, method_name))
         self.t_final = self.time[-1]
-        self.L_final = {Flavor.NU_E: self.luminosity[Flavor.NU_E][-1],
-                        Flavor.NU_X: self.luminosity[Flavor.NU_X][-1],
-                        Flavor.NU_E_BAR: self.luminosity[Flavor.NU_E_BAR][-1],
-                        Flavor.NU_X_BAR: self.luminosity[Flavor.NU_X_BAR][-1]}
+        self.L_final = {flv: self.luminosity[flv][-1] for flv in Flavor}}
 
     def get_initial_spectra(self, *args):
         """Get neutrino spectra/luminosity curves before oscillation"""
