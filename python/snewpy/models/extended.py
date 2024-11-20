@@ -74,7 +74,10 @@ class ExtendedModel(SupernovaModel):
         alpha : float
             Exponential decay factor (default: 2.66)
         """
-        for t in ts:
+        #- Select times after the end of the model
+        select = ts > self.time
+
+        for t in ts[select]:
             self.time = np.append(self.time, t)
             for flavor in Flavor:
                 L_ext = self.get_extended_luminosity(t, k = k, A = A, tau_c = tau_c, alpha = alpha, flavor = flavor)
