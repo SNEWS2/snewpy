@@ -39,7 +39,7 @@ Concrete transformations
 from snewpy.flavor import FlavorMatrix, ThreeFlavor
 from . import in_sn, in_earth, in_vacuum
 from .base import FlavorTransformation
-from .transforms import TransformationChain
+from .TransformationChain import TransformationChain
 
 # define default values for backward compatibility
 AdiabaticMSW = TransformationChain(in_sn.AdiabaticMSW())
