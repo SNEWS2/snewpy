@@ -36,11 +36,12 @@ Concrete transformations
    :members:
    :member-order: bysource
 """
+from snewpy.flavor import FlavorMatrix, ThreeFlavor
 from . import in_sn, in_earth, in_vacuum
-from .transforms import NoTransformation, CompleteExchange, ThreeFlavorDecoherence, FlavorTransformation
+from .base import FlavorTransformation
 from .transforms import TransformationChain
 
-#define default values for backward compatibility
+# define default values for backward compatibility
 AdiabaticMSW = TransformationChain(in_sn.AdiabaticMSW())
 NonAdiabaticMSWH = TransformationChain(in_sn.NonAdiabaticMSWH())
 AdiabaticMSWes = TransformationChain(in_sn.AdiabaticMSWes())
@@ -50,6 +51,49 @@ NeutrinoDecay = TransformationChain(in_sn.AdiabaticMSW(), in_vacuum.NeutrinoDeca
 QuantumDecoherence = TransformationChain(in_sn.AdiabaticMSW(), in_vacuum.QuantumDecoherence())
 EarthMatter = lambda mixing_params,AltAz: TransformationChain(
     in_sn.AdiabaticMSW(),
-    in_earth=in_earth.EarthMatter(SNAltAz=AltAz), 
+    in_earth=in_earth.EarthMatter(SNAltAz=AltAz),
     mixing_params=mixing_params
 )
+
+
+# Phenomenological transformations that cannot be represented as a TransformationChain
+class NoTransformation(FlavorTransformation):
+    """Survival probabilities for no oscillation case."""
+
+    def P_ff(self, t, E):
+        r"""This transformation returns the object without transform,
+        so the transformation probability matrix is unit:
+        
+        .. math::
+        
+            P_{\alpha\beta} = I_{\alpha\beta}
+        """
+        p = FlavorMatrix.eye(ThreeFlavor)
+        return p
+
+    def apply(self, flux):
+        return flux
+
+
+class CompleteExchange(FlavorTransformation):
+    """Survival probabilities for the case when the electron flavors
+       are half exchanged with the mu flavors and the half with the tau flavors.
+    """
+
+    def P_ff(self, t, E):
+        @FlavorMatrix.from_function(ThreeFlavor)
+        def P(f1, f2):
+            return (f1.is_neutrino == f2.is_neutrino)*(f1 != f2)*0.5
+
+        return P
+
+
+class ThreeFlavorDecoherence(FlavorTransformation):
+    """Equal mixing of all threen eutrino matter states and antineutrino matter states"""
+
+    def P_ff(self, t, E):
+        """Equal mixing so Earth matter has no effect"""
+        @FlavorMatrix.from_function(ThreeFlavor)
+        def P(f1, f2):
+            return (f1.is_neutrino == f2.is_neutrino)*1/3.
+        return P
