@@ -10,9 +10,13 @@ from .base import FlavorTransformation
 from .in_sn import SNTransformation
 from .in_vacuum import VacuumTransformation, NoVacuumTransformation
 from .in_earth import EarthTransformation, NoEarthMatter
+from collections import namedtuple
 
+#a tuple to hold the transformations list
+TransformationsTuple = namedtuple('TransformationsTuple',['in_sn','in_vacuum','in_earth'])
 
 class TransformationChain(FlavorTransformation):
+    
     r"""This class calculates the probability matrix :math:`P_{\beta\alpha}` of the :math:`\nu_\alpha\to\nu_\beta` flavor transition as multiplication of :math:`P^{SN}` transformation in SN, :math:`P^{Vac}` transformation in vacuum and :math:`P^{Earth}` transformation in Earth:
 
     .. math::
@@ -42,10 +46,7 @@ class TransformationChain(FlavorTransformation):
             Neutrino mixing parameters (to be applied to all individual transformations in chain)
             By default use standard `MixingParameters` with normal neutrino ordering
         """
-        self.in_sn = in_sn
-        self.in_vacuum = in_vacuum
-        self.in_earth = in_earth
-        self.transforms = [in_sn, in_vacuum, in_earth]
+        self.transforms = TransformationsTuple(in_sn, in_vacuum, in_earth)
         self.set_mixing_params(mixing_params)
     
     def set_mixing_params(self, mixing_params):
@@ -61,8 +62,9 @@ class TransformationChain(FlavorTransformation):
         return self
         
     def P_ff(self, t, E)->FlavorMatrix:
-        in_sn, in_vacuum, in_earth = self.transforms
-        return in_earth.P_fm(t,E) @ in_vacuum.P_mm(t,E) @ in_sn.P_mf(t,E)
+        return self.transforms.in_earth.P_fm(t,E) @ \
+               self.transforms.in_vacuum.P_mm(t,E) @ \
+               self.transforms.in_sn.P_mf(t,E)
     
     def __str__(self):
         s = '+'.join([t.__class__.__name__ for t in self.transforms])+'_'+self.mixing_params.mass_order.name
