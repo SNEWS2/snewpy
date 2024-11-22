@@ -170,7 +170,7 @@ class TestFlavorTransformations:
         xform = xforms.TransformationChain(xforms.in_sn.AdiabaticMSWes(), mixing_params=mixpars)
         #test the probability matrix shape
         U2 = xform.mixing_params.Pmf_HighDensityLimit().T
-        P_SN = xform.in_sn.P_mf(t,E)
+        P_SN = xform.transforms.in_sn.P_mf(t,E)
         #check with eq (A48) from snewpy_v2.0 paper
         assert np.allclose(P_SN['NU','NU'], 
                            [[0, U2['mu','1'], U2['tau','1'],0],
@@ -219,7 +219,7 @@ class TestFlavorTransformations:
         xform = xforms.TransformationChain(xforms.in_sn.AdiabaticMSWes(), mixing_params=mixpars)
         #test the probability matrix shape
         U2 = xform.mixing_params.Pmf_HighDensityLimit().T
-        P_SN = xform.in_sn.P_mf(t,E)
+        P_SN = xform.transforms.in_sn.P_mf(t,E)
         #check with eq (A50) from snewpy_v2.0 paper
         assert np.allclose(P_SN['NU','NU'], 
                            [[0, U2['mu','1'], U2['tau','1'],0],
@@ -267,7 +267,7 @@ class TestFlavorTransformations:
         xform = xforms.TransformationChain(xforms.in_sn.NonAdiabaticMSWes(), mixing_params=mixpars)
         #test the probability matrix shape
         U2 = xform.mixing_params.Pmf_HighDensityLimit().T
-        P_SN = xform.in_sn.P_mf(t,E)
+        P_SN = xform.transforms.in_sn.P_mf(t,E)
         #check with eq (A52) from snewpy_v2.0 paper
         assert np.allclose(P_SN['NU','NU'], 
                            [[0, U2['mu','1'], U2['tau','1'],0],
@@ -309,7 +309,7 @@ class TestFlavorTransformations:
         xform = xforms.TransformationChain(xforms.in_sn.NonAdiabaticMSWes(), mixing_params=mixpars)
         #test the probability matrix shape
         U2 = xform.mixing_params.Pmf_HighDensityLimit().T
-        P_SN = xform.in_sn.P_mf(t,E)
+        P_SN = xform.transforms.in_sn.P_mf(t,E)
         #check with eq (A54) from snewpy_v2.0 paper
         assert np.allclose(P_SN['NU','NU'], 
                            [[0, U2['mu','1'], U2['tau','1'],0],
@@ -354,7 +354,7 @@ class TestFlavorTransformations:
         
         #test the probability matrix shape
         U2 = xform.mixing_params.Pmf_HighDensityLimit().T
-        P_SN = xform.in_sn.P_mf(t,E)
+        P_SN = xform.transforms.in_sn.P_mf(t,E)
         #check with eq (A29) from snewpy_v2.0 paper
         assert np.allclose(P_SN['NU','NU'], 
                            [
@@ -392,7 +392,7 @@ class TestFlavorTransformations:
         xform = xforms.TransformationChain(xforms.in_sn.TwoFlavorDecoherence(), mixing_params=mixpars)
         #test the probability matrix shape
         U2 = xform.mixing_params.Pmf_HighDensityLimit().T
-        P_SN = xform.in_sn.P_mf(t,E)
+        P_SN = xform.transforms.in_sn.P_mf(t,E)
         #check with eq (A30) from snewpy_v2.0 paper
         assert np.allclose(P_SN['NU_BAR','NU_BAR'], 
                            [
@@ -454,7 +454,7 @@ class TestFlavorTransformations:
                                            mixing_params=mixpars)
 
         #test the probability matrix shape
-        P_V = xform.in_vacuum.P_mm(t,E[0])
+        P_V = xform.transforms.in_vacuum.P_mm(t,E[0])
         #check with eq (8) from snewpy_v2.0 paper
         assert np.allclose(P_V['NU','NU'], 
                            [
@@ -503,7 +503,7 @@ class TestFlavorTransformations:
                                            in_vacuum=xforms.in_vacuum.NeutrinoDecay(mass=mass, tau=lifetime, dist=distance),
                                            mixing_params=mixpars)
         #test the probability matrix shape
-        P_V = xform.in_vacuum.P_mm(t,E[0])
+        P_V = xform.transforms.in_vacuum.P_mm(t,E[0])
         #check with eq (9) from snewpy_v2.0 paper
         assert np.allclose(P_V['NU_BAR','NU_BAR'], 
                            [
@@ -557,7 +557,7 @@ class TestFlavorTransformations:
                                                             E0=energy_ref),
             mixing_params=mixpars)
         #check the flavor transformation matrix
-        Pmm = xform.in_vacuum.P_mm(t, E)
+        Pmm = xform.transforms.in_vacuum.P_mm(t, E)
         x = (E/energy_ref)**n
         # Test computation survival and transition probabilities of mass states.
         #check with the formulas (10-13) in snewpy v2.0 paper
@@ -628,7 +628,7 @@ class TestFlavorTransformations:
                                                             E0=energy_ref),
             mixing_params=mixpars)
         #check the flavor transformation matrix
-        Pmm = xform.in_vacuum.P_mm(t, E)
+        Pmm = xform.transforms.in_vacuum.P_mm(t, E)
         x = (E/energy_ref)**n
         # Test computation survival and transition probabilities of mass states.
         #check with the formulas (10-13) in snewpy v2.0 paper
