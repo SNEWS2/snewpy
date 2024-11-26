@@ -33,7 +33,7 @@ from astropy import units as u
 
 import snewpy.models
 from snewpy.flavor_transformation import *
-from snewpy.neutrino import MassHierarchy
+from snewpy.neutrino import MassHierarchy, MixingParameters
 from snewpy.rate_calculator import RateCalculator, center
 from snewpy.flux import Container
 logger = logging.getLogger(__name__)

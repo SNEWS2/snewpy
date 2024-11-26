@@ -7,8 +7,7 @@ from dataclasses import dataclass
 import numpy as np
 from collections.abc import Mapping
 
-from .flavor import ThreeFlavor as Flavor
-from .flavor import TwoFlavor, ThreeFlavor
+from .flavor import ThreeFlavor as Flavor # unused import needed for backward compatibility (see example notebooks)
 from .flavor import FlavorScheme, FlavorMatrix
 
 
@@ -225,7 +224,7 @@ class FourFlavorMixingParameters(ThreeFlavorMixingParameters):
     ..Note: it is an extension of :class:`ThreeFlavorMixingParameters`, and can be constructed using it:
     
         >>> pars_3f = ThreeFlavorMixingParameters() #standard 3flavor mixing
-        >>> pars_4f = FpourFlavorMixingParameters(**pars_3f, theta14=90<<u.deg, dm41_2=1<<u.GeV**2)
+        >>> pars_4f = FourFlavorMixingParameters(**pars_3f, theta14=90<<u.deg, dm41_2=1<<u.GeV**2)
     """
     #sterile neutrino mixing angles. 
     theta14: u.Quantity[u.deg] = 0<<u.deg
@@ -278,7 +277,7 @@ class FourFlavorMixingParameters(ThreeFlavorMixingParameters):
         return (self.dm21_2, self.dm31_2, self.dm32_2, self.dm41_2, self.dm42_2, self.dm43_2)
 
     def VacuumMixingMatrix(self):
-        """The vacuum mixing matrix given the mixing paramters
+        """The vacuum mixing matrix given the mixing parameters
            N.B. This is a 8 x 8 matrix
         """
 
