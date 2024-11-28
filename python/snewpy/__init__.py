@@ -19,7 +19,7 @@ except ModuleNotFoundError:
 
 src_path = os.path.realpath(__path__[0])
 base_path = os.sep.join(src_path.split(os.sep)[:-2])
-model_path = os.path.join(get_cache_dir(), 'snewpy/models')
+model_path = os.path.join(get_cache_dir(), 'snewpy', 'models')
 
 def get_models(models=None, download_dir=None):
     """Download model files from the snewpy repository.

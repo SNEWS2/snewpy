@@ -88,7 +88,7 @@ class GarchingArchiveModel(PinchedModel):
                 'EOS': eos,
             }
         super().__init__(simtab, metadata)
-        
+
 class Nakazato_2013(PinchedModel):
     def __init__(self, filename, metadata={}):
         """Model initialization.
@@ -209,7 +209,6 @@ class OConnor_2015(PinchedModel):
 
 class Zha_2021(OConnor_2015):
     pass
-
 
 class Warren_2020(PinchedModel):
     def __init__(self, filename, metadata={}):
@@ -869,3 +868,102 @@ class Mori_2023(PinchedModel):
 
         super().__init__(simtab, metadata)
 
+
+class Bugli_2021(PinchedModel):
+    """Model based on `Buggli (2021) <https://arxiv.org/abs/2105.00665>`_.
+    """
+
+    def __init__(self, filename, metadata={}):
+        """
+        Parameters
+        ----------
+        filename : str
+            Absolute or relative path to FITS file with model data.
+        """
+
+        datafile = self.request_file(filename)
+        simtab = Table.read(datafile,
+                            names=['TIME', 'L_NU_E', 'L_NU_E_BAR', 'L_NU_X',
+                                    'E_NU_E', 'E_NU_E_BAR', 'E_NU_X',
+                                    'RMS_NU_E', 'RMS_NU_E_BAR', 'RMS_NU_X'],
+                            format='ascii')
+
+        simtab['ALPHA_NU_E'] = (2.0*simtab['E_NU_E']**2 - simtab['RMS_NU_E']**2) / \
+            (simtab['RMS_NU_E']**2 - simtab['E_NU_E']**2)
+        simtab['ALPHA_NU_E_BAR'] = (2.0*simtab['E_NU_E_BAR']**2 - simtab['RMS_NU_E_BAR']**2) / \
+            (simtab['RMS_NU_E_BAR']**2 - simtab['E_NU_E_BAR']**2)
+        simtab['ALPHA_NU_X'] = (2.0*simtab['E_NU_X']**2 - simtab['RMS_NU_X']**2) / \
+            (simtab['RMS_NU_X']**2 - simtab['E_NU_X']**2)
+
+        self.filename = os.path.basename(filename)
+
+        super().__init__(simtab, metadata)
+
+
+class Fischer_2020(PinchedModel):
+    def __init__(self, filename, metadata={}):
+        """
+        Parameters
+        ----------
+        filename : str
+            Absolute or relative path to file
+        """
+        # Open the requested filename using the model downloader.
+        datafile = self.request_file(filename)
+        self.metadata = metadata
+
+        # Open the requested filename using the model downloader.
+        # datafile = _model_downloader.get_model_data(self.__class__.__name__, filename)
+        # self.filename = os.path.basename(filename)
+
+        simtab = Table()
+
+        tf = tarfile.open(datafile)
+
+        # Open luminosity file
+        with tf.extractfile("luminosity.dat") as Lfile:
+             Ldata = np.genfromtxt(Lfile, skip_header=2)
+
+             simtab['TIME'] = Ldata[:, 0]
+
+             simtab['L_NU_E'] = Ldata[:, 1]
+             simtab['L_NU_E_BAR'] = Ldata[:, 2]
+             simtab['L_NU_X'] = Ldata[:, 3]
+             simtab['L_NU_X_BAR'] = Ldata[:, 4]
+
+             Lfile.close()
+
+        # Open mean energy file
+        with tf.extractfile("menergy.dat") as Efile:
+            Edata = np.genfromtxt(Efile, skip_header=2)
+
+            simtab['E_NU_E'] = Edata[:, 1] << u.MeV
+            simtab['E_NU_E_BAR'] = Edata[:, 2] << u.MeV
+            simtab['E_NU_X'] = Edata[:, 3] << u.MeV
+            simtab['E_NU_X_BAR'] = Edata[:, 4] << u.MeV
+
+            Efile.close()
+
+        # Open rms energy file
+        with tf.extractfile("rmsenergy.dat") as RMSEfile:
+            RMSEdata = np.genfromtxt(RMSEfile, skip_header=2)
+
+            simtab['RMS_NU_E'] = RMSEdata[:, 1] << u.MeV
+            simtab['RMS_NU_E_BAR'] = RMSEdata[:, 2] << u.MeV
+            simtab['RMS_NU_X'] = RMSEdata[:, 3] << u.MeV
+            simtab['RMS_NU_X_BAR'] = RMSEdata[:, 4] << u.MeV
+
+            RMSEfile.close()
+
+        simtab['ALPHA_NU_E'] = (2.0 * simtab['E_NU_E'] ** 2 - simtab['RMS_NU_E'] ** 2) / \
+            (simtab['RMS_NU_E'] ** 2 - simtab['E_NU_E'] ** 2)
+        simtab['ALPHA_NU_E_BAR'] = (2.0 * simtab['E_NU_E_BAR'] ** 2 - simtab['RMS_NU_E_BAR'] ** 2) / \
+            (simtab['RMS_NU_E_BAR'] ** 2 - simtab['E_NU_E_BAR'] ** 2)
+        simtab['ALPHA_NU_X'] = (2.0 * simtab['E_NU_X'] ** 2 - simtab['RMS_NU_X'] ** 2) / \
+            (simtab['RMS_NU_X'] ** 2 - simtab['E_NU_X'] ** 2)
+        simtab['ALPHA_NU_X_BAR'] = (2.0 * simtab['E_NU_X_BAR'] ** 2 - simtab['RMS_NU_X_BAR'] ** 2) / \
+            (simtab['RMS_NU_X_BAR'] ** 2 - simtab['E_NU_X_BAR'] ** 2)
+
+        tf.close()
+
+        super().__init__(simtab, metadata)
