@@ -37,6 +37,8 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
+        with:
+          fetch-tags: true
 
       # Set up the Python environment and dependencies
       - name: Set up Python ${{ matrix.python-version }}
