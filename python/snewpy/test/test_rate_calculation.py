@@ -5,6 +5,7 @@ from snewpy.models import ccsn
 from snewpy.rate_calculator import RateCalculator
 
 from snewpy import flavor_transformation as ft
+from snewpy.neutrino import MixingParameters
 pytestmark=pytest.mark.snowglobes
 
 #numbers from SNEWSv2 paper - for approximate checks 
@@ -39,10 +40,10 @@ def fluence(snmodel):
     times    = snmodel.get_time()
     energies = np.linspace(0.5,100,201)<<u.MeV
     #get the flux from the model
-    flux = snmodel.get_flux(t=times, E=energies, distance=10<<u.kpc, flavor_xform=ft.AdiabaticMSW())
+    flux = snmodel.get_flux(t=times, E=energies, distance=10<<u.kpc, 
+                            flavor_xform=ft.AdiabaticMSW(MixingParameters('NORMAL')))
     return flux.integrate('time')
 
-@pytest.mark.xfail(reason="Fluence calculation uses `get_transformed_flux`, which is currently hard coded to a TwoFlavor scheme.", raises=AttributeError)
 @pytest.mark.parametrize('detector, expected_total',crosscheck_table_unsmeared)
 def test_rate_unsmeared(rc, fluence, detector, expected_total):    
     #calculate the event rates
@@ -53,7 +54,7 @@ def test_rate_unsmeared(rc, fluence, detector, expected_total):
     #check the final value
     assert N_total == pytest.approx(expected_total, 0.01)
     
-@pytest.mark.xfail(reason="Fluence calculation uses `get_transformed_flux`, which is currently hard coded to a TwoFlavor scheme.", raises=AttributeError)
+
 @pytest.mark.parametrize('detector, expected_total',crosscheck_table)
 def test_rate_smeared(rc, fluence, detector, expected_total):
     #calculate the event rates
