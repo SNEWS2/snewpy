@@ -10,7 +10,7 @@ from astropy.units.quantity import Quantity
 from scipy.special import loggamma
 from snewpy._model_downloader import LocalFileLoader
 
-from snewpy.neutrino import Flavor, ThreeFlavor
+from snewpy.flavor import ThreeFlavor
 from snewpy.flavor_transformation import NoTransformation
 from functools import wraps
 
@@ -99,7 +99,7 @@ class SupernovaModel(ABC, LocalFileLoader):
         return self.time
 
     @abstractmethod
-    def get_initial_spectra(self, t, E, flavors=Flavor):
+    def get_initial_spectra(self, t, E, flavors=ThreeFlavor):
         """Get neutrino spectra at the source.
 
         Parameters
@@ -220,30 +220,15 @@ class PinchedModel(SupernovaModel):
         self.luminosity = {}
         self.meanE = {}
         self.pinch = {}
-        for f in Flavor:
+        for f in ThreeFlavor:
             self.luminosity[f] = simtab[f'L_{f.name}'] << u.erg/u.s
             self.meanE[f] = simtab[f'E_{f.name}'] << u.MeV
             self.pinch[f] = simtab[f'ALPHA_{f.name}']
         super().__init__(time, metadata)
 
 
-    def get_initial_spectra(self, t, E, flavors=Flavor):
-        """Get neutrino spectra/luminosity curves before oscillation.
+    def get_initial_spectra(self, t, E, flavors=ThreeFlavor):
 
-        Parameters
-        ----------
-        t : astropy.Quantity
-            Time to evaluate initial spectra.
-        E : astropy.Quantity or ndarray of astropy.Quantity
-            Energies to evaluate the initial spectra.
-        flavors: iterable of snewpy.neutrino.Flavor
-            Return spectra for these flavors only (default: all)
-
-        Returns
-        -------
-        initialspectra : dict
-            Dictionary of model spectra, keyed by neutrino flavor.
-        """
         #convert input arguments to 1D arrays
         t = u.Quantity(t, ndmin=1)
         E = u.Quantity(E, ndmin=1)
