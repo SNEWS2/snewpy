@@ -29,10 +29,10 @@ jobs:
         pip install .
         PYTHON_VERSION=`python -c 'import snewpy; print(snewpy.__version__)'`
         echo "PYTHON_VERSION=${PYTHON_VERSION}"
-        GIT_VERSION=${GITHUB_REF/refs\/tags\/v/}
+        GIT_VERSION=${GITHUB_REF/refs\/tags\//}
         echo "GIT_VERSION=${GIT_VERSION}"
-        if [ $PYTHON_VERSION != $GIT_VERSION ]; then exit 1; fi
-        echo "VERSION=${PYTHON_VERSION}" >> $GITHUB_OUTPUT
+        if [ v$PYTHON_VERSION != $GIT_VERSION ]; then exit 1; fi
+        echo "VERSION=${GIT_VERSION}" >> $GITHUB_OUTPUT
 
     - name: Build and publish
       env:
