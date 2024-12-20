@@ -1,0 +1,14 @@
+[project]
+name = "snewpy"
+description = "A Python package for working with supernova neutrinos"
+authors = [{ name = "SNEWS Collaboration", email = "snews2.0@lists.bnl.gov" }]
+license = { text = "BSD" }
+readme = {file = "README.md", content-type = "text/markdown"}
+
+requires-python = ">=3.9"
+
+[project.urls]
+"Homepage" = "https://github.com/SNEWS2/snewpy"
+"Bug Tracker" = "https://github.com/SNEWS2/snewpy/issues"
+
+
