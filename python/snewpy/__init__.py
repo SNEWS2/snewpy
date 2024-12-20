@@ -7,7 +7,6 @@ snewpy
 Front-end for supernova models which provide neutrino luminosity and spectra.
 """
 
-from ._version import __version__
 from sys import exit
 import os
 
@@ -16,6 +15,10 @@ try:
 except ModuleNotFoundError:
     # when imported by setup.py before dependencies are installed
     get_cache_dir = lambda: '.'
+
+
+__version__ = '1.6b1'
+
 
 src_path = os.path.realpath(__path__[0])
 base_path = os.sep.join(src_path.split(os.sep)[:-2])
