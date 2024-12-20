@@ -27,16 +27,6 @@ setup_keywords['package_data'] = {'':['templates/*.glb', 'models/*.yml']}
 setup_keywords['cmdclass'] = {'version': SetVersion}
 setup_keywords['test_suite']='snewpy.test.snewpy_test_suite.snewpy_test_suite'
 
-requires = []
-with open('requirements.txt', 'r') as f:
-    for line in f:
-        if line.strip():
-            requires.append(line.strip())
-setup_keywords['install_requires'] = requires
-setup_keywords['extras_require'] = {  # Optional
-    'dev': ['pytest','hypothesis'],
-    'docs':['numpydoc']
-}
 #
 # Internal data directories.
 #

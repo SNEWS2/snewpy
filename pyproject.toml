@@ -7,6 +7,23 @@ readme = {file = "README.md", content-type = "text/markdown"}
 
 requires-python = ">=3.9"
 
+dependencies = [
+    "numpy",
+    "scipy",
+    "astropy >= 4.3",
+    "pandas",
+    "tqdm",
+    "matplotlib",
+    "h5py",
+    "requests",
+    "pyyaml",
+    "snowglobes_data == 1.3.2"
+]
+
+[project.optional-dependencies]
+dev = ["hypothesis", "pytest"]
+docs = ["numpydoc"]
+
 [project.urls]
 "Homepage" = "https://github.com/SNEWS2/snewpy"
 "Bug Tracker" = "https://github.com/SNEWS2/snewpy/issues"
