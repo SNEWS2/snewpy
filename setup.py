@@ -4,15 +4,11 @@
 
 from setuptools import setup, find_packages
 
-# Git-based version info. Remove?
-from python.snewpy._git import get_version, SetVersion
 
 #
 # Begin setup
 #
 setup_keywords = dict()
-#
-setup_keywords['version'] = get_version()
 #
 # Set other keywords for the setup function.
 #
@@ -24,7 +20,6 @@ setup_keywords['zip_safe'] = False
 setup_keywords['packages'] = find_packages('python')
 setup_keywords['package_dir'] = {'': 'python'}
 setup_keywords['package_data'] = {'':['templates/*.glb', 'models/*.yml']}
-setup_keywords['cmdclass'] = {'version': SetVersion}
 setup_keywords['test_suite']='snewpy.test.snewpy_test_suite.snewpy_test_suite'
 
 #

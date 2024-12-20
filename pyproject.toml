@@ -1,5 +1,6 @@
 [project]
 name = "snewpy"
+dynamic = ["version"]
 description = "A Python package for working with supernova neutrinos"
 authors = [{ name = "SNEWS Collaboration", email = "snews2.0@lists.bnl.gov" }]
 license = { text = "BSD" }
@@ -29,3 +30,5 @@ docs = ["numpydoc"]
 "Bug Tracker" = "https://github.com/SNEWS2/snewpy/issues"
 
 
+[tool.setuptools.dynamic]
+version = {attr = "snewpy.__version__"}
