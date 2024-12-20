@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "snewpy"
 dynamic = ["version"]
@@ -32,3 +36,16 @@ docs = ["numpydoc"]
 
 [tool.setuptools.dynamic]
 version = {attr = "snewpy.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["python"]
+include = [
+    "snewpy",
+    "snewpy.*",
+]
+exclude = [
+    "snewpy.scripts",
+]
+
+[tool.setuptools.package-data]
+"snewpy.models" = ["*.yml"]
