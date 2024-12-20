@@ -16,17 +16,10 @@ setup_keywords = dict()
 # See https://setuptools.readthedocs.io/en/latest/userguide/entry_point.html
 # setup_keywords['entry_points'] = {'console_scripts': ['to_snowglobes = snewpy.to_snowglobes:generate_time_series', ], },
 setup_keywords['provides'] = [setup_keywords['name']]
-setup_keywords['zip_safe'] = False
 setup_keywords['packages'] = find_packages('python')
 setup_keywords['package_dir'] = {'': 'python'}
-setup_keywords['package_data'] = {'':['templates/*.glb', 'models/*.yml']}
-setup_keywords['test_suite']='snewpy.test.snewpy_test_suite.snewpy_test_suite'
+setup_keywords['package_data'] = {'':['models/*.yml']}
 
-#
-# Internal data directories.
-#
-#setup_keywords['data_files'] = [('snewpy/data/config', glob('data/config/*')),
-#                                ('snewpy/data/spectra', glob('data/spectra/*'))]
 #
 # Run setup command.
 #
