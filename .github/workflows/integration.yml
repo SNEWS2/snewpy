@@ -55,7 +55,7 @@ jobs:
         run: |
           pip install nbclient ipykernel
           jupyter kernelspec list
-          cd doc/nb/
+          cd doc/source/nb/
           jupyter execute ccsn/*.ipynb
           jupyter execute presn/*.ipynb
           jupyter execute AnalyticFluence.ipynb FlavorTransformation.ipynb
@@ -67,7 +67,7 @@ jobs:
         run: |
           pip install nbclient ipykernel
           jupyter kernelspec list
-          cd doc\nb\
+          cd doc\source\nb\
           jupyter execute (get-item ccsn\*.ipynb)
           jupyter execute (get-item presn\*.ipynb)
           jupyter execute AnalyticFluence.ipynb FlavorTransformation.ipynb

@@ -21,3 +21,8 @@ This notebook demonstrates how to use the `SNOwGLoBES` class in `snewpy.models`,
 ## SNOwGLoBES_usage
 
 This notebook demonstrates how to use SNEWPY’s `snewpy.snowglobes` module to interact with SNOwGLoBES.
+
+## `dev` Directory
+
+This directory contains notebooks which may be under development or illustrate usage of internal/undocumented APIs.
+They are not recommended for general users.
