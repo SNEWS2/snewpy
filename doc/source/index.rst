@@ -30,6 +30,7 @@ Table of Contents
    flux
    contributing
    citing
+   notebooks
 
 
 Indices and Search
