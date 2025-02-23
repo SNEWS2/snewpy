@@ -815,6 +815,53 @@ class Fornax_2022(Fornax_2021):
             self.luminosity[flavor] = np.sum(dLdE*dE, axis=1) * factor * 1e50 * u.erg/u.s
 
 
+class Fornax_2024(Fornax_2021):
+    def __init__(self, filename, metadata={}):
+        """
+        Parameters
+        ----------
+        filename : str
+            Absolute or relative path to HDF5 file with model data.
+        """
+        # Open the requested filename using the model downloader.
+        datafile = self.request_file(filename)
+        # Set up model metadata.
+        self.progenitor = os.path.splitext(os.path.basename(filename))[0].split('_')[2]
+        self.progenitor_mass = float(re.sub('[A-Za-z]', '', self.progenitor))
+
+        self.metadata = metadata
+
+        # Open HDF5 data file.
+        _h5file = h5py.File(datafile, 'r')
+
+        self.metadata['PNS mass'] = _h5file.attrs['Mpns'] * u.Msun
+        self.time = _h5file['nu0'].attrs['time'] * u.s
+
+        self.luminosity = {}
+        self._E = {}
+        self._dLdE = {}
+        for flavor in Flavor:
+            # Convert flavor to key name in the model HDF5 file
+            key = {Flavor.NU_E: 'nu0',
+                   Flavor.NU_E_BAR: 'nu1',
+                   Flavor.NU_X: 'nu2',
+                   Flavor.NU_X_BAR: 'nu2'}[flavor]
+
+            self._E[flavor] = np.asarray(_h5file[key]['egroup'])
+            self._dLdE[flavor] = {f"g{i}": np.asarray(_h5file[key][f'g{i}']) for i in range(12)}
+
+            # Compute luminosity by integrating over model energy bins.
+            dE = np.asarray(_h5file[key]['degroup'])
+            n = len(dE[0])
+            dLdE = np.zeros((len(self.time), n), dtype=float)
+            for i in range(n):
+                dLdE[:, i] = self._dLdE[flavor][f"g{i}"]
+
+            # Note factor of 0.25 in nu_x and nu_x_bar.
+            factor = 1. if flavor.is_electron else 0.25
+            self.luminosity[flavor] = np.sum(dLdE*dE, axis=1) * factor * 1e50 * u.erg/u.s
+
+
 class Mori_2023(PinchedModel):
     def __init__(self, filename, metadata={}):
         """
