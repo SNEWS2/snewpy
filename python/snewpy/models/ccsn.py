@@ -414,6 +414,7 @@ _fornax_2022_progenitors = [  '9.0',     '9.25',     '9.5',      '9.75',     '10
 
 _fornax_2022_masses = [float(p.strip('.bh')) for p in _fornax_2022_progenitors] << u.Msun
 
+
 @RegistryModel(progenitor_mass = _fornax_2022_masses )
 class Fornax_2022(loaders.Fornax_2022):
     """Model based on 2D simulations of 100 progenitors from Tianshu Wang, David Vartanyan, Adam Burrows, and Matthew S.B. Coleman, MNRAS 517:543, 2022.
@@ -425,6 +426,31 @@ class Fornax_2022(loaders.Fornax_2022):
     def __init__(self, progenitor_mass:u.Quantity):
         progenitor = self._mass_to_progenitor[progenitor_mass]
         self.metadata['Black hole'] = progenitor.endswith('.bh')
+        filename = f'lum_spec_{progenitor}_dat.h5'
+        return super().__init__(filename, self.metadata)
+
+
+_fornax_2024_progenitors = [
+                'u8.1',  '9a',    '9b',     '9.25',  '9.5',
+                'z9.6',  '11',    '12.25',  '14',    '15.01',
+                '16.5',  '16',    '17',     '18',    '18.5',
+                '19',    '19.56', '20',     '21.68', '23',
+                '24',    '25',    '40',     '60',    '100']
+
+_fornax_2024_masses = [float(re.sub('[A-Za-z]', '', p)) for p in _fornax_2024_progenitors] << u.Msun
+
+
+@RegistryModel(progenitor_mass = _fornax_2022_masses )
+class Fornax_2024(loaders.Fornax_2024):
+    """Model based on 3D simulations of 25 progenitors using the Fornax code.
+       Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d.update/
+       """
+    #a mapping of mass to the progenitor
+    _mass_to_progenitor = dict(zip(_fornax_2024_masses,_fornax_2024_progenitors))
+
+    def __init__(self, progenitor_mass:u.Quantity):
+        progenitor = self._mass_to_progenitor[progenitor_mass]
+        self.metadata['Black hole'] = progenitor == '12.25' or progenitor == '14' or progenitor == '19.56' or progenitor == '40'
         filename = f'lum_spec_{progenitor}_dat.h5'
         return super().__init__(filename, self.metadata)
 
