@@ -56,5 +56,6 @@ jobs:
 
       - name: Build HTML docs
         run: |
+          pip install nbclient ipykernel
           cd doc/
           make html
