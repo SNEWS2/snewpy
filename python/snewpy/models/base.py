@@ -140,7 +140,7 @@ class SupernovaModel(ABC, LocalFileLoader):
                                                                 time=t, 
                                                                 energy=E,  
                                                                 flavor_scheme=ThreeFlavor)
-        transformed_spectra = flavor_xform.apply(initialspectra)
+        transformed_spectra = flavor_xform.apply_to(initialspectra)
         return transformed_spectra
 
     def get_flux (self, t, E, distance, flavor_xform=NoTransformation()):
