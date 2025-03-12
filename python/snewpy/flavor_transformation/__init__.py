@@ -71,7 +71,7 @@ class NoTransformation(FlavorTransformation):
         p = FlavorMatrix.eye(ThreeFlavor)
         return p
 
-    def apply(self, flux):
+    def apply_to(self, flux):
         return flux
 
 
