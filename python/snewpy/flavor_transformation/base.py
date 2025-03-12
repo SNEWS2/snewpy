@@ -34,7 +34,7 @@ class FlavorTransformation(ABC):
         """
         pass
 
-    def apply(self, flux: Container) -> Container:
+    def apply_to(self, flux: Container) -> Container:
         r"""Apply this transformation to the given flux, return transformaed flux"""
         M = self.P_ff(flux.time, flux.energy)
         M = (flux.flavor_scheme <<M <<flux.flavor_scheme)
