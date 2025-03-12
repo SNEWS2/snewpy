@@ -50,7 +50,7 @@ class Odrzywolek_2010(SupernovaModel):
         # interpolated in time
         self.df_t = _interp_T(df.index, df)
         self.factor = {}
-        for f in Flavor:
+        for f in ThreeFlavor:
             if f.is_electron:
                 self.factor[f] = 1.0
             else:
@@ -84,19 +84,19 @@ class Patton_2017(SupernovaModel):
             self.request_file(filename),
             comment="#",
             sep=r'\s+',
-            names=["time","Enu"]+ThreeFlavor[['e','e_bar','mu','mu_bar']],
+            names=["time","Enu", "NU_E", "NU_E_BAR", "NU_MU", "NU_MU_BAR"],
             usecols=range(6),
         )
 
-        df[Flavor.NU_TAU] = df[Flavor.NU_MU]
-        df[Flavor.NU_TAU_BAR] = df[Flavor.NU_MU_BAR]
+        df["NU_TAU"] = df["NU_MU"]
+        df["NU_TAU_BAR"] = df["NU_MU_BAR"]
 
         df = df.set_index(["time", "Enu"])
         times = df.index.levels[0].to_numpy()
         energies = df.index.levels[1].to_numpy()
         df = df.unstack("Enu")
         # make a 3d array
-        self.array = np.stack([df[f] for f in Flavor], axis=0)
+        self.array = np.stack([df[f.name] for f in ThreeFlavor], axis=0)
         self.interpolated = _interp_TE(
             times, energies, self.array, ax_t=1, ax_e=2
         )
