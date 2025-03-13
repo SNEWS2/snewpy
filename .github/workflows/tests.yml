@@ -53,13 +53,3 @@ jobs:
       - name: Run unit tests with pytest
         run: |
           pytest -m 'not snowglobes'
-
-      - uses: r-lib/actions/setup-pandoc@v2
-
-      - name: Build HTML docs
-        run: |
-          which pandoc
-          pandoc --version
-          pip install nbclient ipykernel
-          cd doc/
-          make html
