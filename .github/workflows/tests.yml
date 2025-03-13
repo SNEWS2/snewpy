@@ -48,7 +48,7 @@ jobs:
           python -m pip install --upgrade pip
       - name: Install SNEWPY
         run: |
-          pip install ".[dev,docs]"
+          pip install ".[dev]"
       
       - name: Run unit tests with pytest
         run: |
