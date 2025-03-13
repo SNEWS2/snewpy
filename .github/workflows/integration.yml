@@ -45,7 +45,7 @@ jobs:
           python -m pip install --upgrade pip
       - name: Install SNEWPY
         run: |
-          pip install ".[dev]"
+          pip install ".[dev,docs]"
       - name: Run Integration Tests
         run: |
           python -m unittest python/snewpy/test/simplerate_integrationtest.py
