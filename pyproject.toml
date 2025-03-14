@@ -27,7 +27,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["hypothesis", "pytest"]
-docs = ["numpydoc", "nbsphinx", "ipykernel"]
+docs = ["numpydoc", "nbsphinx", "ipykernel", "tqdm[notebook]"]
 
 [project.urls]
 "Homepage" = "https://github.com/SNEWS2/snewpy"
