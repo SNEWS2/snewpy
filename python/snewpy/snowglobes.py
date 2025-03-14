@@ -296,7 +296,11 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="", skip_plots=False, ve
         #rearrange the table to have only channel column
         levels = list(table.columns.names)
         levels.remove('channel')
-        t = table.stack(levels)
+        if pd.__version__ < '2.1':
+            t = table.stack(levels)
+        else:
+            # Avoid FutureWarning, see https://pandas.pydata.org/docs/whatsnew/v2.1.0.html#new-implementation-of-dataframe-stack
+            t = table.stack(levels, future_stack=True)
         for name,pattern in patterns.items():
             #get channels which contain `like`
             t_sel = t.filter(like=pattern)
