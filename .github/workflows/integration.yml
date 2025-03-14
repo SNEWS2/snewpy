@@ -54,7 +54,5 @@ jobs:
 
       - name: Build HTML docs
         run: |
-          # Download necessary progenitor file, before executing the notebook
-          python -c 'from snewpy.models.ccsn import Zha_2021; from astropy import units as u; _ = Zha_2021(progenitor_mass=17*u.solMass)'
           cd doc/
           make html
