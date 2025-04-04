@@ -74,8 +74,8 @@ class ExtendedModel(SupernovaModel):
         alpha : float
             Exponential decay factor (default: 2.66)
         """
-        #- Select times after the end of the model
-        select = ts > self.time
+        # Select times after the end of the model
+        select = ts > self.t_final
 
         for t in ts[select]:
             self.time = np.append(self.time, t)
