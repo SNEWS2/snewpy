@@ -84,27 +84,3 @@ class ExtendedModel(SupernovaModel):
                 self.luminosity[flavor] = np.append(self.luminosity[flavor], L_ext)
                 self.meanE[flavor] = np.append(self.meanE[flavor], self.meanE[flavor][-1])
                 self.pinch[flavor] = np.append(self.pinch[flavor], self.pinch[flavor][-1])
-
-    def get_integrated_luminosity(self, m_PNS, SRT, alpha, beta, gamma):
-        """Get integrated neutrino luminosity from shock revival time to 20 s.
-
-        Parameters
-        ----------
-        m_PNS : astropy.Quantity
-            Mass of the proto-neutron star.
-        SRT : astropy.Quantity
-            Shock revival time.
-        alpha : float
-            First cooling tail model parameter.
-        beta : float
-            Second cooling tail model parameter.
-        gamma : float
-            Third cooling tail model parameter.
-
-        Returns
-        -------
-        astropy.Quantity
-            Integrated luminosity calculated from Ekanger et al. (2023) model.
-        """
-        logE = (m_PNS.value * alpha) + (SRT.value * beta) + gamma
-        return (10**logE) * u.erg
