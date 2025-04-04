@@ -29,7 +29,7 @@ class ExtendedModel(SupernovaModel):
         """Get neutrino spectra/luminosity curves before oscillation"""
         return self._get_initial_spectra(*args, **kwargs)
 
-    def get_extended_luminosity(self, t, k=-1., A=1e51 * u.erg/u.s, tau_c=36. * u.s, alpha=2.66, flavor = Flavor.NU_E):
+    def get_extended_luminosity(self, t, k=-1., A=None, tau_c=36. * u.s, alpha=2.66, flavor = Flavor.NU_E):
         """Get neutrino luminosity from supernova cooling tail luminosity model.
 
         Parameters
@@ -39,7 +39,7 @@ class ExtendedModel(SupernovaModel):
         k : float
             Power law factor (default: -1)
         A : astropy.Quantity
-            Normalization factor (default: 1e51 erg/s)
+            Normalization factor (default: None, automatically match original model data)
         tau_c : astropy.Quantity
             Exponential decay characteristic timescale (default: 36 s)
         alpha : float
@@ -58,7 +58,7 @@ class ExtendedModel(SupernovaModel):
             A = Lf / (tf.value**k * np.exp(-(tf/tau_c)**alpha))
         return A * t.value**k * np.exp(-(t/tau_c)**alpha)
 
-    def extend(self, ts, k=-1., A=1e51 * u.erg/u.s, tau_c=36. * u.s, alpha=2.66):
+    def extend(self, ts, k=-1., A=None, tau_c=36. * u.s, alpha=2.66):
         """Extend supernova model to specific times.
 
         Parameters
@@ -68,7 +68,7 @@ class ExtendedModel(SupernovaModel):
         k : float
             Power law factor (default: -1)
         A : astropy.Quantity
-            Normalization factor (default: None)
+            Normalization factor (default: None, automatically match original model data)
         tau_c : astropy.Quantity
             Exponential decay characteristic timescale (default: 36 s)
         alpha : float
