@@ -29,7 +29,7 @@ class ExtendedModel(SupernovaModel):
         """Get neutrino spectra/luminosity curves before oscillation"""
         return self._get_initial_spectra(*args, **kwargs)
 
-    def get_extended_luminosity(self, t, k=-1., A=1e51 * u.erg/u.s, tau_c=36. * u.s, alpha=2.66, flavor = Flavor.NU_E):
+    def get_extended_luminosity(self, t, k=-1., A=None, tau_c=36. * u.s, alpha=2.66, flavor = Flavor.NU_E):
         """Get neutrino luminosity from supernova cooling tail luminosity model.
 
         Parameters
@@ -39,7 +39,7 @@ class ExtendedModel(SupernovaModel):
         k : float
             Power law factor (default: -1)
         A : astropy.Quantity
-            Normalization factor (default: 1e51 erg/s)
+            Normalization factor (default: None, automatically match original model data)
         tau_c : astropy.Quantity
             Exponential decay characteristic timescale (default: 36 s)
         alpha : float
@@ -58,7 +58,7 @@ class ExtendedModel(SupernovaModel):
             A = Lf / (tf.value**k * np.exp(-(tf/tau_c)**alpha))
         return A * t.value**k * np.exp(-(t/tau_c)**alpha)
 
-    def extend(self, ts, k=-1., A=1e51 * u.erg/u.s, tau_c=36. * u.s, alpha=2.66):
+    def extend(self, ts, k=-1., A=None, tau_c=36. * u.s, alpha=2.66):
         """Extend supernova model to specific times.
 
         Parameters
@@ -68,40 +68,19 @@ class ExtendedModel(SupernovaModel):
         k : float
             Power law factor (default: -1)
         A : astropy.Quantity
-            Normalization factor (default: None)
+            Normalization factor (default: None, automatically match original model data)
         tau_c : astropy.Quantity
             Exponential decay characteristic timescale (default: 36 s)
         alpha : float
             Exponential decay factor (default: 2.66)
         """
-        for t in ts:
+        # Select times after the end of the model
+        select = ts > self.t_final
+
+        for t in ts[select]:
             self.time = np.append(self.time, t)
             for flavor in Flavor:
                 L_ext = self.get_extended_luminosity(t, k = k, A = A, tau_c = tau_c, alpha = alpha, flavor = flavor)
                 self.luminosity[flavor] = np.append(self.luminosity[flavor], L_ext)
                 self.meanE[flavor] = np.append(self.meanE[flavor], self.meanE[flavor][-1])
                 self.pinch[flavor] = np.append(self.pinch[flavor], self.pinch[flavor][-1])
-
-    def get_integrated_luminosity(self, m_PNS, SRT, alpha, beta, gamma):
-        """Get integrated neutrino luminosity from shock revival time to 20 s.
-
-        Parameters
-        ----------
-        m_PNS : astropy.Quantity
-            Mass of the proto-neutron star.
-        SRT : astropy.Quantity
-            Shock revival time.
-        alpha : float
-            First cooling tail model parameter.
-        beta : float
-            Second cooling tail model parameter.
-        gamma : float
-            Third cooling tail model parameter.
-
-        Returns
-        -------
-        astropy.Quantity
-            Integrated luminosity calculated from Ekanger et al. (2023) model.
-        """
-        logE = (m_PNS.value * alpha) + (SRT.value * beta) + gamma
-        return (10**logE) * u.erg
