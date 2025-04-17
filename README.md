@@ -55,7 +55,7 @@ flux = bollig.get_flux(times, energies, distance=10*u.kpc, flavor_xform=msw_nmo)
 
 You can also calculate the observed event rate in all neutrino detectors supported by SNOwGLoBES, use the included SN models and flavor transformations in third-party code (like event generators), and much more.
 
-Jupyter notebooks showcasing the downloadable supernova models available through SNEWPY and much of its functionality are available in the `doc/nb/` subfolder.
+Jupyter notebooks showcasing the downloadable supernova models available through SNEWPY and much of its functionality are available in the `doc/source/nb/` subfolder.
 Additional example scripts are in the
 `python/snewpy/scripts/` subfolder.
 
