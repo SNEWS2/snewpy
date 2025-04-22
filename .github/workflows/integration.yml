@@ -45,32 +45,14 @@ jobs:
           python -m pip install --upgrade pip
       - name: Install SNEWPY
         run: |
-          pip install ".[dev]"
+          pip install ".[dev,docs]"
       - name: Run Integration Tests
         run: |
           python -m unittest python/snewpy/test/simplerate_integrationtest.py
           pytest -m 'snowglobes'
-      - name: Run Jupyter notebooks
-        if: ${{ ! startsWith(matrix.os, 'windows') }}
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - name: Build HTML docs
         run: |
-          pip install nbclient ipykernel
-          jupyter kernelspec list
-          cd doc/nb/
-          jupyter execute ccsn/*.ipynb
-          jupyter execute presn/*.ipynb
-          jupyter execute AnalyticFluence.ipynb FlavorTransformation.ipynb
-          # Download necessary progenitor file, before executing the notebook
-          python -c 'from snewpy.models.ccsn import Zha_2021; from astropy import units as u; _ = Zha_2021(progenitor_mass=17*u.solMass)'
-          jupyter execute SNOwGLoBES_usage.ipynb
-      - name: Run Jupyter notebooks on Windows
-        if: ${{ startsWith(matrix.os, 'windows') }}
-        run: |
-          pip install nbclient ipykernel
-          jupyter kernelspec list
-          cd doc\nb\
-          jupyter execute (get-item ccsn\*.ipynb)
-          jupyter execute (get-item presn\*.ipynb)
-          jupyter execute AnalyticFluence.ipynb FlavorTransformation.ipynb
-          # Download necessary progenitor file, before executing the notebook
-          python -c 'from snewpy.models.ccsn import Zha_2021; from astropy import units as u; _ = Zha_2021(progenitor_mass=17*u.solMass)'
-          jupyter execute SNOwGLoBES_usage.ipynb
+          cd doc/
+          make html
