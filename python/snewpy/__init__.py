@@ -17,7 +17,7 @@ except ModuleNotFoundError:
     get_cache_dir = lambda: '.'
 
 
-__version__ = '1.6b1'
+__version__ = '1.6'
 
 
 src_path = os.path.realpath(__path__[0])
