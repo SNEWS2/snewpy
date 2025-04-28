@@ -18,10 +18,7 @@ from tqdm.auto import tqdm
 
 import snowglobes_data
 import sys
-if sys.version_info >= (3, 9):
-    from importlib.resources import files
-else:
-    from importlib_resources import files
+from importlib.resources import files
 
 def guess_material(detector):
     if detector.startswith(('wc', 'ice', 'km3net')):
@@ -38,7 +35,7 @@ def guess_material(detector):
         mat = 'scint'
     elif detector.startswith(('ds20','argo')):
         mat = 'argon_coh'
-    elif detector.startswith('xe'):
+    elif detector.startswith(('xe', 'lz', 'pan')):
         mat = 'xenon_coh'
     else:
         raise ValueError(f'Please provide material for {detector}')

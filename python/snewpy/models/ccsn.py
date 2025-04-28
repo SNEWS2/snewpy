@@ -41,12 +41,23 @@ from snewpy.models.registry_model import RegistryModel, Parameter
 from snewpy.models.registry_model import all_models
 from textwrap import dedent
 
+
+@RegistryModel()
+class Fischer_2020(loaders.Fischer_2020):
+    """Model based on simulations from `Fischer et al. (2020) <https://arxiv.org/abs/1804.10890>`
+    """
+    def __init__(self):
+        self.metadata["EOS"] = "HS(DD2)"
+        self.metadata["Progenitor mass"] = 18 * u.Msun
+        filename='Fischer_2020.tar.gz'
+        return super().__init__(filename, metadata=self.metadata)
+
 @RegistryModel(
     progenitor_mass = [13, 20, 30, 50] * u.Msun,
     revival_time = [0, 100, 200, 300] * u.ms,
     metallicity = [0.02, 0.004],
     eos = ['LS220', 'shen', 'togashi'],
-    
+
     _param_validator = lambda p: (p['revival_time'] == 0 * u.ms and p['progenitor_mass'] == 30 * u.Msun
                                   and p['metallicity'] == 0.004) or \
                                  (p['revival_time'] != 0 * u.ms and p['eos'] == 'shen'
@@ -56,7 +67,6 @@ class Nakazato_2013(loaders.Nakazato_2013):
     """Model based on simulations from Nakazato et al., ApJ S 205:2
     (2013), ApJ 804:75 (2015), PASJ 73:639 (2021). See also http://asphwww.ph.noda.tus.ac.jp/snn/.
     """
-
     def __init__(self, progenitor_mass:u.Quantity, revival_time:u.Quantity, metallicity:float, eos:str):
         # Strip units for filename construction
         progenitor_mass = progenitor_mass.to(u.Msun).value
@@ -93,7 +103,7 @@ class Sukhbold_2015(loaders.Sukhbold_2015):
     _param_validator = lambda p: (p['progenitor_mass'] == 11.2 * u.Msun and p['direction'] in (1,)) or \
         (p['progenitor_mass'] == 20. * u.Msun and p['direction'] in (1,)) or \
         (p['progenitor_mass'] == 27. * u.Msun and p['direction'] in (1,2,3))
-)   
+)
 class Tamborra_2014(loaders.Tamborra_2014):
     """Model based on 3D simulations from `Tamborra et al., PRD 90:045032, 2014 <https://arxiv.org/abs/1406.0006>`_.
     Data files are from the `Garching Supernova Archive`_.
@@ -127,7 +137,7 @@ class Walk_2018(loaders.Walk_2018):
     the `Garching Supernova Archive`_.
     """
     def __init__(self, *, progenitor_mass:u.Quantity, rotation:str, direction:int):
-        
+
         filename = f's{progenitor_mass.value:3.1f}c_3D_{rotation}rot_dir{direction}'
         return super().__init__(filename=filename, metadata=self.metadata)
 
@@ -152,14 +162,14 @@ class Walk_2019(loaders.Walk_2019):
 @RegistryModel(
     progenitor_mass = Parameter(values=(list(range(12, 34)) +
                                  list(range(35, 61, 5)) +
-                                 [70, 80, 100, 120]) * u.Msun, 
+                                 [70, 80, 100, 120]) * u.Msun,
                                 desc_values='[12..33, 35..5..60, 70, 80, 100, 120] solMass'
                                ),
     eos = ['HShen', 'LS220']
 )
 class OConnor_2013(loaders.OConnor_2013):
     """Model based on the black hole formation simulation in `O'Connor & Ott (2013) <https://arxiv.org/abs/1207.1100>`_.
-    """    
+    """
     def __init__(self, eos:str, progenitor_mass:u.Quantity):
         # Load from Parameters
         filename = f'{eos}_timeseries.tar.gz'
@@ -219,7 +229,7 @@ class Warren_2020(loaders.Warren_2020):
 
 @RegistryModel(
     rotational_velocity= [0, 1] * u.rad / u.s,
-    magnetic_field_exponent= Parameter([0, 12, 13],                                      
+    magnetic_field_exponent= Parameter([0, 12, 13],
                                       label='B_0 Exponent',
                                       description='Exponent of magnetic field (See Eq. 46)'),
     progenitor_mass=[20*u.Msun],
@@ -237,7 +247,7 @@ class Kuroda_2020(loaders.Kuroda_2020):
     progenitor_mass=[9, 10, 12, 13, 14, 15, 16, 19, 25, 60] * u.Msun,
 )
 class Fornax_2019(loaders.Fornax_2019):
-    """Model based on 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019. 
+    """Model based on 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019.
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/
     """
     def __init__(self, cache_flux=False, *, progenitor_mass):
@@ -258,7 +268,7 @@ class Fornax_2019(loaders.Fornax_2019):
                                 desc_values='[12..23, 25, 26, 26.99] solMass')
 )
 class Fornax_2021(loaders.Fornax_2021):
-    """Model based on 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019. 
+    """Model based on 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019.
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/
         """
     def __init__(self, progenitor_mass:u.Quantity):
@@ -313,7 +323,7 @@ class Fornax_2022(loaders.Fornax_2022):
                (p['axion_mass'] == 0 and p['axion_coupling'] == 0) or \
                (p['axion_mass'].to_value('MeV') == 100 and p['axion_coupling'].to_value('1e-10/GeV') in (2,4,10,12,14,16,20)) or \
                (p['axion_mass'].to_value('MeV') == 200 and p['axion_coupling'].to_value('1e-10/GeV') in (2,4,6,8,10,20)),
-               
+
                axion_mass = Parameter(values=[0, 100, 200]<<u.MeV,
                                       description='Axion mass in units of MeV'),
                axion_coupling = Parameter(values=[0, 2, 4, 6, 8, 10, 12, 14, 16, 20]<<(1e-10/u.GeV),
@@ -358,6 +368,29 @@ class Mori_2023(loaders.Mori_2023):
         # Set the metadata.
         self.metadata['PNS mass'] = pns_mass*u.Msun
         return super().__init__(filename, self.metadata)
+
+@RegistryModel(
+    Bfield = ['hydro','L1','L2'],
+    direction = ['average','equator','north','south'],
+    grav=['A','B',None],
+    rotation=[0,90,None],
+    _param_validator = lambda p: (p['Bfield'] == 'hydro' and p['grav'] == None and p['rotation'] == None ) or
+        (p['Bfield'] == 'L1' and p['grav'] == None and p['rotation'] in [0,90]) or
+        (p['Bfield'] == 'L2' and p['rotation'] == None and p['grav'] in ['A','B'])
+)
+class Bugli_2021(loaders.Bugli_2021):
+    """Model based on `Buggli (2021) <https://arxiv.org/abs/2105.00665>`_.
+    """
+    def __init__(self, *, Bfield:str, direction:str, rotation:int=None, grav:str=None):
+
+        filename = f'{Bfield}_3d_snewpy_{direction}.dat'
+        self.metadata['Progenitor mass'] = 35*u.Msun
+        self.metadata['EOS'] = 'LS220'
+        if Bfield=='L2':
+            filename = f'{Bfield}_b12_dipdecay_3d_grav{grav}_snewpy_{direction}.dat'
+        if Bfield=='L1':
+            filename = f'{Bfield}_b12_3d_{rotation}deg_snewpy_{direction}.dat'
+        return super().__init__(filename=filename, metadata=self.metadata)
 
 class SNOwGLoBES:
     """A model that does not inherit from SupernovaModel (yet) and imports a group of SNOwGLoBES files."""

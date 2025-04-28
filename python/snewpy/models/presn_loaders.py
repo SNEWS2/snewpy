@@ -100,7 +100,7 @@ class Patton_2017(SupernovaModel):
         self.interpolated = _interp_TE(
             times, energies, self.array, ax_t=1, ax_e=2
         )
-        super().__init__(times << u.hour, self.metadata)
+        super().__init__(-times << u.hour, self.metadata)
 
     def get_initial_spectra(self, t, E, flavors=Flavor):
         t = np.array(-t.to_value("hour"), ndmin=1)
@@ -136,7 +136,7 @@ class Kato_2017(SupernovaModel):
         self.interpolated = _interp_TE(
             times, energies, self.array, ax_t=1, ax_e=2
         )
-        super().__init__(times << u.s, self.metadata)
+        super().__init__(-times << u.s, self.metadata)
 
     def get_initial_spectra(self, t, E, flavors=Flavor):
         t = np.array(-t.to_value("s"), ndmin=1)
@@ -169,7 +169,7 @@ class Yoshida_2016(SupernovaModel):
         self.interpolated = _interp_TE(
             times, energies, dNdEdT, ax_t=1, ax_e=2
         )
-        super().__init__(times << u.s, self.metadata)
+        super().__init__(-times << u.s, self.metadata)
 
     def get_initial_spectra(self, t, E, flavors=Flavor):
         t = np.array(-t.to_value("s"), ndmin=1)
