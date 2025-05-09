@@ -4,9 +4,9 @@
 from enum import IntEnum
 from astropy import units as u
 from dataclasses import dataclass
-from typing import Optional
 import numpy as np
 from collections.abc import Mapping
+from .flavor import ThreeFlavor as Flavor
 
 class MassHierarchy(IntEnum):
     """Neutrino mass ordering: ``NORMAL`` or ``INVERTED``."""
@@ -23,32 +23,6 @@ class MassHierarchy(IntEnum):
         else:
             return MassHierarchy.INVERTED
             
-class Flavor(IntEnum):
-    """Enumeration of CCSN Neutrino flavors."""
-    NU_E = 0
-    NU_X = 1
-    NU_E_BAR = 2
-    NU_X_BAR = 3
-    
-    def to_tex(self):
-        """LaTeX-compatible string representations of flavor."""
-        if '_BAR' in self.name:
-            return r'$\overline{{\nu}}_{0}$'.format(self.name[3].lower())
-        return r'$\{0}$'.format(self.name.lower())
-
-    @property
-    def is_electron(self):
-        """Return ``True`` for ``Flavor.NU_E`` and ``Flavor.NU_E_BAR``."""
-        return self.value in (Flavor.NU_E.value, Flavor.NU_E_BAR.value)
-
-    @property
-    def is_neutrino(self):
-        """Return ``True`` for ``Flavor.NU_E`` and ``Flavor.NU_X``."""
-        return self.value in (Flavor.NU_E.value, Flavor.NU_X.value)
-
-    @property
-    def is_antineutrino(self):
-        return self.value in (Flavor.NU_E_BAR.value, Flavor.NU_X_BAR.value)
         
 @dataclass
 class MixingParameters3Flavor(Mapping):
@@ -66,10 +40,10 @@ class MixingParameters3Flavor(Mapping):
     deltaCP: u.Quantity[u.deg]
     #square mass difference
     dm21_2: u.Quantity[u.eV**2]
-    dm32_2: Optional[u.Quantity] = None
-    dm31_2: Optional[u.Quantity] = None
+    dm32_2: u.Quantity | None = None
+    dm31_2: u.Quantity | None = None
     #mass ordering
-    mass_order: Optional[MassHierarchy] = None
+    mass_order: MassHierarchy | None = None
     # Note: in IH, the mass splittings are: m3..............m1..m2.
 
     def __iter__(self):
@@ -149,8 +123,8 @@ class MixingParameters4Flavor(MixingParameters3Flavor):
     theta34: u.Quantity[u.deg] = 0<<u.deg
     #sterile neutrino mass squared differences
     dm41_2: u.Quantity[u.eV**2] = 0<<u.eV**2
-    dm42_2: Optional[u.Quantity] = None
-    dm43_2: Optional[u.Quantity] = None
+    dm42_2: u.Quantity | None = None
+    dm43_2: u.Quantity | None = None
     
     def __post_init__(self):
         super().__post_init__()

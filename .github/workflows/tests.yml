@@ -22,7 +22,7 @@ jobs:
       matrix:
         # Test all supported Python versions under Ubuntu
         os: [ubuntu-latest]
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.10', '3.11', '3.12', '3.13']
         # Additionally, test one Python version under MacOS and Windows, to detect OS-specific issues
         include:
           - os: macos-latest

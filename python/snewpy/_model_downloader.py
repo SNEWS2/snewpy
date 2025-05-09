@@ -15,7 +15,6 @@ from dataclasses import dataclass
 from importlib.resources import open_text
 from pathlib import Path
 from tqdm.auto import tqdm
-from typing import Optional
 
 from snewpy import model_path
 from snewpy import __version__ as snewpy_version
@@ -79,7 +78,7 @@ class FileHandle:
 
     path: Path
     remote: str = None
-    md5: Optional[str] = None
+    md5: str | None = None
 
     def check(self) -> None:
         """Check if the given file exists locally and has a correct md5 sum.

@@ -1,7 +1,6 @@
 import itertools as it
 import os
 from abc import ABC, abstractmethod
-from warnings import warn
 
 import numpy as np
 from astropy import units as u
@@ -119,14 +118,6 @@ class SupernovaModel(ABC, LocalFileLoader):
         """
         pass
 
-    def get_initialspectra(self, *args):
-        """DO NOT USE! Only for backward compatibility!
-
-        :meta private:
-        """
-        warn("Please use `get_initial_spectra()` instead of `get_initialspectra()`!", FutureWarning)
-        return self.get_initial_spectra(*args)
-
     def get_transformed_spectra(self, t, E, flavor_xform):
         """Get neutrino spectra after applying oscillation.
 
@@ -190,18 +181,9 @@ class SupernovaModel(ABC, LocalFileLoader):
         factor = 1/(4*np.pi*(distance.to('cm'))**2)
         f = self.get_transformed_spectra(t, E, flavor_xform)
 
-        array = np.stack([f[flv] for flv in sorted(Flavor)])
-        return  Flux(data=array*factor, flavor=np.sort(Flavor), time=t, energy=E)
+        array = np.stack([f[flv] for flv in Flavor])
+        return  Flux(data=array*factor, flavor=Flavor, time=t, energy=E)
 
-
-
-    def get_oscillatedspectra(self, *args):
-        """DO NOT USE! Only for backward compatibility!
-
-        :meta private:
-        """
-        warn("Please use `get_transformed_spectra()` instead of `get_oscillatedspectra()`!", FutureWarning)
-        return self.get_transformed_spectra(*args)
 
 def get_value(x):
     """If quantity x has is an astropy Quantity with units, return just the
@@ -235,11 +217,16 @@ class PinchedModel(SupernovaModel):
         metadata: dict
             Model parameters dict
         """
-        if not 'L_NU_X_BAR' in simtab.colnames:
-            # table only contains NU_E, NU_E_BAR, and NU_X, so double up
-            # the use of NU_X for NU_X_BAR.
+        if not 'L_NU_MU' in simtab.colnames:
+            # table only contains NU_E, NU_E_BAR, and NU_X, so re-use NU_X for MU/TAU (anti)neutrinos.
             for val in ['L','E','ALPHA']:
-                simtab[f'{val}_NU_X_BAR'] = simtab[f'{val}_NU_X']
+                simtab[f'{val}_NU_MU'] = simtab[f'{val}_NU_X']
+                simtab[f'{val}_NU_MU_BAR'] = simtab.columns.get(f'{val}_NU_X_BAR', simtab[f'{val}_NU_X'])
+                simtab[f'{val}_NU_TAU'] = simtab[f'{val}_NU_X']
+                simtab[f'{val}_NU_TAU_BAR'] = simtab.columns.get(f'{val}_NU_X_BAR', simtab[f'{val}_NU_X'])
+                del simtab[f'{val}_NU_X']
+                if f'{val}_NU_X_BAR' in simtab.colnames:
+                    del simtab[f'{val}_NU_X_BAR']
         # Get grid of model times.
         time = simtab['TIME'] << u.s
         # Set up dictionary of luminosity, mean energy and shape parameter

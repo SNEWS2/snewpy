@@ -144,7 +144,7 @@ class TestModels(unittest.TestCase):
         """
         Instantiate a set of "O'Connor 2015" models
         """
-        model = OConnor_2015(progenitor_mass=40*u.Msun, eos='LS220')
+        model = OConnor_2015(progenitor_mass=40*u.Msun)
 
         self.assertEqual(model.metadata['EOS'], 'LS220')
         self.assertEqual(model.metadata['Progenitor mass'], 40*u.Msun)
@@ -301,7 +301,7 @@ class TestModels(unittest.TestCase):
                                    (1, [12, 13])]:
             for exponent in exponents:
                 model = Kuroda_2020(rotational_velocity=rot_vel * u.rad / u.s,
-                                    magnetic_field_exponent=exponent, eos='LS220')
+                                    magnetic_field_exponent=exponent)
 
                 self.assertEqual(model.metadata['EOS'], 'LS220')
                 self.assertEqual(model.metadata['Progenitor mass'], 20*u.Msun)
@@ -359,7 +359,7 @@ class TestModels(unittest.TestCase):
         """
 
         for mass in list(range(16, 27)) + [19.89, 22.39, 30, 33]:
-            model = Zha_2021(progenitor_mass=mass * u.Msun, eos='STOS_B145')
+            model = Zha_2021(progenitor_mass=mass * u.Msun)
 
             self.assertEqual(model.metadata['Progenitor mass'], float(mass)*u.Msun)
             self.assertEqual(model.metadata['EOS'], 'STOS_B145')

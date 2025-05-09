@@ -30,7 +30,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from astropy import units as u
-from warnings import warn
 
 import snewpy.models
 from snewpy.flavor_transformation import *
@@ -130,7 +129,7 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
     str
         Path of NumPy archive file with neutrino fluence data.
     """
-    model_class = getattr(snewpy.models.ccsn, model_type)
+    model_class = getattr(snewpy.models.ccsn_loaders, model_type)
 
     # Choose flavor transformation. Use dict to associate the transformation name with its class.
     flavor_transformation_dict = {'NoTransformation': NoTransformation(), 'AdiabaticMSW_NMO': AdiabaticMSW(mh=MassHierarchy.NORMAL), 'AdiabaticMSW_IMO': AdiabaticMSW(mh=MassHierarchy.INVERTED), 'NonAdiabaticMSWH_NMO': NonAdiabaticMSWH(mh=MassHierarchy.NORMAL), 'NonAdiabaticMSWH_IMO': NonAdiabaticMSWH(mh=MassHierarchy.INVERTED), 'TwoFlavorDecoherence': TwoFlavorDecoherence(), 'ThreeFlavorDecoherence': ThreeFlavorDecoherence(), 'NeutrinoDecay_NMO': NeutrinoDecay(mh=MassHierarchy.NORMAL), 'NeutrinoDecay_IMO': NeutrinoDecay(mh=MassHierarchy.INVERTED), 'QuantumDecoherence_NMO': QuantumDecoherence(mh=MassHierarchy.NORMAL), 'QuantumDecoherence_IMO': QuantumDecoherence(mh=MassHierarchy.INVERTED)}
@@ -170,7 +169,7 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
     fluence.save(tfname)
     return tfname
 
-def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False, *, detector_effects=True):
+def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", *, detector_effects=True):
     """Calculate expected event rates for the given neutrino flux files and the given (set of) SNOwGLoBES detector(s).
     These event rates are given as a function of the neutrino energy and time, for each interaction channel.
 
@@ -182,14 +181,9 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", verbose=False, *
         Path of compressed .tar file produced e.g. by ``generate_time_series()`` or ``generate_fluence()``.
     detector_input : str
         Name of detector. If ``"all"``, will use all detectors supported by SNOwGLoBES.
-    verbose : bool
-        [DEPRECATED, DO NOT USE.]
     detector_effects : bool
          Whether to account for detector smearing and efficiency.
     """
-    if verbose:  # Deprecated since SNEWPY v1.2
-        warn(f"The 'verbose' parameter to 'snewpy.snowglobes.simulate()' is deprecated and should not be used.", FutureWarning)
-
     rc = RateCalculator(base_dir=SNOwGLoBESdir)
     if detector_input == 'all':
         detector_input = list(rc.detectors)
@@ -260,23 +254,15 @@ def get_channel_label(c):
     else: 
         return re_chan_label.sub(gen_label, c) 
 
-def collate(SNOwGLoBESdir, tarball_path, detector_input="", skip_plots=False, verbose=False, remove_generated_files=True, *, smearing=True):
+def collate(tarball_path, skip_plots=False, *, smearing=True):
     """Collates SNOwGLoBES output files and generates plots or returns a data table.
 
     Parameters
     ----------
-    SNOwGLoBESdir : str or None
-        [DEPRECATED, DO NOT USE.]
     tarball_path : str
         Path of compressed .tar file produced e.g. by ``generate_time_series()`` or ``generate_fluence()``.
-    detector_input : str
-        [DEPRECATED, DO NOT USE. SNEWPY will use all detectors included in the tarball.]
     skip_plots: bool
         If False, it gives as output the plot of the energy distribution for each time bin and for each interaction channel.
-    verbose : bool
-        [DEPRECATED, DO NOT USE.]
-    remove_generated_files: bool
-        [DEPRECATED, DO NOT USE.]
     smearing: bool
         Also consider results with smearing effects.
 
@@ -285,12 +271,6 @@ def collate(SNOwGLoBESdir, tarball_path, detector_input="", skip_plots=False, ve
     dict
         Dictionary of data tables: One table per time bin; each table contains in the first column the energy bins, in the remaining columns the number of events for each interaction channel in the detector.
     """
-    if verbose:  # Deprecated since SNEWPY v1.2
-        warn(f"The 'verbose' parameter to 'snewpy.snowglobes.collate()' is deprecated and should not be used.", FutureWarning)
-    if detector_input:  # Deprecated since SNEWPY v1.2
-        warn(f"The 'detector_input' parameter to 'snewpy.snowglobes.collate()' is deprecated and should not be used.", FutureWarning)
-    if not remove_generated_files:  # Deprecated since SNEWPY v1.2
-        warn(f"The 'remove_generated_files' parameter to 'snewpy.snowglobes.collate()' is deprecated and should not be used.", FutureWarning)
 
     def aggregate_channels(table, **patterns):
         #rearrange the table to have only channel column
