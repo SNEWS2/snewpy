@@ -88,8 +88,8 @@ class CompleteExchange(FlavorTransformation):
         return P
 
 
-class ThreeFlavorDecoherence(FlavorTransformation):
-    """Equal mixing of all threen eutrino matter states and antineutrino matter states"""
+class Equilibrate(FlavorTransformation):
+    """Equal mixing of all three neutrino states, and all three antineutrino states"""
 
     def P_ff(self, t, E):
         """Equal mixing so Earth matter has no effect"""
