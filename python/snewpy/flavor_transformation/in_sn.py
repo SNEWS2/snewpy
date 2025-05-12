@@ -32,6 +32,7 @@ class AdiabaticMSW(SNTransformation, ThreeFlavorTransformation):
 
     def P_mf(self, t, E):
         return self.mixing_params.Pmf_HighDensityLimit()
+        
 ###############################################################################
 class NonAdiabaticMSWH(SNTransformation, ThreeFlavorTransformation):
     """Nonadiabatic MSW H resonance. 
@@ -49,6 +50,7 @@ class NonAdiabaticMSWH(SNTransformation, ThreeFlavorTransformation):
         else:
             Pmf[['NU_1_BAR','NU_3_BAR'],:] = Pmf[['NU_3_BAR','NU_1_BAR'],:]
         return Pmf
+        
 ###############################################################################
 class TwoFlavorDecoherence(SNTransformation, ThreeFlavorTransformation):
     """Equal mixing of whatever two matter states form the MSW H resonance.
@@ -72,6 +74,20 @@ class TwoFlavorDecoherence(SNTransformation, ThreeFlavorTransformation):
 
         return Pmf
 
+###############################################################################
+class ThreeFlavorDecoherence(SNTransformation, ThreeFlavorTransformation):
+    """Equal mixing of all three neutrino states, and all three antineutrinos
+    
+    ThreeFlavorDecoherence is relevant when the size of the density fluctuations is >= 10% for densities 
+    around the H resonance density —see Kneller (2010); Kneller & Mauney (2013). 
+    """
+    
+    def P_mf(self, t, E):
+        @FlavorMatrix.from_function(ThreeFlavor)
+        def P(f1, f2):
+            return (f1.is_neutrino == f2.is_neutrino)*1/3.
+        return P
+        
 ###############################################################################       
 class MSWEffect(SNTransformation, ThreeFlavorTransformation):
     """The MSW effect using a density profile and electron 
