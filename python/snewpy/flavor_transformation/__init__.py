@@ -16,7 +16,7 @@ Available Transformations
 .. autoclass:: snewpy.flavor_transformation.CompleteExchange
     :members:
 
-.. autoclass:: snewpy.flavor_transformation.ThreeFlavorDecoherence
+.. autoclass:: snewpy.flavor_transformation.Equilibrate
     :members:
 
 .. autoclass:: snewpy.flavor_transformation.TransformationChain
@@ -47,6 +47,7 @@ NonAdiabaticMSWH = TransformationChain(in_sn.NonAdiabaticMSWH())
 AdiabaticMSWes = TransformationChain(in_sn.AdiabaticMSWes())
 NonAdiabaticMSWes = TransformationChain(in_sn.NonAdiabaticMSWes())
 TwoFlavorDecoherence = TransformationChain(in_sn.TwoFlavorDecoherence())
+ThreeFlavorDecoherence = TransformationChain(in_sn.ThreeFlavorDecoherence())
 NeutrinoDecay = TransformationChain(in_sn.AdiabaticMSW(), in_vacuum.NeutrinoDecay())
 QuantumDecoherence = TransformationChain(in_sn.AdiabaticMSW(), in_vacuum.QuantumDecoherence())
 EarthMatter = lambda mixing_params,AltAz: TransformationChain(
