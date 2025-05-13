@@ -71,7 +71,17 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
     model_class = getattr(snewpy.models.ccsn, model_type)
 
     # Choose flavor transformation. Use dict to associate the transformation name with its class.
-    flavor_transformation_dict = {'NoTransformation': NoTransformation(), 'AdiabaticMSW_NMO': AdiabaticMSW(mh=MassHierarchy.NORMAL), 'AdiabaticMSW_IMO': AdiabaticMSW(mh=MassHierarchy.INVERTED), 'NonAdiabaticMSWH_NMO': NonAdiabaticMSWH(mh=MassHierarchy.NORMAL), 'NonAdiabaticMSWH_IMO': NonAdiabaticMSWH(mh=MassHierarchy.INVERTED), 'TwoFlavorDecoherence': TwoFlavorDecoherence(), 'ThreeFlavorDecoherence': ThreeFlavorDecoherence(), 'NeutrinoDecay_NMO': NeutrinoDecay(mh=MassHierarchy.NORMAL), 'NeutrinoDecay_IMO': NeutrinoDecay(mh=MassHierarchy.INVERTED), 'QuantumDecoherence_NMO': QuantumDecoherence(mh=MassHierarchy.NORMAL), 'QuantumDecoherence_IMO': QuantumDecoherence(mh=MassHierarchy.INVERTED)}
+    flavor_transformation_dict = {'NoTransformation': NoTransformation(), 
+                                  'AdiabaticMSW_NMO': AdiabaticMSW(NMO), 
+                                  'AdiabaticMSW_IMO': AdiabaticMSW(IMO), 
+                                  'NonAdiabaticMSWH_NMO': NonAdiabaticMSWH(NMO), 
+                                  'NonAdiabaticMSWH_IMO': NonAdiabaticMSWH(IMO), 
+                                  'TwoFlavorDecoherence': TwoFlavorDecoherence(NMO), 
+                                  'ThreeFlavorDecoherence': ThreeFlavorDecoherence(NMO), 
+                                  'NeutrinoDecay_NMO': NeutrinoDecay(NMO), 
+                                  'NeutrinoDecay_IMO': NeutrinoDecay(IMO), 
+                                  'QuantumDecoherence_NMO': QuantumDecoherence(NMO), 
+                                  'QuantumDecoherence_IMO': QuantumDecoherence(IMO)}
     flavor_transformation = flavor_transformation_dict[transformation_type]
 
     model_dir, model_file = os.path.split(os.path.abspath(model_path))
@@ -140,7 +150,7 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
                                   'NonAdiabaticMSWH_NMO': NonAdiabaticMSWH(NMO), 
                                   'NonAdiabaticMSWH_IMO': NonAdiabaticMSWH(IMO), 
                                   'TwoFlavorDecoherence': TwoFlavorDecoherence(NMO), 
-                                  'ThreeFlavorDecoherence': ThreeFlavorDecoherence(), 
+                                  'ThreeFlavorDecoherence': ThreeFlavorDecoherence(NMO), 
                                   'NeutrinoDecay_NMO': NeutrinoDecay(NMO), 
                                   'NeutrinoDecay_IMO': NeutrinoDecay(IMO), 
                                   'QuantumDecoherence_NMO': QuantumDecoherence(NMO), 
