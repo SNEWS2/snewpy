@@ -16,7 +16,7 @@ Available Transformations
 .. autoclass:: snewpy.flavor_transformation.CompleteExchange
     :members:
 
-.. autoclass:: snewpy.flavor_transformation.ThreeFlavorDecoherence
+.. autoclass:: snewpy.flavor_transformation.FlavorEquilibration
     :members:
 
 .. autoclass:: snewpy.flavor_transformation.TransformationChain
@@ -47,6 +47,7 @@ NonAdiabaticMSWH = TransformationChain(in_sn.NonAdiabaticMSWH())
 AdiabaticMSWes = TransformationChain(in_sn.AdiabaticMSWes())
 NonAdiabaticMSWes = TransformationChain(in_sn.NonAdiabaticMSWes())
 TwoFlavorDecoherence = TransformationChain(in_sn.TwoFlavorDecoherence())
+ThreeFlavorDecoherence = TransformationChain(in_sn.ThreeFlavorDecoherence())
 NeutrinoDecay = TransformationChain(in_sn.AdiabaticMSW(), in_vacuum.NeutrinoDecay())
 QuantumDecoherence = TransformationChain(in_sn.AdiabaticMSW(), in_vacuum.QuantumDecoherence())
 EarthMatter = lambda mixing_params,AltAz: TransformationChain(
@@ -88,11 +89,11 @@ class CompleteExchange(FlavorTransformation):
         return P
 
 
-class ThreeFlavorDecoherence(FlavorTransformation):
-    """Equal mixing of all threen eutrino matter states and antineutrino matter states"""
+class FlavorEquilibration(FlavorTransformation):
+    """Equal mixing of all three neutrino states, and all three antineutrino states"""
 
     def P_ff(self, t, E):
-        """Equal mixing so Earth matter has no effect"""
+        """Equal mixing of all neutrino flavors, and anineutrino flavors"""
         @FlavorMatrix.from_function(ThreeFlavor)
         def P(f1, f2):
             return (f1.is_neutrino == f2.is_neutrino)*1/3.
