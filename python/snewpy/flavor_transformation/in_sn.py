@@ -1,4 +1,4 @@
-r"""
+icalr"""
 Transformations in supernova
 =============================
 Transition of neutrino flavor states to mass states :math:`\nu_\alpha\to\nu_i` inside supernova
