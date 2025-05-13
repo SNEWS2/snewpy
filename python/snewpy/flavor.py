@@ -58,6 +58,41 @@ class FlavorScheme(enum.IntEnum, metaclass=FlavorEnumMeta):
         if self.is_muon or self.is_tauon:
             lepton = '\\'+lepton
         return f"${base}_{{{lepton}}}$"
+
+    def to_marley(self):
+        """The neutrino name in the Marley format. 
+           See Table 3 in https://arxiv.org/pdf/2101.11867
+           The name for the sterile is a SNEWPY extension
+        """
+        name = "v"
+        if self.is_electron:
+            name += "e"
+        elif self.is_muon:
+            name += "u"
+        elif self.is_tauon:
+            name += "t"
+        else: 
+            name += "s"            
+        if self.is_antineutrino:
+            name += "bar"
+        return name    
+
+    def to_pdg_code(self):
+        """The code number for the neutrino in the PDG particle numbering scheme. 
+           See Table https://pdg.lbl.gov/2007/reviews/montecarlorpp.pdf
+           The code number for the sterile flavor is set to the 4th generation
+        """
+        if self.is_electron:
+            code = 12
+        elif self.is_muon:
+            code = 14
+        elif self.is_tauon:
+            code = 16
+        else: 
+            code = 18
+        if self.is_antineutrino:
+            code = -code
+        return code        
         
     @property
     def is_neutrino(self):
