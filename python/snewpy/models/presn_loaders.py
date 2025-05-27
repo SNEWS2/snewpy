@@ -59,7 +59,7 @@ class Odrzywolek_2010(SupernovaModel):
         time = -df.index.to_numpy() << u.s
         super().__init__(time, self.metadata)
 
-    def _get_initial_spectra(self, t, E, flavors=ThreeFlavor):
+    def _get_initial_spectra_dict(self, t, E, flavors=ThreeFlavor):
         # negative t for time before SN
         t = -t.to_value("s")
         E = E.to_value("MeV")
@@ -102,7 +102,7 @@ class Patton_2017(SupernovaModel):
         )
         super().__init__(-times << u.hour, self.metadata)
 
-    def _get_initial_spectra(self, t, E, flavors=ThreeFlavor):
+    def _get_initial_spectra_dict(self, t, E, flavors=ThreeFlavor):
         t = np.array(-t.to_value("hour"), ndmin=1)
         E = np.array(E.to_value("MeV"), ndmin=1)
         flux = self.interpolated(t, E) / (u.MeV * u.s)
@@ -138,7 +138,7 @@ class Kato_2017(SupernovaModel):
         )
         super().__init__(-times << u.s, self.metadata)
 
-    def _get_initial_spectra(self, t, E, flavors=ThreeFlavor):
+    def _get_initial_spectra_dict(self, t, E, flavors=ThreeFlavor):
         t = np.array(-t.to_value("s"), ndmin=1)
         E = np.array(E.to_value("MeV"), ndmin=1)
         flux = self.interpolated(t, E) / (u.MeV * u.s)
@@ -176,7 +176,7 @@ class Yoshida_2016(SupernovaModel):
         )
         super().__init__(-times << u.s, self.metadata)
 
-    def _get_initial_spectra(self, t, E, flavors=ThreeFlavor):
+    def _get_initial_spectra_dict(self, t, E, flavors=ThreeFlavor):
         t = np.array(-t.to_value("s"), ndmin=1)
         E = np.array(E.to_value("MeV"), ndmin=1)
         flux = self.interpolated(t, E) / (u.MeV * u.s)

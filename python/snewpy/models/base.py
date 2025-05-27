@@ -132,7 +132,7 @@ class SupernovaModel(ABC, LocalFileLoader):
             A container with the information about the initial neutrino spectra
         """
         spectra_dict = self._get_initial_spectra_dict(t, E, flavors=ThreeFlavor)
-        initialspectra =  flux.Container['1/(MeV*s)'].from_dict(spectra_dict, 
+        initial_spectra =  flux.Container['1/(MeV*s)'].from_dict(spectra_dict, 
                                                                 time=t,
                                                                 energy=E,
                                                                 flavor_scheme=ThreeFlavor)
@@ -241,7 +241,7 @@ class PinchedModel(SupernovaModel):
         super().__init__(time, metadata)
 
 
-    def _get_initial_spectra(self, t, E, flavors=ThreeFlavor):
+    def _get_initial_spectra_dict(self, t, E, flavors=ThreeFlavor):
 
         #convert input arguments to 1D arrays
         t = u.Quantity(t, ndmin=1)
