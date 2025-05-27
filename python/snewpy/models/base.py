@@ -99,47 +99,63 @@ class SupernovaModel(ABC, LocalFileLoader):
         return self.time
 
     @abstractmethod
-    def get_initial_spectra(self, t, E, flavors=ThreeFlavor):
+    def _get_initial_spectra_dict(t, E, flavors=ThreeFlavor)->dict:
         """Get neutrino spectra at the source.
 
         Parameters
         ----------
         t : astropy.Quantity
             Time to evaluate initial spectra.
-        E : astropy.Quantity or ndarray of astropy.Quantity
+        E : astropy.Quantity 
             Energies to evaluate the initial spectra.
-        flavors: iterable of snewpy.neutrino.Flavor
-            Return spectra for these flavors only (default: all)
 
         Returns
         -------
-        initialspectra : dict
-            Dictionary of neutrino spectra, keyed by neutrino flavor.
+        dict
+            An initial neutrino spectra, keyed by the flavor
         """
         pass
-
-    def get_transformed_spectra(self, t, E, flavor_xform):
-        """Get neutrino spectra after applying oscillation.
+        
+    def get_initial_spectra(self, t, E):
+        """Get neutrino spectra at the source.
 
         Parameters
         ----------
         t : astropy.Quantity
-            Time to evaluate initial and oscillated spectra.
-        E : astropy.Quantity or ndarray of astropy.Quantity
-            Energies to evaluate the initial and oscillated spectra.
+            Time to evaluate initial spectra.
+        E : astropy.Quantity 
+            Energies to evaluate the initial spectra.
+
+        Returns
+        -------
+        flux.Container 
+            A container with the information about the initial neutrino spectra
+        """
+        spectra_dict = self._get_initial_spectra_dict(t, E, flavors=ThreeFlavor)
+        initialspectra =  flux.Container['1/(MeV*s)'].from_dict(spectra_dict, 
+                                                                time=t,
+                                                                energy=E,
+                                                                flavor_scheme=ThreeFlavor)
+        return initial_spectra
+
+    def get_transformed_spectra(self, t, E, flavor_xform):
+        """Get neutrino spectra after applying the flavor transformation.
+
+        Parameters
+        ----------
+        t : astropy.Quantity
+            Time to evaluate the neutrino spectra.
+        E : astropy.Quantity
+            Energies to evaluate the neutrino spectra.
         flavor_xform : FlavorTransformation
             An instance from the flavor_transformation module.
 
         Returns
         -------
-        dict
-            Dictionary of transformed spectra, keyed by neutrino flavor.
+        flux.Container 
+            A container with the information of the transformed neutrino spectra
         """
-        spectra_dict = self.get_initial_spectra(t, E)
-        initialspectra =  flux.Container['1/(MeV*s)'].from_dict(spectra_dict, 
-                                                                time=t, 
-                                                                energy=E,  
-                                                                flavor_scheme=ThreeFlavor)
+        initialspectra = self.get_initial_spectra(t, E)
         transformed_spectra = flavor_xform.apply_to(initialspectra)
         return transformed_spectra
 
@@ -159,10 +175,8 @@ class SupernovaModel(ABC, LocalFileLoader):
 
         Returns
         -------
-        dict
-            Dictionary of neutrino fluxes in [neutrinos/(cm^2*erg*s)], 
-            keyed by neutrino flavor.
-
+        flux.Container 
+            A container with the information about the neutrino flux
         """
         transformed_spectra = self.get_transformed_spectra(t, E, flavor_xform)
         distance = distance << u.kpc #assume that provided distance is in kpc, or convert
@@ -227,7 +241,7 @@ class PinchedModel(SupernovaModel):
         super().__init__(time, metadata)
 
 
-    def get_initial_spectra(self, t, E, flavors=ThreeFlavor):
+    def _get_initial_spectra(self, t, E, flavors=ThreeFlavor):
 
         #convert input arguments to 1D arrays
         t = u.Quantity(t, ndmin=1)
