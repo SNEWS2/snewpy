@@ -40,15 +40,41 @@ from snewpy.flavor import FlavorMatrix, ThreeFlavor
 from . import in_sn, in_earth, in_vacuum
 from .base import FlavorTransformation
 from .TransformationChain import TransformationChain
+from snewpy.neutrino import ThreeFlavorMixingParameters, FourFlavorMixingParameters
 
+def construct_chain(*transformation_classes):
+    """Create a function that constructs a chain from given transformation_steps"""
+    def construct(mixing_params:ThreeFlavorMixingParameters|FourFlavorMixingParameters,
+                 )->TransformationChain:
+        """Construct a transformation chain with 
+        Parameters
+        ----------
+        mixing_params: 
+            neutrino mixing parameters to be passed to the internal transformation steps
+        
+        Returns
+        -------
+            A TransformationChain object with {step_names} transformations
+        """
+        #initialize the transformations
+        transformations = [value() for value in transformation_classes]
+        #create the chain
+        return TransformationChain(*transformations, mixing_params=mixing_params)
+    #update the docstring
+    step_names=[cls.__qualname__ for cls in transformation_classes]
+    construct.__doc__ = construct.__doc__.format(step_names=step_names)
+    return construct
+ 
 # define default values for backward compatibility
-AdiabaticMSW = TransformationChain(in_sn.AdiabaticMSW())
-NonAdiabaticMSWH = TransformationChain(in_sn.NonAdiabaticMSWH())
-AdiabaticMSWes = TransformationChain(in_sn.AdiabaticMSWes())
-NonAdiabaticMSWes = TransformationChain(in_sn.NonAdiabaticMSWes())
-TwoFlavorDecoherence = TransformationChain(in_sn.TwoFlavorDecoherence())
-NeutrinoDecay = TransformationChain(in_sn.AdiabaticMSW(), in_vacuum.NeutrinoDecay())
-QuantumDecoherence = TransformationChain(in_sn.AdiabaticMSW(), in_vacuum.QuantumDecoherence())
+AdiabaticMSW = construct_chain(in_sn.AdiabaticMSW)
+NonAdiabaticMSWH = construct_chain(in_sn.NonAdiabaticMSWH)
+AdiabaticMSWes = construct_chain(in_sn.AdiabaticMSWes)
+NonAdiabaticMSWes = construct_chain(in_sn.NonAdiabaticMSWes)
+TwoFlavorDecoherence = construct_chain(in_sn.TwoFlavorDecoherence)
+NeutrinoDecay = construct_chain(in_sn.AdiabaticMSW, 
+                                in_vacuum.NeutrinoDecay)
+QuantumDecoherence = construct_chain(in_sn.AdiabaticMSW, 
+                                     in_vacuum.QuantumDecoherence)
 EarthMatter = lambda mixing_params,AltAz: TransformationChain(
     in_sn.AdiabaticMSW(),
     in_earth=in_earth.EarthMatter(SNAltAz=AltAz),
