@@ -118,7 +118,7 @@ class SupernovaModel(ABC, LocalFileLoader):
         """
         pass
 
-    def get_transformed_spectra(self, t, E, flavor_xform):
+    def get_transformed_spectra(self, t, E, flavor_xform, flavors=Flavor):
         """Get neutrino spectra after applying oscillation.
 
         Parameters
@@ -129,6 +129,8 @@ class SupernovaModel(ABC, LocalFileLoader):
             Energies to evaluate the initial and oscillated spectra.
         flavor_xform : FlavorTransformation
             An instance from the flavor_transformation module.
+        flavors: iterable of snewpy.neutrino.Flavor
+            Return spectra for these flavors only (default: all)            
 
         Returns
         -------
@@ -137,10 +139,6 @@ class SupernovaModel(ABC, LocalFileLoader):
         """
         initial_spectra = self.get_initial_spectra(t, E)
         transformation_matrix = flavor_xform.P_ff(t,E)  
-        
-        NU_E, NU_MU, NU_TAU, NU_E_BAR, NU_MU_BAR, NU_TAU_BAR = \
-             ThreeFlavor.NU_E, ThreeFlavor.NU_MU, ThreeFlavor.NU_TAU, \
-             ThreeFlavor.NU_E_BAR, ThreeFlavor.NU_MU_BAR, ThreeFlavor.NU_TAU_BAR
 
         transformed_spectra = {}
         
