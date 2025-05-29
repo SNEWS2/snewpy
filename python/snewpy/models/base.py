@@ -135,26 +135,46 @@ class SupernovaModel(ABC, LocalFileLoader):
         dict
             Dictionary of transformed spectra, keyed by neutrino flavor.
         """
-        initialspectra = self.get_initial_spectra(t, E)
+        initial_spectra = self.get_initial_spectra(t, E)
+        transformation_matrix = flavor_xform.P_ff(t,E)  
+        
+        NU_E, NU_MU, NU_TAU, NU_E_BAR, NU_MU_BAR, NU_TAU_BAR = \
+             ThreeFlavor.NU_E, ThreeFlavor.NU_MU, ThreeFlavor.NU_TAU, \
+             ThreeFlavor.NU_E_BAR, ThreeFlavor.NU_MU_BAR, ThreeFlavor.NU_TAU_BAR
+
         transformed_spectra = {}
+        
+        transformed_spectra[NU_E] = \
+            transformation_matrix[NU_E, NU_E] * initial_spectra[NU_E] + \
+            transformation_matrix[NU_E, NU_MU] * initial_spectra[NU_MU] + \
+            transformation_matrix[NU_E, NU_TAU] * initial_spectra[NU_TAU]
 
-        transformed_spectra[Flavor.NU_E] = \
-            flavor_xform.prob_ee(t, E) * initialspectra[Flavor.NU_E] + \
-            flavor_xform.prob_ex(t, E) * initialspectra[Flavor.NU_X]
+        transformed_spectra[NU_MU] = \
+            transformation_matrix[NU_MU, NU_E] * initial_spectra[NU_E] + \
+            transformation_matrix[NU_MU, NU_MU] * initial_spectra[NU_MU] + \
+            transformation_matrix[NU_MU, NU_TAU] * initial_spectra[NU_TAU]
 
-        transformed_spectra[Flavor.NU_X] = \
-            flavor_xform.prob_xe(t, E) * initialspectra[Flavor.NU_E] + \
-            flavor_xform.prob_xx(t, E) * initialspectra[Flavor.NU_X] 
+        transformed_spectra[NU_TAU] = \
+            transformation_matrix[NU_TAU, NU_E] * initial_spectra[NU_E] + \
+            transformation_matrix[NU_TAU, NU_MU] * initial_spectra[NU_MU] + \
+            transformation_matrix[NU_TAU, NU_TAU] * initial_spectra[NU_TAU]
 
-        transformed_spectra[Flavor.NU_E_BAR] = \
-            flavor_xform.prob_eebar(t, E) * initialspectra[Flavor.NU_E_BAR] + \
-            flavor_xform.prob_exbar(t, E) * initialspectra[Flavor.NU_X_BAR]
+        transformed_spectra[NU_E_BAR] = \
+            transformation_matrix[NU_E_BAR, NU_E_BAR] * initial_spectra[NU_E_BAR] + \
+            transformation_matrix[NU_E_BAR, NU_MU_BAR] * initial_spectra[NU_MU_BAR] + \
+            transformation_matrix[NU_E_BAR, NU_TAU_BAR] * initial_spectra[NU_TAU_BAR]
 
-        transformed_spectra[Flavor.NU_X_BAR] = \
-            flavor_xform.prob_xebar(t, E) * initialspectra[Flavor.NU_E_BAR] + \
-            flavor_xform.prob_xxbar(t, E) * initialspectra[Flavor.NU_X_BAR] 
+        transformed_spectra[NU_MU_BAR] = \
+            transformation_matrix[NU_MU_BAR, NU_E_BAR] * initial_spectra[NU_E_BAR] + \
+            transformation_matrix[NU_MU_BAR, NU_MU_BAR] * initial_spectra[NU_MU_BAR] + \
+            transformation_matrix[NU_MU_BAR, NU_TAU_BAR] * initial_spectra[NU_TAU_BAR]
+            
+        transformed_spectra[NU_TAU_BAR] = \
+            transformation_matrix[NU_TAU_BAR, NU_E_BAR] * initial_spectra[NU_E_BAR] + \
+            transformation_matrix[NU_TAU_BAR, NU_MU_BAR] * initial_spectra[NU_MU_BAR] + \
+            transformation_matrix[NU_TAU_BAR, NU_TAU_BAR] * initial_spectra[NU_TAU_BAR]
 
-        return transformed_spectra   
+        return transformed_spectra      
 
     def get_flux (self, t, E, distance, flavor_xform=NoTransformation()):
         """Get neutrino flux through 1cm^2 surface at the given distance
