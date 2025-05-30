@@ -32,7 +32,6 @@ def rates_calculation(fluence_file):
         result[det] = table['weighted']['smeared'].values.sum()
     return result
 
-@pytest.mark.xfail(reason="Rate calculation uses `get_transformed_flux`, which is currently hard coded to a TwoFlavor scheme.", raises=AttributeError)
 @pytest.mark.parametrize('model_parameters',param_values)
 def test_total_rate_equals_table_value(model_parameters):
     fluence_file = fluence_calculation(*model_parameters)

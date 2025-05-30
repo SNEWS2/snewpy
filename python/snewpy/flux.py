@@ -490,7 +490,10 @@ class Container(_ContainerBase):
             style = styles(flv)
             style.update(kwargs)
             y = fP[flv].array.squeeze()
-            plt.plot(x,y,label=flv.to_tex(), **style)
+            if len(x)==len(y):
+                plt.plot(x,y,label=flv.to_tex(), **style)
+            else:
+                plt.stairs(y,edges=x, label=flv.to_tex(), **style)
         plt.legend(ncols=2)
         plt.xlabel(f'{projection}, {x.unit._repr_latex_()}')
         plt.ylabel(f'{fP.__class__.__name__}, {x.unit._repr_latex_()}')
