@@ -462,7 +462,7 @@ parameter_presets = {
         # Values from https://pdglive.lbl.gov/Particle.action?node=S067&init=0
         # Cite as S. Navas et al. (Particle Data Group), Phys. Rev. D 110, 030001 (2024)
         MassHierarchy.NORMAL:
-        MixingParameters3Flavor(
+        ThreeFlavorMixingParameters(
             theta12 = 33.65 << u.deg,
             theta13 = 8.51 << u.deg,
             theta23 = 48.33 << u.deg,
@@ -471,7 +471,7 @@ parameter_presets = {
             dm32_2 = 2.455e-3 << u.eV**2
         ),
         MassHierarchy.INVERTED:
-        MixingParameters3Flavor(
+        ThreeFlavorMixingParameters(
             theta12 = 33.65 << u.deg,
             theta13 = 8.51 << u.deg,
             theta23 = 48.04 << u.deg,
