@@ -1,7 +1,8 @@
 import astropy.units as u
 import numpy as np
 from snewpy.models import presn
-from snewpy.flavor_transformation import AdiabaticMSW, MassHierarchy
+from snewpy.neutrino import MassHierarchy, MixingParameters
+from snewpy.flavor_transformation import AdiabaticMSW
 from snewpy.rate_calculator import RateCalculator
 import pytest
 
@@ -16,7 +17,7 @@ E = np.linspace(0,20,100)*u.MeV
 
 @pytest.mark.xfail(reason="`model.get_flux` uses `get_transformed_flux`, which is currently hard coded to a TwoFlavor scheme.", raises=AttributeError)
 @pytest.mark.parametrize('model_class',[presn.Odrzywolek_2010, presn.Kato_2017, presn.Patton_2017, presn.Yoshida_2016])
-@pytest.mark.parametrize('transformation',[AdiabaticMSW(mh=mh) for mh in MassHierarchy])
+@pytest.mark.parametrize('transformation',[AdiabaticMSW(MixingParameters(mh)) for mh in MassHierarchy])
 @pytest.mark.parametrize('detector', ["wc100kt30prct"])
 def test_presn_rate(model_class, transformation, detector):
     model = model_class(progenitor_mass=15*u.Msun)
