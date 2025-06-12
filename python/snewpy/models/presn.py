@@ -18,7 +18,7 @@ class Odrzywolek_2010(loaders.Odrzywolek_2010):
     """
     def __init__(self, progenitor_mass:u.Quantity):
         filename=f"s{progenitor_mass.to_value('Msun'):.0f}_nuebar_data.txt"
-        super().__init__(filename)
+        super().__init__(filename, self.metadata)
     
 @RegistryModel(
     progenitor_mass = [15, 30]<<u.Msun
@@ -31,7 +31,7 @@ class Patton_2017(loaders.Patton_2017):
     """
     def __init__(self, progenitor_mass:u.Quantity):
         filename=f"totalLuminosity_{progenitor_mass.to_value('Msun'):.0f}SolarMass.dat"
-        super().__init__(filename)
+        super().__init__(filename, self.metadata)
         
 @RegistryModel(
     progenitor_mass = [12, 15]<<u.Msun
@@ -44,7 +44,7 @@ class Kato_2017(loaders.Kato_2017):
     """
     def __init__(self, progenitor_mass:u.Quantity):
         path=f"pre_collapse/m{progenitor_mass.to_value('Msun'):.0f}"
-        super().__init__(path)
+        super().__init__(path, self.metadata)
 
 
 @RegistryModel(
@@ -58,4 +58,4 @@ class Yoshida_2016(loaders.Yoshida_2016):
     """
     def __init__(self, progenitor_mass:u.Quantity):
         path=f"t_spc_m{progenitor_mass.to_value('Msun'):.0f}_1.2.txt"
-        super().__init__(path)
+        super().__init__(path, self.metadata)
