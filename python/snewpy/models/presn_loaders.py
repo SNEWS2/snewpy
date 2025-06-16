@@ -38,7 +38,7 @@ class Odrzywolek_2010(SupernovaModel):
     [A. Odrzywolek and A. Heger, Acta Phys. Polon. B 41 (2010) 1611.]
     """
 
-    def __init__(self, filename:str):
+    def __init__(self, filename:str, metadata={}):
         df = pd.read_csv(
             self.request_file(filename),
             sep=r'\s+',
@@ -57,7 +57,7 @@ class Odrzywolek_2010(SupernovaModel):
                 # nuX/nuE ratio from Odrzywolek paper: (arXiv:astro-ph/0311012)
                 self.factor[f] = 0.19
         time = -df.index.to_numpy() << u.s
-        super().__init__(time, self.metadata)
+        super().__init__(time, metadata)
 
     def get_initial_spectra(self, t, E, flavors=Flavor):
         # negative t for time before SN
@@ -79,7 +79,7 @@ class Patton_2017(SupernovaModel):
     [Kelly M. Patton et al 2017 ApJ 851 6, 
      https://doi.org/10.5281/zenodo.2598709]
     """
-    def __init__(self, filename:str):
+    def __init__(self, filename:str, metadata={}):
         df = pd.read_csv(
             self.request_file(filename),
             comment="#",
@@ -100,7 +100,7 @@ class Patton_2017(SupernovaModel):
         self.interpolated = _interp_TE(
             times, energies, self.array, ax_t=1, ax_e=2
         )
-        super().__init__(-times << u.hour, self.metadata)
+        super().__init__(-times << u.hour, metadata)
 
     def get_initial_spectra(self, t, E, flavors=Flavor):
         t = np.array(-t.to_value("hour"), ndmin=1)
@@ -112,7 +112,7 @@ class Kato_2017(SupernovaModel):
     """Set up a presupernova model based on 
     [Chinami Kato et al 2017 ApJ 848 48]
     """
-    def __init__(self, path):
+    def __init__(self, path, metadata={}):
         fluxes = {}
         #reading the time steps values:
         times, step = np.loadtxt(self.request_file(f"{path}/total_nue/lightcurve_nue_all.dat"), usecols=[0, 3]).T
@@ -136,7 +136,7 @@ class Kato_2017(SupernovaModel):
         self.interpolated = _interp_TE(
             times, energies, self.array, ax_t=1, ax_e=2
         )
-        super().__init__(-times << u.s, self.metadata)
+        super().__init__(-times << u.s, metadata)
 
     def get_initial_spectra(self, t, E, flavors=Flavor):
         t = np.array(-t.to_value("s"), ndmin=1)
@@ -148,7 +148,7 @@ class Yoshida_2016(SupernovaModel):
     """Set up a presupernova model based on 
     [Yoshida et al. (2016), PRD 93, 123012.]
     """
-    def __init__(self, filename):
+    def __init__(self, filename, metadata={}):
         with open(self.request_file(filename)) as f:
             data = []
             T = []
@@ -169,7 +169,7 @@ class Yoshida_2016(SupernovaModel):
         self.interpolated = _interp_TE(
             times, energies, dNdEdT, ax_t=1, ax_e=2
         )
-        super().__init__(-times << u.s, self.metadata)
+        super().__init__(-times << u.s, metadata)
 
     def get_initial_spectra(self, t, E, flavors=Flavor):
         t = np.array(-t.to_value("s"), ndmin=1)
