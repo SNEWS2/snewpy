@@ -61,8 +61,8 @@ class Odrzywolek_2010(SupernovaModel):
 
     def get_initial_spectra(self, t, E, flavors=Flavor):
         # negative t for time before SN
-        t = -t.to_value("s")
-        E = E.to_value("MeV")
+        t = np.array(-t.to_value("s"), ndmin=1)
+        E = np.array(E.to_value("MeV"), ndmin=1)
         df = self.df_t(t)
         a, alpha, b = df.T
         Enu = np.expand_dims(E, 1)
