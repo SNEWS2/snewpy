@@ -677,7 +677,7 @@ class TestFlavorTransformations:
         assert (np.allclose(P['x_bar','x_bar'], 1. - 0.5*(1 - prob_eebar)))
         assert (np.allclose(P['x_bar','e_bar'], 0.5*(1. - prob_eebar)))
 
-
+    @pytest.mark.BEMEWS
     def test_EarthMatter_NMO(self):
         """Earth matter effects with normal ordering.
         """
@@ -708,7 +708,8 @@ class TestFlavorTransformations:
             [0.24584477, 0.3366807,  0.41747453, 0.,         0.,         0.,       ],
             [0.,         0.,         0.,         0.24407448, 0.33845361, 0.41747191]])
         assert np.allclose(Pfm[:,:,0].array, m.T)
-
+    
+    @pytest.mark.BEMEWS
     def test_EarthMatter_IMO(self):
         """Earth matter effects with normal ordering.
         """

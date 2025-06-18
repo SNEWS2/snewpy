@@ -44,7 +44,6 @@ def fluence(snmodel):
                             flavor_xform=ft.AdiabaticMSW(MixingParameters('NORMAL')))
     return flux.integrate('time')
 
-@pytest.mark.xfail(reason="Fluence calculation uses `get_transformed_flux`, which is currently hard coded to a TwoFlavor scheme.", raises=AttributeError)
 @pytest.mark.parametrize('detector, expected_total',crosscheck_table_unsmeared)
 def test_rate_unsmeared(rc, fluence, detector, expected_total):    
     #calculate the event rates
@@ -55,7 +54,7 @@ def test_rate_unsmeared(rc, fluence, detector, expected_total):
     #check the final value
     assert N_total == pytest.approx(expected_total, 0.01)
     
-@pytest.mark.xfail(reason="Fluence calculation uses `get_transformed_flux`, which is currently hard coded to a TwoFlavor scheme.", raises=AttributeError)
+
 @pytest.mark.parametrize('detector, expected_total',crosscheck_table)
 def test_rate_smeared(rc, fluence, detector, expected_total):
     #calculate the event rates
