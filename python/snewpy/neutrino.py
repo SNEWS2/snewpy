@@ -483,7 +483,7 @@ parameter_presets = {
 }
    
 
-def MixingParameters(mass_order:MassHierarchy|str='NORMAL', version:str='NuFIT5.0'):
+def MixingParameters(mass_order:MassHierarchy|str='NORMAL', version:str='NuFIT6.0'):
     if isinstance(mass_order,str):
         mass_order = MassHierarchy[mass_order]
     return parameter_presets[version][mass_order]
