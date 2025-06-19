@@ -111,7 +111,8 @@ class MSWEffect(SNTransformation, ThreeFlavorTransformation):
         self.settings.stepcounterlimit = 10000  # output frequency if outputflag = True: larger is less frequent
         self.settings.outputflag = False        # set to True if output is desired
         self._update_settings()
-        
+        super().__init__()
+
     def _update_settings(self):
         """Put the values from mixing_parameters into self.settings"""
         self.settings.deltam_21 = self.mixing_params.dm21_2.to_value('eV**2')
