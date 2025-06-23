@@ -37,9 +37,9 @@ class MassHierarchy(IntEnum):
 class ThreeFlavorMixingParameters(Mapping):
     """Mixing angles and mass differences, assuming three neutrino flavors.
     This class contains the default values used throughout SNEWPY, which are
-    based on `NuFIT 5.0 <http://www.nu-fit.org>`_ results from July 2020,
-    published in `JHEP 09 (2020) 178 <https://dx.doi.org/10.1007/JHEP09(2020)178>`_
-    [`arXiv:2007.14792 <https://arxiv.org/abs/2007.14792>`_].
+    based on `NuFIT 6.0 <http://www.nu-fit.org>`_ results from September 2024,
+    published in `JHEP 12 (2024) 216 <https://dx.doi.org/10.1007/JHEP12(2024)216>`_
+    [`arXiv:2410.05380 <https://arxiv.org/abs/2410.05380>`_].
     """
     #mixing angles
     theta12: u.Quantity[u.deg]
@@ -483,7 +483,7 @@ parameter_presets = {
 }
    
 
-def MixingParameters(mass_order:MassHierarchy|str='NORMAL', version:str='NuFIT5.0'):
+def MixingParameters(mass_order:MassHierarchy|str='NORMAL', version:str='NuFIT6.0'):
     if isinstance(mass_order,str):
         mass_order = MassHierarchy[mass_order]
     return parameter_presets[version][mass_order]
