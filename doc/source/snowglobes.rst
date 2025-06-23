@@ -7,15 +7,16 @@ When installing SNEWPY, it automatically downloads the detector configurations
 from the latest supported SNOwGLoBES version.
 
 You only need to download SNOwGLoBES manually if you require a custom detector
-configuration. In that case, run the following commands:
+configuration. In that case, build and install it using the following commands:
 
 .. code-block:: bash
 
    git clone https://github.com/SNOwGLoBES/snowglobes.git
    cd snowglobes
-   git checkout v1.3
-   # create custom detector configuration
-   export SNOWGLOBES=${PWD} # or use `SNOwGLoBESdir` parameter as documented below
+   # ... create custom detector configuration here ...
+   cd snowglobes_data
+   ./build.sh
+   pip install dist/snowglobes_data-*.whl
 
 
 Usage
