@@ -37,7 +37,7 @@ class MassHierarchy(IntEnum):
 class ThreeFlavorMixingParameters(Mapping):
     """Mixing angles and mass differences, assuming three neutrino flavors.
     This class contains the default values used throughout SNEWPY, which are
-    based on `NuFIT 6.0 <http://www.nu-fit.org>`_ results from July 2024,
+    based on `NuFIT 6.0 <http://www.nu-fit.org>`_ results from September 2024,
     published in `JHEP 12 (2024) 216 <https://dx.doi.org/10.1007/JHEP12(2024)216>`_
     [`arXiv:2410.05380 <https://arxiv.org/abs/2410.05380>`_].
     """
