@@ -5,8 +5,9 @@ from snewpy.flavor import FlavorMatrix
 from snewpy.neutrino import MixingParameters, ThreeFlavorMixingParameters, FourFlavorMixingParameters
 
 class ThreeFlavorTransformation:
-    _mixing_params = ThreeFlavorMixingParameters(**MixingParameters())
-    
+    def __init__(self):
+        self._mixing_params = ThreeFlavorMixingParameters(**MixingParameters())
+
     @property
     def mixing_params(self):
         return self._mixing_params
@@ -16,7 +17,8 @@ class ThreeFlavorTransformation:
         return self._mixing_params.update(**val)
 
 class FourFlavorTransformation(ThreeFlavorTransformation):
-    _mixing_params = FourFlavorMixingParameters(**MixingParameters())
+    def __init__(self):
+        self._mixing_params = FourFlavorMixingParameters(**MixingParameters())
 
 
 class FlavorTransformation(ABC):
