@@ -486,18 +486,21 @@ class Container(_ContainerBase):
         elif styles==None:
             styles = lambda flv: {'ls':'-' if flv.is_neutrino else ':',
                                   'color':f'C{flv//2:d}'}
-        for flv in fP.flavor:
+        lines = []
+        for idx,flv in zip(range(fP.array.shape[0]),fP.flavor):
             style = styles(flv)
             style.update(kwargs)
-            y = fP[flv].array.squeeze()
+            style.setdefault('label',flv.to_tex())
+            y = fP[idx].array.squeeze()
             if len(x)==len(y):
-                plt.plot(x,y,label=flv.to_tex(), **style)
+                l=plt.plot(x,y, **style)
             else:
-                plt.stairs(y,edges=x, label=flv.to_tex(), **style)
-        plt.legend(ncols=2)
+                l=plt.stairs(y,edges=x, **style)
+            lines.append(l)
+            
         plt.xlabel(f'{projection}, {x.unit._repr_latex_()}')
         plt.ylabel(f'{fP.__class__.__name__}, {x.unit._repr_latex_()}')
-        return
+        return lines
 
 #some standard container classes that can be used for 
 Flux = Container['1/(MeV*s*m**2)', "d2FdEdT"]
