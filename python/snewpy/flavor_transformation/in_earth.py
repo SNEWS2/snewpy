@@ -31,9 +31,9 @@ class EarthTransformation(ABC):
         pass
 ###############################################################################
 
-class NoEarthMatter(EarthTransformation):
+class NoEarthMatter(ThreeFlavorTransformation, EarthTransformation):
     def __init__(self, mixing_params=None):
-         self.mixing_params = mixing_params or MixingParameters('NORMAL')
+        super().__init__(mixing_params or MixingParameters('NORMAL'))
          
     def P_fm(self, t, E)->FlavorMatrix:
         D = self.mixing_params.VacuumMixingMatrix().abs2()
@@ -50,10 +50,9 @@ class EarthMatter(ThreeFlavorTransformation, EarthTransformation):
         mixing_params : ThreeFlavorMixingParameters instance or None
         SNAltAz : astropy AltAz object
         """       
+        super().__init__(mixing_params)
         if BEMEWS is None:
             raise ModuleNotFoundError('BEMEWS module is not found. Please make sure BEMEWS is installed to use EarthMatter transformation')
-        if(mixing_params):
-            self.mixing_params=mixing_params
         self.SNAltAz = SNAltAz
 
         self.prior_E = None # used to store energy array from previous calls to get_probabilities

@@ -25,8 +25,8 @@ class TransformationChain(FlavorTransformation):
     """
     def __init__(self,
                  in_sn: SNTransformation,
-                 in_vacuum: VacuumTransformation=NoVacuumTransformation(),
-                 in_earth: EarthTransformation=NoEarthMatter(),
+                 in_vacuum: VacuumTransformation|None=None,
+                 in_earth: EarthTransformation|None=None,
                  *,
                  mixing_params:ThreeFlavorMixingParameters|FourFlavorMixingParameters=MixingParameters()
                 ):
@@ -37,15 +37,18 @@ class TransformationChain(FlavorTransformation):
             Transformation in Supernova.
         in_vacuum
             Transformation in Vacuum.
-            By default NoVacuumTransformation is applied
+            If None (default) NoVacuumTransformation is applied
         in_earth
             Transformation in Earth.
-            By default NoEarthTransformation is applied
+            If None (default) NoEarthTransformation is applied
 
         Keyword mixing_params
             Neutrino mixing parameters (to be applied to all individual transformations in chain)
             By default use standard `MixingParameters` with normal neutrino ordering
         """
+        in_vacuum = in_vacuum or NoVacuumTransformation()
+        in_earth = in_earth or NoEarthMatter()
+
         self.transforms = TransformationsTuple(in_sn, in_vacuum, in_earth)
         self.set_mixing_params(mixing_params)
     

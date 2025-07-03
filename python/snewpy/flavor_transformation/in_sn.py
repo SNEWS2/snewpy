@@ -94,6 +94,7 @@ class MSWEffect(SNTransformation, ThreeFlavorTransformation):
         ----------
         SNprofile : instance of profile class
         """
+        super().__init__()
         if SNOSHEWS == None:
             raise ModuleNotFoundError("The SNOSHEWS module not be found. Please make sure SNOSHEWS is installed to use MSWEffect transformation")
         #input data object for SNOSHEWS

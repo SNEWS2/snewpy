@@ -5,8 +5,8 @@ from snewpy.flavor import FlavorMatrix
 from snewpy.neutrino import MixingParameters, ThreeFlavorMixingParameters, FourFlavorMixingParameters
 
 class ThreeFlavorTransformation:
-    _mixing_params = ThreeFlavorMixingParameters(**MixingParameters())
-    
+    def __init__(self, mixing_params:ThreeFlavorMixingParameters|None = None):
+        self._mixing_params = mixing_params or ThreeFlavorMixingParameters(**MixingParameters())
     @property
     def mixing_params(self):
         return self._mixing_params
@@ -16,8 +16,8 @@ class ThreeFlavorTransformation:
         return self._mixing_params.update(**val)
 
 class FourFlavorTransformation(ThreeFlavorTransformation):
-    _mixing_params = FourFlavorMixingParameters(**MixingParameters())
-
+        def __init__(self, mixing_params:FourFlavorMixingParameters|None = None):
+            self._mixing_params = mixing_params or FourFlavorMixingParameters(**MixingParameters())
 
 class FlavorTransformation(ABC):
     """Generic interface to compute neutrino and antineutrino survival probability."""

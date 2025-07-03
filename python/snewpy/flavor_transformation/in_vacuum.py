@@ -42,10 +42,11 @@ class NeutrinoDecay(VacuumTransformation, ThreeFlavorTransformation):
         dist : astropy.units.quantity.Quantity
             Distance to the supernova.
         """
+        super().__init__()
         self.m = mass
         self.tau = tau
         self.d = dist
-
+        
     def gamma(self, E):
         """Decay width of the heaviest neutrino mass.
 
@@ -104,6 +105,7 @@ class QuantumDecoherence(VacuumTransformation, ThreeFlavorTransformation):
             it is taken as 10 MeV. Note that if n = 0, quantum decoherence parameters are independent
             of E0.
         """
+        super().__init__()
         self.Gamma3 = (Gamma3 / (c.hbar.to('eV s') * c.c)).to('1/kpc')
         self.Gamma8 = (Gamma8 / (c.hbar.to('eV s') * c.c)).to('1/kpc')
         self.d = dist
