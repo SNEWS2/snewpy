@@ -464,6 +464,12 @@ class Container(_ContainerBase):
         if flavor_scheme is None:
             flavor_scheme = _derive_flavor_scheme(flavor)
         array = np.stack([data_dict[flv] for flv in flavor_scheme])
+        #check if we need to expand the dimensions
+        if time.size==1 and array.ndim<3:
+            array = np.expand_dims(array, axis=Axes['time'])
+        if energy.size==1 and array.ndim<3:
+            array = np.expand_dims(array, axis=Axes['energy'])
+            
         return cls(array, flavor, time, energy, flavor_scheme=flavor_scheme, integrable_axes=integrable_axes)
         
     def project_to(self, axis='energy', squeeze=False):
