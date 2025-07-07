@@ -51,6 +51,7 @@ jobs:
           python -m unittest python/snewpy/test/simplerate_integrationtest.py
           pytest -m 'snowglobes'
       - name: Run notebooks test
+        run: |
           pytest --nbval-lax doc/source/nb
       - uses: r-lib/actions/setup-pandoc@v2
 
