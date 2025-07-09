@@ -6,6 +6,7 @@ config:
     - &snewpy "https://github.com/SNEWS2/snewpy/raw/v{snewpy_version}/models/{model}/{filename}"
     - &ccsn_repository "https://github.com/SNEWS2/snewpy-models-ccsn/raw/v0.3/models/{model}/{filename}"
     - &presn_repository "https://github.com/SNEWS2/snewpy-models-presn/raw/v0.2/models/{model}/{filename}"
+    - &pisn_typeIa_repository "https://github.com/SNEWS2/snewpy-models-pisn_typeIa/raw/v0.1/models/{model}/{filename}"
     
 models:
     ccsn:
@@ -73,3 +74,10 @@ models:
 
         Yoshida_2016:
             repository: *presn_repository
+
+    pisn_typeIa:
+        TypeIa:
+            repository: *pisn_typeIa_repository  
+               
+        Wright_2017:
+            repository: *pisn_typeIa_repository

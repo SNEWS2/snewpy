@@ -8,7 +8,7 @@ These directories contain notebooks demonstrating how to use the core-collapse a
 
 ## AnalyticFluence
 
-This notebook demonstrates how to use the `Analytic3Species` class from `snewpy.models` to create an analytic supernova model by specifying the luminosity, mean energy and mean squared energy for three neutrino flavors.
+This notebook demonstrates how to use the `Analytic3Species` class from `snewpy.models.base` to create an analytic supernova model by specifying the luminosity, mean energy and mean squared energy for three neutrino flavors.
 
 ## FlavorTransformation
 
@@ -16,7 +16,7 @@ This notebook demonstrates the flavor transformations available in `snewpy.flavo
 
 ## SNOwGLoBES_models
 
-This notebook demonstrates how to use the `SNOwGLoBES` class in `snewpy.models`, which can be used with the `Type_Ia` and `PISN` model files that are available for download through SNEWPY.
+This notebook demonstrates how to use the `SNOwGLoBES` class in `snewpy.models.base`, which can be used with the `Type_Ia` and `PISN` model files that are available for download through SNEWPY.
 
 ## SNOwGLoBES_usage
 

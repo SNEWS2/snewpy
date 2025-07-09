@@ -1,5 +1,5 @@
 """This model stub allows one to generate simple analytic models and then 
-read them into the Analytic3Species model found in model.py which is part of SNEWPY.
+read them into the Analytic3Species model found in models.base.py which is part of SNEWPY.
 """
 
 from astropy.table import Table
