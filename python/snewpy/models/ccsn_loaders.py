@@ -293,6 +293,11 @@ class Fornax_2019(SupernovaModel):
         cache_flux : bool
             If true, pre-compute the flux on a fixed angular grid and store the values in a FITS file.
         """
+        #set the parameters
+        self.interpolation = "linear" #"linear"/"nearest"
+        self.phi = 0*u.deg #Input azimuth angles
+        self.theta = 0*u.deg #Input zenith angles
+        
         # Set up model metadata.
         self.filename = filename
         self.metadata = metadata
@@ -562,7 +567,7 @@ class Fornax_2019(SupernovaModel):
 
         return E, dE, binspec
 
-    def _get_initial_spectra_dict(self, t, E, theta, phi, flavors=ThreeFlavor, interpolation='linear'):
+    def _get_initial_spectra_dict(self, t, E, flavors=ThreeFlavor):
         """Get neutrino spectra/luminosity curves before flavor transformation.
 
         Parameters
@@ -571,15 +576,8 @@ class Fornax_2019(SupernovaModel):
             Time to evaluate initial spectra.
         E : astropy.Quantity or ndarray of astropy.Quantity
             Energies to evaluate the initial spectra.
-        theta : astropy.Quantity
-            Zenith angle of the spectral emission.
-        phi : astropy.Quantity
-            Azimuth angle of the spectral emission.
         flavors: iterable of snewpy.neutrino.Flavor
             Return spectra for these flavors only (default: all)
-        interpolation : str
-            Scheme to interpolate in spectra ('nearest', 'linear').
-
         Returns
         -------
         initialspectra : dict
@@ -588,7 +586,7 @@ class Fornax_2019(SupernovaModel):
         initialspectra = {}
 
         # Extract the binned spectra for the input t, theta, phi:
-        _E, _dE, _spec = self._get_binnedspectra(t, theta, phi)
+        _E, _dE, _spec = self._get_binnedspectra(t, self.theta, self.phi)
 
         # Avoid "division by zero" in retrieval of the spectrum.
         E[E == 0] = np.finfo(float).eps * E.unit
@@ -597,7 +595,7 @@ class Fornax_2019(SupernovaModel):
         for flavor in flavors:
 
             # Linear interpolation in flux.
-            if interpolation.lower() == 'linear':
+            if self.interpolation.lower() == 'linear':
                 # Pad log(E) array with values where flux is fixed to zero.
                 _logE = np.log10(_E[flavor].to_value('MeV'))
                 _dlogE = np.diff(_logE)
@@ -611,7 +609,7 @@ class Fornax_2019(SupernovaModel):
 
                 initialspectra[flavor] = np.interp(logE, _logEbins, _dLdE) * self.fluxunit
 
-            elif interpolation.lower() == 'nearest':
+            elif self.interpolation.lower() == 'nearest':
                 _logE = np.log10(_E[flavor].to_value('MeV'))
                 _dlogE = np.diff(_logE)[0]
                 _logEbins = _logE - _dlogE
@@ -626,7 +624,7 @@ class Fornax_2019(SupernovaModel):
                 initialspectra[flavor] = _dLdE * self.fluxunit
 
             else:
-                raise ValueError('Unrecognized interpolation type "{}"'.format(interpolation))
+                raise ValueError('Unrecognized interpolation type "{}"'.format(self.interpolation))
 
         return initialspectra
 
@@ -639,7 +637,8 @@ class Fornax_2021(SupernovaModel):
         filename : str
             Absolute or relative path to HDF5 file with model data.
         """
-
+        #extra parameters
+        self.interpolation = "linear" #Scheme to interpolate in spectra ('nearest', 'linear').
         # Open the requested filename using the model downloader.
         datafile = self.request_file(filename)
         # Set up model metadata.
@@ -676,7 +675,7 @@ class Fornax_2021(SupernovaModel):
             factor = 1. if flavor.is_electron else 0.25
             self.luminosity[flavor] = np.sum(dLdE*dE, axis=1) * factor * 1e50 * u.erg/u.s
 
-    def _get_initial_spectra_dict(self, t, E, flavors=ThreeFlavor, interpolation='linear'):
+    def _get_initial_spectra_dict(self, t, E, flavors=ThreeFlavor):
         """Get neutrino spectra/luminosity curves after oscillation.
 
         Parameters
@@ -687,9 +686,6 @@ class Fornax_2021(SupernovaModel):
             Energies to evaluate the initial spectra.
         flavors: iterable of snewpy.neutrino.Flavor
             Return spectra for these flavors only (default: all)
-        interpolation : str
-            Scheme to interpolate in spectra ('nearest', 'linear').
-
         Returns
         -------
         initialspectra : dict
@@ -717,7 +713,7 @@ class Fornax_2021(SupernovaModel):
             factor = 1. if flavor.is_electron else 0.25
 
             # Linear interpolation in flux.
-            if interpolation.lower() == 'linear':
+            if self.interpolation.lower() == 'linear':
                 # Pad log(E) array with values where flux is fixed to zero.
                 _logEbins = np.insert(_logE, 0, np.log10(np.finfo(float).eps * E.unit/u.MeV), axis=1)
                 _logEbins = np.append(_logEbins, np.expand_dims(_logE[:,-1] + _dlogE[:,-1], 1), axis=1)
@@ -729,7 +725,7 @@ class Fornax_2021(SupernovaModel):
                                           for __logEbins, __dNLdE in zip(_logEbins, _dNLdE)])
                 initialspectra[flavor] = (interp_values / E * factor * 1e50 * u.erg/u.s/u.MeV).to('1 / (erg s)')
 
-            elif interpolation.lower() == 'nearest':
+            elif self.interpolation.lower() == 'nearest':
                 # Find edges of energy bins and identify which energy bin (each entry of) E falls into
                 _logEbinEdges = _logE - _dlogE[0,0] / 2
                 _logEbinEdges = np.append(_logEbinEdges, np.expand_dims(_logE[:,-1] + _dlogE[:,-1]/2, 1), axis=1)
@@ -745,7 +741,7 @@ class Fornax_2021(SupernovaModel):
                 initialspectra[flavor] = ((_dNLdE << 1/u.MeV) * factor * 1e50 * u.erg/u.s/u.MeV).to('1 / (erg s)')
 
             else:
-                raise ValueError('Unrecognized interpolation type "{}"'.format(interpolation))
+                raise ValueError('Unrecognized interpolation type "{}"'.format(self.interpolation))
 
         return initialspectra
 
@@ -758,6 +754,8 @@ class Fornax_2022(Fornax_2021):
         filename : str
             Absolute or relative path to HDF5 file with model data.
         """
+        #extra parameters
+        self.interpolation = "linear" #Scheme to interpolate in spectra ('nearest', 'linear').
         # Open the requested filename using the model downloader.
         datafile = self.request_file(filename)
         # Set up model metadata.
