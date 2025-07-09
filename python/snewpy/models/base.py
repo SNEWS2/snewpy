@@ -204,6 +204,86 @@ def get_value(x):
         return x.value
     return x
 
+
+class SNOwGLoBES:
+    """A model that does not inherit from SupernovaModel (yet) and imports a group of SNOwGLoBES files."""
+
+    def __init__(self, tarfilename):
+        """
+        Parameters
+        ----------
+        tarfilename: str
+            Absolute or relative path to tar archive with SNOwGLoBES files.
+        """
+        self.tfname = tarfilename
+        tf = tarfile.open(self.tfname)
+
+        # For now just pull out the "NoOsc" files.
+        datafiles = sorted([f.name for f in tf if '.dat' in f.name])
+        noosc = [df for df in datafiles if 'NoOsc' in df]
+        noosc.sort(key=len)
+
+        # Loop through the noosc files and pull out the number fluxes.
+        self.time = []
+        self.energy = None
+        self.flux = {}
+        self.fmin = 1e99
+        self.fmax = -1e99
+
+        for nooscfile in noosc:
+            with tf.extractfile(nooscfile) as f:
+                logging.debug('Reading {}'.format(nooscfile))
+                meta = f.readline()
+                metatext = meta.decode('utf-8')
+                t = float(metatext.split('TBinMid=')[-1].split('sec')[0])
+                dt = float(metatext.split('tBinWidth=')[-1].split('s')[0])
+                dE = float(metatext.split('eBinWidth=')[-1].split('MeV')[0])
+
+                data = Table.read(f, format='ascii.commented_header', header_start=-1)
+                data.meta['t'] = t
+                data.meta['dt'] = dt
+                data.meta['dE'] = dE
+
+                self.time.append(t)
+                if self.energy is None:
+                    self.energy = (data['E(GeV)'].data*1000).tolist()
+
+            for flavor in ['NuE', 'NuMu', 'NuTau', 'aNuE', 'aNuMu', 'aNuTau']:
+                if flavor in self.flux:
+                    self.flux[flavor].append(data[flavor].data.tolist())
+                else:
+                    self.flux[flavor] = [data[flavor].data.tolist()]
+
+        # We now have a table with rows=times and columns=energies. Transpose
+        # so that rows=energy and cols=time.
+        for k, v in self.flux.items():
+            self.flux[k] = np.transpose(self.flux[k])
+            self.fmin = np.minimum(self.fmin, np.min(self.flux[k]))
+            self.fmax = np.maximum(self.fmax, np.max(self.flux[k]))
+
+    def get_fluence(self, t):
+        """Return the fluence at a given time t.
+
+        Parameters
+        ----------
+        t : float
+            Time in seconds.
+
+        Returns
+        -------
+        fluence : dict
+            A dictionary giving fluence at time t, keyed by flavor.
+        """
+        # Get index of closest element in the array
+        idx = np.abs(np.asarray(self.time) - t).argmin()
+
+        fluence = {}
+        for k, fl in self.flux.items():
+            fluence[k] = fl[:,idx]
+
+        return fluence
+
+
 class PinchedModel(SupernovaModel):
     """Subclass that contains spectra/luminosity pinches"""
     def __init__(self, simtab, metadata):
@@ -286,3 +366,27 @@ class PinchedModel(SupernovaModel):
             initialspectra[flavor] = result
 
         return initialspectra
+
+
+class Analytic3Species(PinchedModel):
+    """An analytical model calculating spectra given total luminosity,
+    average energy, and rms or pinch, for each species.
+    """
+
+    param = "There are no input files available for this class. Use `doc/scripts/Analytic.py` in the SNEWPY GitHub repo to create a custom input file."
+
+    def get_param_combinations(cls):
+        print(cls.param)
+        return []
+
+    def __init__(self, filename):
+        """
+        Parameters
+        ----------
+        filename : str
+            Absolute or relative path to file with model data.
+        """
+
+        simtab = Table.read(filename,format='ascii')
+        self.filename = filename
+        super().__init__(simtab, metadata={})
