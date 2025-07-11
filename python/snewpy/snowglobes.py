@@ -38,7 +38,44 @@ from snewpy.rate_calculator import RateCalculator, center
 from snewpy.flux import Container
 logger = logging.getLogger(__name__)
 
-def generate_time_series(model_path, model_type, transformation_type, d, output_filename=None, ntbins=30, deltat=None, snmodel_dict={}):
+def get_transformation(flavor_transformation_string):
+    """A function for idetifying the flavor transformation class from a string
+
+    Parameters
+    ---------
+    flavor_transformation_string : string
+
+    Returns
+    -------
+    flavor_transformation_class : a flavor_transformation class 
+    """
+
+    IMO_mix_params = MixingParameters(MassHierarchy.INVERTED)
+    NMO_mix_params = MixingParameters(MassHierarchy.NORMAL) 
+    
+    if flavor_transformation_string.find("NeutrinoDecay") is True:
+        print("Using the default values for Neutrino Decay transformation")         
+
+    # Choose flavor transformation. Use dict to associate the transformation name with its class.
+    # The default mixing paramaters are the normal hierarchy values
+    flavor_transformation_dict = {'NoTransformation': NoTransformation(), 
+                                  'CompleteExchange': CompleteExchange(),                                
+                                  'AdiabaticMSW_NMO': AdiabaticMSW(NMO_mix_params), 
+                                  'AdiabaticMSW_IMO': AdiabaticMSW(IMO_mix_params), 
+                                  'NonAdiabaticMSWH_NMO': NonAdiabaticMSWH(NMO_mix_params), 
+                                  'NonAdiabaticMSWH_IMO': NonAdiabaticMSWH(IMO_mix_params), 
+                                  'TwoFlavorDecoherence': TwoFlavorDecoherence(NMO_mix_params), 
+                                  'TwoFlavorDecoherence_NMO': TwoFlavorDecoherence(NMO_mix_params), 
+                                  'TwoFlavorDecoherence_IMO': TwoFlavorDecoherence(IMO_mix_params), 
+                                  'ThreeFlavorDecoherence': ThreeFlavorDecoherence()
+                                  }
+
+    flavor_transformation_class = flavor_transformation_dict[flavor_transformation_string]
+
+    return flavor_transformation_class
+
+
+def generate_time_series(model_path, model_type, flavor_transformation, d, output_filename=None, ntbins=30, deltat=None, snmodel_dict={}):
     """Generate time series files in SNOwGLoBES format.
 
     This version will subsample the times in a supernova model, produce energy
@@ -50,8 +87,8 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
         Input file containing neutrino flux information from supernova model.
     model_type : str
         Format of input file. Matches the name of the corresponding class in :py:mod:`snewpy.models`.
-    transformation_type : str
-        Name of flavor transformation. See snewpy.flavor_transformation documentation for possible values.
+    flavor_transformation : str or instance of flavor transformation class  
+        If a string, the class if found using the get_transformation function
     d : int or float
         Distance to supernova in kpc.
     output_filename : str or None
@@ -70,9 +107,9 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
     """
     model_class = getattr(snewpy.models.ccsn, model_type)
 
-    # Choose flavor transformation. Use dict to associate the transformation name with its class.
-    flavor_transformation_dict = {'NoTransformation': NoTransformation(), 'AdiabaticMSW_NMO': AdiabaticMSW(mh=MassHierarchy.NORMAL), 'AdiabaticMSW_IMO': AdiabaticMSW(mh=MassHierarchy.INVERTED), 'NonAdiabaticMSWH_NMO': NonAdiabaticMSWH(mh=MassHierarchy.NORMAL), 'NonAdiabaticMSWH_IMO': NonAdiabaticMSWH(mh=MassHierarchy.INVERTED), 'TwoFlavorDecoherence': TwoFlavorDecoherence(), 'ThreeFlavorDecoherence': ThreeFlavorDecoherence(), 'NeutrinoDecay_NMO': NeutrinoDecay(mh=MassHierarchy.NORMAL), 'NeutrinoDecay_IMO': NeutrinoDecay(mh=MassHierarchy.INVERTED), 'QuantumDecoherence_NMO': QuantumDecoherence(mh=MassHierarchy.NORMAL), 'QuantumDecoherence_IMO': QuantumDecoherence(mh=MassHierarchy.INVERTED)}
-    flavor_transformation = flavor_transformation_dict[transformation_type]
+    # if flavor_transformation is a string, find the appropriate class
+    if isinstance(flavor_transformation,str) == True:
+        flavor_transformation = get_transformation(flavor_transformation)
 
     model_dir, model_file = os.path.split(os.path.abspath(model_path))
     snmodel = model_class(model_path, **snmodel_dict)
@@ -99,7 +136,7 @@ def generate_time_series(model_path, model_type, transformation_type, d, output_
     fluence.save(tfname)
     return tfname
 
-def generate_fluence(model_path, model_type, transformation_type, d, output_filename=None, tstart=None, tend=None, snmodel_dict={}):
+def generate_fluence(model_path, model_type, flavor_transformation, d, output_filename=None, tstart=None, tend=None, snmodel_dict={}):
     """Generate fluence files in SNOwGLoBES format.
 
     This version will subsample the times in a supernova model, produce energy
@@ -111,8 +148,8 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
         Input file containing neutrino flux information from supernova model.
     model_type : str
         Format of input file. Matches the name of the corresponding class in :py:mod:`snewpy.models`.
-    transformation_type : str
-        Name of flavor transformation. See snewpy.flavor_transformation documentation for possible values.
+    flavor_transformation : str or instance of flavor transformation class  
+        If a string, the class if found using the get_transformation function
     d : int or float
         Distance to supernova in kpc.
     output_filename : str or None
@@ -131,21 +168,9 @@ def generate_fluence(model_path, model_type, transformation_type, d, output_file
     """
     model_class = getattr(snewpy.models.ccsn_loaders, model_type)
 
-    # Choose flavor transformation. Use dict to associate the transformation name with its class.
-    NMO = MixingParameters('NORMAL')
-    IMO = MixingParameters('INVERTED')
-    flavor_transformation_dict = {'NoTransformation': NoTransformation(), 
-                                  'AdiabaticMSW_NMO': AdiabaticMSW(NMO), 
-                                  'AdiabaticMSW_IMO': AdiabaticMSW(IMO), 
-                                  'NonAdiabaticMSWH_NMO': NonAdiabaticMSWH(NMO), 
-                                  'NonAdiabaticMSWH_IMO': NonAdiabaticMSWH(IMO), 
-                                  'TwoFlavorDecoherence': TwoFlavorDecoherence(NMO), 
-                                  'ThreeFlavorDecoherence': ThreeFlavorDecoherence(), 
-                                  'NeutrinoDecay_NMO': NeutrinoDecay(NMO), 
-                                  'NeutrinoDecay_IMO': NeutrinoDecay(IMO), 
-                                  'QuantumDecoherence_NMO': QuantumDecoherence(NMO), 
-                                  'QuantumDecoherence_IMO': QuantumDecoherence(IMO)}
-    flavor_transformation = flavor_transformation_dict[transformation_type]
+    # if flavor_transformation is a string, find the appropriate class
+    if isinstance(flavor_transformation,str) == True:
+        flavor_transformation = get_transformation(flavor_transformation)
 
     model_dir, model_file = os.path.split(os.path.abspath(model_path))
     snmodel = model_class(model_path, **snmodel_dict)
