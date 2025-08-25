@@ -334,9 +334,9 @@ class RateCalculator(SnowglobesData):
         """
         Parameters
         ----------
-        base_dir:         Path or None
+        base_dir: Path or str
             Path to the directory where the cross-section, detector, and channel files are located
-            If empty, try to get it from ``$SNOWGLOBES`` environment var
+            If empty, use files provided by the `snowglobes_data` package.
         """
         super().__init__(base_dir=base_dir)
 

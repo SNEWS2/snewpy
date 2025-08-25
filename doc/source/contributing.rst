@@ -42,15 +42,11 @@ You can then run the tests using the
 
     pytest
 
-command in the SNEWPY root directory. To skip integration tests which depend
-on SNOwGLoBES (or to run *only* those tests) you can use one of::
+command in the SNEWPY root directory. To skip integration tests (which depend
+on SNOwGLoBES) or to run *only* those tests you can use one of::
 
-    pytest -m 'snowglobes'  # only run tests that depend on SNOwGLoBES
-    pytest -m 'not snowglobes'
-
-Normally, integration tests use the release version of SNOwGLoBES that was
-installed as a dependency of SNEWPY. To use custom data files, set the
-``$SNOWGLOBES`` environment variable to the path of your SNOwGLoBES directory.
+    pytest -m 'not snowglobes'  # skip integration tests
+    pytest -m 'snowglobes'  # only run integration tests
 
 Building Documentation
 ~~~~~~~~~~~~~~~~~~~~~~

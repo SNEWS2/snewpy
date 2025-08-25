@@ -45,7 +45,7 @@ def guess_material(detector):
     return mat
 
 class SnowglobesData:
-    def __init__(self, base_dir:Path='', detectors:str="all", detector_effects=True):
+    def __init__(self, base_dir:Path|str='', detectors:str="all", detector_effects=True):
         """Interface to SNOwGLoBES data
 
         On construction the code will read:
@@ -60,9 +60,9 @@ class SnowglobesData:
 
         Parameters
         ----------
-        base_dir:         Path or None
+        base_dir: Path or str
             Path to the directory where the cross-section, detector, and channel files are located
-            If empty, try to get it from ``$SNOWGLOBES`` environment var
+            If empty, use files provided by the `snowglobes_data` package.
 
         detectors: str
             Name of detector. If ``"all"``, will use all detectors supported by SNOwGLoBES.
@@ -70,11 +70,7 @@ class SnowglobesData:
         detector_effects: bool
             If true, account for efficiency and smearing. If false, consider a perfect detector.
         """
-        try:
-            self.base_dir = Path(base_dir if base_dir else os.environ['SNOWGLOBES'])
-        except KeyError:
-            print("Using snowglobes_data module ...")
-            self.base_dir = files(snowglobes_data)
+        self.base_dir = Path(base_dir) if base_dir else files(snowglobes_data)
         self._load_detectors(self.base_dir/'detector_configurations.dat', detectors)
         self._load_channels(self.base_dir/'channels')
         self.efficiencies = None
@@ -170,7 +166,7 @@ class SnowglobesData:
         logger.debug(f'smearing matrices: {self.smearings}')
 
 class SimpleRate(SnowglobesData):
-    def __init__(self, detectors:str="all", detector_effects=True, base_dir:Path=''):
+    def __init__(self, detectors:str="all", detector_effects=True, base_dir:Path|str=''):
         """Simple rate calculation interface.
         Computes expected rate for a detector without using GLOBES. The formula for the rate is
 
@@ -189,9 +185,9 @@ class SimpleRate(SnowglobesData):
         detector_effects: bool
             If true, account for efficiency and smearing. If false, consider a perfect detector.
 
-        base_dir:         Path or None
+        base_dir: Path or str
             Path to the directory where the cross-section, detector, and channel files are located
-            If empty, try to get it from ``$SNOWGLOBES`` environment var
+            If empty, use files provided by the `snowglobes_data` package.
         """
         super().__init__(base_dir, detectors=detectors, detector_effects = detector_effects)
 
