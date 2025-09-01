@@ -132,7 +132,7 @@ def generate_time_series(model_path, model_type, flavor_transformation, d, outpu
         tfname = output_filename + '.npz'
     else:
         model_file_root, _ = os.path.splitext(model_file)  # strip extension (if present)
-        tfname = f'{model_file_root}.{transformation_type}.{tmin:.3f},{tmax:.3f},{ntbins:d}-{d:.1f}.npz'
+        tfname = f'{model_file_root}'+str(flavor_transformation)+f'{tmin:.3f},{tmax:.3f},{ntbins:d}-{d:.1f}.npz'
     fluence.save(tfname)
     return tfname
 
@@ -201,7 +201,7 @@ def generate_fluence(model_path, model_type, flavor_transformation, d, output_fi
         tfname = output_filename+'.npz'
     else:
         model_file_root, _ = os.path.splitext(model_file)  # strip extension (if present)
-        tfname = f'{model_file_root}.{transformation_type}.{times[0]:.3f},{times[1]:.3f},{len(times)-1:d}-{d:.1f}.npz'
+        tfname = f'{model_file_root}'+str(flavor_transformation)+f'.{times[0]:.3f},{times[1]:.3f},{len(times)-1:d}-{d:.1f}.npz'
 
     fluence.save(tfname)
     return tfname
