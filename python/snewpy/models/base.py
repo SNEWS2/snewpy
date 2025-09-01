@@ -26,7 +26,7 @@ def _wrap_init(init, check):
 
 def get_all_models():
     models = {}
-    for filename in os.listdir(./):
+    for filename in os.listdir(.):
         if filename.endswith(".py") and filename != "__init__.py":
             models_file = filename[:-3]  # Remove .py extension
             models.append(models_file.__dict__)
