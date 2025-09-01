@@ -107,8 +107,8 @@ def generate_time_series(model_path, model_type, flavor_transformation, d, outpu
     str
         Path of NumPy archive file with neutrino fluence data.
     """
-    all_models = get_all_models()
-    model_class = getattr(all_models, model_type)
+    all_models_dict = get_all_models_dict()
+    model_class = getattr(all_models_dict, model_type)
 
     # if flavor_transformation is a string, find the appropriate class
     if isinstance(flavor_transformation,str) == True:
@@ -169,8 +169,8 @@ def generate_fluence(model_path, model_type, flavor_transformation, d, output_fi
     str
         Path of NumPy archive file with neutrino fluence data.
     """
-    all_models = get_all_models()
-    model_class = getattr(all_models, model_type)
+    all_models_dict = get_all_models_dict()
+    model_class = getattr(all_models_dict, model_type)
 
     # if flavor_transformation is a string, find the appropriate class
     if isinstance(flavor_transformation,str) == True:
