@@ -32,7 +32,7 @@ import pandas as pd
 from astropy import units as u
 
 import snewpy.models
-from snewpy.models.base import get_all_models
+from snewpy.models.base import get_all_models_dict
 
 from snewpy.flavor_transformation import *
 from snewpy.neutrino import MassHierarchy, MixingParameters
