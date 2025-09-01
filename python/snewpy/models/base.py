@@ -24,13 +24,13 @@ def _wrap_init(init, check):
         check(self)
     return _wrapper
 
-def get_all_models():
-    models = {}
+def get_all_models_dict():
+    models_dict = {}
     for filename in os.listdir('./'):
         if filename.endswith(".py") and filename != "__init__.py":
             models_file = filename[:-3]  # Remove .py extension
-            models.append(models_file.__dict__)
-    return models
+            models_dict.update(models_file.__dict__)
+    return models_dict
     
 class SupernovaModel(ABC, LocalFileLoader):
     """Base class defining an interface to a supernova model."""
