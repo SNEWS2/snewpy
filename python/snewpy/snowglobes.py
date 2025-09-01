@@ -32,6 +32,8 @@ import pandas as pd
 from astropy import units as u
 
 import snewpy.models
+from snewpy.models.base import get_all_models
+
 from snewpy.flavor_transformation import *
 from snewpy.neutrino import MassHierarchy, MixingParameters
 from snewpy.rate_calculator import RateCalculator, center
