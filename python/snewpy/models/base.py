@@ -29,7 +29,7 @@ def _wrap_init(init, check):
 def get_all_models_dict():
     models_dict = {}
     modules_list = [snewpy.models.base, snewpy.models.ccsn, snewpy.models.ccsn_loaders, 
-                    snewpy.models.extended, snewpy.models.presn, snewpy.models.presn_loaders]
+                    snewpy.models.presn, snewpy.models.presn_loaders]
     for module in modules_list:
         models_dict.update(vars(module))
     return models_dict
