@@ -10,7 +10,6 @@ from astropy.units import UnitTypeError, get_physical_type
 from astropy.units.quantity import Quantity
 from scipy.special import loggamma
 from snewpy._model_downloader import LocalFileLoader
-import snewpy.models
 
 from snewpy.flavor import ThreeFlavor
 from snewpy.flavor_transformation import NoTransformation
@@ -28,8 +27,7 @@ def _wrap_init(init, check):
 
 def get_all_models_dict():
     models_dict = {}
-    modules_list = [snewpy.models.base, snewpy.models.ccsn, snewpy.models.ccsn_loaders, 
-                    snewpy.models.presn, snewpy.models.presn_loaders]
+    modules_list = [snewpy.models.base, snewpy.models.ccsn, snewpy.models.ccsn_loaders]
     for module in modules_list:
         models_dict.update(vars(module))
     return models_dict
