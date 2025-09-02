@@ -24,16 +24,7 @@ def _wrap_init(init, check):
         init(self, *arg, **kwargs)
         check(self)
     return _wrapper
-
-def get_all_models_dict():
-    models_dict = {}
-    modules_list = ["snewpy.models.base", "snewpy.models.ccsn", "snewpy.models.ccsn_loaders",
-                    "snewpy.models.extended", "snewpy.models.presn", "snewpy.models.presn_loaders"]
-    for module_name in modules_list:
-        module = importlib.import_module(module_name)
-        models_dict.update(vars(module))
-    return models_dict
-    
+   
 class SupernovaModel(ABC, LocalFileLoader):
     """Base class defining an interface to a supernova model."""
 
