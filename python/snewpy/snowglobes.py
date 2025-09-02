@@ -32,7 +32,6 @@ import pandas as pd
 from astropy import units as u
 
 import snewpy.models
-from snewpy.models.base import get_all_models_dict
 
 from snewpy.flavor_transformation import *
 from snewpy.neutrino import MassHierarchy, MixingParameters
@@ -76,7 +75,25 @@ def get_transformation(flavor_transformation_string):
 
     return flavor_transformation_class
 
+def get_all_models_dict():
+    """A function for building the dictionary of models 
 
+    Parameters
+    ---------
+    None
+
+    Returns
+    -------
+    models_dict : a dictionary of all the models
+    """    
+    models_dict = {}
+    modules_list = ["snewpy.models.base", "snewpy.models.ccsn", "snewpy.models.ccsn_loaders",
+                    "snewpy.models.extended", "snewpy.models.presn", "snewpy.models.presn_loaders"]
+    for module_name in modules_list:
+        module = importlib.import_module(module_name)
+        models_dict.update(vars(module))
+    return models_dict
+    
 def generate_time_series(model_path, model_type, flavor_transformation, d, output_filename=None, ntbins=30, deltat=None, snmodel_dict={}):
     """Generate time series files in SNOwGLoBES format.
 
