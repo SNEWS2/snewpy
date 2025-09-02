@@ -28,10 +28,10 @@ def _wrap_init(init, check):
 def get_all_models_dict():
     models_dict = {}
     print(os.getcwd())
-    for filename in os.listdir('./'):
+    for filename in os.listdir('./models/'):
         if filename.endswith(".py") and filename != "__init__.py":
             module_name = filename[:-3]  # Remove .py extension
-            module = importlib.import_module(module_name) 
+            module = importlib.import_module(module_name)) 
             models_dict.update(vars(module)
     return models_dict
     
