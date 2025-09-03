@@ -23,7 +23,7 @@ def _wrap_init(init, check):
         init(self, *arg, **kwargs)
         check(self)
     return _wrapper
-    
+   
 class SupernovaModel(ABC, LocalFileLoader):
     """Base class defining an interface to a supernova model."""
 
