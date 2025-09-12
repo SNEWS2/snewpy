@@ -107,8 +107,8 @@ class EarthMatter(ThreeFlavorTransformation, EarthTransformation):
         Pfm = np.swapaxes(Pfm, 1,3) #(nu/nubar, i, alpha, energy)
     
         P = FlavorMatrix.zeros(
-            flavor=self.mixing_params.basis_mass,
-            from_flavor=self.mixing_params.basis_flavor,
+            flavor=self.mixing_params.basis_flavor,
+            from_flavor=self.mixing_params.basis_mass,
             extra_dims=E.shape)
 
         P["NU","NU"] = Pfm[0]

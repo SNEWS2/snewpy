@@ -138,8 +138,8 @@ class MSWEffect(SNTransformation, ThreeFlavorTransformation):
         pSN = np.swapaxes(pSN, 1,3) #(nu/nubar, alpha, i, energy)
         # restructure the results
         P = FlavorMatrix.zeros(
-            flavor=self.mixing_params.basis_flavor,
-            from_flavor=self.mixing_params.basis_mass,
+            flavor=self.mixing_params.basis_mass,
+            from_flavor=self.mixing_params.basis_flavor,
             extra_dims=E.shape)
         
         P["NU","NU"] = pSN[0]
