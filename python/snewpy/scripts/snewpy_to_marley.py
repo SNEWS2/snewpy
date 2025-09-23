@@ -27,7 +27,7 @@ def marley_name(flavor):
 def save_as_marley(fluence_object, output_filename, marley_additional_inputs=None):
     """Save the contents of a fluence object in MARLEY format.
 
-       For each time bin 6 Marley config files are genreated and placed into a tarfile.
+       For each time bin, 6 Marley config files are generated and placed into a tarfile.
 
        Parameters
        ----------
