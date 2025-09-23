@@ -1,15 +1,10 @@
-
-import logging
-import os
 import re
 import tarfile
 import io
 import json
 
 import numpy as np
-import pandas as pd
 from astropy import units as u
-from warnings import warn
 
 from snewpy.models.ccsn import Bollig_2016
 from snewpy.flavor_transformation import AdiabaticMSW
