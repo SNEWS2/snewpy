@@ -82,7 +82,7 @@ snmodel = Bollig_2016(progenitor_mass=27<<u.Msun)
 times    = snmodel.time
 energies = np.linspace(0,50,501)<<u.MeV
 
-d = (10*u.kpc).to('cm').value # distance to SN
+d = 10 * u.kpc  # distance to SN
     
 mp_nmo = MixingParameters()
 xform = AdiabaticMSW(mp_nmo)
