@@ -24,16 +24,16 @@ def marley_name(flavor):
 
     return marley_name  
     
-def save_as_marley(fluence_object, output_filename, marley_additional_inputs=None):
-    """Save the contents of a fluence object in MARLEY format.
+def save_as_marley(fluence, output_filename, additional_inputs=None):
+    """Save the contents of a fluence in MARLEY format.
 
        For each time bin, 6 Marley config files are generated and placed into a tarfile.
 
        Parameters
        ----------
-       fluence_object : flux container
+       fluence : flux container
            Time-integrated neutrino flux from supernova model.
-       marley_additional_inputs : dict
+       additional_inputs : dict
            Additional dictionary that will be inserted into the Marley config files. 
 
        Returns
@@ -45,15 +45,15 @@ def save_as_marley(fluence_object, output_filename, marley_additional_inputs=Non
     times=fluence.time
     ntbins = len(times)
 
-    if marley_additional_inputs != None:
-        marley_data = marley_additional_inputs
+    if additional_inputs != None:
+        marley_data = additional_inputs
     else: 
         marley_data = {}
 
     if 'reactions' not in marley_data:
        marley_data['reactions'] = [ "ve40ArCC_Bhattacharya2009.react", "ES.react" ] 
        
-    marley_data["source"] = { 'type': "histogram", 'E_bin_lefts': fluence_object.energy[:-1].value.tolist(), 'Emax': fluence_object.energy[-1].value } 
+    marley_data["source"] = { 'type': "histogram", 'E_bin_lefts': fluence.energy[:-1].value.tolist(), 'Emax': fluence.energy[-1].value } 
     with tarfile.open(output_filename, 'w:bz2') as tf:
         for i in range(ntbins):
             for f in ThreeFlavor:
