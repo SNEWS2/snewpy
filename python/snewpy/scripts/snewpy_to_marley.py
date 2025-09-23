@@ -32,7 +32,7 @@ def save_as_marley(fluence_object, output_filename, marley_additional_inputs=Non
        Parameters
        ----------
        fluence_object : flux container
-           Input file containing neutrino flux information from supernova model.
+           Time-integrated neutrino flux from supernova model.
        marley_additional_inputs : dict
            Additional dictionary that will be inserted into the Marley config files. 
 
