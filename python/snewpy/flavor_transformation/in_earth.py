@@ -91,7 +91,7 @@ class EarthMatter(ThreeFlavorTransformation, EarthTransformation):
             try:
                 if u.allclose(self.prior_E, E) == True:
                     return self.prior_D
-            except:
+            except ValueError:
                 pass
 
         self.prior_E = E
