@@ -88,8 +88,11 @@ class EarthMatter(ThreeFlavorTransformation, EarthTransformation):
         
         if self.prior_E != None:
             # Use cached result if possible
-            if u.allclose(self.prior_E, E) == True:
-                return self.prior_D
+            try:
+                if u.allclose(self.prior_E, E) == True:
+                    return self.prior_D
+            except ValueError:
+                pass
 
         self.prior_E = E
         
