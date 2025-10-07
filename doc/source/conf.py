@@ -79,6 +79,7 @@ release = snewpy.__version__
 # directories to ignore when looking for source files.
 exclude_patterns = ['nb/dev']
 
+nbsphinx_allow_errors = False
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
 #default_role = None
