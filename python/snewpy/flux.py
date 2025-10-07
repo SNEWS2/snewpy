@@ -514,8 +514,9 @@ class Container(_ContainerBase):
 #some standard container classes that can be used for 
 Flux = Container['1/(MeV*s*m**2)', "d2FdEdT"]
 Fluence = Container[Flux.unit*u.s, "dFdE"]
-Spectrum= Container[Flux.unit*u.MeV, "dFdT"]
 IntegralFlux= Container[Flux.unit*u.s*u.MeV, "dF"]
+
+Spectrum= Container[Flux.unit*u.m**2, "d2PhidEdT"]
 
 DifferentialEventRate = Container['1/(MeV*s)', "d2NdEdT"]
 EventRate = Container['1/s', "dNdT"]
