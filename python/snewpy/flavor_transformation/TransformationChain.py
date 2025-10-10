@@ -56,11 +56,6 @@ class TransformationChain(FlavorTransformation):
         for t in self.transforms:
             t.mixing_params = mixing_params
         
-    def __call__(self, mixing_params):
-        """Convenience method: update mixing parameters and return self"""
-        self.set_mixing_params(mixing_params)
-        return self
-        
     def P_ff(self, t, E)->FlavorMatrix:
         return self.transforms.in_earth.P_fm(t,E) @ \
                self.transforms.in_vacuum.P_mm(t,E) @ \

@@ -71,7 +71,8 @@ class EarthMatter(ThreeFlavorTransformation, EarthTransformation):
         self.settings.accuracy = 1.01e-9
         self.settings.outputflag = False
         self.settings.stepcounterlimit = False
-            
+        super().__init__()
+
     def _update_settings(self):
         """Put the values from mixing_parameters into self.settings"""
         self.settings.deltam_21 = self.mixing_params.dm21_2.to_value('eV**2')
@@ -87,8 +88,11 @@ class EarthMatter(ThreeFlavorTransformation, EarthTransformation):
         
         if self.prior_E != None:
             # Use cached result if possible
-            if u.allclose(self.prior_E, E) == True:
-                return self.prior_D
+            try:
+                if u.allclose(self.prior_E, E) == True:
+                    return self.prior_D
+            except ValueError:
+                pass
 
         self.prior_E = E
         

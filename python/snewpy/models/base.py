@@ -10,11 +10,11 @@ from astropy.units.quantity import Quantity
 from scipy.special import loggamma
 from snewpy._model_downloader import LocalFileLoader
 
-from snewpy.neutrino import Flavor
+from snewpy.flavor import ThreeFlavor
 from snewpy.flavor_transformation import NoTransformation
 from functools import wraps
 
-from snewpy.flux import Flux
+from snewpy import flux
 from pathlib import Path
 
 def _wrap_init(init, check):
@@ -99,62 +99,65 @@ class SupernovaModel(ABC, LocalFileLoader):
         return self.time
 
     @abstractmethod
-    def get_initial_spectra(self, t, E, flavors=Flavor):
+    def _get_initial_spectra_dict(t, E, flavors=ThreeFlavor)->dict:
         """Get neutrino spectra at the source.
 
         Parameters
         ----------
         t : astropy.Quantity
             Time to evaluate initial spectra.
-        E : astropy.Quantity or ndarray of astropy.Quantity
+        E : astropy.Quantity 
             Energies to evaluate the initial spectra.
-        flavors: iterable of snewpy.neutrino.Flavor
-            Return spectra for these flavors only (default: all)
 
         Returns
         -------
-        initialspectra : dict
-            Dictionary of neutrino spectra, keyed by neutrino flavor.
+        dict
+            An initial neutrino spectra, keyed by the flavor
         """
         pass
-
-    def get_transformed_spectra(self, t, E, flavor_xform):
-        """Get neutrino spectra after applying oscillation.
+        
+    def get_initial_spectra(self, t, E):
+        """Get neutrino spectra at the source.
 
         Parameters
         ----------
         t : astropy.Quantity
-            Time to evaluate initial and oscillated spectra.
-        E : astropy.Quantity or ndarray of astropy.Quantity
-            Energies to evaluate the initial and oscillated spectra.
+            Time to evaluate initial spectra.
+        E : astropy.Quantity 
+            Energies to evaluate the initial spectra.
+
+        Returns
+        -------
+        flux.Container 
+            A container with the information about the initial neutrino spectra
+        """
+        spectra_dict = self._get_initial_spectra_dict(t, E, flavors=ThreeFlavor)
+        initial_spectra =  flux.Container['1/(MeV*s)'].from_dict(spectra_dict, 
+                                                                time=t,
+                                                                energy=E,
+                                                                flavor_scheme=ThreeFlavor)
+        return initial_spectra
+
+    def get_transformed_spectra(self, t, E, flavor_xform):
+        """Get neutrino spectra after applying the flavor transformation.
+
+        Parameters
+        ----------
+        t : astropy.Quantity
+            Time to evaluate the neutrino spectra.
+        E : astropy.Quantity
+            Energies to evaluate the neutrino spectra.
         flavor_xform : FlavorTransformation
             An instance from the flavor_transformation module.
 
         Returns
         -------
-        dict
-            Dictionary of transformed spectra, keyed by neutrino flavor.
+        flux.Container 
+            A container with the information of the transformed neutrino spectra
         """
         initialspectra = self.get_initial_spectra(t, E)
-        transformed_spectra = {}
-
-        transformed_spectra[Flavor.NU_E] = \
-            flavor_xform.prob_ee(t, E) * initialspectra[Flavor.NU_E] + \
-            flavor_xform.prob_ex(t, E) * initialspectra[Flavor.NU_X]
-
-        transformed_spectra[Flavor.NU_X] = \
-            flavor_xform.prob_xe(t, E) * initialspectra[Flavor.NU_E] + \
-            flavor_xform.prob_xx(t, E) * initialspectra[Flavor.NU_X] 
-
-        transformed_spectra[Flavor.NU_E_BAR] = \
-            flavor_xform.prob_eebar(t, E) * initialspectra[Flavor.NU_E_BAR] + \
-            flavor_xform.prob_exbar(t, E) * initialspectra[Flavor.NU_X_BAR]
-
-        transformed_spectra[Flavor.NU_X_BAR] = \
-            flavor_xform.prob_xebar(t, E) * initialspectra[Flavor.NU_E_BAR] + \
-            flavor_xform.prob_xxbar(t, E) * initialspectra[Flavor.NU_X_BAR] 
-
-        return transformed_spectra   
+        transformed_spectra = flavor_xform.apply_to(initialspectra)
+        return transformed_spectra
 
     def get_flux (self, t, E, distance, flavor_xform=NoTransformation()):
         """Get neutrino flux through 1cm^2 surface at the given distance
@@ -172,17 +175,14 @@ class SupernovaModel(ABC, LocalFileLoader):
 
         Returns
         -------
-        dict
-            Dictionary of neutrino fluxes in [neutrinos/(cm^2*erg*s)], 
-            keyed by neutrino flavor.
-
+        flux.Container 
+            A container with the information about the neutrino flux
         """
+        transformed_spectra = self.get_transformed_spectra(t, E, flavor_xform)
         distance = distance << u.kpc #assume that provided distance is in kpc, or convert
         factor = 1/(4*np.pi*(distance.to('cm'))**2)
-        f = self.get_transformed_spectra(t, E, flavor_xform)
-
-        array = np.stack([f[flv] for flv in Flavor])
-        return  Flux(data=array*factor, flavor=Flavor, time=t, energy=E)
+        
+        return transformed_spectra*factor
 
 
 def get_value(x):
@@ -234,30 +234,15 @@ class PinchedModel(SupernovaModel):
         self.luminosity = {}
         self.meanE = {}
         self.pinch = {}
-        for f in Flavor:
+        for f in ThreeFlavor:
             self.luminosity[f] = simtab[f'L_{f.name}'] << u.erg/u.s
             self.meanE[f] = simtab[f'E_{f.name}'] << u.MeV
             self.pinch[f] = simtab[f'ALPHA_{f.name}']
         super().__init__(time, metadata)
 
 
-    def get_initial_spectra(self, t, E, flavors=Flavor):
-        """Get neutrino spectra/luminosity curves before oscillation.
+    def _get_initial_spectra_dict(self, t, E, flavors=ThreeFlavor):
 
-        Parameters
-        ----------
-        t : astropy.Quantity
-            Time to evaluate initial spectra.
-        E : astropy.Quantity or ndarray of astropy.Quantity
-            Energies to evaluate the initial spectra.
-        flavors: iterable of snewpy.neutrino.Flavor
-            Return spectra for these flavors only (default: all)
-
-        Returns
-        -------
-        initialspectra : dict
-            Dictionary of model spectra, keyed by neutrino flavor.
-        """
         #convert input arguments to 1D arrays
         t = u.Quantity(t, ndmin=1)
         E = u.Quantity(E, ndmin=1)

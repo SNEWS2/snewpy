@@ -9,7 +9,7 @@ import pandas as pd
 from scipy.interpolate import interp1d
 from astropy import units as u
 from snewpy.models.base import SupernovaModel
-from snewpy.neutrino import Flavor
+from snewpy.flavor import ThreeFlavor
 from pathlib import Path
 
 def _interp_T(t0, v0, dt=1e-3, dv=1e-10, axis=0):
@@ -38,7 +38,7 @@ class Odrzywolek_2010(SupernovaModel):
     [A. Odrzywolek and A. Heger, Acta Phys. Polon. B 41 (2010) 1611.]
     """
 
-    def __init__(self, filename:str):
+    def __init__(self, filename:str, metadata={}):
         df = pd.read_csv(
             self.request_file(filename),
             sep=r'\s+',
@@ -50,16 +50,16 @@ class Odrzywolek_2010(SupernovaModel):
         # interpolated in time
         self.df_t = _interp_T(df.index, df)
         self.factor = {}
-        for f in Flavor:
+        for f in ThreeFlavor:
             if f.is_electron:
                 self.factor[f] = 1.0
             else:
                 # nuX/nuE ratio from Odrzywolek paper: (arXiv:astro-ph/0311012)
                 self.factor[f] = 0.19
         time = -df.index.to_numpy() << u.s
-        super().__init__(time, self.metadata)
+        super().__init__(time, metadata)
 
-    def get_initial_spectra(self, t, E, flavors=Flavor):
+    def _get_initial_spectra_dict(self, t, E, flavors=ThreeFlavor):
         # negative t for time before SN
         t = -t.to_value("s")
         E = E.to_value("MeV")
@@ -79,30 +79,30 @@ class Patton_2017(SupernovaModel):
     [Kelly M. Patton et al 2017 ApJ 851 6, 
      https://doi.org/10.5281/zenodo.2598709]
     """
-    def __init__(self, filename:str):
+    def __init__(self, filename:str, metadata={}):
         df = pd.read_csv(
             self.request_file(filename),
             comment="#",
             sep=r'\s+',
-            names=["time","Enu",Flavor.NU_E,Flavor.NU_E_BAR,Flavor.NU_MU,Flavor.NU_MU_BAR],
+            names=["time","Enu", "NU_E", "NU_E_BAR", "NU_MU", "NU_MU_BAR"],
             usecols=range(6),
         )
 
-        df[Flavor.NU_TAU] = df[Flavor.NU_MU]
-        df[Flavor.NU_TAU_BAR] = df[Flavor.NU_MU_BAR]
+        df["NU_TAU"] = df["NU_MU"]
+        df["NU_TAU_BAR"] = df["NU_MU_BAR"]
 
         df = df.set_index(["time", "Enu"])
         times = df.index.levels[0].to_numpy()
         energies = df.index.levels[1].to_numpy()
         df = df.unstack("Enu")
         # make a 3d array
-        self.array = np.stack([df[f] for f in Flavor], axis=0)
+        self.array = np.stack([df[f.name] for f in ThreeFlavor], axis=0)
         self.interpolated = _interp_TE(
             times, energies, self.array, ax_t=1, ax_e=2
         )
-        super().__init__(-times << u.hour, self.metadata)
+        super().__init__(-times << u.hour, metadata)
 
-    def get_initial_spectra(self, t, E, flavors=Flavor):
+    def _get_initial_spectra_dict(self, t, E, flavors=ThreeFlavor):
         t = np.array(-t.to_value("hour"), ndmin=1)
         E = np.array(E.to_value("MeV"), ndmin=1)
         flux = self.interpolated(t, E) / (u.MeV * u.s)
@@ -112,17 +112,17 @@ class Kato_2017(SupernovaModel):
     """Set up a presupernova model based on 
     [Chinami Kato et al 2017 ApJ 848 48]
     """
-    def __init__(self, path):
+    def __init__(self, path, metadata={}):
         fluxes = {}
         #reading the time steps values:
         times, step = np.loadtxt(self.request_file(f"{path}/total_nue/lightcurve_nue_all.dat"), usecols=[0, 3]).T
 
-        file_base = {Flavor.NU_E: 'total_nue/spe_all',
-                     Flavor.NU_E_BAR: 'total_nueb/spe_all',
-                     Flavor.NU_MU: 'total_nux/spe_sum_mu_nu',
-                     Flavor.NU_MU_BAR: 'total_nux/spe_sum_mu',
-                     Flavor.NU_TAU: 'total_nux/spe_sum_mu_nu',
-                     Flavor.NU_TAU_BAR: 'total_nux/spe_sum_mu'
+        file_base = {ThreeFlavor.NU_E: 'total_nue/spe_all',
+                     ThreeFlavor.NU_E_BAR: 'total_nueb/spe_all',
+                     ThreeFlavor.NU_MU: 'total_nux/spe_sum_mu_nu',
+                     ThreeFlavor.NU_MU_BAR: 'total_nux/spe_sum_mu',
+                     ThreeFlavor.NU_TAU: 'total_nux/spe_sum_mu_nu',
+                     ThreeFlavor.NU_TAU_BAR: 'total_nux/spe_sum_mu'
                      }
         for flv,file_base in file_base.items():
             d2NdEdT = []
@@ -132,13 +132,13 @@ class Kato_2017(SupernovaModel):
                 ).T
                 d2NdEdT += [dNdE]
             fluxes[flv] = np.stack(d2NdEdT)
-        self.array = np.stack([fluxes[f] for f in Flavor], axis=0)
+        self.array = np.stack([fluxes[f] for f in ThreeFlavor], axis=0)
         self.interpolated = _interp_TE(
             times, energies, self.array, ax_t=1, ax_e=2
         )
-        super().__init__(-times << u.s, self.metadata)
+        super().__init__(-times << u.s, metadata)
 
-    def get_initial_spectra(self, t, E, flavors=Flavor):
+    def _get_initial_spectra_dict(self, t, E, flavors=ThreeFlavor):
         t = np.array(-t.to_value("s"), ndmin=1)
         E = np.array(E.to_value("MeV"), ndmin=1)
         flux = self.interpolated(t, E) / (u.MeV * u.s)
@@ -148,7 +148,7 @@ class Yoshida_2016(SupernovaModel):
     """Set up a presupernova model based on 
     [Yoshida et al. (2016), PRD 93, 123012.]
     """
-    def __init__(self, filename):
+    def __init__(self, filename, metadata={}):
         with open(self.request_file(filename)) as f:
             data = []
             T = []
@@ -157,21 +157,26 @@ class Yoshida_2016(SupernovaModel):
                 T += [float(line.split()[1])]
                 data += [[np.loadtxt(f, max_rows=100).flatten() for i in range(4)]]
         times = np.array(T)
+        super().__init__(times << u.s, self.metadata)
         energies = np.concatenate([
                 np.linspace(0,10,1001)[1:],
                 np.linspace(10,20,501)[1:]
             ])
         dNdEdT = np.stack(data, axis=1)
-        #rearrange flavors from NU_E, NU_E_BAR,_NU_X, NU_X_BAR to current 
-        indices = np.argsort([Flavor.NU_E,Flavor.NU_E_BAR, Flavor.NU_X, Flavor.NU_X_BAR]) 
+        #The order is [NU_E, NU_EBAR, NU_X, NU_XBAR]
+        dNdEdT[2:]*=0.5 #recalculate from NU_X to NU_MU
+        dNdEdT = dNdEdT.take([0,1,2,3,2,3], axis=0)#[e,e_bar, mu, mu_bar, tau, tau_bar]
+        #rearrange flavors from ['e','e_bar','mu','mu_bar','tau','tau_bar'] to current 
+        indices = np.argsort(ThreeFlavor[['e','e_bar','mu','mu_bar','tau','tau_bar']])
         dNdEdT = dNdEdT.take(indices, axis=0)
+        
         
         self.interpolated = _interp_TE(
             times, energies, dNdEdT, ax_t=1, ax_e=2
         )
-        super().__init__(-times << u.s, self.metadata)
+        super().__init__(-times << u.s, metadata)
 
-    def get_initial_spectra(self, t, E, flavors=Flavor):
+    def _get_initial_spectra_dict(self, t, E, flavors=ThreeFlavor):
         t = np.array(-t.to_value("s"), ndmin=1)
         E = np.array(E.to_value("MeV"), ndmin=1)
         flux = self.interpolated(t, E) / (u.MeV * u.s)

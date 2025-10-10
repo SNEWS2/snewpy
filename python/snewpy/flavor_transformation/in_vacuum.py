@@ -45,6 +45,7 @@ class NeutrinoDecay(VacuumTransformation, ThreeFlavorTransformation):
         self.m = mass
         self.tau = tau
         self.d = dist
+        super().__init__()
 
     def gamma(self, E):
         """Decay width of the heaviest neutrino mass.
@@ -109,6 +110,7 @@ class QuantumDecoherence(VacuumTransformation, ThreeFlavorTransformation):
         self.d = dist
         self.n = n
         self.E0 = E0
+        super().__init__()
 
     def P_mm(self, t, E)->FlavorMatrix: 
         PQD = FlavorMatrix.zeros(self.mixing_params.basis_mass, extra_dims=E.shape)
