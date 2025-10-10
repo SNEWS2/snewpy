@@ -23,6 +23,8 @@ import logging
 import os
 import re
 import tarfile
+import importlib
+
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
