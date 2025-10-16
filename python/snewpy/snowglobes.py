@@ -19,6 +19,7 @@ There are three basic steps to using SNOwGLoBES from SNEWPY:
     The output tables allow to build the detected neutrino energy spectrum and neutrino time distribution, for each reaction channel or the sum of them.
 """
 
+from inspect import isclass
 import logging
 import os
 import re
@@ -40,7 +41,7 @@ from snewpy.rate_calculator import RateCalculator, center
 from snewpy.flux import Container
 logger = logging.getLogger(__name__)
 
-def get_transformation(flavor_transformation_string):
+def _get_transformation(flavor_transformation_string):
     """A function for idetifying the flavor transformation class from a string
 
     Parameters
@@ -76,26 +77,29 @@ def get_transformation(flavor_transformation_string):
 
     return flavor_transformation_class
 
-def get_all_models_dict():
-    """A function for building the dictionary of models 
+def _get_model_class(model_type):
+    """Look up model class corresponding to the given model name.
 
     Parameters
     ---------
-    None
+    model_type : model name as string
 
     Returns
     -------
-    models_dict : a dictionary of all the models
+    Model class corresponding to the given model name
     """    
     models_dict = {}
     modules_list = ["snewpy.models.base", "snewpy.models.ccsn", "snewpy.models.ccsn_loaders",
                     "snewpy.models.extended", "snewpy.models.presn", "snewpy.models.presn_loaders"]
     for module_name in modules_list:
         module = importlib.import_module(module_name)
-        models_dict.update(vars(module))
-    return models_dict
-    
-    
+        models_dict.update({k:v for k,v in vars(module).items() if isclass(v)})
+
+    try:
+        return models_dict[model_type]
+    except KeyError:
+        raise ValueError(f"Model '{model_type}' not found.")
+
 def generate_time_series(model_path, model_type, flavor_transformation, d, output_filename=None, ntbins=30, deltat=None, snmodel_dict={}):
     """Generate time series files in SNOwGLoBES format.
 
@@ -109,7 +113,7 @@ def generate_time_series(model_path, model_type, flavor_transformation, d, outpu
     model_type : str
         Format of input file. Matches the name of the corresponding class in :py:mod:`snewpy.models`.
     flavor_transformation : str or instance of flavor transformation class  
-        If a string, the class if found using the get_transformation function
+        If a string, the class if found using the _get_transformation function
     d : int or float
         Distance to supernova in kpc.
     output_filename : str or None
@@ -126,12 +130,11 @@ def generate_time_series(model_path, model_type, flavor_transformation, d, outpu
     str
         Path of NumPy archive file with neutrino fluence data.
     """
-    all_models_dict = get_all_models_dict()
-    model_class = all_models_dict[model_type]
+    model_class = _get_model_class(model_type)
 
     # if flavor_transformation is a string, find the appropriate class
     if isinstance(flavor_transformation,str) == True:
-        flavor_transformation = get_transformation(flavor_transformation)
+        flavor_transformation = _get_transformation(flavor_transformation)
 
     model_dir, model_file = os.path.split(os.path.abspath(model_path))
     snmodel = model_class(model_path, **snmodel_dict)
@@ -172,7 +175,7 @@ def generate_fluence(model_path, model_type, flavor_transformation, d, output_fi
     model_type : str
         Format of input file. Matches the name of the corresponding class in :py:mod:`snewpy.models`.
     flavor_transformation : str or instance of flavor transformation class  
-        If a string, the class if found using the get_transformation function
+        If a string, the class if found using the _get_transformation function
     d : int or float
         Distance to supernova in kpc.
     output_filename : str or None
@@ -189,12 +192,11 @@ def generate_fluence(model_path, model_type, flavor_transformation, d, output_fi
     str
         Path of NumPy archive file with neutrino fluence data.
     """
-    all_models_dict = get_all_models_dict()  
-    model_class = all_models_dict[model_type]
+    model_class = _get_model_class(model_type)
 
     # if flavor_transformation is a string, find the appropriate class
     if isinstance(flavor_transformation,str) == True:
-        flavor_transformation = get_transformation(flavor_transformation)
+        flavor_transformation = _get_transformation(flavor_transformation)
 
     model_dir, model_file = os.path.split(os.path.abspath(model_path))
     snmodel = model_class(model_path, **snmodel_dict)
