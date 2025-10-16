@@ -41,23 +41,24 @@ from snewpy.rate_calculator import RateCalculator, center
 from snewpy.flux import Container
 logger = logging.getLogger(__name__)
 
-def _get_transformation(flavor_transformation_string):
-    """A function for idetifying the flavor transformation class from a string
+def _get_transformation(flavor_transformation: str):
+    """Identify the flavor transformation from a string
 
     Parameters
     ---------
-    flavor_transformation_string : string
+    flavor_transformation : str
+        Name of the flavor transformation
 
     Returns
     -------
-    flavor_transformation_class : a flavor_transformation class 
+    FlavorTransformation object initialized with default parameters
     """
 
     IMO_mix_params = MixingParameters(MassHierarchy.INVERTED)
     NMO_mix_params = MixingParameters(MassHierarchy.NORMAL) 
     
-    if flavor_transformation_string.find("NeutrinoDecay") is True:
-        print("Using the default values for Neutrino Decay transformation")         
+    if "NeutrinoDecay" in flavor_transformation:
+        print("Using the default values for Neutrino Decay transformation")
 
     # Choose flavor transformation. Use dict to associate the transformation name with its class.
     # The default mixing paramaters are the normal hierarchy values
@@ -73,16 +74,18 @@ def _get_transformation(flavor_transformation_string):
                                   'ThreeFlavorDecoherence': ThreeFlavorDecoherence()
                                   }
 
-    flavor_transformation_class = flavor_transformation_dict[flavor_transformation_string]
+    try:
+        return flavor_transformation_dict[flavor_transformation]
+    except KeyError:
+        raise ValueError(f"Flavor transformation '{flavor_transformation}' not found.")
 
-    return flavor_transformation_class
-
-def _get_model_class(model_type):
+def _get_model_class(model_type: str):
     """Look up model class corresponding to the given model name.
 
     Parameters
     ---------
-    model_type : model name as string
+    model_type : str
+        Model name
 
     Returns
     -------
@@ -133,7 +136,7 @@ def generate_time_series(model_path, model_type, flavor_transformation, d, outpu
     model_class = _get_model_class(model_type)
 
     # if flavor_transformation is a string, find the appropriate class
-    if isinstance(flavor_transformation,str) == True:
+    if isinstance(flavor_transformation, str):
         flavor_transformation = _get_transformation(flavor_transformation)
 
     model_dir, model_file = os.path.split(os.path.abspath(model_path))
@@ -195,7 +198,7 @@ def generate_fluence(model_path, model_type, flavor_transformation, d, output_fi
     model_class = _get_model_class(model_type)
 
     # if flavor_transformation is a string, find the appropriate class
-    if isinstance(flavor_transformation,str) == True:
+    if isinstance(flavor_transformation, str):
         flavor_transformation = _get_transformation(flavor_transformation)
 
     model_dir, model_file = os.path.split(os.path.abspath(model_path))
