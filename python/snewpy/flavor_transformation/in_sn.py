@@ -8,7 +8,7 @@ from abc import abstractmethod, ABC
 import numpy as np
 
 from snewpy.flavor import FlavorMatrix
-from snewpy.neutrino import MassHierarchy
+from snewpy.neutrino import MassHierarchy, ThreeFlavorMixingParameters, FourFlavorMixingParameters
 from dataclasses import dataclass
 
 from .base import ThreeFlavorTransformation, FourFlavorTransformation
@@ -22,9 +22,7 @@ class SNTransformation(ABC):
     """Base class for all transformations in SN"""
     @abstractmethod
     def P_mf(self, t, E)->FlavorMatrix:
-        pass
-
-        
+        pass        
 
 ###############################################################################
 class AdiabaticMSW(SNTransformation, ThreeFlavorTransformation):
@@ -83,7 +81,7 @@ class ThreeFlavorDecoherence(SNTransformation, ThreeFlavorTransformation):
     """
     
     def P_mf(self, t, E):
-        @FlavorMatrix.from_function(ThreeFlavor)
+        @FlavorMatrix.from_function(ThreeFlavorMixingParameters.basis_mass, ThreeFlavorMixingParameters.basis_flavor)
         def P(f1, f2):
             return (f1.is_neutrino == f2.is_neutrino)*1/3.
         return P
@@ -204,3 +202,14 @@ class NonAdiabaticMSWes(SNTransformation, FourFlavorTransformation):
             Pmf[['NU_1_BAR','NU_2_BAR','NU_4_BAR'],:] = Pmf[['NU_2_BAR','NU_4_BAR','NU_1_BAR'],:]
 
         return Pmf
+
+###############################################################################
+class FourFlavorDecoherence(SNTransformation, FourFlavorTransformation):
+    """Equal mixing of all four neutrino states, and all four antineutrinos
+    """
+    
+    def P_mf(self, t, E):
+        @FlavorMatrix.from_function(FourFlavorMixingParameters.basis_mass, FourFlavorMixingParameters.basis_flavor)
+        def P(f1, f2):
+            return (f1.is_neutrino == f2.is_neutrino)*1/4.
+        return P  
