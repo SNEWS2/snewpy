@@ -16,9 +16,6 @@ Available Transformations
 .. autoclass:: snewpy.flavor_transformation.CompleteExchange
     :members:
 
-.. autoclass:: snewpy.flavor_transformation.FlavorEquilibration
-    :members:
-
 .. autoclass:: snewpy.flavor_transformation.TransformationChain
     :members:
 
@@ -115,12 +112,3 @@ class CompleteExchange(FlavorTransformation):
         return P
 
 
-class FlavorEquilibration(FlavorTransformation):
-    """Equal mixing of all three neutrino states, and all three antineutrino states"""
-
-    def P_ff(self, t, E):
-        """Equal mixing of all neutrino flavors, and anineutrino flavors"""
-        @FlavorMatrix.from_function(ThreeFlavor)
-        def P(f1, f2):
-            return (f1.is_neutrino == f2.is_neutrino)*1/3.
-        return P
