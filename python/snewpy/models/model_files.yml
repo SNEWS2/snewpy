@@ -74,10 +74,11 @@ models:
 
         Yoshida_2016:
             repository: *presn_repository
-
-    pisn_typeIa:
-        TypeIa:
-            repository: *pisn_typeIa_repository  
-               
+            
+    pisn:               
         Wright_2017:
-            repository: *pisn_typeIa_repository            
+            repository: *pisn_typeIa_repository                
+            
+    typeIa:
+        TypeIa:
+            repository: *pisn_typeIa_repository          
