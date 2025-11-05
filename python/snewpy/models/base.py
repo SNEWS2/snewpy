@@ -132,7 +132,7 @@ class SupernovaModel(ABC, LocalFileLoader):
             A container with the information about the initial neutrino spectra
         """
         spectra_dict = self._get_initial_spectra_dict(t, E, flavors=ThreeFlavor)
-        initial_spectra =  flux.Container['1/(MeV*s)'].from_dict(spectra_dict, 
+        initial_spectra =  flux.Spectrum['1/(MeV*s)'].from_dict(spectra_dict, 
                                                                 time=t,
                                                                 energy=E,
                                                                 flavor_scheme=ThreeFlavor)
