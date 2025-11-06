@@ -26,14 +26,13 @@ from snewpy.flux import Spectrum
 from snewpy import _model_downloader
 
 class TypeIa(SupernovaModel):
-    """
-    The DDT model is described in "Neutrinos from type Ia supernovae: The deflagration-to-detonation transition scenario", 
-    Warren P. Wright, Gautam Nagaraj, James P. Kneller, Kate Scholberg, Ivo R. Seitenzahl, Phys. Rev. D94 (2016) 025026, arXiv:1605.01408.
-    There are 30 snapshots in time and for each snapshot there are 8 lines of sight through the explosion. The format of each data file is the SNOwGLoBES format.
+    """The DDT model is described in 'Neutrinos from type Ia supernovae: The deflagration-to-detonation transition scenario', by Warren P. Wright et al.,
+    [Phys. Rev. D94 (2016) 025026](https://journals.aps.org/prd/abstract/10.1103/PhysRevD.94.025026), [arXiv:1605.01408](https://arxiv.org/abs/1605.01408).  
+    There are 30 snapshots in time and the format of each data file is the SNOwGLoBES format.  
 
-    The GCD model is described in "Neutrinos from type Ia supernovae: The gravitationally confined detonation scenario" 
-    Warren P. Wright, James P. Kneller, Sebastian T. Ohlmann, Friedrich K. Röpke, Kate Scholberg, Ivo R. Seitenzahl, Phys. Rev. D95 (2017) 043006, arXiv:1609.07403.
-    There are 64 snapshots in time and for each snapshot there are 10 lines of sight through the explosion. The format of each data file is the SNOwGLoBES format.
+    The GCD model is described in 'Neutrinos from type Ia supernovae: The gravitationally confined detonation scenario' by Warren P. Wright et al.,
+    [Phys. Rev. D95 (2017) 043006](https://journals.aps.org/prd/abstract/10.1103/PhysRevD.95.043006), [arXiv:1609.07403](https://arxiv.org/abs/1609.07403).  
+    There are 64 snapshots in time and the format of each data file is the SNOwGLoBES format.
     """
 
     def  __init__(self, filename, metadata={}):
