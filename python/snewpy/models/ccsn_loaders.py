@@ -846,6 +846,45 @@ class Mori_2023(PinchedModel):
         super().__init__(simtab, metadata)
 
 
+class Takata_2025(PinchedModel):
+    def __init__(self, filename, matadata={}):
+        """
+        Parameters
+        ----------
+        filename: str
+            Absolute or relative path to file prefix.
+            
+        """
+
+        # Open the requested filename using the model downloader.\
+        datafile = self.request_file(filename)
+
+        self.metadata = metadata
+
+        #Read ASCII data.
+        simtab = Table.read(datafile, format='ascii')
+
+        #Remove the first table row, which appears to have zero input.
+        simtab = simtab[simtab['1:t_sim[s]'] > 0]
+
+        #Get grid of model times.
+        sim['TIME'] = simtab['2:t_pb[s]'] << u.s
+        for j, (f, fkey) in enumerate(zip(["NU_E", "NU_E_BAR", "NU_X"], 'ebx')):
+            # Compute the pinch parameter from E_rms and E_avg
+            # E_rms^2/<E>^2 = (2+a)/(1+a)
+            Eavg = simtab[f'{9+j}:Em{fkey}[MeV]']
+            Erms = simtab[f'{12+j}:Er{fkey}[MeV]']
+            x = Erms**2 / Eavg**2
+            alpha = (2-x)/(x-1)
+
+            simtab[f'E_{f}'] = Eavg << u.MeV
+            simtab[f'Erms_{f}'] = Erms << u.MeV
+
+        self.filename = os.path.basename(filename)
+
+        super().__init__(simtab, metadata)
+        
+
 class Bugli_2021(PinchedModel):
     """Model based on `Buggli (2021) <https://arxiv.org/abs/2105.00665>`_.
     """
