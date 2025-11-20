@@ -424,20 +424,16 @@ class TestFlavorTransformations:
         """
         Three flavor decoherence
         """
-        P = xforms.ThreeFlavorDecoherence().P_ff(t,E)
+        P = xforms.ThreeFlavorDecoherence(MixingParameters(MassHierarchy.NORMAL)).P_ff(t,E)
         #convert to TwoFlavor case
-        P = (TwoFlavor<<P<<TwoFlavor)
-        
-        assert np.isclose(P['e','e'], 1./3)
-        assert np.isclose(P['e','x'] , 2./3)
-        assert np.isclose(P['x','x'] , 2./3)
-        assert np.isclose(P['x','e'] , 1./3)
-        
-        assert np.isclose(P['e_bar','e_bar'] , 1./3)
-        assert np.isclose(P['e_bar','x_bar'] , 2./3)
-        assert np.isclose(P['x_bar','x_bar'] , 2./3)
-        assert np.isclose(P['x_bar','e_bar'] , 1./3)
-        
+        P = (ThreeFlavor<<P<<ThreeFlavor)
+        for orig_flv in ThreeFlavor:
+            for dest_flv in ThreeFlavor:
+                if orig_flv.is_neutrino == dest_flv.is_neutrino:
+                    assert np.isclose(P[orig_flv,dest_flv], 1/3)
+                else:
+                    assert np.isclose(P[orig_flv,dest_flv], 0)
+
     def test_NeutrinoDecay_NMO(self, t, E):
         """
         Neutrino decay with NMO and new mixing angles 
