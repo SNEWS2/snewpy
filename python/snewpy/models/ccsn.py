@@ -373,11 +373,11 @@ class Mori_2023(loaders.Mori_2023):
 @RegistryModel(
                _param_validator = lambda p: \
                (p['progenitor_mass'].to_value('Msun') in (11.2, 20, 25) and p['axion_mass'] == 0 and p['axion_coupling'] == 0) or \
-               (p['progenitor_mass'].to_value('Msun') in (11.2, 20, 25) and p['axion_mass'].to_value('MeV') in (40, 100, 150, 200, 300, 400, 800)                  and p['axion_coupling'].to_value('1e-10/GeV') in (2, 4, 6, 8, 10))
+               (p['progenitor_mass'].to_value('Msun') in (11.2, 20, 25) and p['axion_mass'].to_value('MeV') in (40, 100, 150, 200, 300, 600, 400, 800) and p['axion_coupling'].to_value('1e-10/GeV') in (2, 4, 6, 8, 10))
 
                progenitor_mass = Parameter(values=[11.2, 20, 25]<<u.Msun,
                                           description='Progenitor star mass in units of M☉'),
-               axion_mass = Parameter(values=[0, 40, 100, 150, 200, 300, 400, 800]<<u.MeV,
+               axion_mass = Parameter(values=[0, 40, 100, 150, 200, 300, 400, 600, 800]<<u.MeV,
                                       description='Axion mass in units of MeV'),
                axion_coupling = Parameter(values=[0, 2, 4, 6, 8, 10]<<(1e-10/u.GeV),
                                           description='Axion-photon coupling, in units of 1e-10/GeV',
