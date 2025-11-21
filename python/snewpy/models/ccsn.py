@@ -402,7 +402,7 @@ class Takata_2025(loaders.Takata_2025):
         if axion_mass == 0:
             if progenitor_mass == 11.2:
                 filename = '11_000_00.dat'
-            elif: progenitor_mass == 20:
+            elif progenitor_mass == 20:
                 filename = '20_000_00.dat'
             else: 
                 filename = '25_000_00.dat'
@@ -410,7 +410,7 @@ class Takata_2025(loaders.Takata_2025):
         else:
             if progenitor_mass == 11.2:
                 filename = f'11_{axion_mass.to_value("MeV"):3g}_{axion_coupling.to_value("1e-10/GeV"):02g}.dat'
-            elif: progenitor_mass == 20:
+            elif progenitor_mass == 20:
                 filename = f'20_{axion_mass.to_value("MeV"):3g}_{axion_coupling.to_value("1e-10/GeV"):02g}.dat'
             else: 
                 filename = f'25_{axion_mass.to_value("MeV"):3g}_{axion_coupling.to_value("1e-10/GeV"):02g}.dat'
