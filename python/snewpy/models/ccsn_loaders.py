@@ -847,7 +847,7 @@ class Mori_2023(PinchedModel):
 
 
 class Takata_2025(PinchedModel):
-    def __init__(self, filename, matadata={}):
+    def __init__(self, filename, metadata={}):
         """
         Parameters
         ----------
@@ -868,8 +868,9 @@ class Takata_2025(PinchedModel):
         simtab = simtab[simtab['1:t_sim[s]'] > 0]
 
         #Get grid of model times.
-        sim['TIME'] = simtab['2:t_pb[s]'] << u.s
+        simtab['TIME'] = simtab['2:t_pb[s]'] << u.s
         for j, (f, fkey) in enumerate(zip(["NU_E", "NU_E_BAR", "NU_X"], 'ebx')):
+            simtab[f'L_{f}'] = simtab[f'{6+j}:Le{fkey}[e/s]'] << u.erg / u.s
             # Compute the pinch parameter from E_rms and E_avg
             # E_rms^2/<E>^2 = (2+a)/(1+a)
             Eavg = simtab[f'{9+j}:Em{fkey}[MeV]']
@@ -879,6 +880,7 @@ class Takata_2025(PinchedModel):
 
             simtab[f'E_{f}'] = Eavg << u.MeV
             simtab[f'Erms_{f}'] = Erms << u.MeV
+            simtab[f'ALPHA_{f}'] = alpha
 
         self.filename = os.path.basename(filename)
 

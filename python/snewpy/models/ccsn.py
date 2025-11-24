@@ -394,7 +394,7 @@ class Takata_2025(loaders.Takata_2025):
         """ 
         This simulation is conducted for a progenitor_mass of 11.2, 20, and 25 M_sun.
         Each of these progenitors are simulated for a set of ALP parameters: ALP mass, m_a [MeV] = (0, 40, 100, 150, 300, 400, 600, 800), and
-        ALP-photon coupling strength, g_a𝛄 [10^-10/GeV] = (0 ,4, 6, 8, 10)
+        ALP-photon coupling strength, g_a𝛄 [10^-10/GeV] = (0, 4, 6, 8, 10)
         """
         # Make sure the axion coupling is converted to units 1e-10/GeV:
         # axion_coupling = np.round(axion_coupling.to('1e-10/GeV'))
