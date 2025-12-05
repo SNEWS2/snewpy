@@ -49,15 +49,31 @@ def save_as_marley(fluence, output_filename, additional_inputs=None):
         marley_data = additional_inputs
     else: 
         marley_data = {}
+        
+    if 'seed' not in marley_data:        
+        marley_data['seed'] = 123456
+       
+    if 'direction' not in marley_data:                
+        marley_data['direction'] = { 'x': 0.0, 'y': 0.0, 'z': 1.0 }
+        
+    if 'target' not in marley_data:                
+        marley_data['target'] = { 'nuclides': [1000180400], 'atom_fractions': [1.0] }
 
     if 'reactions' not in marley_data:
-       marley_data['reactions'] = [ "ve40ArCC_Bhattacharya2009.react", "ES.react" ] 
+        marley_data['reactions'] = [ "ve40ArCC_Bhattacharya2009.react", "ES.react" ] 
        
     marley_data["source"] = { 'type': "histogram", 'E_bin_lefts': fluence.energy[:-1].value.tolist(), 'Emax': fluence.energy[-1].value } 
+    
     with tarfile.open(output_filename, 'w:bz2') as tf:
         for i in range(ntbins):
             for f in ThreeFlavor:
                 marley_data['source'].update({"neutrino": marley_name(f), "weights": np.squeeze(fluence[f,i].array).value.tolist() })
+
+                marley_output_name = marley_name(f) + f'.{times[i].value:.3f}' + ".hepevt"                
+                marley_data['executable_settings'] = { 
+                    'events': 1000, 
+                    'output': [ { 'file': marley_output_name, 'format': "hepevt", 'mode': "overwrite" } ]
+                    }                
 
                 json_str = json.dumps(marley_data,indent=4)
                 json_str = re.sub(r'"(\w+)":', r'\1:',json_str) # remove the quotes around the keys in the json_str                
