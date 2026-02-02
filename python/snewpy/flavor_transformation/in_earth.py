@@ -108,11 +108,13 @@ class EarthMatter(ThreeFlavorTransformation, EarthTransformation):
         #Pfm contains P(nu_alpha -> nu_i) index order is (nu/nubar, energy, alpha, i)
         #We convert the array dimensions: 
         Pfm = np.swapaxes(Pfm, 1,3) #(nu/nubar, i, alpha, energy)
-    
+        #Add the time dimension
+        Pfm = np.expand_dims(Pfm, 3) #(nu/nubar, i, alpha, time, energy)
         P = FlavorMatrix.zeros(
             flavor=self.mixing_params.basis_flavor,
             from_flavor=self.mixing_params.basis_mass,
-            extra_dims=E.shape)
+            extra_dims=(1,*E.shape)
+        )
 
         P["NU","NU"] = Pfm[0]
         P["NU_BAR","NU_BAR"] = Pfm[1]
