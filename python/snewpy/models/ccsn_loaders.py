@@ -585,46 +585,81 @@ class Fornax_2019(SupernovaModel):
         """
         initialspectra = {}
 
-        # Extract the binned spectra for the input t, theta, phi:
-        _E, _dE, _spec = self._get_binnedspectra(t, self.theta, self.phi)
-
         # Avoid "division by zero" in retrieval of the spectrum.
         E[E == 0] = np.finfo(float).eps * E.unit
         logE = np.log10(E.to_value('MeV'))
 
+        t_arr = np.atleast_1d(t).to(self.time.unit)
+
+        # Find all nearest time indices in one pass instead of per-time-step HDF5 reads.
+        j_arr = np.array([np.abs(t_i - self.time).argmin() for t_i in t_arr])
+
+        # h5py requires strictly increasing indices for fancy indexing.
+        # Work on unique sorted indices, then remap to original order.
+        j_unique, j_inverse = np.unique(j_arr, return_inverse=True)
+
+        # Pre-compute Y_lm at fixed (theta, phi) — constant across all time steps.
+        theta_rad = self.theta.to_value('radian')
+        phi_rad   = self.phi.to_value('radian')
+        Ylm = {l: {m: self._real_sph_harm(l, m, theta_rad, phi_rad)
+                   for m in range(-l, l+1)}
+               for l in range(3)}
+
         for flavor in flavors:
+            key = self._flavorkeys[flavor]
+            factor = 1. if flavor.is_electron else 0.25
 
-            # Linear interpolation in flux.
+            # Read energy grids for unique time indices only.
+            _E_unique_val = self._h5file[key]['egroup'][j_unique]  # (n_unique, n_ebins), plain ndarray
+            n_unique, n_ebins = _E_unique_val.shape
+
+            # Accumulate dL/dE over multipole moments with one bulk HDF5 read per (ebin, l, m).
+            _dLdE_unique = np.zeros((n_unique, n_ebins))
+            for ebin in range(n_ebins):
+                for l in range(3):
+                    for m in range(-l, l + 1):
+                        _dLdE_unique[:, ebin] += (
+                            self._h5file[key]['g{}'.format(ebin)]['l={} m={}'.format(l, m)][j_unique]
+                            * Ylm[l][m]
+                        )
+            _dLdE_unique *= factor
+
+            # Interpolate onto user energy grid for each unique time step only,
+            # then expand to full time array via j_inverse — avoids redundant work.
+            logeps = np.log10(np.finfo(float).eps * E.unit / u.MeV)
+            result_unique = np.zeros((n_unique, len(E)))
+
             if self.interpolation.lower() == 'linear':
-                # Pad log(E) array with values where flux is fixed to zero.
-                _logE = np.log10(_E[flavor].to_value('MeV'))
-                _dlogE = np.diff(_logE)
-                _logEbins = np.insert(_logE, 0, np.log10(np.finfo(float).eps * E.unit/u.MeV))
-                _logEbins = np.append(_logEbins, _logE[-1] + _dlogE[-1])
-
-                # Pad with values where flux is fixed to zero.
-                _dLdE = _spec[flavor].to_value(self.fluxunit)
-                _dLdE = np.insert(_dLdE, 0, 0.)
-                _dLdE = np.append(_dLdE, 0.)
-
-                initialspectra[flavor] = np.interp(logE, _logEbins, _dLdE) * self.fluxunit
+                for i in range(n_unique):
+                    _logE_i   = np.log10(_E_unique_val[i])
+                    _dlogE_i  = np.diff(_logE_i)
+                    _logEbins = np.empty(n_ebins + 2)
+                    _logEbins[0]    = logeps
+                    _logEbins[1:-1] = _logE_i
+                    _logEbins[-1]   = _logE_i[-1] + _dlogE_i[-1]
+                    _dLdE_i = np.empty(n_ebins + 2)
+                    _dLdE_i[0]    = 0.
+                    _dLdE_i[1:-1] = _dLdE_unique[i]
+                    _dLdE_i[-1]   = 0.
+                    result_unique[i] = np.interp(logE, _logEbins, _dLdE_i)
 
             elif self.interpolation.lower() == 'nearest':
-                _logE = np.log10(_E[flavor].to_value('MeV'))
-                _dlogE = np.diff(_logE)[0]
-                _logEbins = _logE - _dlogE
-                _logEbins = np.concatenate((_logEbins, [_logE[-1] + _dlogE]))
-                _Ebins = 10**_logEbins
-
-                idx = np.searchsorted(_Ebins, E) - 1
-                select = (idx > 0) & (idx < len(_E[flavor]))
-
-                _dLdE = np.zeros(len(E))
-                _dLdE[np.where(select)] = np.asarray([_spec[flavor][i].to_value(self.fluxunit) for i in idx[select]])
-                initialspectra[flavor] = _dLdE * self.fluxunit
+                for i in range(n_unique):
+                    _logE_i   = np.log10(_E_unique_val[i])
+                    _dlogE_i  = np.diff(_logE_i)[0]
+                    _logEbins = np.concatenate((_logE_i - _dlogE_i, [_logE_i[-1] + _dlogE_i]))
+                    _Ebins    = 10**_logEbins
+                    idx       = np.searchsorted(_Ebins, E) - 1
+                    select    = (idx > 0) & (idx < n_ebins)
+                    result_unique[i][np.where(select)] = _dLdE_unique[i][idx[select]]
 
             else:
                 raise ValueError('Unrecognized interpolation type "{}"'.format(self.interpolation))
+
+            # Expand unique results to full time array, then convert units.
+            result = result_unique[j_inverse]
+            # Divide by E to convert luminosity spectrum [erg/(MeV*s)] to number spectrum [1/(MeV*s)].
+            initialspectra[flavor] = (result * self.fluxunit / E).to('1/(MeV*s)')
 
         return initialspectra
 
