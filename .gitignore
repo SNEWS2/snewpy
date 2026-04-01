@@ -5,6 +5,7 @@ __pycache__/
 build/
 dist/
 *.egg-info/
+.DS_Store
 
 # default directory for downloaded model files
 SNEWPY_models/

@@ -369,6 +369,57 @@ class Mori_2023(loaders.Mori_2023):
         self.metadata['PNS mass'] = pns_mass*u.Msun
         return super().__init__(filename, self.metadata)
 
+
+@RegistryModel(
+               _param_validator = lambda p: \
+               (p['progenitor_mass'].to_value('Msun') in (11.2, 20, 25) and p['axion_mass'] == 0 and p['axion_coupling'] == 0) or \
+               (p['progenitor_mass'].to_value('Msun') in (11.2, 20, 25) and p['axion_mass'].to_value('MeV') in (40, 100, 150, 200, 300, 600, 400, 800) and p['axion_coupling'].to_value('1e-10/GeV') in (2, 4, 6, 8, 10)),
+
+               progenitor_mass = Parameter(values=[11.2, 20, 25]<<u.Msun,
+                                          description='Progenitor star mass in units of M☉'),
+               axion_mass = Parameter(values=[0, 40, 100, 150, 200, 300, 400, 600, 800]<<u.MeV,
+                                      description='Axion mass in units of MeV'),
+               axion_coupling = Parameter(values=[0, 2, 4, 6, 8, 10]<<(1e-10/u.GeV),
+                                          description='Axion-photon coupling, in units of 1e-10/GeV',
+                                          precision=2 #round to 1e-12/u.GeV
+                                         )
+              )
+class Takata_2025(loaders.Takata_2025):
+    """
+    Model based on 1D simulations with axionlike particles, Takata, T. et al., PhysRevD.111.103028, 2025.
+    Data from private communication.
+    """
+
+    def __init__(self, progenitor_mass:u.Quantity, axion_mass:u.Quantity, axion_coupling:u.Quantity):
+        """ 
+        This simulation is conducted for a progenitor_mass of 11.2, 20, and 25 M_sun.
+        Each of these progenitors are simulated for a set of ALP parameters: ALP mass, m_a [MeV] = (0, 40, 100, 150, 300, 400, 600, 800), and
+        ALP-photon coupling strength, g_a𝛄 [10^-10/GeV] = (0, 4, 6, 8, 10)
+        """
+        # Make sure the axion coupling is converted to units 1e-10/GeV:
+        # axion_coupling = np.round(axion_coupling.to('1e-10/GeV'))
+
+        if axion_mass == 0:
+            if progenitor_mass == 11.2*u.Msun:
+                filename = '11_000_00.dat'
+            elif progenitor_mass == 20*u.Msun:
+                filename = '20_000_00.dat'
+            else: 
+                filename = '25_000_00.dat'
+
+        else:
+            if progenitor_mass == 11.2*u.Msun:
+                filename = f'11_{axion_mass.to_value("MeV"):3g}_{axion_coupling.to_value("1e-10/GeV"):02g}.dat'
+            elif progenitor_mass == 20*u.Msun:
+                filename = f'20_{axion_mass.to_value("MeV"):3g}_{axion_coupling.to_value("1e-10/GeV"):02g}.dat'
+            else: 
+                filename = f'25_{axion_mass.to_value("MeV"):3g}_{axion_coupling.to_value("1e-10/GeV"):02g}.dat'
+
+        self.metadata = {}
+
+        return super().__init__(filename, self.metadata)
+
+
 @RegistryModel(
     Bfield = ['hydro','L1','L2'],
     direction = ['average','equator','north','south'],
@@ -377,7 +428,7 @@ class Mori_2023(loaders.Mori_2023):
     _param_validator = lambda p: (p['Bfield'] == 'hydro' and p['grav'] == None and p['rotation'] == None ) or
         (p['Bfield'] == 'L1' and p['grav'] == None and p['rotation'] in [0,90]) or
         (p['Bfield'] == 'L2' and p['rotation'] == None and p['grav'] in ['A','B'])
-)
+)        
 class Bugli_2021(loaders.Bugli_2021):
     """Model based on `Buggli (2021) <https://arxiv.org/abs/2105.00665>`_.
     """

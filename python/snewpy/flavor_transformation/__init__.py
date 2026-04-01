@@ -16,9 +16,6 @@ Available Transformations
 .. autoclass:: snewpy.flavor_transformation.CompleteExchange
     :members:
 
-.. autoclass:: snewpy.flavor_transformation.ThreeFlavorDecoherence
-    :members:
-
 .. autoclass:: snewpy.flavor_transformation.TransformationChain
     :members:
 
@@ -71,6 +68,7 @@ NonAdiabaticMSWH = construct_chain(in_sn.NonAdiabaticMSWH)
 AdiabaticMSWes = construct_chain(in_sn.AdiabaticMSWes)
 NonAdiabaticMSWes = construct_chain(in_sn.NonAdiabaticMSWes)
 TwoFlavorDecoherence = construct_chain(in_sn.TwoFlavorDecoherence)
+ThreeFlavorDecoherence = construct_chain(in_sn.ThreeFlavorDecoherence)
 NeutrinoDecay = construct_chain(in_sn.AdiabaticMSW, 
                                 in_vacuum.NeutrinoDecay)
 QuantumDecoherence = construct_chain(in_sn.AdiabaticMSW, 
@@ -114,12 +112,3 @@ class CompleteExchange(FlavorTransformation):
         return P
 
 
-class ThreeFlavorDecoherence(FlavorTransformation):
-    """Equal mixing of all threen eutrino matter states and antineutrino matter states"""
-
-    def P_ff(self, t, E):
-        """Equal mixing so Earth matter has no effect"""
-        @FlavorMatrix.from_function(ThreeFlavor)
-        def P(f1, f2):
-            return (f1.is_neutrino == f2.is_neutrino)*1/3.
-        return P
