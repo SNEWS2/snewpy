@@ -73,7 +73,7 @@ def _get_transformation(flavor_transformation: str):
                                   'TwoFlavorDecoherence': TwoFlavorDecoherence(NMO_mix_params), 
                                   'TwoFlavorDecoherence_NMO': TwoFlavorDecoherence(NMO_mix_params), 
                                   'TwoFlavorDecoherence_IMO': TwoFlavorDecoherence(IMO_mix_params), 
-                                  'ThreeFlavorDecoherence': ThreeFlavorDecoherence()
+                                  'ThreeFlavorDecoherence': ThreeFlavorDecoherence(NMO_mix_params)
                                   }
 
     try:
