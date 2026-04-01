@@ -5,6 +5,7 @@
 config:
     - &snewpy "https://github.com/SNEWS2/snewpy/raw/v{snewpy_version}/models/{model}/{filename}"
     - &ccsn_repository "https://github.com/SNEWS2/snewpy-models-ccsn/raw/v0.3/models/{model}/{filename}"
+    - &fnx_repository "https://github.com/SNEWS2/snewpy-models-ccsn/raw/fornax-2024-update/models/{model}/{filename}"
     - &presn_repository "https://github.com/SNEWS2/snewpy-models-presn/raw/v0.2/models/{model}/{filename}"
     
 models:
@@ -20,6 +21,9 @@ models:
     
         Fornax_2022: 
             repository: *ccsn_repository
+    
+        Fornax_2024: 
+            repository: *fnx_repository
     
         Kuroda_2020: 
             repository: *ccsn_repository
