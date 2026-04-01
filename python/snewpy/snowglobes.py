@@ -28,6 +28,7 @@ import importlib
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from warnings import warn
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -57,6 +58,7 @@ def _get_transformation(flavor_transformation: str):
     IMO_mix_params = MixingParameters(MassHierarchy.INVERTED)
     NMO_mix_params = MixingParameters(MassHierarchy.NORMAL) 
     
+    warn("Using a string to specify the flavor transformation is deprecated. Please use a `FlavorTransformation` instance instead.", DeprecationWarning, stacklevel=3)
     if "NeutrinoDecay" in flavor_transformation:
         print("Using the default values for Neutrino Decay transformation")
 
@@ -116,7 +118,7 @@ def generate_time_series(model_path, model_type, flavor_transformation, d, outpu
     model_type : str
         Format of input file. Matches the name of the corresponding class in :py:mod:`snewpy.models`.
     flavor_transformation : str or instance of flavor transformation class  
-        If a string, the class if found using the _get_transformation function
+        If a string, the class is found using the _get_transformation function
     d : int or float
         Distance to supernova in kpc.
     output_filename : str or None
@@ -178,7 +180,7 @@ def generate_fluence(model_path, model_type, flavor_transformation, d, output_fi
     model_type : str
         Format of input file. Matches the name of the corresponding class in :py:mod:`snewpy.models`.
     flavor_transformation : str or instance of flavor transformation class  
-        If a string, the class if found using the _get_transformation function
+        If a string, the class is found using the _get_transformation function
     d : int or float
         Distance to supernova in kpc.
     output_filename : str or None
