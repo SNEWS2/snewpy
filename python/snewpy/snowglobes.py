@@ -59,8 +59,8 @@ def _get_transformation(flavor_transformation: str):
     NMO_mix_params = MixingParameters(MassHierarchy.NORMAL) 
     
     warn("Using a string to specify the flavor transformation is deprecated. Please use a `FlavorTransformation` instance instead.", DeprecationWarning, stacklevel=3)
-    if "NeutrinoDecay" in flavor_transformation:
-        print("Using the default values for Neutrino Decay transformation")
+    if flavor_transformation.startswith(('NeutrinoDecay', 'QuantumDecoherence')):
+        print(f"Using default parameters for {flavor_transformation} transformation. Use a `FlavorTransformation` instance to specify custom parameters.")
 
     # Choose flavor transformation. Use dict to associate the transformation name with its class.
     # The default mixing paramaters are the normal hierarchy values
@@ -73,7 +73,11 @@ def _get_transformation(flavor_transformation: str):
                                   'TwoFlavorDecoherence': TwoFlavorDecoherence(NMO_mix_params), 
                                   'TwoFlavorDecoherence_NMO': TwoFlavorDecoherence(NMO_mix_params), 
                                   'TwoFlavorDecoherence_IMO': TwoFlavorDecoherence(IMO_mix_params), 
-                                  'ThreeFlavorDecoherence': ThreeFlavorDecoherence(NMO_mix_params)
+                                  'ThreeFlavorDecoherence': ThreeFlavorDecoherence(NMO_mix_params),
+                                  'NeutrinoDecay_NMO': NeutrinoDecay(NMO_mix_params), 
+                                  'NeutrinoDecay_IMO': NeutrinoDecay(IMO_mix_params), 
+                                  'QuantumDecoherence_NMO': QuantumDecoherence(NMO_mix_params), 
+                                  'QuantumDecoherence_IMO': QuantumDecoherence(IMO_mix_params),
                                   }
 
     try:
