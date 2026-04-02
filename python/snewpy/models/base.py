@@ -23,7 +23,7 @@ def _wrap_init(init, check):
         init(self, *arg, **kwargs)
         check(self)
     return _wrapper
-    
+   
 class SupernovaModel(ABC, LocalFileLoader):
     """Base class defining an interface to a supernova model."""
 
@@ -132,10 +132,10 @@ class SupernovaModel(ABC, LocalFileLoader):
             A container with the information about the initial neutrino spectra
         """
         spectra_dict = self._get_initial_spectra_dict(t, E, flavors=ThreeFlavor)
-        initial_spectra =  flux.Container['1/(MeV*s)'].from_dict(spectra_dict, 
-                                                                time=t,
-                                                                energy=E,
-                                                                flavor_scheme=ThreeFlavor)
+        initial_spectra =  flux.Spectrum.from_dict(spectra_dict, 
+                                                   time=t,
+                                                   energy=E,
+                                                   flavor_scheme=ThreeFlavor)
         return initial_spectra
 
     def get_transformed_spectra(self, t, E, flavor_xform):
@@ -155,8 +155,8 @@ class SupernovaModel(ABC, LocalFileLoader):
         flux.Container 
             A container with the information of the transformed neutrino spectra
         """
-        initialspectra = self.get_initial_spectra(t, E)
-        transformed_spectra = flavor_xform.apply_to(initialspectra)
+        initial_spectra = self.get_initial_spectra(t, E)
+        transformed_spectra = flavor_xform.apply_to(initial_spectra)
         return transformed_spectra
 
     def get_flux (self, t, E, distance, flavor_xform=NoTransformation()):
@@ -249,7 +249,7 @@ class PinchedModel(SupernovaModel):
         #Reshape the Energy array to shape [1,len(E)]
         E = np.expand_dims(E, axis=0)
 
-        initialspectra = {}
+        initial_spectra = {}
 
         # Estimate L(t), <E_nu(t)> and alpha(t). Express all energies in erg.
         E = E.to_value('erg')
@@ -283,6 +283,6 @@ class PinchedModel(SupernovaModel):
 
             #remove unnecessary dimensions, if E or t was scalar:
             result = np.squeeze(result)
-            initialspectra[flavor] = result
+            initial_spectra[flavor] = result
 
-        return initialspectra
+        return initial_spectra
