@@ -1,3 +1,5 @@
+from __future__ import annotations  # fix: defer annotation evaluation so `FlavorScheme | None` is not evaluated at class-body parse time (see GitHub issue)
+
 import enum
 import numpy as np
 import typing
