@@ -13,7 +13,16 @@ import tarfile
 from astropy import units as u
 from astropy.table import Table, join
 from astropy.io import ascii, fits
-from astropy_healpix import healpy as hp
+
+try:
+    # Available on Linux and Mac, but not Windows
+    import healpy as hp
+except ImportError as e:
+    # Windows
+    from astropy_healpix import healpy as hp
+finally:
+    # Fall-through case
+    raise SystemExit('Neither healpy nor astropy-healpix are available.')
 
 import h5py
 import numpy as np
