@@ -20,9 +20,6 @@ try:
 except ImportError as e:
     # Windows
     from astropy_healpix import healpy as hp
-finally:
-    # Fall-through case
-    raise SystemExit('Neither healpy nor astropy-healpix are available.')
 
 import h5py
 import numpy as np
