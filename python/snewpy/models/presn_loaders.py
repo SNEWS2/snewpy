@@ -124,13 +124,20 @@ class Kato_2017(SupernovaModel):
                      ThreeFlavor.NU_TAU: 'total_nux/spe_sum_mu_nu',
                      ThreeFlavor.NU_TAU_BAR: 'total_nux/spe_sum_mu'
                      }
+        factor = {ThreeFlavor.NU_E: 1,
+                  ThreeFlavor.NU_E_BAR: 1,
+                  ThreeFlavor.NU_MU: 0.25,
+                  ThreeFlavor.NU_MU_BAR: 0.25,
+                  ThreeFlavor.NU_TAU: 0.25,
+                  ThreeFlavor.NU_TAU_BAR: 0.25
+                  }        
         for flv,file_base in file_base.items():
             d2NdEdT = []
             for s in step:
                 energies, dNdE = np.loadtxt(
                     self.request_file(f"{path}/{file_base}{s:05.0f}.dat")
                 ).T
-                d2NdEdT += [dNdE]
+                d2NdEdT += [dNdE] * factor[flv]
             fluxes[flv] = np.stack(d2NdEdT)
         self.array = np.stack([fluxes[f] for f in ThreeFlavor], axis=0)
         self.interpolated = _interp_TE(
