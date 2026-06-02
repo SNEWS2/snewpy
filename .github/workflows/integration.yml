@@ -52,7 +52,7 @@ jobs:
           pytest -m 'snowglobes'
       - name: Run notebooks test
         run: |
-          pytest --nbval-lax doc/source/nb
+          pytest --nbval-lax python/examples/notebooks
       - uses: r-lib/actions/setup-pandoc@v2
 
       - name: Build HTML docs
