@@ -8,7 +8,7 @@ CCSN Models
     :maxdepth: 1
     :glob:
 
-    snewpy/examples/notebooks/ccsn/*
+    ../../snewpy/examples/notebooks/ccsn/*
 
 Pre-SN Models
 -------------
@@ -17,7 +17,7 @@ Pre-SN Models
     :maxdepth: 1
     :glob:
 
-    snewpy/examples/notebooks/presn/*
+    ../../snewpy/examples/notebooks/presn/*
 
 
 Using SNEWPY
@@ -27,4 +27,4 @@ Using SNEWPY
     :maxdepth: 1
     :glob:
 
-    snewpy/examples/notebooks/*
+    ../../snewpy/examples/notebooks/*
