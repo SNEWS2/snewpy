@@ -526,7 +526,7 @@ class Analytic3Species(PinchedModel):
     average energy, and rms or pinch, for each species.
     """
 
-    param = "There are no input files available for this class. Use `doc/scripts/Analytic.py` in the SNEWPY GitHub repo to create a custom input file."
+    param = "There are no input files available for this class. Use `python/examples/scripts/Analytic.py` in the SNEWPY GitHub repo to create a custom input file."
 
     def get_param_combinations(cls):
         print(cls.param)
