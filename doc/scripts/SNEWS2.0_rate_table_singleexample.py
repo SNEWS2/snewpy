@@ -1,8 +1,12 @@
 #!/usr/bin/env python
+from snewpy import model_path
 from snewpy import snowglobes
 
 SNOwGLoBES_path = None  # change to SNOwGLoBES directory if using a custom detector configuration
-SNEWPY_model_dir = "/path/to/snewpy/models/"  # directory containing model input files
+
+# If your models are not stored in the default location (usually in astropy.cache) change the following from "model_path" 
+# to the string for the directory containing the model input files i.e. SNEWPY_models_base = "Your/SNEWPY/Models/Path/" 
+SNEWPY_models_base = model_path
 
 distance = 10  # Supernova distance in kpc
 detector = "wc100kt30prct" #SNOwGLoBES detector for water Cerenkov
@@ -22,8 +26,7 @@ print("Simulating detector effects with SNOwGLoBES ...")
 snowglobes.simulate(SNOwGLoBES_path, tarredfile, detector_input=detector)
 
 print("Collating results ...")
-tables = snowglobes.collate(SNOwGLoBES_path, tarredfile, skip_plots=True)
-
+tables = snowglobes.collate(tarredfile, skip_plots=True)
 
 # Use results to print the number of events in different interaction channels
 key = f"Collated_{outfile}_{detector}_events_smeared_weighted.dat"
