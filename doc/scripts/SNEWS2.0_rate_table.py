@@ -1,5 +1,11 @@
+""" This is the script that makes Table 4 in the SNEWS white paper 
+Al Kharusi et al., New Journal of Physics, Volume 23, id.031201 (2021)
+"""
+
 import numpy as np
 import os
+
+from snewpy import model_path
 from snewpy import snowglobes
 
 #Select output format, Mathjax or LaTeX
@@ -16,7 +22,10 @@ while True:
 
 home_directory = os.getcwd()
 SNOwGLoBES_path = None  # change to SNOwGLoBES directory if using a custom detector configuration
-SNEWPY_models_base = "Your/SNEWPY/Models/Path/Here"  # local directory containing model input files ("SNEWPY_models")
+
+# If your models are not stored in the default location (usually in astropy.cache) change the following from "model_path" 
+# to the string for the directory containing the model input files i.e. SNEWPY_models_base = "Your/SNEWPY/Models/Path/" 
+SNEWPY_models_base = model_path
 
 d = 10  # distance of supernova in kpc
 
@@ -49,7 +58,7 @@ if (have_data_saved is False):
             tarredfile = snowglobes.generate_fluence(model_dir + file_name, modeltype, transformation, d, outfile)
             for det in dets:
                 snowglobes.simulate(SNOwGLoBES_path, tarredfile, detector_input = det)
-                tables = snowglobes.collate(SNOwGLoBES_path, tarredfile, skip_plots = True)
+                tables = snowglobes.collate(tarredfile, skip_plots = True)
 
                 # for our table, interesting number is the smeared total number of events
                 key = "Collated_" + outfile + "_" + det + "_events_smeared_weighted.dat"
