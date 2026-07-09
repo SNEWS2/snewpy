@@ -40,9 +40,20 @@ from snewpy.flavor_transformation import *
 from snewpy.neutrino import MassHierarchy, MixingParameters
 from snewpy.rate_calculator import RateCalculator, center
 from snewpy.flux import Container
+
 logger = logging.getLogger(__name__)
 
-def _get_transformation(flavor_transformation: str):
+def strip_extensions(filename):
+    # Strip extension from filename if it matches one in the list below
+    strip_extensions = ['.dat', '.txt', '.fits', '.h5', '.tar', '.gz', '.bz2', '.npz', '.npy']
+    while True:
+        filename, ext = os.path.splitext(filename)
+        if ext.lower() not in strip_extensions:
+            filename += ext
+            break    
+    return filename
+
+def get_transformation(flavor_transformation: str):
     """Identify the flavor transformation from a string
 
     Parameters
@@ -57,10 +68,6 @@ def _get_transformation(flavor_transformation: str):
 
     IMO_mix_params = MixingParameters(MassHierarchy.INVERTED)
     NMO_mix_params = MixingParameters(MassHierarchy.NORMAL) 
-    
-    warn("Using a string to specify the flavor transformation is deprecated. Please use a `FlavorTransformation` instance instead.", DeprecationWarning, stacklevel=3)
-    if flavor_transformation.startswith(('NeutrinoDecay', 'QuantumDecoherence')):
-        print(f"Using default parameters for {flavor_transformation} transformation. Use a `FlavorTransformation` instance to specify custom parameters.")
 
     # Choose flavor transformation. Use dict to associate the transformation name with its class.
     # The default mixing paramaters are the normal hierarchy values
@@ -84,22 +91,12 @@ def _get_transformation(flavor_transformation: str):
         return flavor_transformation_dict[flavor_transformation]
     except KeyError:
         raise ValueError(f"Flavor transformation '{flavor_transformation}' not found.")
-
-def _get_model_class(model_type: str):
+    
+def get_model_class(model_type: str):
     """Look up model class corresponding to the given model name.
-
-    Parameters
-    ---------
-    model_type : str
-        Model name
-
-    Returns
-    -------
-    Model class corresponding to the given model name
     """    
     models_dict = {}
-    modules_list = ["snewpy.models.base", "snewpy.models.ccsn", "snewpy.models.ccsn_loaders",
-                    "snewpy.models.extended", "snewpy.models.presn", "snewpy.models.presn_loaders"]
+    modules_list = ["snewpy.models.ccsn", "snewpy.models.presn"]
     for module_name in modules_list:
         module = importlib.import_module(module_name)
         models_dict.update({k:v for k,v in vars(module).items() if isclass(v)})
@@ -109,11 +106,26 @@ def _get_model_class(model_type: str):
     except KeyError:
         raise ValueError(f"Model '{model_type}' not found.")
 
-def generate_time_series(model_path, model_type, flavor_transformation, d, output_filename=None, ntbins=30, deltat=None, snmodel_dict={}):
-    """Generate time series files in SNOwGLoBES format.
+def get_model_loader(model_type: str):
+    """Look up model class corresponding to the given model name.
+    """    
+    models_dict = {}
+    modules_list = ["snewpy.models.ccsn_loaders", "snewpy.models.presn_loaders"]
+    for module_name in modules_list:
+        module = importlib.import_module(module_name)
+        models_dict.update({k:v for k,v in vars(module).items() if isclass(v)})
+    models_dict['Analytic3Species'] = snewpy.models.ccsn.Analytic3Species
+    
+    try:
+        return models_dict[model_type]
+    except KeyError:
+        raise ValueError(f"Model loader'{model_type}' not found.")
 
-    This version will subsample the times in a supernova model, produce energy
-    tables expected by SNOwGLoBES, and compress the output into a tarfile.
+def generate_time_series(model_path, model_type, flavor_transformation, d, output_filename=None, ntbins=30, deltat=None, snmodel_dict={}):
+    """Generate time series files.
+
+    This version will subsample the times in a supernova model, 
+    and compress the output into a NumPy archive file
 
     Parameters
     ----------
@@ -126,7 +138,7 @@ def generate_time_series(model_path, model_type, flavor_transformation, d, outpu
     d : int or float
         Distance to supernova in kpc.
     output_filename : str or None
-        Name of output file. If ``None``, will be based on input file name.
+        Name of output file. If ``None``, will be based on the model name + transformation
     ntbins : int
         Number of time slices. Will be ignored if ``deltat`` is also given.
     deltat : astropy.Quantity or None
@@ -139,37 +151,45 @@ def generate_time_series(model_path, model_type, flavor_transformation, d, outpu
     str
         Path of NumPy archive file with neutrino fluence data.
     """
-    model_class = _get_model_class(model_type)
-
+    warn("generate_time_series is deprecated. Please use `generate` instead.", DeprecationWarning, stacklevel=2)
+    
+    model_loader = get_model_loader(model_type)
+    model_dir, model_file = os.path.split(os.path.abspath(model_path))
+    model = model_loader(model_path, **snmodel_dict)
+    
     # if flavor_transformation is a string, find the appropriate class
     if isinstance(flavor_transformation, str):
-        flavor_transformation = _get_transformation(flavor_transformation)
-
-    model_dir, model_file = os.path.split(os.path.abspath(model_path))
-    snmodel = model_class(model_path, **snmodel_dict)
+        flavor_transformation = get_transformation(flavor_transformation)
 
     # Subsample the model time. Default to 30 time slices.
-    tmin = snmodel.get_time()[0]
-    tmax = snmodel.get_time()[-1]
+    tmin = model.get_time()[0]
+    tmax = model.get_time()[-1]
     if deltat is not None:
         dt = deltat
         ntbins = int((tmax-tmin)/dt)
     else:
         dt = (tmax - tmin) / (ntbins+1)
-
     times = np.arange(tmin/u.s, tmax/u.s, dt/u.s)*u.s
-    energy = np.linspace(0, 100, 501) * u.MeV
+
+    # set up energies: 0 to 100 MeV in steps of 200 keV
+    energies = np.linspace(0, 100, 501) << u.MeV
+
     flux = snmodel.get_flux(t=times, E=energy,  distance=d, flavor_xform=flavor_transformation)
-    fluence = flux.integrate('time', limits = times).integrate('energy', limits = energy)
-    #save resulting fluence to file
-    if output_filename is not None:
-        tfname = output_filename + '.npz'
-    else:
-        model_file_root, _ = os.path.splitext(model_file)  # strip extension (if present)
-        tfname = f'{model_file_root}'+str(flavor_transformation)+f'{tmin:.3f},{tmax:.3f},{ntbins:d}-{d:.1f}.npz'
-    fluence.save(tfname)
-    return tfname
+    fluence = flux.integrate('time',limits=times).integrate('energy',limits=energies)
     
+    if output_filename is not None:
+        if Path(output_filename).suffix != '.npz':
+            output_filename = output_filename + '.npz'
+    else:
+        if len(times) > 1:
+            output_filename = f'{model.name}.'+str(flavor_transformation)+f'.{times[0]:.3f}-'+f'{times[-1]:.3f},'+f'{energies[0]:.3f}-'+f'{energies[-1]:.3f},'+f'{d:.3f}'+'.npz'
+        else:
+            output_filename = f'{model.name}.'+str(flavor_transformation)+f'.{times:.3f},'+f'{energies[0]:.3f}-'+f'{energies[-1]:.3f},'+f'{d:.3f}'+'.npz'
+
+    fluence.save(output_filename)       
+    
+    return output_filename
+
 
 def generate_fluence(model_path, model_type, flavor_transformation, d, output_filename=None, tstart=None, tend=None, snmodel_dict={}):
     """Generate fluence files in SNOwGLoBES format.
@@ -188,7 +208,7 @@ def generate_fluence(model_path, model_type, flavor_transformation, d, output_fi
     d : int or float
         Distance to supernova in kpc.
     output_filename : str or None
-        Name of output file. If ``None``, will be based on input file name.
+        Name of output file. If ``None``, will be based on the model name + transformation.
     tstart : astropy.Quantity or None
         Start of time interval to integrate over, or list of start times of the time series bins.
     tend : astropy.Quantity or None
@@ -201,20 +221,17 @@ def generate_fluence(model_path, model_type, flavor_transformation, d, output_fi
     str
         Path of NumPy archive file with neutrino fluence data.
     """
-    try:
-        model_class = getattr(snewpy.models.ccsn_loaders, model_type)
-    except AttributeError as e:
-        logging.warn(e)
-        model_class = getattr(snewpy.models.ccsn, model_type)
-
+    warn("generate_fluence is deprecated. Please use `generate` instead.", DeprecationWarning, stacklevel=2)
+    
+    model_loader = get_model_loader(model_type)
+    model_dir, model_file = os.path.split(os.path.abspath(model_path))
+    model = model_loader(model_path, **snmodel_dict)
+    
     # if flavor_transformation is a string, find the appropriate class
     if isinstance(flavor_transformation, str):
-        flavor_transformation = _get_transformation(flavor_transformation)
+        flavor_transformation = get_transformation(flavor_transformation)
 
-    model_dir, model_file = os.path.split(os.path.abspath(model_path))
-    snmodel = model_class(model_path, **snmodel_dict)
-
-    #set the timings up
+    #set the time bins up
     #default if inputs are None: full time window of the model
     times = None
     if tstart is not None and tend is not None:
@@ -226,24 +243,81 @@ def generate_fluence(model_path, model_type, flavor_transformation, d, output_fi
         except:
             #in case we have single values
             times = u.Quantity([tstart,tend])
-        times.sort()
-
-    #energy with 0.2 MeV binning
-    energy   = np.arange(0, 101, 0.2) << u.MeV
-    #energy bins similar to SNOwGLoBES
-    energy_t = (np.linspace(0, 100, 201)+0.25) << u.MeV 
-    flux = snmodel.get_flux(t=snmodel.get_time(), E=energy,  distance=d, flavor_xform=flavor_transformation)
-    fluence = flux.integrate('time', limits = times).integrate('energy', limits = energy_t)
-    times = fluence.time
-    #store the energy bin centers instead of the edges
-    if output_filename is not None:
-        tfname = output_filename+'.npz'
     else:
-        model_file_root, _ = os.path.splitext(model_file)  # strip extension (if present)
-        tfname = f'{model_file_root}'+str(flavor_transformation)+f'.{times[0]:.3f},{times[1]:.3f},{len(times)-1:d}-{d:.1f}.npz'
+        times = u.Quantity([model.get_time()[0],model.get_time()[-1]])            
+    times.sort()
 
-    fluence.save(tfname)
-    return tfname
+    #energy with 0.2 MeV binning    
+    energies   = np.arange(0, 101, 0.2) << u.MeV
+    #energy bins similar to SNOwGLoBES
+    energies_t = (np.linspace(0, 100, 201)+0.25) << u.MeV 
+
+    flux = model.get_flux(t=model.get_time(), E=energies, distance=d, flavor_xform=flavor_transformation)
+    fluence = flux.integrate('time',limits=times).integrate('energy',limits=energies_t)
+    times = fluence.time    
+    
+    if output_filename is not None:
+        if Path(output_filename).suffix != '.npz':
+            output_filename = output_filename + '.npz'
+    else:
+        if len(times) > 1:
+            output_filename = f'{model.name}.'+str(flavor_transformation)+f'.{times[0]:.3f}-'+f'{times[-1]:.3f},'+f'{energies[0]:.3f}-'+f'{energies[-1]:.3f},'+f'{d:.3f}'+'.npz'
+        else:
+            output_filename = f'{model.name}.'+str(flavor_transformation)+f'.{times:.3f},'+f'{energies[0]:.3f}-'+f'{energies[-1]:.3f},'+f'{d:.3f}'+'.npz'
+
+    fluence.save(output_filename)       
+    
+    return output_filename
+
+
+def generate(model, flavor_transformation, d, times=None, energies=None):
+    """Generate an array of fluences for an array of time bins, don't integrate over the energy.    
+       For those reading this, not integrating over energy allows the energy integration to be applied 
+       as needed elsewhere, e.g. the RateCalulator, if smearing is applied
+
+    Parameters
+    ----------
+    model : instance of a model class        
+    flavor_transformation : str or instance of flavor transformation class  
+        If a string, the class is found using the _get_transformation function
+    d : astropy Quantity 
+        Distance to supernova
+    times : astropy.Quantity or None
+        array of time bin edges over which to compute the fluence
+        if None, use the full model time interval for the fluence
+    energies : astropy.Quantity or None
+        list of energies at which to compute the fluence
+
+    Returns
+    -------
+    flux container
+        defined in snewpy.flux
+    """
+
+    # if flavor_transformation is a string, find the appropriate class
+    if isinstance(flavor_transformation, str):
+        warn("Using a string to specify the flavor transformation is deprecated. Please use a `FlavorTransformation` instance instead.", DeprecationWarning, stacklevel=3)
+        if flavor_transformation.startswith(('NeutrinoDecay', 'QuantumDecoherence')):
+            print(f"Using default parameters for {flavor_transformation} transformation. Use a `FlavorTransformation` instance to specify custom parameters.")        
+        flavor_transformation = get_transformation(flavor_transformation)
+
+    # set the timings up
+    # default if input is None, use full time window of the model
+    if times is None:
+        times = u.Quantity([model.get_time()[0],model.get_time()[-1]])
+    times.sort()                    
+
+    # set up energies
+    # default is 0 to 100 MeV in steps of 200 keV
+    if energies is None:
+        energies = np.linspace(0, 100, 501) << u.MeV
+    energies.sort()
+    
+    # Get the flux from the model at all model times, and then intergate over time of each interval. 
+    flux = model.get_flux(t=model.get_time(), E=energies, distance=d, flavor_xform=flavor_transformation)
+    fluence = flux.integrate('time',limits=times)
+    
+    return fluence
 
 
 def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", *, detector_effects=True):
@@ -261,6 +335,8 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", *, detector_effe
     detector_effects : bool
          Whether to account for detector smearing and efficiency.
     """
+    warn("simulate is deprecated. Please use `calculate` instead.", DeprecationWarning, stacklevel=2)
+    
     rc = RateCalculator(base_dir=SNOwGLoBESdir)
     if detector_input == 'all':
         detector_input = list(rc.detectors)
@@ -437,3 +513,86 @@ def collate(tarball_path, skip_plots=False, *, smearing=True):
                 tar.add(file,arcname=output_name+'/'+file.name)
         logging.info(f'Created archive: {output_path}')
     return results 
+    
+
+def calculate(SNOwGLoBESdir, fluence, detector="all", *, detector_effects=True):
+    """Calculate expected event rates for the given neutrino fluence files and the given (set of) SNOwGLoBES detector(s).
+    These event rates are given as a function of the neutrino energy and time, for each observale interaction channel 
+
+    Parameters
+    ----------
+    SNOwGLoBESdir : str or None
+        Path to SNOwGLoBES directory. Set to ``None`` to automatically use the latest supported SNOwGLoBES release.
+    fluence : str or Container object
+        if string, the file of that name will be opened by Container.load
+    detector : str or array of str
+        Name of detector. If ``"all"``, will use all detectors supported by SNOwGLoBES.
+    detector_effects : bool
+         Whether to account for detector smearing and efficiency.
+         
+    Returns
+    -------
+    nested dict of flux.Container objects or name of numpy archive file that can be read by the Container.load member
+        Dictionary of event rates / numbers: first dict key is detector type, second is channel 
+    """
+
+    rc = RateCalculator(base_dir=SNOwGLoBESdir)
+    if detector == 'all':
+        detector_list = list(rc.detectors)
+    elif(isinstance(detector,str)):
+        detector_list=[detector]
+    else:
+        detector_list = detector
+
+    if detector_effects == False:    
+        smearing = "unsmeared"
+    else:
+        smearing = "smeared"
+        
+    if isinstance(fluence,str): #read the fluence in the file
+        fluence_filename = fluence
+        logging.info(f'Reading fluences from {fluence_filename}')
+        fluence = Container.load(fluence_filename)
+        fluence_filename_base = fluence_filename[:fluence_filename.rfind('.')]        
+    else:
+        fluence_filename = None
+
+    rates = {}            
+    for det in detector_list:        
+        rates[det] = rc.run(fluence, det, detector_effects=detector_effects)
+
+    def aggregate_channels(rates,patterns):
+        for name, pattern in patterns.items():
+            #get channels in rates with names that contain the pattern
+            matches = [channel for channel in rates.keys() if re.search(pattern,channel)]
+            #sum over the matches
+            rates_agg = sum(rates[channel] for channel in matches)
+            #remove matching channels from rates
+            for channel in matches:
+                del rates[channel]
+            #make a new entry with the aggregate 
+            if len(matches) > 0:
+                rates[name] = rates_agg
+        return rates
+
+    # make collated rate table
+    collated_rates = {}
+    patterns = {'nc':'nc_',
+                'eES':'_e', 
+                'coh_helm_Ar':r'coh_helm.*_Ar', 'coh_helm_Ge':r'coh_helm.*_Ge', 'coh_helm_Xe':r'coh_helm.*_Xe',
+                'coh_klein-nystrand_Ar':r'coh_klein.*_Ar', 'coh_klein-nystrand_Ge':r'coh_klein.*_Ge', 'coh_klein-nystrand_Xe':r'coh_kelin.*_Xe'                
+               }
+    for detector in rates:
+        collated_rates[detector] = aggregate_channels(rates[detector],patterns)
+                
+    if fluence_filename is not None: 
+        # save result to file
+        if detector == 'all': 
+            collated_rates_filename = fluence_filename_base+'.all_'+smearing+'_collated.npz'
+        else:
+            collated_rates_filename = fluence_filename_base+'.{detector}_'+smearing+'_collated.npz'
+        logging.info(f'Saving detector event rates / numbers to {collated_rates_filenames}')
+        np.savez(collated_rates_filename, **{det: np.array(collated_rates[det]) for det in collated_rates})
+        return collated_rates_filename
+    else:
+        return collated_rates

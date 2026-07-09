@@ -1,7 +1,7 @@
 import enum
 import numpy as np
 import typing
-import snewpy.utils
+from snewpy.utils import expand_dimensions_to
 
 class FlavorEnumMeta(enum.EnumMeta):
     """Meta class for setting flavor enums.
@@ -198,7 +198,7 @@ class FlavorMatrix:
             try:
                 m0, m1 = self.array, other.array
                 ndims = max(m0.ndim, m1.ndim)
-                m0,m1 = [snewpy.utils.expand_dimensions_to(m, ndim=ndims) for m in [m0,m1]]
+                m0,m1 = [expand_dimensions_to(m, ndim=ndims) for m in [m0,m1]]
                 array = np.einsum('ij...,jk...->ik...',m0,m1)
                 return FlavorMatrix(array, self.flavor_out, from_flavor = other.flavor_in)
             except Exception as e:

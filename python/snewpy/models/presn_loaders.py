@@ -61,6 +61,8 @@ class Odrzywolek_2010(SupernovaModel):
                 # nuX/nuE ratio from Odrzywolek paper: (arXiv:astro-ph/0311012)
                 self.factor[f] = 0.19
         time = -df.index.to_numpy() << u.s
+
+        self.name = self.__class__.__name__             
         super().__init__(time, metadata)
 
     def _get_initial_spectra_dict(self, t, E, flavors=ThreeFlavor):
@@ -104,6 +106,8 @@ class Patton_2017(SupernovaModel):
         self.interpolated = _interp_TE(
             times, energies, self.array, ax_t=1, ax_e=2
         )
+
+        self.name = self.__class__.__name__             
         super().__init__(-times << u.hour, metadata)
 
     def _get_initial_spectra_dict(self, t, E, flavors=ThreeFlavor):
@@ -140,6 +144,8 @@ class Kato_2017(SupernovaModel):
         self.interpolated = _interp_TE(
             times, energies, self.array, ax_t=1, ax_e=2
         )
+
+        self.name = self.__class__.__name__             
         super().__init__(-times << u.s, metadata)
 
     def _get_initial_spectra_dict(self, t, E, flavors=ThreeFlavor):
@@ -161,7 +167,7 @@ class Yoshida_2016(SupernovaModel):
                 T += [float(line.split()[1])]
                 data += [[np.loadtxt(f, max_rows=100).flatten() for i in range(4)]]
         times = np.array(T)
-        super().__init__(times << u.s, self.metadata)
+
         energies = np.concatenate([
                 np.linspace(0,10,1001)[1:],
                 np.linspace(10,20,501)[1:]
@@ -172,12 +178,13 @@ class Yoshida_2016(SupernovaModel):
         dNdEdT = dNdEdT.take([0,1,2,3,2,3], axis=0)#[e,e_bar, mu, mu_bar, tau, tau_bar]
         #rearrange flavors from ['e','e_bar','mu','mu_bar','tau','tau_bar'] to current 
         indices = np.argsort(ThreeFlavor[['e','e_bar','mu','mu_bar','tau','tau_bar']])
-        dNdEdT = dNdEdT.take(indices, axis=0)
-        
+        dNdEdT = dNdEdT.take(indices, axis=0)        
         
         self.interpolated = _interp_TE(
             times, energies, dNdEdT, ax_t=1, ax_e=2
         )
+
+        self.name = self.__class__.__name__             
         super().__init__(-times << u.s, metadata)
 
     def _get_initial_spectra_dict(self, t, E, flavors=ThreeFlavor):
@@ -224,6 +231,8 @@ class Myers_2026(SupernovaModel):
         self.interpolated = _interp_TE(
             np.abs(times), energies, dNdEdT, ax_t=1, ax_e=2
         )
+
+        self.name = self.__class__.__name__             
         super().__init__(times << u.hour, metadata)
 
     @classmethod

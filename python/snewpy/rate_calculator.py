@@ -226,6 +226,7 @@ class DetectionChannel:
                 rate = self.smearing.apply(rate)
         if apply_efficiency:
                 rate = rate*self.efficiency
+
         return rate
         
     def _calc_interaction_rate(self, flux):
