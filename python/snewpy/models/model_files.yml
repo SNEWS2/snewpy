@@ -6,7 +6,8 @@ config:
     - &snewpy "https://github.com/SNEWS2/snewpy/raw/v{snewpy_version}/models/{model}/{filename}"
     - &ccsn_repository "https://github.com/SNEWS2/snewpy-models-ccsn/raw/v0.4/models/{model}/{filename}"
     - &presn_repository "https://github.com/SNEWS2/snewpy-models-presn/raw/v0.2/models/{model}/{filename}"
-    - &presn_repository_main "https://github.com/SNEWS2/snewpy-models-presn/raw/main/models/{model}/{filename}"
+    - &presn_repository_main "https://github.com/SNEWS2/snewpy-models-presn/raw/main/models/{model}/{filename}"    
+    - &pisn_typeIa_repository "https://github.com/SNEWS2/snewpy-models-pisn_typeIa/raw/v0.2/models/{model}/{filename}"        
     
 models:
     ccsn:
@@ -82,4 +83,14 @@ models:
             repository: *presn_repository
 
         Myers_2026:
-            repository: *presn_repository_main
+            repository: *presn_repository_main            
+            
+    pisn:               
+        Wright_2017:
+            repository: *pisn_typeIa_repository                
+            
+    typeIa:
+        Wright_2016:
+            repository: *pisn_typeIa_repository  
+              
+
