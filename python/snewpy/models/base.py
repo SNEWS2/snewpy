@@ -47,6 +47,9 @@ class SupernovaModel(ABC, LocalFileLoader):
         """
         self.time = time
         self.metadata = metadata
+        # add metadata to class name to better identify instance of model
+        for entry in metadata:
+            self.__class__.__name__ += f"-{metadata[entry]}"        
         
     def __repr__(self):
         """Default representation of the model.
