@@ -22,9 +22,9 @@ def marley_name(flavor):
     if 'BAR' in flavor.name:
         marley_name += "bar"
 
-    return marley_name  
-    
-def save_as_marley(fluence, output_filename, additional_inputs=None):
+    return marley_name
+
+def save_as_marley(fluence, output_filename, marley_major_version=2, additional_inputs=None):
     """Save the contents of a fluence in MARLEY format.
 
        For each time bin, 6 Marley config files are generated and placed into a tarfile.
@@ -34,7 +34,7 @@ def save_as_marley(fluence, output_filename, additional_inputs=None):
        fluence : flux container
            Time-integrated neutrino flux from supernova model.
        additional_inputs : dict
-           Additional dictionary that will be inserted into the Marley config files. 
+           Additional dictionary that will be inserted into the Marley config files.
 
        Returns
        -------
@@ -47,42 +47,56 @@ def save_as_marley(fluence, output_filename, additional_inputs=None):
 
     if additional_inputs != None:
         marley_data = additional_inputs
-    else: 
+    else:
         marley_data = {}
-        
-    if 'seed' not in marley_data:        
+
+    if 'seed' not in marley_data:
         marley_data['seed'] = 123456
-       
-    if 'direction' not in marley_data:                
+
+    if 'direction' not in marley_data:
         marley_data['direction'] = { 'x': 0.0, 'y': 0.0, 'z': 1.0 }
-        
-    if 'target' not in marley_data:                
+
+    if 'target' not in marley_data:
         marley_data['target'] = { 'nuclides': [1000180400], 'atom_fractions': [1.0] }
 
     if 'reactions' not in marley_data:
-        marley_data['reactions'] = [ "ve40ArCC_Bhattacharya2009.react", "ES.react" ] 
-       
-    marley_data["source"] = { 'type': "histogram", 'E_bin_lefts': fluence.energy[:-1].value.tolist(), 'Emax': fluence.energy[-1].value } 
-    
+        # The recommended reaction file names changed for MARLEY v2.0.0
+        if marley_major_version < 2:
+            marley_data['reactions'] = [ "ve40ArCC_Bhattacharya2009.react", "ES.react" ]
+        else:
+            marley_data['reactions'] = [ "ve40ArCC_HF-CRPA.react", "ve40ArCC_Bhattacharya2009-Discrete.react", "ES.react" ],
+
+    marley_data["source"] = { 'type': "histogram", 'E_bin_lefts': fluence.energy[:-1].value.tolist(), 'Emax': fluence.energy[-1].value }
+
     with tarfile.open(output_filename, 'w:bz2') as tf:
         for i in range(ntbins):
             for f in ThreeFlavor:
                 marley_data['source'].update({"neutrino": marley_name(f), "weights": np.squeeze(fluence[f,i].array).value.tolist() })
 
-                marley_output_name = marley_name(f) + f'.{times[i].value:.3f}' + ".hepevt"                
-                marley_data['executable_settings'] = { 
-                    'events': 1000, 
-                    'output': [ { 'file': marley_output_name, 'format': "hepevt", 'mode': "overwrite" } ]
-                    }                
+                # MARLEY output formats and the top-level key for
+                # controlling the executable changed in v2.0.0
+                marley_format_name = "hepmc3"
+                marley_exec_key = "generate"
+
+                if marley_major_version < 2:
+                    marley_format_name = "hepevt"
+                    marley_exec_key = "executable_settings"
+
+                marley_output_name = marley_name(f) + f'.{times[i].value:.3f}' + "." + marley_format_name
+
+                marley_data[ marley_exec_key ] = {
+                    'events': 1000,
+                    'output': [ { 'file': marley_output_name, 'format': marley_format_name, 'mode': "overwrite" } ]
+                    }
 
                 json_str = json.dumps(marley_data,indent=4)
-                json_str = re.sub(r'"(\w+)":', r'\1:',json_str) # remove the quotes around the keys in the json_str                
-                json_bytes = json_str.encode('ascii')                  
+                json_str = re.sub(r'"(\w+)":', r'\1:',json_str) # remove the quotes around the keys in the json_str
+                json_bytes = json_str.encode('ascii')
 
                 name_in_tar = marley_name(f) + f'.{times[i]:.3f}' + ".js"
                 tar_info = tarfile.TarInfo(name=name_in_tar)
-                tar_info.size = len(json_bytes)           
-               
+                tar_info.size = len(json_bytes)
+
                 tf.addfile(tar_info, io.BytesIO(json_bytes))
 
     return output_filename
@@ -94,7 +108,7 @@ times    = snmodel.time
 energies = np.linspace(0,50,501)<<u.MeV
 
 d = 10 * u.kpc  # distance to SN
-    
+
 mp_nmo = MixingParameters()
 xform = AdiabaticMSW(mp_nmo)
 
