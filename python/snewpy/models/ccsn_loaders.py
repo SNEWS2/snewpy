@@ -1089,6 +1089,8 @@ class PUSH(PinchedModel):
         
         #xdatafile = self.request_file(xfilename)        
         xdata = np.genfromtxt(xfilename)
+
+        simtab = Table()
         
         simtab['TIME'] = edata[:, 0]
 
