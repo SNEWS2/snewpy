@@ -1084,11 +1084,11 @@ class PUSH(PinchedModel):
             Absolute or relative path to model data for mutau flavor neutrinos            
         """
 
-        edatafile = self.request_file(efilename)
-        edata = np.genfromtxt(edatafile)
+        #edatafile = self.request_file(efilename)
+        edata = np.genfromtxt(efilename)
         
-        xdatafile = self.request_file(xfilename)        
-        xdata = np.genfromtxt(xdatafile)
+        #xdatafile = self.request_file(xfilename)        
+        xdata = np.genfromtxt(xfilename)
         
         simtab['TIME'] = edata[:, 0]
 
