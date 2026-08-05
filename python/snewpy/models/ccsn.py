@@ -41,7 +41,17 @@ from snewpy.models.registry_model import RegistryModel, Parameter
 from snewpy.models.registry_model import all_models
 from textwrap import dedent
 
-
+@RegistryModel()
+class PUSH(loaders.PUSH):
+    """Model from the PUSH collaboration
+    """
+    def __init__(self:
+        self.metadata["EOS"] = "LS220"
+        # neutrino data is in two files
+        efilename = 'luminosity.d'
+        xfilename = 'mutau_luminosity.d'
+        return super().__init__(efilename,xfilename,self.metadata)
+     
 @RegistryModel()
 class Fischer_2020(loaders.Fischer_2020):
     """Model based on simulations from `Fischer et al. (2020) <https://arxiv.org/abs/1804.10890>`
