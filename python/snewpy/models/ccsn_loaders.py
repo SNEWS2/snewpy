@@ -1100,7 +1100,7 @@ class PUSH(PinchedModel):
         simtab['E_NU_E_BAR'] = edata[:, 7] << u.MeV
         simtab['E_NU_X'] = xdata[:, 3] << u.MeV
 
-        simtab['ALPHA_NU_E'] = np.array(len(simtab['TIME']),3)
+        simtab['ALPHA_NU_E'] = np.full(len(simtab['TIME']),3)
         simtab['ALPHA_NU_E_BAR'] = simtab['ALPHA_NU_E']
         simtab['ALPHA_NU_X'] = simtab['ALPHA_NU_E']
 
