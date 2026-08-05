@@ -45,7 +45,7 @@ from textwrap import dedent
 class PUSH(loaders.PUSH):
     """Model from the PUSH collaboration
     """
-    def __init__(self:
+    def __init__(self):
         self.metadata["EOS"] = "LS220"
         # neutrino data is in two files
         efilename = 'luminosity.d'
