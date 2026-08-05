@@ -1069,3 +1069,46 @@ class Fischer_2020(PinchedModel):
         tf.close()
 
         super().__init__(simtab, metadata)
+
+class PUSH(PinchedModel):
+    """Model from the PUSH collaboration
+    """
+
+    def __init__(self, efilename, xfilename, metadata={}):
+        """
+        Parameters
+        ----------
+        efilename : str
+            Absolute or relative path to model data for electron flavor neutrinos.
+        xfilename : str
+            Absolute or relative path to model data for mutau flavor neutrinos            
+        """
+
+        edatafile = self.request_file(efilename)
+        edata = np.genfromtxt(edatafile)
+        
+        xdatafile = self.request_file(xfilename)        
+        xdata = np.genfromtxt(xdatafile)
+        
+        simtab['TIME'] = edata[:, 0]
+
+        simtab['L_NU_E'] = edata[:, 4] << u.erg/u.s
+        simtab['L_NU_E_BAR'] = edata[:, 5] << u.erg/u.s
+        simtab['L_NU_X'] = xdata[:, 2] << u.erg/u.s
+
+        simtab['E_NU_E'] = edata[:, 6] << u.MeV
+        simtab['E_NU_E_BAR'] = edata[:, 7] << u.MeV
+        simtab['E_NU_X'] = xdata[:, 3] << u.MeV
+
+        simtab['ALPHA_NU_E'] = np.array(len(simtab['TIME']),3)
+        simtab['ALPHA_NU_E_BAR'] = simtab['ALPHA_NU_E']
+        simtab['ALPHA_NU_X'] = simtab['ALPHA_NU_E']
+
+        simtab['L_NU_X'] /= 4.0
+
+        # prevent negative lums
+        simtab['L_NU_E'][simtab['L_NU_E'] < 0] = 1
+        simtab['L_NU_E_BAR'][simtab['L_NU_E_BAR'] < 0] = 1
+        simtab['L_NU_X'][simtab['L_NU_X'] < 0] = 1
+
+        super().__init__(simtab, metadata)
