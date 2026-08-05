@@ -1094,12 +1094,12 @@ class PUSH(PinchedModel):
         
         simtab['TIME'] = edata[:, 0]
 
-        simtab['L_NU_E'] = edata[:, 4] << u.erg/u.s
-        simtab['L_NU_E_BAR'] = edata[:, 5] << u.erg/u.s
+        simtab['L_NU_E'] = edata[:, 3] << u.erg/u.s
+        simtab['L_NU_E_BAR'] = edata[:, 4] << u.erg/u.s
         simtab['L_NU_X'] = xdata[:, 2] << u.erg/u.s
 
-        simtab['E_NU_E'] = edata[:, 6] << u.MeV
-        simtab['E_NU_E_BAR'] = edata[:, 7] << u.MeV
+        simtab['E_NU_E'] = edata[:, 5] << u.MeV
+        simtab['E_NU_E_BAR'] = edata[:, 6] << u.MeV
         simtab['E_NU_X'] = xdata[:, 3] << u.MeV
 
         simtab['ALPHA_NU_E'] = np.full(len(simtab['TIME']),3)
