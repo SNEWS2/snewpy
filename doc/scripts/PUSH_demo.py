@@ -12,16 +12,13 @@ path = "~/.astropy/cache/snewpy/models/PUSH/"
 model = ccsn_loaders.PUSH("luminosity.d","mutau_luminosity.d") # SN model
 transformation = AdiabaticMSW(MixingParameters('NORMAL')) # Desired flavor transformation
        
-# Now, do the main work:
-print("Generating fluence files ...")
 times    = model.get_time()
 energies = np.linspace(0,100,501)<<u.MeV
 distance = 10*u.kpc
-#get the flux from the model
+
 flux = model.get_flux(t=times, E=energies, distance=distance, flavor_xform=transformation)
 fluence = flux.integrate('time')
 
-print("Simulating detector effects ...")
 detector = "wc100kt30prct"
 rc = RateCalculator()
 
