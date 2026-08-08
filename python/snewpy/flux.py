@@ -390,7 +390,26 @@ class _ContainerBase:
             return cls(data=array,
                        **{name:_load_quantity(name) for name in ['time','energy','flavor']},
                        integrable_axes=f['_integrable_axes'])
-            
+
+    def __add__(self,other:'Container'):
+        # Overload the + operator. 
+        # Don't compare the flavors, only that they have the same number
+        if self.__class__==other.__class__ and \
+            self.unit == other.unit and \
+            self.flavor_scheme==other.flavor_scheme and \
+            len(self.flavor)==len(other.flavor) and \
+            all([np.allclose(self.axes[ax], other.axes[ax]) for ax in list(Axes)[1:]]):
+                array = self.array+other.array
+                axes = list(self.axes)
+                return Container(array,*axes)
+        else:
+            return NotImplemented
+
+    def __radd__(self,other):
+        if other == 0:
+            return self
+        return self.__add__(other)    
+        
     def __eq__(self, other:'Container')->bool:
         "Check if two Containers are equal"
         result = self.__class__==other.__class__ and \
