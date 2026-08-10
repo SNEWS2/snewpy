@@ -567,27 +567,4 @@ class SNOwGLoBES:
 
         return fluence
 
-class Analytic3Species(PinchedModel):
-    """An analytical model calculating spectra given total luminosity,
-    average energy, and rms or pinch, for each species.
-    """
 
-    param = "There are no input files available for this class. Use `doc/scripts/Analytic.py` in the SNEWPY GitHub repo to create a custom input file."
-
-    def get_param_combinations(cls):
-        print(cls.param)
-        return []
-
-    def __init__(self, filename):
-        """
-        Parameters
-        ----------
-        filename : str
-            Absolute or relative path to file with model data.
-        """
-        self.name = self.__class__.__name__     
-     
-        simtab = Table.read(filename,format='ascii')
-        self.filename = filename
-
-        super().__init__(simtab, metadata={})
