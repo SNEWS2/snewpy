@@ -114,7 +114,7 @@ def get_model_loader(model_type: str):
     for module_name in modules_list:
         module = importlib.import_module(module_name)
         models_dict.update({k:v for k,v in vars(module).items() if isclass(v)})
-    models_dict['Analytic3Species'] = snewpy.models.ccsn.Analytic3Species
+    #models_dict['Analytic3Species'] = snewpy.models.ccsn.Analytic3Species
     
     try:
         return models_dict[model_type]
