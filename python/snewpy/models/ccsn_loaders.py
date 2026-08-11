@@ -101,7 +101,7 @@ class PUSHArchiveModel(base.PinchedModel):
         filename : str
             Absolute or relative path to model data
         """
-        datafile = self.request_file(filename)        
+        datafile = filename #self.request_file(filename)        
         f = h5py.File(datafile, 'r')
 
         simtab = Table()
