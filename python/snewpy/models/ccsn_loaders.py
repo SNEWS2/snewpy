@@ -19,7 +19,7 @@ import h5py
 import numpy as np
 from scipy.special import gamma, lpmv
 
-import snewpy.models.base
+import snewpy.models.base as base
 from snewpy.flux import Spectrum
 from snewpy.flavor import ThreeFlavor
 from snewpy import _model_downloader
