@@ -41,16 +41,30 @@ from snewpy.models.registry_model import RegistryModel, Parameter
 from snewpy.models.registry_model import all_models
 from textwrap import dedent
 
-@RegistryModel()
-class PUSH(loaders.PUSH):
-    """Model from the PUSH collaboration
+@RegistryModel(
+    progenitor_mass= [11.2, 27.] * u.Msun,
+    eos = ['SFHo'],
+    callibration = ['cal1', 'cal2'] 
+)
+class Ebinger_2018(loaders.PUSHArchiveModel):
+    """Model from the PUSH collaboration described in Ebinger et al.
     """
-    def __init__(self):
-        self.metadata["EOS"] = "LS220"
-        # neutrino data is in two files
-        efilename = 'luminosity.d'
-        xfilename = 'mutau_luminosity.d'
-        return super().__init__(efilename,xfilename,self.metadata)
+    def __init__(self, progenitor_mass:u.Quantity), eos:str='SFHo', callibration:str)
+        filename = f's{progenitor_mass.value:3.1f}._{eos}_{calibration}_Ebinger_luminosity.h'
+        return super().__init__(filename, self.metadata)
+
+@RegistryModel(
+    progenitor_mass= [11.2, 27.] * u.Msun,
+    eos = ['SFHo'],
+    callibration = ['cal1'] 
+)
+class Curtis_2019(loaders.PUSHArchiveModel):
+    """Model from the PUSH collaboration described in Curtis et al.
+    """
+    def __init__(self, progenitor_mass:u.Quantity, eos:str='SFHo', callibration:str):
+        filename = f's{progenitor_mass.value:3.1f}._{eos}_{calibration}_Curtis_luminosity.h'
+        return super().__init__(filename, self.metadata)
+
      
 @RegistryModel()
 class Fischer_2020(loaders.Fischer_2020):
@@ -67,7 +81,6 @@ class Fischer_2020(loaders.Fischer_2020):
     revival_time = [0, 100, 200, 300] * u.ms,
     metallicity = [0.02, 0.004],
     eos = ['LS220', 'shen', 'togashi'],
-
     _param_validator = lambda p: (p['revival_time'] == 0 * u.ms and p['progenitor_mass'] == 30 * u.Msun
                                   and p['metallicity'] == 0.004) or \
                                  (p['revival_time'] != 0 * u.ms and p['eos'] == 'shen'
@@ -545,25 +558,4 @@ class SNOwGLoBES:
 
         return fluence
 
-class Analytic3Species(PinchedModel):
-    """An analytical model calculating spectra given total luminosity,
-    average energy, and rms or pinch, for each species.
-    """
 
-    param = "There are no input files available for this class. Use `doc/scripts/Analytic.py` in the SNEWPY GitHub repo to create a custom input file."
-
-    def get_param_combinations(cls):
-        print(cls.param)
-        return []
-
-    def __init__(self, filename):
-        """
-        Parameters
-        ----------
-        filename : str
-            Absolute or relative path to file with model data.
-        """
-
-        simtab = Table.read(filename,format='ascii')
-        self.filename = filename
-        super().__init__(simtab, metadata={})
