@@ -68,7 +68,7 @@ class Curtis_2019(loaders.PUSHArchiveModel):
 @RegistryModel(
     progenitor_mass= np.concatenate( (np.linspace(10.8, 28.2, 0.2), 
                                       np.linspace(29, 40, 1)) ) << u.Msun,
-    eos = ['SFHo', 'SFHx', 'DD2', 'BHB', 'TM1', NL3'],
+    eos = ['SFHo', 'SFHx', 'DD2', 'BHB', 'TM1', 'NL3'],
     callibration = ['calI'] 
 )
 class Wolfe_2023(loaders.PUSHArchiveModel):
