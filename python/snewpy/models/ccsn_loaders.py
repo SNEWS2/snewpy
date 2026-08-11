@@ -94,39 +94,41 @@ class PUSHArchiveModel(base.PinchedModel):
     by the PUSH collaboration
     """
 
-    def __init__(self, efilename, xfilename, metadata={}):
+    def __init__(self, filename, metadata={}):
         """
         Parameters
         ----------
-        efilename : str
-            Absolute or relative path to model data for electron flavor neutrinos.
-        xfilename : str
-            Absolute or relative path to model data for mutau flavor neutrinos            
+        filename : str
+            Absolute or relative path to model data
         """
-
-        #edatafile = self.request_file(efilename)
-        edata = np.genfromtxt(efilename)
-        
-        #xdatafile = self.request_file(xfilename)        
-        xdata = np.genfromtxt(xfilename)
+        datafile = self.request_file(filename)        
+        f = h5py.File(datafile, 'r')
 
         simtab = Table()
+
+        simtab['TIME'] = f['nue_data']['lum'][:, 0]
         
-        simtab['TIME'] = edata[:, 0]
+        simtab['L_NU_E'] = f['nue_data']['lum'][:, 1] << u.erg/u.s
+        simtab['L_NU_E_BAR'] = f['nuae_data']['lum'][:, 1] << u.erg/u.s
+        simtab['L_NU_X'] = f['nux_data']['lum'][:, 1] << u.erg/u.s
+        
+        simtab['E_NU_E'] = f['nue_data']['avg_energy'][:, 1] << u.MeV
+        simtab['E_NU_E_BAR'] = f['nuae_data']['avg_energy'][:, 1] << u.MeV
+        simtab['E_NU_X'] = f['nux_data']['avg_energy'][:, 1] << u.MeV
 
-        simtab['L_NU_E'] = edata[:, 3] << u.erg/u.s
-        simtab['L_NU_E_BAR'] = edata[:, 4] << u.erg/u.s
-        simtab['L_NU_X'] = xdata[:, 2] << u.erg/u.s
+        #simtab['L_NU_E'] = edata[:, 3] << u.erg/u.s
+        #simtab['L_NU_E_BAR'] = edata[:, 4] << u.erg/u.s
+        #simtab['L_NU_X'] = xdata[:, 2] << u.erg/u.s
 
-        simtab['E_NU_E'] = edata[:, 5] << u.MeV
-        simtab['E_NU_E_BAR'] = edata[:, 6] << u.MeV
-        simtab['E_NU_X'] = xdata[:, 3] << u.MeV
-
+        #simtab['E_NU_E'] = edata[:, 5] << u.MeV
+        #simtab['E_NU_E_BAR'] = edata[:, 6] << u.MeV
+        #simtab['E_NU_X'] = xdata[:, 3] << u.MeV        
+        
         simtab['ALPHA_NU_E'] = np.full(len(simtab['TIME']),3)
         simtab['ALPHA_NU_E_BAR'] = simtab['ALPHA_NU_E']
         simtab['ALPHA_NU_X'] = simtab['ALPHA_NU_E']
 
-        # prevent negative lums
+        # prevent negative luminosities
         simtab['L_NU_E'][simtab['L_NU_E'] < 0] = 1
         simtab['L_NU_E_BAR'][simtab['L_NU_E_BAR'] < 0] = 1
         simtab['L_NU_X'][simtab['L_NU_X'] < 0] = 1
