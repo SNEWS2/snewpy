@@ -106,7 +106,8 @@ class PUSHArchiveModel(base.PinchedModel):
 
         simtab = Table()
 
-        simtab['TIME'] = f['times'] * u.s
+        tbounce = f['metadata']['bounce_time'] * u.s
+        simtab['TIME'] = f['times'] * u.s - tbounce
         
         simtab['L_NU_E'] = f['data']['lum_e'] << u.erg/u.s
         simtab['L_NU_E_BAR'] = f['data']['lum_ebar'][:, 2] << u.erg/u.s
