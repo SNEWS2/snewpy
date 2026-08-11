@@ -66,8 +66,9 @@ class Curtis_2019(loaders.PUSHArchiveModel):
         return super().__init__(filename, metadata=self.metadata)
 
 @RegistryModel(
-    progenitor_mass= np.concatenate( (np.linspace(10.8, 28.2, 0.2), 
-                                      np.linspace(29, 40, 1)) ) << u.Msun,
+    progenitor_mass = Parameter(np.concatenate((np.linspace(10.8, 28.2, 0.2),
+                                                np.linspace(29, 40, 1) ) )) << u.Msun,
+                                desc_values='[10.8..+0.2..28.2, 29..+1..40] solMass'),
     eos = ['SFHo', 'SFHx', 'DD2', 'BHB', 'TM1', 'NL3'],
     callibration = ['calI'] 
 )
