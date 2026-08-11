@@ -49,7 +49,7 @@ from textwrap import dedent
 class Ebinger_2018(loaders.PUSHArchiveModel):
     """Model from the PUSH collaboration described in Ebinger et al.
     """
-    def __init__(self, progenitor_mass:u.Quantity), eos:str='SFHo', callibration:str)
+    def __init__(self, progenitor_mass:u.Quantity, eos:str='SFHo', callibration:str)
         filename = f's{progenitor_mass.value:3.1f}._{eos}_{calibration}_Ebinger_luminosity.h5'
         return super().__init__(filename, self.metadata)
 
