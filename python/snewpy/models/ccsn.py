@@ -34,7 +34,7 @@ import numpy as np
 from astropy import units as u
 from astropy.table import Table
 
-import snewpy.model.base as base
+from snewpy.models import base
 from snewpy.models import ccsn_loaders as loaders
 
 from snewpy.models.registry_model import RegistryModel, Parameter
