@@ -34,8 +34,8 @@ import numpy as np
 from astropy import units as u
 from astropy.table import Table
 
+import snewpy.model.base as base
 from snewpy.models import ccsn_loaders as loaders
-from .base import PinchedModel
 
 from snewpy.models.registry_model import RegistryModel, Parameter
 from snewpy.models.registry_model import all_models
@@ -573,4 +573,26 @@ class SNOwGLoBES:
 
         return fluence
 
+class Analytic3Species(base.PinchedModel):
+    """This is the basically the loader version of base.PinchedModel i.e. it reads the data 
+    for the PinchedModel from a file. The format of the file is that made by 
+    the `doc/scripts/Analytic.py` script
+    """
 
+    param = "There are no input files available for this class. Use `doc/scripts/Analytic.py` in the SNEWPY GitHub repo to create a custom input file."
+
+    def get_param_combinations(cls):
+        print(cls.param)
+        return []
+
+    def __init__(self, filename):
+        """
+        Parameters
+        ----------
+        filename : str
+            Absolute or relative path to file with model data.
+        """
+
+        simtab = Table.read(filename,format='ascii')
+        self.filename = filename
+        super().__init__(simtab, metadata={})
