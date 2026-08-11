@@ -67,8 +67,8 @@ class Curtis_2019(loaders.PUSHArchiveModel):
 
 
 @RegistryModel(
-    progenitor_mass = Parameter(np.concatenate((np.linspace(10.8, 28.2, 0.2),
-                                                np.linspace(29, 40, 1) )) << u.Msun,
+    progenitor_mass = Parameter(np.concatenate((np.arange(10.8, 28.2+0.1, 0.2),
+                                                np.arange(29, 40+0.1, 1) )) << u.Msun,
                                 desc_values='[10.8..+0.2..28.2, 29..+1..40] solMass'),
     eos = ['SFHo', 'SFHx', 'DD2', 'BHB', 'TM1', 'NL3'],
     callibration = ['calI'] 
