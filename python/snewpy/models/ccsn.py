@@ -49,9 +49,9 @@ from textwrap import dedent
 class Ebinger_2018(loaders.PUSHArchiveModel):
     """Model from the PUSH collaboration described in Ebinger et al.
     """
-    def __init__(self, progenitor_mass:u.Quantity, eos:str='SFHo', callibration:str='calI')
-        filename = f's{progenitor_mass.value:3.1f}._{eos}_{callibration}_Ebinger_luminosity.h5'
-        return super().__init__(filename, self.metadata)
+    def __init__(self, progenitor_mass:u.Quantity, eos:str='SFHo', callibration:str='calI'):
+        filename = f's{progenitor_mass.value:2.1f}._{eos}_{callibration}_Ebinger_luminosity.h5'
+        return super().__init__(filename, metadata=self.metadata)
 
 @RegistryModel(
     progenitor_mass= [11.2, 27.] * u.Msun,
@@ -62,8 +62,8 @@ class Curtis_2019(loaders.PUSHArchiveModel):
     """Model from the PUSH collaboration described in Curtis et al.
     """
     def __init__(self, progenitor_mass:u.Quantity, eos:str='SFHo', callibration:str='calI'):
-        filename = f's{progenitor_mass.value:3.1f}._{eos}_{callibration}_Curtis_luminosity.h5'
-        return super().__init__(filename, self.metadata)
+        filename = f's{progenitor_mass.value:2.1f}._{eos}_{callibration}_Curtis_luminosity.h5'
+        return super().__init__(filename, metadata=self.metadata)
 
 @RegistryModel(
     progenitor_mass= np.concatenate( (np.linspace(10.8, 28.2, 0.2), 
@@ -74,9 +74,9 @@ class Curtis_2019(loaders.PUSHArchiveModel):
 class Wolfe_2023(loaders.PUSHArchiveModel):
     """Model from the PUSH collaboration described in Wolfe et al.
     """
-    def __init__(self, progenitor_mass:u.Quantity, eos:str='SFHo', callibration:str='calI')
-        filename = f's{progenitor_mass.value:3.1f}._{eos}_{callibration}_Wolfe_luminosity.h5'
-        return super().__init__(filename, self.metadata)
+    def __init__(self, progenitor_mass:u.Quantity, eos:str='SFHo', callibration:str='calI'):
+        filename = f's{progenitor_mass.value:2.1f}._{eos}_{callibration}_Wolfe_luminosity.h5'
+        return super().__init__(filename, metadata=self.metadata)
      
      
 @RegistryModel()
