@@ -88,6 +88,52 @@ class GarchingArchiveModel(PinchedModel):
             }
         super().__init__(simtab, metadata)
 
+
+class PUSHArchiveModel(PinchedModel):
+    """Subclass that reads models in the format used
+    by the PUSH collaboration
+    """
+
+    def __init__(self, efilename, xfilename, metadata={}):
+        """
+        Parameters
+        ----------
+        efilename : str
+            Absolute or relative path to model data for electron flavor neutrinos.
+        xfilename : str
+            Absolute or relative path to model data for mutau flavor neutrinos            
+        """
+
+        #edatafile = self.request_file(efilename)
+        edata = np.genfromtxt(efilename)
+        
+        #xdatafile = self.request_file(xfilename)        
+        xdata = np.genfromtxt(xfilename)
+
+        simtab = Table()
+        
+        simtab['TIME'] = edata[:, 0]
+
+        simtab['L_NU_E'] = edata[:, 3] << u.erg/u.s
+        simtab['L_NU_E_BAR'] = edata[:, 4] << u.erg/u.s
+        simtab['L_NU_X'] = xdata[:, 2] << u.erg/u.s
+
+        simtab['E_NU_E'] = edata[:, 5] << u.MeV
+        simtab['E_NU_E_BAR'] = edata[:, 6] << u.MeV
+        simtab['E_NU_X'] = xdata[:, 3] << u.MeV
+
+        simtab['ALPHA_NU_E'] = np.full(len(simtab['TIME']),3)
+        simtab['ALPHA_NU_E_BAR'] = simtab['ALPHA_NU_E']
+        simtab['ALPHA_NU_X'] = simtab['ALPHA_NU_E']
+
+        # prevent negative lums
+        simtab['L_NU_E'][simtab['L_NU_E'] < 0] = 1
+        simtab['L_NU_E_BAR'][simtab['L_NU_E_BAR'] < 0] = 1
+        simtab['L_NU_X'][simtab['L_NU_X'] < 0] = 1
+
+        super().__init__(simtab, metadata)
+
+
 class Nakazato_2013(PinchedModel):
     def __init__(self, filename, metadata={}):
         """Model initialization.
@@ -1070,47 +1116,4 @@ class Fischer_2020(PinchedModel):
 
         super().__init__(simtab, metadata)
 
-class PUSH(PinchedModel):
-    """Model from the PUSH collaboration
-    """
 
-    def __init__(self, efilename, xfilename, metadata={}):
-        """
-        Parameters
-        ----------
-        efilename : str
-            Absolute or relative path to model data for electron flavor neutrinos.
-        xfilename : str
-            Absolute or relative path to model data for mutau flavor neutrinos            
-        """
-
-        #edatafile = self.request_file(efilename)
-        edata = np.genfromtxt(efilename)
-        
-        #xdatafile = self.request_file(xfilename)        
-        xdata = np.genfromtxt(xfilename)
-
-        simtab = Table()
-        
-        simtab['TIME'] = edata[:, 0]
-
-        simtab['L_NU_E'] = edata[:, 3] << u.erg/u.s
-        simtab['L_NU_E_BAR'] = edata[:, 4] << u.erg/u.s
-        simtab['L_NU_X'] = xdata[:, 2] << u.erg/u.s
-
-        simtab['E_NU_E'] = edata[:, 5] << u.MeV
-        simtab['E_NU_E_BAR'] = edata[:, 6] << u.MeV
-        simtab['E_NU_X'] = xdata[:, 3] << u.MeV
-
-        simtab['ALPHA_NU_E'] = np.full(len(simtab['TIME']),3)
-        simtab['ALPHA_NU_E_BAR'] = simtab['ALPHA_NU_E']
-        simtab['ALPHA_NU_X'] = simtab['ALPHA_NU_E']
-
-        simtab['L_NU_X'] /= 4.0
-
-        # prevent negative lums
-        simtab['L_NU_E'][simtab['L_NU_E'] < 0] = 1
-        simtab['L_NU_E_BAR'][simtab['L_NU_E_BAR'] < 0] = 1
-        simtab['L_NU_X'][simtab['L_NU_X'] < 0] = 1
-
-        super().__init__(simtab, metadata)
