@@ -65,9 +65,10 @@ class Curtis_2019(loaders.PUSHArchiveModel):
         filename = f's{progenitor_mass.value:2.1f}._{eos}_{callibration}_Curtis_luminosity.h5'
         return super().__init__(filename, metadata=self.metadata)
 
+
 @RegistryModel(
     progenitor_mass = Parameter(np.concatenate((np.linspace(10.8, 28.2, 0.2),
-                                                np.linspace(29, 40, 1) ) )) << u.Msun,
+                                                np.linspace(29, 40, 1) )) << u.Msun,
                                 desc_values='[10.8..+0.2..28.2, 29..+1..40] solMass'),
     eos = ['SFHo', 'SFHx', 'DD2', 'BHB', 'TM1', 'NL3'],
     callibration = ['calI'] 
@@ -228,7 +229,7 @@ class OConnor_2015(loaders.OConnor_2015):
 @RegistryModel(
     progenitor_mass = Parameter(values=(list(range(16, 27)) + [19.89, 22.39, 30, 33]) * u.Msun,
                                 desc_values = '[16..26, 19.89, 22.39, 30, 33] solMass'
-                               ),
+                               )
 )
 class Zha_2021(loaders.Zha_2021):
     """Model based on the hadron-quark phse transition models from `Zha et al. 2021 <https://arxiv.org/abs/2103.02268>`_.
@@ -250,7 +251,7 @@ class Zha_2021(loaders.Zha_2021):
                               name='turbmixing_param',
                               label='Turb. mixing param.',
                               description='Turbulent mixing parameter alpha_lambda',
-                              ),
+                              )
 )
 class Warren_2020(loaders.Warren_2020):
     """Model based on simulations from Warren et al., ApJ 898:139, 2020.
