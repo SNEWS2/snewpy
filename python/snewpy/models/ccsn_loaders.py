@@ -19,14 +19,14 @@ import h5py
 import numpy as np
 from scipy.special import gamma, lpmv
 
+import snewpy.models.base
 from snewpy.flux import Spectrum
-from snewpy.models.base import PinchedModel, SupernovaModel
 from snewpy.flavor import ThreeFlavor
 from snewpy import _model_downloader
 
 import multiprocessing
 
-class GarchingArchiveModel(PinchedModel):
+class GarchingArchiveModel(base.PinchedModel):
     """Subclass that reads models in the format used in the
     `Garching Supernova Archive <https://wwwmpa.mpa-garching.mpg.de/ccsnarchive/>`_."""
     def __init__(self, filename, eos='LS220', metadata={}):
@@ -89,7 +89,7 @@ class GarchingArchiveModel(PinchedModel):
         super().__init__(simtab, metadata)
 
 
-class PUSHArchiveModel(PinchedModel):
+class PUSHArchiveModel(base.PinchedModel):
     """Subclass that reads models in the format used
     by the PUSH collaboration
     """
@@ -134,7 +134,7 @@ class PUSHArchiveModel(PinchedModel):
         super().__init__(simtab, metadata)
 
 
-class Nakazato_2013(PinchedModel):
+class Nakazato_2013(base.PinchedModel):
     def __init__(self, filename, metadata={}):
         """Model initialization.
 
@@ -177,7 +177,7 @@ class Walk_2019(GarchingArchiveModel):
     pass
 
 
-class OConnor_2013(PinchedModel):
+class OConnor_2013(base.PinchedModel):
     """Model based on the black hole formation simulation in `O'Connor & Ott (2013) <https://arxiv.org/abs/1207.1100>`_.
     """
 
@@ -209,7 +209,7 @@ class OConnor_2013(PinchedModel):
         super().__init__(simtab, metadata)
 
 
-class OConnor_2015(PinchedModel):
+class OConnor_2015(base.PinchedModel):
     """Model based on the black hole formation simulation in `O'Connor (2015) <https://arxiv.org/abs/1411.7058>`_.
     """
 
@@ -255,7 +255,7 @@ class OConnor_2015(PinchedModel):
 class Zha_2021(OConnor_2015):
     pass
 
-class Warren_2020(PinchedModel):
+class Warren_2020(base.PinchedModel):
     def __init__(self, filename, metadata={}):
         """
         Parameters
@@ -301,7 +301,7 @@ class Warren_2020(PinchedModel):
         super().__init__(simtab, metadata)
 
 
-class Kuroda_2020(PinchedModel):
+class Kuroda_2020(base.PinchedModel):
     def __init__(self, filename, metadata={}):
         """
         Parameters
@@ -328,7 +328,7 @@ class Kuroda_2020(PinchedModel):
 
         super().__init__(simtab, metadata)
 
-class Fornax_2019(SupernovaModel):
+class Fornax_2019(base.SupernovaModel):
     def __init__(self, filename, metadata={}, cache_flux=False):
         """
         Parameters
@@ -703,7 +703,7 @@ class Fornax_2019(SupernovaModel):
 
         return initial_spectra
 
-class Fornax_2021(SupernovaModel):
+class Fornax_2021(base.SupernovaModel):
     def __init__(self, filename, metadata={}):
         """
         Parameters
@@ -923,7 +923,7 @@ class Fornax_2024(Fornax_2021):
             self.luminosity[flavor] = np.sum(dLdE*dE, axis=1) * factor * 1e50 * u.erg/u.s
 
 
-class Mori_2023(PinchedModel):
+class Mori_2023(base.PinchedModel):
     def __init__(self, filename, metadata={}):
         """
         Parameters
@@ -971,7 +971,7 @@ class Mori_2023(PinchedModel):
         super().__init__(simtab, metadata)
 
 
-class Takata_2025(PinchedModel):
+class Takata_2025(base.PinchedModel):
     def __init__(self, filename, metadata={}):
         """
         Parameters
@@ -1017,7 +1017,7 @@ class Takata_2025(PinchedModel):
         super().__init__(simtab, metadata)
         
 
-class Bugli_2021(PinchedModel):
+class Bugli_2021(base.PinchedModel):
     """Model based on `Buggli (2021) <https://arxiv.org/abs/2105.00665>`_.
     """
 
@@ -1048,7 +1048,7 @@ class Bugli_2021(PinchedModel):
         super().__init__(simtab, metadata)
 
 
-class Fischer_2020(PinchedModel):
+class Fischer_2020(base.PinchedModel):
     def __init__(self, filename, metadata={}):
         """
         Parameters
@@ -1118,8 +1118,9 @@ class Fischer_2020(PinchedModel):
 
 
 class PinchedModel(base.PinchedModel):
-    """An analytical model calculating spectra given total luminosity,
-    average energy, and rms or pinch, for each species.
+    """This is the loader version of base.PinchedModel i.e. it reads the data 
+    for the PinchedModel from a file. The format of the file is that made by 
+    the `doc/scripts/Analytic.py` script
     """
 
     param = "There are no input files available for this class. Use `doc/scripts/Analytic.py` in the SNEWPY GitHub repo to create a custom input file."
