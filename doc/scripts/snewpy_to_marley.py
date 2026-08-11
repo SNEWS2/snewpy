@@ -115,6 +115,6 @@ xform = AdiabaticMSW(mp_nmo)
 flux = snmodel.get_flux(t=times, E=energies,  distance=d, flavor_xform=xform)
 fluence = flux.integrate('time', limits = times).integrate('energy', limits = energies)
 
-output_filename = "Bollig_2016.MARLEY.tar.bz2"
+output_filename = "Bollig_2016.27Msun.MARLEY.tar.bz2"
 save_as_marley(fluence,output_filename)
 
