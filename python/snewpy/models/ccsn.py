@@ -65,6 +65,19 @@ class Curtis_2019(loaders.PUSHArchiveModel):
         filename = f's{progenitor_mass.value:3.1f}._{eos}_{callibration}_Curtis_luminosity.h5'
         return super().__init__(filename, self.metadata)
 
+@RegistryModel(
+    progenitor_mass= np.concatenate( (np.linspace(10.8, 28.2, 0.2), 
+                                      np.linspace(29, 40, 1)) ) << u.Msun,
+    eos = ['SFHo', 'SFHx', 'DD2', 'BHB', 'TM1', NL3'],
+    callibration = ['calI'] 
+)
+class Wolfe_2023(loaders.PUSHArchiveModel):
+    """Model from the PUSH collaboration described in Wolfe et al.
+    """
+    def __init__(self, progenitor_mass:u.Quantity, eos:str='SFHo', callibration:str='calI')
+        filename = f's{progenitor_mass.value:3.1f}._{eos}_{callibration}_Wolfe_luminosity.h5'
+        return super().__init__(filename, self.metadata)
+     
      
 @RegistryModel()
 class Fischer_2020(loaders.Fischer_2020):
@@ -75,6 +88,7 @@ class Fischer_2020(loaders.Fischer_2020):
         self.metadata["Progenitor mass"] = 18 * u.Msun
         filename='Fischer_2020.tar.gz'
         return super().__init__(filename, metadata=self.metadata)
+
 
 @RegistryModel(
     progenitor_mass = [13, 20, 30, 50] * u.Msun,
