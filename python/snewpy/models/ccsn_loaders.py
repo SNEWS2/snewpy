@@ -102,12 +102,13 @@ class PUSHArchiveModel(base.PinchedModel):
             Absolute or relative path to model data
         """
         datafile = filename #self.request_file(filename)        
+        print(datafile)
         f = h5py.File(datafile, 'r')
 
         simtab = Table()
 
-        tbounce = f['metadata']['bounce_time'] * u.s
-        simtab['TIME'] = f['times'] * u.s - tbounce
+        #tbounce = f['metadata']['bounce_time'] * u.s
+        simtab['TIME'] = f['times'] * u.s #- tbounce
         
         simtab['L_NU_E'] = f['data']['lum_e'] << u.erg/u.s
         simtab['L_NU_E_BAR'] = f['data']['lum_ebar'][:, 2] << u.erg/u.s
@@ -126,7 +127,7 @@ class PUSHArchiveModel(base.PinchedModel):
         simtab['L_NU_E_BAR'][simtab['L_NU_E_BAR'] < 0] = 1
         simtab['L_NU_X'][simtab['L_NU_X'] < 0] = 1
 
-        metadata== f['metadata']
+        metadata = f['metadata']
 
         super().__init__(simtab, metadata)
 
