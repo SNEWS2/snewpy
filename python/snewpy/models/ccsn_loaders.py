@@ -106,23 +106,15 @@ class PUSHArchiveModel(base.PinchedModel):
 
         simtab = Table()
 
-        simtab['TIME'] = f['nue_data']['lum'][:, 0]
+        simtab['TIME'] = f['times'] * u.s
         
-        simtab['L_NU_E'] = f['nue_data']['lum'][:, 1] << u.erg/u.s
-        simtab['L_NU_E_BAR'] = f['nuae_data']['lum'][:, 1] << u.erg/u.s
-        simtab['L_NU_X'] = f['nux_data']['lum'][:, 1] << u.erg/u.s
+        simtab['L_NU_E'] = f['data']['lum_e'] << u.erg/u.s
+        simtab['L_NU_E_BAR'] = f['data']['lum_ebar'][:, 2] << u.erg/u.s
+        simtab['L_NU_X'] = f['data']['lum']['lum_x'] << u.erg/u.s
         
-        simtab['E_NU_E'] = f['nue_data']['avg_energy'][:, 1] << u.MeV
-        simtab['E_NU_E_BAR'] = f['nuae_data']['avg_energy'][:, 1] << u.MeV
-        simtab['E_NU_X'] = f['nux_data']['avg_energy'][:, 1] << u.MeV
-
-        #simtab['L_NU_E'] = edata[:, 3] << u.erg/u.s
-        #simtab['L_NU_E_BAR'] = edata[:, 4] << u.erg/u.s
-        #simtab['L_NU_X'] = xdata[:, 2] << u.erg/u.s
-
-        #simtab['E_NU_E'] = edata[:, 5] << u.MeV
-        #simtab['E_NU_E_BAR'] = edata[:, 6] << u.MeV
-        #simtab['E_NU_X'] = xdata[:, 3] << u.MeV        
+        simtab['E_NU_E'] = f['data']['lum_e'] / f['data']['nlum_e'] << u.erg
+        simtab['E_NU_E_BAR'] = f['data']['lum_ebar'] / f['data']['nlum_ebar'] << u.erg
+        simtab['E_NU_X'] = f['data']['lum_x'] / f['data']['nlum_x'] << u.erg
         
         simtab['ALPHA_NU_E'] = np.full(len(simtab['TIME']),3)
         simtab['ALPHA_NU_E_BAR'] = simtab['ALPHA_NU_E']
@@ -132,6 +124,8 @@ class PUSHArchiveModel(base.PinchedModel):
         simtab['L_NU_E'][simtab['L_NU_E'] < 0] = 1
         simtab['L_NU_E_BAR'][simtab['L_NU_E_BAR'] < 0] = 1
         simtab['L_NU_X'][simtab['L_NU_X'] < 0] = 1
+
+        metadata== f['metadata']
 
         super().__init__(simtab, metadata)
 
