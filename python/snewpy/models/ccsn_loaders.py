@@ -108,15 +108,15 @@ class PUSHArchiveModel(base.PinchedModel):
         simtab = Table()
 
         tbounce = f['metadata'].attrs['bounce_time'] * u.s
-        simtab['TIME'] = f['data'].attrs['times'] * u.s - tbounce
+        simtab['TIME'] = f['data'][:,0] * u.s - tbounce
         
-        simtab['L_NU_E'] = f['data'].attrs['lum_e'] << u.erg/u.s
-        simtab['L_NU_E_BAR'] = f['data'].attrs['lum_ebar'] << u.erg/u.s
-        simtab['L_NU_X'] = f['data'].attrs['lum_x'] << u.erg/u.s
+        simtab['L_NU_E'] = f['data'][:,3] << u.erg/u.s
+        simtab['L_NU_E_BAR'] = f['data'][:,4] << u.erg/u.s
+        simtab['L_NU_X'] = f['data'][:,6] << u.erg/u.s
         
-        simtab['E_NU_E'] = f['data'].attrs['lum_e'] / f['data'].attrs['nlum_e'] << u.erg
-        simtab['E_NU_E_BAR'] = f['data'].attrs['lum_ebar'] / f['data'].attrs['nlum_ebar'] << u.erg
-        simtab['E_NU_X'] = f['data'].attrs['lum_x'] / f['data'].attrs['nlum_x'] << u.erg
+        simtab['E_NU_E'] = f['data'][:,3] / f['data'][:,1] << u.erg
+        simtab['E_NU_E_BAR'] = f['data'][:,4] / f['data'][:,2] << u.erg
+        simtab['E_NU_X'] = f['data'][:,6] / f['data'][:,5] << u.erg
         
         simtab['ALPHA_NU_E'] = np.full(len(simtab['TIME']),3)
         simtab['ALPHA_NU_E_BAR'] = simtab['ALPHA_NU_E']
