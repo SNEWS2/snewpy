@@ -113,10 +113,14 @@ class PUSHArchiveModel(base.PinchedModel):
         simtab['L_NU_E'] = f['data'][:,3] << u.erg/u.s
         simtab['L_NU_E_BAR'] = f['data'][:,4] << u.erg/u.s
         simtab['L_NU_X'] = f['data'][:,6] << u.erg/u.s
-        
+
         simtab['E_NU_E'] = f['data'][:,3] / f['data'][:,1] << u.erg
         simtab['E_NU_E_BAR'] = f['data'][:,4] / f['data'][:,2] << u.erg
         simtab['E_NU_X'] = f['data'][:,6] / f['data'][:,5] << u.erg
+        #remove bad values
+        simtab['E_NU_E'][np.isnan(['E_NU_E'])] = 0
+        simtab['E_NU_E_BAR'][np.isnan(['E_NU_E_BAR'])] = 0
+        simtab['E_NU_X'][np.isnan(['E_NU_X'])] = 0        
         
         simtab['ALPHA_NU_E'] = np.full(len(simtab['TIME']),3)
         simtab['ALPHA_NU_E_BAR'] = simtab['ALPHA_NU_E']
