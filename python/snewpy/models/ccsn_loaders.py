@@ -113,14 +113,15 @@ class PUSHArchiveModel(base.PinchedModel):
         simtab['L_NU_E'] = f['data'][:,3] << u.erg/u.s
         simtab['L_NU_E_BAR'] = f['data'][:,4] << u.erg/u.s
         simtab['L_NU_X'] = f['data'][:,6] << u.erg/u.s
-
-        simtab['E_NU_E'] = f['data'][:,3] / f['data'][:,1] << u.erg
-        simtab['E_NU_E_BAR'] = f['data'][:,4] / f['data'][:,2] << u.erg
-        simtab['E_NU_X'] = f['data'][:,6] / f['data'][:,5] << u.erg
+        
+        with np.errstate(divide='ignore', invalid='ignore'):
+            simtab['E_NU_E'] = np.array(f['data'][:,3]) / np.array(f['data'][:,1]) << u.erg
+            simtab['E_NU_E_BAR'] = np.array(f['data'][:,4]) / np.array(f['data'][:,2]) << u.erg
+            simtab['E_NU_X'] = np.array(f['data'][:,6]) / np.array(f['data'][:,5]) << u.erg
         #remove bad values
-        simtab['E_NU_E'][np.isnan(['E_NU_E'])] = 0
-        simtab['E_NU_E_BAR'][np.isnan(['E_NU_E_BAR'])] = 0
-        simtab['E_NU_X'][np.isnan(['E_NU_X'])] = 0        
+        simtab['E_NU_E'][np.isnan(simtab['E_NU_E'])] = 1 * u.erg
+        simtab['E_NU_E_BAR'][np.isnan(simtab['E_NU_E_BAR'])] = 1 * u.erg
+        simtab['E_NU_X'][np.isnan(simtab['E_NU_X'])] = 1 * u.erg
         
         simtab['ALPHA_NU_E'] = np.full(len(simtab['TIME']),3)
         simtab['ALPHA_NU_E_BAR'] = simtab['ALPHA_NU_E']
