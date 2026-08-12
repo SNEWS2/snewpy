@@ -9,6 +9,7 @@ import os
 import re
 import sys
 import tarfile
+from pathlib import Path
 
 from astropy import units as u
 from astropy.table import Table, join
@@ -101,14 +102,13 @@ class PUSHArchiveModel(base.PinchedModel):
         filename : str
             Absolute or relative path to model data
         """
-        datafile = filename #self.request_file(filename)        
-        print(datafile)
+        datafile = self.request_file(filename) 
         f = h5py.File(datafile, 'r')
 
         simtab = Table()
 
-        #tbounce = f['metadata']['bounce_time'] * u.s
-        simtab['TIME'] = f['times'] * u.s #- tbounce
+        tbounce = f['metadata'].attrs['bounce_time'] * u.s
+        simtab['TIME'] = f['data']['times'] * u.s - tbounce
         
         simtab['L_NU_E'] = f['data']['lum_e'] << u.erg/u.s
         simtab['L_NU_E_BAR'] = f['data']['lum_ebar'][:, 2] << u.erg/u.s
