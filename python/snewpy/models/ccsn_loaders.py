@@ -108,20 +108,23 @@ class PUSHArchiveModel(base.PinchedModel):
         simtab = Table()
 
         tbounce = f['metadata'].attrs['bounce_time'] * u.s
-        simtab['TIME'] = f['data'][:,0] * u.s - tbounce
         
-        simtab['L_NU_E'] = f['data'][:,3] << u.erg/u.s
-        simtab['L_NU_E_BAR'] = f['data'][:,4] << u.erg/u.s
-        simtab['L_NU_X'] = f['data'][:,6] << u.erg/u.s
+        data = np.array(f['data'][:,:])
+
+        # Keep row only if all elements are >= 0
+        columns = data[:, 1:]
+        mask = np.any(columns<=0,axis=1)
+        data = data[~mask]
+
+        simtab['TIME'] = data[:,0] * u.s - tbounce
+                 
+        simtab['L_NU_E'] = data[:,3] << u.erg/u.s
+        simtab['L_NU_E_BAR'] = data[:,4] << u.erg/u.s
+        simtab['L_NU_X'] = data[:,6] << u.erg/u.s
         
-        with np.errstate(divide='ignore', invalid='ignore'):
-            simtab['E_NU_E'] = np.array(f['data'][:,3]) / np.array(f['data'][:,1]) << u.erg
-            simtab['E_NU_E_BAR'] = np.array(f['data'][:,4]) / np.array(f['data'][:,2]) << u.erg
-            simtab['E_NU_X'] = np.array(f['data'][:,6]) / np.array(f['data'][:,5]) << u.erg
-        #remove bad values
-        simtab['E_NU_E'][np.isnan(simtab['E_NU_E'])] = 1 * u.erg
-        simtab['E_NU_E_BAR'][np.isnan(simtab['E_NU_E_BAR'])] = 1 * u.erg
-        simtab['E_NU_X'][np.isnan(simtab['E_NU_X'])] = 1 * u.erg
+        simtab['E_NU_E'] = data[:,3] / data[:,1] << u.erg
+        simtab['E_NU_E_BAR'] = data[:,4] / data[:,2] << u.erg
+        simtab['E_NU_X'] = data[:,6] / data[:,5] << u.erg
         
         simtab['ALPHA_NU_E'] = np.full(len(simtab['TIME']),3)
         simtab['ALPHA_NU_E_BAR'] = simtab['ALPHA_NU_E']
