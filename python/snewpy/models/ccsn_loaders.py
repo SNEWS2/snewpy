@@ -109,7 +109,7 @@ class PUSHArchiveModel(base.PinchedModel):
 
         tbounce = f['metadata'].attrs['bounce_time'] * u.s
         
-        data = np.array(f['data'][:,:])
+        data = np.array(f['data'])
 
         # Keep row only if all elements are >= 0
         columns = data[:, 1:]
@@ -135,7 +135,12 @@ class PUSHArchiveModel(base.PinchedModel):
         simtab['L_NU_E_BAR'][simtab['L_NU_E_BAR'] < 0] = 1
         simtab['L_NU_X'][simtab['L_NU_X'] < 0] = 1
 
-        metadata = f['metadata']
+        metadata = dict(f['metadata'].attrs)
+
+        k = f['metadata/compactness_forpush'].attrs['columns']        
+        compacness = np.transpose( np.array( f['metadata/compactness_forpush'] ) )
+
+        metadata = metadata | dict(zip(k,compacness))
 
         super().__init__(simtab, metadata)
 
