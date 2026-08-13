@@ -460,7 +460,7 @@ def collate(rates):
                 rates[name] = rates_agg
         return rates
 
-    # make collated rate table
+    # collate the following sets of channels: 
     patterns = {'nc':'nc_',
                 'eES':'_e', 
                 'coh_helm_Ar':r'coh_helm.*_Ar', 'coh_helm_Ge':r'coh_helm.*_Ge', 'coh_helm_Xe':r'coh_helm.*_Xe',
