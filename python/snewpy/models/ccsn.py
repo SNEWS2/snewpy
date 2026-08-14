@@ -76,8 +76,7 @@ class Nakazato_2013(loaders.Nakazato_2013):
             filename = f"nakazato-{eos}-z{metallicity}-t_rev{int(revival_time)}ms-s{progenitor_mass:3.1f}.fits"
         else:
             filename = f"nakazato-{eos}-BH-z{metallicity}-s{progenitor_mass:3.1f}.fits"
-        #modify metadata if needed...
-        #self.metadata['name']=value
+        self.metadata['Black hole']=(revival_time==0)
         return super().__init__(filename, self.metadata)
 
 
@@ -156,6 +155,7 @@ class Walk_2019(loaders.Walk_2019):
     """
     def __init__(self, * ,progenitor_mass:u.Quantity, direction:int):
         filename = f's{progenitor_mass.value:3.1f}c_3DBH_dir{direction}'
+        self.metadata['Black hole']=True
         return super().__init__(filename=filename, metadata=self.metadata)
 
 
@@ -185,6 +185,8 @@ class OConnor_2015(loaders.OConnor_2015):
         self.metadata["EOS"] = "LS220"
         # Filename is currently the same regardless of parameters
         filename = 'M1_neutrinos.dat'
+        #this model forms BH
+        self.metadata['Black hole']=True 
         return super().__init__(filename, self.metadata)
 
 @RegistryModel(
@@ -198,6 +200,8 @@ class Zha_2021(loaders.Zha_2021):
     def __init__(self, *, progenitor_mass:u.Quantity):
         self.metadata["EOS"] = "STOS_B145"
         filename = f's{progenitor_mass.value:g}.dat'
+        #tag if this simulation forms a black hole
+        self.metadata['Black hole'] = filename[:-4] not in ['s18','s25']
         return super().__init__(filename, self.metadata)
 
 @RegistryModel(
