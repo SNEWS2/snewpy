@@ -108,7 +108,7 @@ class _ContainerBase:
                  *,
                  integrable_axes: set[Axes] | None = None,
                  flavor_scheme: FlavorScheme | None = None
-    ):
+                ):
         """A container class storing the physical quantity (flux, fluence, rate...), which depends on flavor, time and energy.
 
         Parameters
@@ -484,8 +484,7 @@ class Container(_ContainerBase):
         if squeeze:
             return x, fP.array.squeeze().T
         else:
-            return x, fP
-        
+            return x, fP        
         
     def plot(flux, projection='energy', styles=None, **kwargs):
         x, fP = flux.project_to(projection, squeeze=False)
@@ -511,7 +510,28 @@ class Container(_ContainerBase):
         plt.ylabel(f'{fP.__class__.__name__}, {x.unit._repr_latex_()}')
         return lines
 
-    def __getstate__(self):
+    @staticmethod
+    def _reconstruct(array, flavor, time, energy, integrable_axes, flavor_scheme):
+        return Container(array,
+                         flavor,
+                         time,
+                         energy,
+                         integrable_axes=integrable_axes,
+                         flavor_scheme=flavor_scheme,
+                         )
+
+    def __reduce__(self):
+        return ( Container._reconstruct,
+                      ( self.array,
+                        self.flavor,
+                        self.time,
+                        self.energy,
+                        self._integrable_axes,
+                        self.flavor_scheme,
+                       ),
+               )    
+        
+    """def __getstate__(self):
         def _save_quantity(name):
             values = self.__dict__[name]
             try:
@@ -540,7 +560,7 @@ class Container(_ContainerBase):
         for name in ['array','time','energy']:
             self.__dict__[name] = _load_quantity(name)
         self.flavor = state['flavor']
-        self.integrable_axes=state['_integrable_axes']
+        self.integrable_axes=state['_integrable_axes']"""
 
 #some standard container classes that can be used for 
 Flux = Container['1/(MeV*s*m**2)', "d2FdEdT"]
