@@ -530,37 +530,6 @@ class Container(_ContainerBase):
                         self.flavor_scheme,
                        ),
                )    
-        
-    """def __getstate__(self):
-        def _save_quantity(name):
-            values = self.__dict__[name]
-            try:
-                array = values.to_value()
-                unit = values.unit.to_string()
-                return {name:array, f'_{name}_unit':unit}
-            except:
-                return {name:values}            
-        state = {}
-        for name in ['array','time','energy']:
-            state.update(_save_quantity(name))
-        state['flavor'] = np.array(self.flavor, dtype=object)            
-        state['_class_name']=self.__class__.__name__
-        state['_integrable_axes']=np.array([int(a) for a in self._integrable_axes])
-        
-        return state
-
-    def __setstate__(self, state):
-        def _load_quantity(name):
-            array = state[name]
-            try:
-                unit = state[f'_{name}_unit']
-                return array<<u.Unit(unit)
-            except KeyError:
-                return array
-        for name in ['array','time','energy']:
-            self.__dict__[name] = _load_quantity(name)
-        self.flavor = state['flavor']
-        self.integrable_axes=state['_integrable_axes']"""
 
 #some standard container classes that can be used for 
 Flux = Container['1/(MeV*s*m**2)', "d2FdEdT"]
