@@ -460,7 +460,7 @@ def collate(rates):
             sumrates = sum([rates[channel].array for channel in matches])
             #make a new entry with the aggregate 
             if len(matches) > 0:
-                rates[aggname] = Container(sumrates,ThreeFlavor.take([0,-1]), matches[0].time, matches[0].energy)
+                rates[aggname] = Container(sumrates,ThreeFlavor.take([0,-1]), rates[matches[0]].time, rates[matches[0]].energy)
             #remove matching channels from rates
             for channel in matches:
                 del rates[channel]
