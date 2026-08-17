@@ -237,7 +237,7 @@ class DetectionChannel:
         """calculate interaction rate for given channel"""
         tgt_mass = 1<<u.kt
         Ntargets = tgt_mass.to_value(u.Dalton)
-        sumrates = sum([self.xsec*flux[flv]*self.weight*Ntargets for flv in self.flavor])
+        sumrates = sum([self.xsec*flux[flv]*self.weight*Ntargets.array for flv in self.flavor])
         if len(self.flavor) == 1:
             return Container(ratessum,self.flavor, flux.time, flux.energy)
         else:
