@@ -135,11 +135,13 @@ class FunctionOfEnergy:
             A function of one parameter (energy). This can be an analitical function, or an interpolation of a (E,value) dataset
         """
         self.value = callable
+
     def __mul__(self, f:Container)->Container:
         e = f.energy #Define sample points
         if not f.can_integrate('energy'): #we have bins, let's use central values for sampling
             e = center(f.energy)
         return f*self.value(e)
+
     def __rmul__(self, f:Container)->Container:
         #same as multiplication from the left
         return self.__mul__(f)
@@ -237,11 +239,15 @@ class DetectionChannel:
         """calculate interaction rate for given channel"""
         tgt_mass = 1<<u.kt
         Ntargets = tgt_mass.to_value(u.Dalton)
-        sumrates = sum([self.xsec*flux[flv]*self.weight*Ntargets.array for flv in self.flavor])
-        if len(self.flavor) == 1:
-            return Container(ratessum,self.flavor, flux.time, flux.energy)
+        if len(self.flavor) > 1:
+           #sum flux over flavors
+           sumfluxarray = sum([flux[flv].array for flv in self.flavor])
+           #create a summary flux container
+           sumflux = Container(sumfluxarray, flavor=[self.flavor[0],self.flavor[-1]], 
+                               time=flux.time, energy=flux.energy)
+           return self.xsec*sumflux*self.weight*Ntargets
         else:
-            return Container(ratessum,ThreeFlavor.take([0,-1]), flux.time, flux.energy)
+             return self.xsec*flux*self.weight*Ntargets
 
 class Detector:
     """A detector configuration for the rate calculation. """
@@ -451,10 +457,10 @@ def collate(rates):
             #get channels in rates with names that contain the pattern
             matches = [channel for channel in rates.keys() if re.search(pattern,channel)]
             #sum over the matches
-            ratessum = sum([rates[channel].array for channel in matches])
+            sumrates = sum([rates[channel].array for channel in matches])
             #make a new entry with the aggregate 
             if len(matches) > 0:
-                rates[aggname] = Container(ratessum,ThreeFlavor.take([0,-1]), matches[0].time, matches[0].energy)
+                rates[aggname] = Container(sumrates,ThreeFlavor.take([0,-1]), matches[0].time, matches[0].energy)
             #remove matching channels from rates
             for channel in matches:
                 del rates[channel]
@@ -485,8 +491,8 @@ def aggregate(rates):
     dict[str, Container]
                 A dictionary with interaction rates (as instances of :class:`snewpy.flux.Container`) summed over all channels for a given detector.
     """    
-    ratessum = sum([rates[channel].array for channel in rates])
-    return Container(ratessum,ThreeFlavor.take([0,-1]), rates[0].time, rates[0].energy)
+    sumrates = sum([rates[channel].array for channel in rates])
+    return Container(sumrates,ThreeFlavor.take([0,-1]), rates[0].time, rates[0].energy)
 
 
 
