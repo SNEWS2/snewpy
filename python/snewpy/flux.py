@@ -108,7 +108,7 @@ class _ContainerBase:
                  *,
                  integrable_axes: set[Axes] | None = None,
                  flavor_scheme: FlavorScheme | None = None
-    ):
+                ):
         """A container class storing the physical quantity (flux, fluence, rate...), which depends on flavor, time and energy.
 
         Parameters
@@ -150,7 +150,7 @@ class _ContainerBase:
         Nf,Nt,Ne = len(self.flavor), len(self.time), len(self.energy)
         #list all valid shapes of the input array
         expected_shapes=[(nf,nt,ne) for nf in (Nf-1,Nf) for nt in (Nt-1,Nt) for ne in (Ne-1,Ne)]
-        
+
         #treat special case if data is 1d array
         if self.array.ndim==1:
             #try to reshape the array to expected shape
@@ -336,6 +336,7 @@ class _ContainerBase:
     def can_integrate(self, axis):
         "return true if can be integrated along given axis"
         return Axes.get(axis) in self._integrable_axes
+
     def can_sum(self, axis):
         "return true if can be summed along given axis"
         return Axes.get(axis) not in self._integrable_axes
@@ -402,25 +403,6 @@ class _ContainerBase:
                  all(self.flavor==other.flavor) and \
                  all([np.allclose(self.axes[ax], other.axes[ax]) for ax in list(Axes)[1:]])
         return result
-
-    def __add__(self,other:'Container'):
-        # Overload the + operator. 
-        # Don't compare the flavors, only that they have the same number
-        if self.__class__==other.__class__ and \
-            self.unit == other.unit and \
-            self.flavor_scheme==other.flavor_scheme and \
-            len(self.flavor)==len(other.flavor) and \
-            all([np.allclose(self.axes[ax], other.axes[ax]) for ax in list(Axes)[1:]]):
-                array = self.array+other.array
-                axes = list(self.axes)
-                return Container(array,*axes)
-        else:
-            return NotImplemented
-
-    def __radd__(self,other):
-        if other == 0:
-            return self
-        return self.__add__(other)    
 
     def _is_full_flavor(self):
         return all(self.flavor==list(self.flavor_scheme))
@@ -504,8 +486,7 @@ class Container(_ContainerBase):
         if squeeze:
             return x, fP.array.squeeze().T
         else:
-            return x, fP
-        
+            return x, fP        
         
     def plot(flux, projection='energy', styles=None, **kwargs):
         x, fP = flux.project_to(projection, squeeze=False)
@@ -530,6 +511,28 @@ class Container(_ContainerBase):
         plt.xlabel(f'{projection}, {x.unit._repr_latex_()}')
         plt.ylabel(f'{fP.__class__.__name__}, {x.unit._repr_latex_()}')
         return lines
+
+    @staticmethod
+    def _reconstruct(array, flavor, time, energy, integrable_axes, flavor_scheme):
+        return Container(array,
+                         flavor,
+                         time,
+                         energy,
+                         integrable_axes=integrable_axes,
+                         flavor_scheme=flavor_scheme,
+                         )
+
+    def __reduce__(self):
+        return ( Container._reconstruct,
+                      ( self.array,
+                        self.flavor,
+                        self.time,
+                        self.energy,
+                        self._integrable_axes,
+                        self.flavor_scheme,
+                       ),
+               )    
+
 
 #some standard container classes that can be used for 
 Flux = Container['1/(MeV*s*m**2)', "d2FdEdT"]
