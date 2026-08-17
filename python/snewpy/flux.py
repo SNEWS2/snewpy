@@ -149,7 +149,8 @@ class _ContainerBase:
             
         Nf,Nt,Ne = len(self.flavor), len(self.time), len(self.energy)
         #list all valid shapes of the input array
-        expected_shapes=[(nf,nt,ne) for nf in (Nf,Nf-1) for nt in (Nt,Nt-1) for ne in (Ne,Ne-1)]
+        expected_shapes=[(Nf,nt,ne) for nt in (Nt,Nt-1) for ne in (Ne,Ne-1)]
+        
         #treat special case if data is 1d array
         if self.array.ndim==1:
             #try to reshape the array to expected shape
