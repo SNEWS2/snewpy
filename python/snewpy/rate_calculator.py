@@ -236,13 +236,7 @@ class DetectionChannel:
         """calculate interaction rate for given channel"""
         tgt_mass = 1<<u.kt
         Ntargets = tgt_mass.to_value(u.Dalton)
-        #sum flux over flavors
-        array_total = sum([flux[flv].array for flv in self.flavor])
-        #create a summary flux container
-        flux_total = Container(array_total, flavor=self.flavor, 
-                               time=flux.time, energy=flux.energy,
-                               integrable_axes=flux._integrable_axes)
-        rate = self.xsec*flux_total*self.weight*Ntargets
+        rate = sum(self.xsec*flux[flv]*self.weight*Ntargets for flv in self.flavors)
         return rate
 
 class Detector:
