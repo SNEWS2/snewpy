@@ -247,7 +247,7 @@ class DetectionChannel:
                                time=flux.time, energy=flux.energy)
            return self.xsec*sumflux*self.weight*Ntargets
         else:
-             return self.xsec*flux*self.weight*Ntargets
+             return self.xsec*flux[self.flavor]*self.weight*Ntargets
 
 class Detector:
     """A detector configuration for the rate calculation. """
