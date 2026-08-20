@@ -437,6 +437,27 @@ parameter_presets = {
             dm32_2 = -2.484e-3 << u.eV**2
         )
     },
+    'NuFIT6.1': {
+        # Values from http://www.nu-fit.org/?q=node/309; cite as arXiv:2410.05380
+        MassHierarchy.NORMAL:
+        ThreeFlavorMixingParameters(
+            theta12 = 33.76 << u.deg,
+            theta13 = 8.62 << u.deg,
+            theta23 = 43.29 << u.deg,
+            deltaCP = 212 << u.deg,
+            dm21_2 = 7.537e-5 << u.eV**2,
+            dm31_2 = 2.511e-3 << u.eV**2
+        ),
+        MassHierarchy.INVERTED:
+        ThreeFlavorMixingParameters(
+            theta12 = 33.76 << u.deg,
+            theta13 = 8.65 << u.deg,
+            theta23 = 47.90 << u.deg,
+            deltaCP = 274 << u.deg,
+            dm21_2 = 7.537e-5 << u.eV**2,
+            dm32_2 = -2.483e-3 << u.eV**2
+        )
+    },
     'PDG2022':{
         # Cite as R.L. Workman et al. (Particle Data Group), Prog. Theor. Exp. Phys. 2022, 083C01 (2022)
         MassHierarchy.NORMAL:
@@ -459,7 +480,6 @@ parameter_presets = {
         )
     },
     'PDG2024':{
-        # Values from https://pdglive.lbl.gov/Particle.action?node=S067&init=0
         # Cite as S. Navas et al. (Particle Data Group), Phys. Rev. D 110, 030001 (2024)
         MassHierarchy.NORMAL:
         ThreeFlavorMixingParameters(
@@ -478,6 +498,28 @@ parameter_presets = {
             deltaCP = 214 << u.deg,
             dm21_2 = 7.53e-5 << u.eV**2,
             dm32_2 = -2.529e-3 << u.eV**2
+        )
+    },
+    'PDG2026':{
+        # Values from https://pdglive.lbl.gov/Particle.action?node=S067&init=0
+        # Cite as F. Takahashi et al. (Particle Data Group), Int. J. Mod. Phys. A 41, 2630011 (2026)
+        MassHierarchy.NORMAL:
+        ThreeFlavorMixingParameters(  # TODO: update all to PDG2026 values
+            theta12 = 33.65 << u.deg,
+            theta13 = 8.47 << u.deg,
+            theta23 = 46.89 << u.deg,
+            deltaCP = 217.8 << u.deg,
+            dm21_2 = 7.60e-5 << u.eV**2,
+            dm32_2 = 2.445e-3 << u.eV**2
+        ),
+        MassHierarchy.INVERTED:
+        ThreeFlavorMixingParameters(  # TODO: update all to PDG2026 values
+            theta12 = 33.65 << u.deg,
+            theta13 = 8.47 << u.deg,
+            theta23 = 46.32 << u.deg,
+            deltaCP = 217.8 << u.deg,
+            dm21_2 = 7.60e-5 << u.eV**2,
+            dm32_2 = -2.52e-3 << u.eV**2
         )
     }
 }
