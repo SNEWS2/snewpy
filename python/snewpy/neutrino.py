@@ -530,7 +530,7 @@ parameter_presets = {
 }
    
 
-def MixingParameters(mass_order:MassHierarchy|str='NORMAL', version:str='NuFIT6.0'):
+def MixingParameters(mass_order:MassHierarchy|str='NORMAL', version:str='NuFIT6.1'):
     """Neutrino mixing parameters presets based on results from
     `NuFIT <http://www.nu-fit.org>`_ or `PDG <https://pdglive.lbl.gov>`_.
 
@@ -539,8 +539,8 @@ def MixingParameters(mass_order:MassHierarchy|str='NORMAL', version:str='NuFIT6.
     mass_order : MassHierarchy or str, optional
         Neutrino mass ordering, either ``MassHierarchy.NORMAL`` (default) or ``MassHierarchy.INVERTED``.
     version : str, optional
-        Version of the preset values. Default is ``NuFIT6.0``.
-        Other available versions are ``NuFIT5.0``, ``NuFIT5.2``, ``NuFIT6.1``,
+        Version of the preset values. Default is ``NuFIT6.1`` (November 2025).
+        Other available versions are ``NuFIT5.0``, ``NuFIT5.2``, ``NuFIT6.0``,
         ``PDG2022``, ``PDG2024``, and ``PDG2026``.
     """
     if isinstance(mass_order,str):
