@@ -52,8 +52,8 @@ class ExtendedModel(SupernovaModel):
 
         array = {} 
         for flavor in flavors:
-            extended_model_spectra = np.outer(f_ext , base_model_spectra[flavor][-1,:])
-            array[flavor] = np.append(base_model_spectra[flavor],extended_model_spectra,axis=0)
+            extended_model_spectra = np.outer(f_ext, base_model_spectra[flavor][-1,:])
+            array[flavor] = np.append(base_model_spectra[flavor], extended_model_spectra, axis=0)
             array[flavor] = array[flavor].squeeze()
         
         return array
@@ -64,7 +64,7 @@ class ExtendedModel(SupernovaModel):
         Parameters
         ----------
         times : astropy.Quantity
-            Times to evaluate luminosity.
+            Times to evaluate the flux.
 
         Returns
         -------
@@ -76,5 +76,18 @@ class ExtendedModel(SupernovaModel):
             
         return self.A * times**self.k * np.exp(-(times/self.tau_c).value**self.alpha)
 
+    def is_extended_tail(self, times):
+        """Identify where a set of computed times is part of the base model or the extended tail computed by this class.
 
+        Parameters
+        ----------
+        times: astropy.Quantity
+            Times to evaluate the flux.
+
+        Returns
+        -------
+        is_extended: np.ndarray
+            Boolean array identifying status of times in the extended tail.
+        """
+        return times > self.time[-1]
 
