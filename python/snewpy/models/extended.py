@@ -59,7 +59,7 @@ class ExtendedModel(SupernovaModel):
         return array
 
     def get_extended_time_dependence(self, times):
-        """Get time dependence of extended times from supernova cooling tail model.
+        """Get time dependence of extended times from supernova cooling tail model. This is a generalization of eq. 2 of Li, Roberts, and Beacom, PRD 103:023016, 2021.
 
         Parameters
         ----------
@@ -71,6 +71,9 @@ class ExtendedModel(SupernovaModel):
         astropy.Quantity
             extended time dependence calculated from cooling tail model.
         """
+        #- Ensure the input converted to an array.
+        times = u.Quantity(times, ndmin=1)
+
         if times[0] < 0.5*u.s:
             warn("Extended luminosity model not applicable to early times")
             
