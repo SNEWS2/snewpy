@@ -36,10 +36,15 @@ class MassHierarchy(IntEnum):
 @dataclass
 class ThreeFlavorMixingParameters(Mapping):
     """Mixing angles and mass differences, assuming three neutrino flavors.
-    This class contains the default values used throughout SNEWPY, which are
-    based on `NuFIT 6.0 <http://www.nu-fit.org>`_ results from September 2024,
-    published in `JHEP 12 (2024) 216 <https://dx.doi.org/10.1007/JHEP12(2024)216>`_
-    [`arXiv:2410.05380 <https://arxiv.org/abs/2410.05380>`_].
+
+    In most cases, you should use the :func:`MixingParameters` function to get
+    a preset set of parameters, rather than constructing this class directly:
+    
+        >>> pars = MixingParameters(mass_order='NORMAL')
+    
+    If desired, you can then update the parameters using the :meth:`update` method:
+    
+        >>> pars.update(theta12=34<<u.deg, dm21_2=7.5e-5<<u.eV**2)
     """
     #mixing angles
     theta12: u.Quantity[u.deg]
@@ -223,7 +228,7 @@ class FourFlavorMixingParameters(ThreeFlavorMixingParameters):
     """A class for four flavor neutrino mixing. 
     ..Note: it is an extension of :class:`ThreeFlavorMixingParameters`, and can be constructed using it:
     
-        >>> pars_3f = ThreeFlavorMixingParameters() #standard 3flavor mixing
+        >>> pars_3f = ThreeFlavorMixingParameters() #standard 3flavor mixing # TODO: this fails with a TypeError!
         >>> pars_4f = FourFlavorMixingParameters(**pars_3f, theta14=90<<u.deg, dm41_2=1<<u.GeV**2)
     """
     #sterile neutrino mixing angles. 
@@ -437,6 +442,27 @@ parameter_presets = {
             dm32_2 = -2.484e-3 << u.eV**2
         )
     },
+    'NuFIT6.1': {
+        # Values from http://www.nu-fit.org/?q=node/309; cite as arXiv:2410.05380
+        MassHierarchy.NORMAL:
+        ThreeFlavorMixingParameters(
+            theta12 = 33.76 << u.deg,
+            theta13 = 8.62 << u.deg,
+            theta23 = 43.29 << u.deg,
+            deltaCP = 212 << u.deg,
+            dm21_2 = 7.537e-5 << u.eV**2,
+            dm31_2 = 2.511e-3 << u.eV**2
+        ),
+        MassHierarchy.INVERTED:
+        ThreeFlavorMixingParameters(
+            theta12 = 33.76 << u.deg,
+            theta13 = 8.65 << u.deg,
+            theta23 = 47.90 << u.deg,
+            deltaCP = 274 << u.deg,
+            dm21_2 = 7.537e-5 << u.eV**2,
+            dm32_2 = -2.483e-3 << u.eV**2
+        )
+    },
     'PDG2022':{
         # Cite as R.L. Workman et al. (Particle Data Group), Prog. Theor. Exp. Phys. 2022, 083C01 (2022)
         MassHierarchy.NORMAL:
@@ -459,7 +485,6 @@ parameter_presets = {
         )
     },
     'PDG2024':{
-        # Values from https://pdglive.lbl.gov/Particle.action?node=S067&init=0
         # Cite as S. Navas et al. (Particle Data Group), Phys. Rev. D 110, 030001 (2024)
         MassHierarchy.NORMAL:
         ThreeFlavorMixingParameters(
@@ -479,11 +504,45 @@ parameter_presets = {
             dm21_2 = 7.53e-5 << u.eV**2,
             dm32_2 = -2.529e-3 << u.eV**2
         )
+    },
+    'PDG2026':{
+        # Values from https://pdglive.lbl.gov/Particle.action?node=S067&init=0
+        # Cite as F. Takahashi et al. (Particle Data Group), Int. J. Mod. Phys. A 41, 2630011 (2026)
+        MassHierarchy.NORMAL:
+        ThreeFlavorMixingParameters(  # TODO: update all to PDG2026 values
+            theta12 = 33.65 << u.deg,
+            theta13 = 8.47 << u.deg,
+            theta23 = 46.89 << u.deg,
+            deltaCP = 217.8 << u.deg,
+            dm21_2 = 7.60e-5 << u.eV**2,
+            dm32_2 = 2.445e-3 << u.eV**2
+        ),
+        MassHierarchy.INVERTED:
+        ThreeFlavorMixingParameters(  # TODO: update all to PDG2026 values
+            theta12 = 33.65 << u.deg,
+            theta13 = 8.47 << u.deg,
+            theta23 = 46.32 << u.deg,
+            deltaCP = 217.8 << u.deg,
+            dm21_2 = 7.60e-5 << u.eV**2,
+            dm32_2 = -2.52e-3 << u.eV**2
+        )
     }
 }
    
 
-def MixingParameters(mass_order:MassHierarchy|str='NORMAL', version:str='NuFIT6.0'):
+def MixingParameters(mass_order:MassHierarchy|str='NORMAL', version:str='NuFIT6.1'):
+    """Neutrino mixing parameters presets based on results from
+    `NuFIT <http://www.nu-fit.org>`_ or `PDG <https://pdglive.lbl.gov>`_.
+
+    Parameters:
+    -----------
+    mass_order : MassHierarchy or str, optional
+        Neutrino mass ordering, either ``MassHierarchy.NORMAL`` (default) or ``MassHierarchy.INVERTED``.
+    version : str, optional
+        Version of the preset values. Default is ``NuFIT6.1`` (November 2025).
+        Other available versions are ``NuFIT5.0``, ``NuFIT5.2``, ``NuFIT6.0``,
+        ``PDG2022``, ``PDG2024``, and ``PDG2026``.
+    """
     if isinstance(mass_order,str):
         mass_order = MassHierarchy[mass_order]
     return parameter_presets[version][mass_order]
