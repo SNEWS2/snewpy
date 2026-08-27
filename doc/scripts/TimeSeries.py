@@ -25,3 +25,4 @@ events = rc.run(fluence, detector, detector_effects=True)
 
 filename = f"{model}.{transformation}.{times[0]:.3f}-{times[-1]:.3f},{energies[0]:.3f}-{energies[-1]:.3f},{distance:.3f}.{detector}.npz"
 np.savez(filename,**events)
+
