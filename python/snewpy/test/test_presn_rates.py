@@ -28,5 +28,5 @@ def test_presn_rate(model_class, model_params, transformation, detector):
     model = model_class(**model_params)
     flux = model.get_flux(T, E, distance=distance, flavor_xform=transformation)
     rate = rc.run(flux, detector='scint20kt', detector_effects=False)['ibd']
-    ibd_events = rate.integrate_or_sum('time').integrate_or_sum('energy').array.squeeze()
+    ibd_events = rate.integrate_or_sum('time').integrate_or_sum('energy').array.squeeze().value
     assert 10<ibd_events<1000

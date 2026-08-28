@@ -109,6 +109,53 @@ def _get_model_class(model_type: str):
     except KeyError:
         raise ValueError(f"Model '{model_type}' not found.")
 
+def get_model_class(model_type: str):
+    """Look up model class corresponding to the given model name.
+
+    Parameters
+    ---------
+    model_type : str
+        Model name
+
+    Returns
+    -------
+    Model class corresponding to the given model name
+    """    
+    models_dict = {}
+    modules_list = ["snewpy.models.ccsn", "snewpy.models.presn"]
+    for module_name in modules_list:
+        module = importlib.import_module(module_name)
+        models_dict.update({k:v for k,v in vars(module).items() if isclass(v)})
+
+    try:
+        return models_dict[model_type]
+    except KeyError:
+        raise ValueError(f"Model '{model_type}' not found.")
+
+def get_model_loader(model_type: str):
+    """Look up model class corresponding to the given model name.
+
+    Parameters
+    ---------
+    model_type : str
+        Model name
+
+    Returns
+    -------
+    Model class corresponding to the given model name
+    """    
+    models_dict = {}
+    modules_list = ["snewpy.models.ccsn_loaders", "snewpy.models.presn_loaders"]
+    for module_name in modules_list:
+        module = importlib.import_module(module_name)
+        models_dict.update({k:v for k,v in vars(module).items() if isclass(v)})
+    models_dict['Analytic3Species'] = snewpy.models.ccsn.Analytic3Species
+    
+    try:
+        return models_dict[model_type]
+    except KeyError:
+        raise ValueError(f"Model loader'{model_type}' not found.")
+
 def generate_time_series(model_path, model_type, flavor_transformation, d, output_filename=None, ntbins=30, deltat=None, snmodel_dict={}):
     """Generate time series files in SNOwGLoBES format.
 
@@ -139,14 +186,16 @@ def generate_time_series(model_path, model_type, flavor_transformation, d, outpu
     str
         Path of NumPy archive file with neutrino fluence data.
     """
-    model_class = _get_model_class(model_type)
-
+    
+    warn("generate_time_series is deprecated. Use the SupernovaModel.get_flux() method instead.", DeprecationWarning, stacklevel=2)
+    
+    model_loader = get_model_loader(model_type)
+    model_dir, model_file = os.path.split(os.path.abspath(model_path))
+    snmodel = model_loader(model_path, **snmodel_dict)
+    
     # if flavor_transformation is a string, find the appropriate class
     if isinstance(flavor_transformation, str):
-        flavor_transformation = _get_transformation(flavor_transformation)
-
-    model_dir, model_file = os.path.split(os.path.abspath(model_path))
-    snmodel = model_class(model_path, **snmodel_dict)
+        flavor_transformation = get_transformation(flavor_transformation)
 
     # Subsample the model time. Default to 30 time slices.
     tmin = snmodel.get_time()[0]
@@ -201,18 +250,16 @@ def generate_fluence(model_path, model_type, flavor_transformation, d, output_fi
     str
         Path of NumPy archive file with neutrino fluence data.
     """
-    try:
-        model_class = getattr(snewpy.models.ccsn_loaders, model_type)
-    except AttributeError as e:
-        logging.warn(e)
-        model_class = getattr(snewpy.models.ccsn, model_type)
-
+    
+    warn("generate_fluence is deprecated. Use the SupernovaModel.get_flux() method instead.", DeprecationWarning, stacklevel=2)
+    
+    model_loader = get_model_loader(model_type)
+    model_dir, model_file = os.path.split(os.path.abspath(model_path))
+    snmodel = model_loader(model_path, **snmodel_dict)
+    
     # if flavor_transformation is a string, find the appropriate class
     if isinstance(flavor_transformation, str):
-        flavor_transformation = _get_transformation(flavor_transformation)
-
-    model_dir, model_file = os.path.split(os.path.abspath(model_path))
-    snmodel = model_class(model_path, **snmodel_dict)
+        flavor_transformation = get_transformation(flavor_transformation)
 
     #set the timings up
     #default if inputs are None: full time window of the model
@@ -261,6 +308,9 @@ def simulate(SNOwGLoBESdir, tarball_path, detector_input="all", *, detector_effe
     detector_effects : bool
          Whether to account for detector smearing and efficiency.
     """
+    
+    warn("The simulate function is deprecated. Use the RateCalculator.run() method instead.", DeprecationWarning, stacklevel=2)
+    
     rc = RateCalculator(base_dir=SNOwGLoBESdir)
     if detector_input == 'all':
         detector_input = list(rc.detectors)
@@ -349,6 +399,8 @@ def collate(tarball_path, skip_plots=False, *, smearing=True):
         Dictionary of data tables: One table per time bin; each table contains in the first column the energy bins, in the remaining columns the number of events for each interaction channel in the detector.
     """
 
+    warn("The collate function is deprecated.", DeprecationWarning, stacklevel=2)    
+    
     def aggregate_channels(table, **patterns):
         #rearrange the table to have only channel column
         levels = list(table.columns.names)

@@ -409,8 +409,9 @@ class RateCalculator(SnowglobesData):
             The incoming neutrino flux (or fluence).
         
         detector: str
-            Name of the detector to calculate the rate. 
+            Name of the detector to calculate the rate, or 'all'.
             Check `RateCalculator.detectors` for the list of options
+            If 'all', all the detector options in SNOwGLoBES will be run            
         
         material: str or None
             Name of the detector material. 
@@ -425,4 +426,7 @@ class RateCalculator(SnowglobesData):
             dict[str, Container]
                 A dictionary with interaction rates (as instances of :class:`snewpy.flux.Container`) for each channel.
         """
+        if detector == 'all':
+             detector = list(self.detectors)        
+            
         return self.read_detector(detector,material).run(flux, detector_effects=detector_effects)

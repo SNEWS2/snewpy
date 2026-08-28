@@ -1,6 +1,12 @@
 import numpy as np
 import os
-from snewpy import snowglobes
+
+from snewpy.rate_calculator import RateCalculator
+from snewpy.models.ccsn import Bollig_2016, OConnor_2015
+from snewpy.neutrino import MassHierarchy, MixingParameters, ThreeFlavorMixingParameters
+from snewpy.flavor_transformation import AdiabaticMSW
+
+from astropy import units as u
 
 #Select output format, Mathjax or LaTeX
 while True:
@@ -14,59 +20,46 @@ while True:
     else:
         print('Please enter 1 or 0.')
 
-home_directory = os.getcwd()
-SNOwGLoBES_path = None  # change to SNOwGLoBES directory if using a custom detector configuration
-SNEWPY_models_base = "Your/SNEWPY/Models/Path/Here"  # local directory containing model input files ("SNEWPY_models")
+models = { 's11.2' : Bollig_2016(progenitor_mass=11.2<<u.Msun), 
+           's27.0' : Bollig_2016(progenitor_mass=27<<u.Msun),  
+           's40' : OConnor_2015(progenitor_mass=40<<u.Msun) }
 
-d = 10  # distance of supernova in kpc
+transformations = { 'AdiabaticMSW_NMO' : AdiabaticMSW(MixingParameters('NORMAL')), 
+                    'AdiabaticMSW_IMO' : AdiabaticMSW(MixingParameters('INVERTED')) }
 
-dets = ["wc100kt30prct", "ar40kt", "halo1", "halo2", "scint20kt", "novaFD", "icecube", "km3net", "ds20", "xent", "lz",
-        "pandax"]
-ref_mass = {"wc100kt30prct": 100, "ar40kt": 40, "halo1": 0.079, "halo2": 1, "scint20kt": 20, "novaFD": 14,
-            "icecube": 51600, "km3net": 69366 * 3, "ds20": 0.0386, "xent": 0.006, "lz": 0.007, "pandax": 0.004}
+detectors = ["wc100kt30prct", "ar40kt", "halo1", "halo2", "scint20kt", "novaFD", 
+             "icecube", "km3net", "ds20", "xent", "lz", "pandax"]
+        
+detector_masses = {"wc100kt30prct": 100, "ar40kt": 40, "halo1": 0.079, "halo2": 1, "scint20kt": 20, "novaFD": 14,
+                   "icecube": 51600, "km3net": 69366 * 3, "ds20": 0.0386, "xent": 0.006, "lz": 0.007, "pandax": 0.004}
 
-models = {}
-models['s11.2'] = {'type': 'Bollig_2016', 'file_name': 's11.2c'}
-models['s27.0'] = {'type': 'Bollig_2016', 'file_name': 's27.0c'}
-models['s40'] = {'type': 'OConnor_2015', 'file_name': 'M1_neutrinos.dat'}
+detector_effects = {'smeared' : True, 'unsmeared' : False}
 
-transformations = ['AdiabaticMSW_NMO', 'AdiabaticMSW_IMO']
+rc=RateCalculator()
 
 total_events = {}
 
-have_data_saved = False
-if (have_data_saved is False):
-    # Running the modules
+energies = np.linspace(0,100,501)<<u.MeV
+distance = 10*u.kpc
+        
+# Running the modules
+for effects in detector_effects:
+    total_events[effects] = {}
     for model in models:
-        total_events[model] = {}
+        times = models[model].get_time()
+        total_events[effects][model] = {}
         for transformation in transformations:
-            total_events[model][transformation] = {}
-            file_name = models[model]['file_name']
-            modeltype = models[model]['type']
-            outfile = modeltype + "_" + model + "_summed_" + transformation
-            model_dir = SNEWPY_models_base + "/" + modeltype + "/"
+            total_events[effects][model][transformation] = {}
+            #get the flux from the model
+            flux = model.get_flux(t=times, E=energies, distance=distance, flavor_xform=transformation)
+            fluence = flux.integrate('time')
+            for detector in detectors:
+                events = rc.run(fluence, detectors[detector], detector_effects=detector_effects[effects])
+                total_events[effects][model][transformation][detector] = sum([chan.integrate_or_sum('energy').array.squeeze().value for chan in events.values()])     
 
-            tarredfile = snowglobes.generate_fluence(model_dir + file_name, modeltype, transformation, d, outfile)
-            for det in dets:
-                snowglobes.simulate(SNOwGLoBES_path, tarredfile, detector_input = det)
-                tables = snowglobes.collate(SNOwGLoBES_path, tarredfile, skip_plots = True)
-
-                # for our table, interesting number is the smeared total number of events
-                key = "Collated_" + outfile + "_" + det + "_events_smeared_weighted.dat"
-                total_events[model][transformation][det + "smeared"] = 0
-                for j in range(1, len(tables[key]['header'].split())):
-                    total_events[model][transformation][det + "smeared"] += sum(tables[key]['data'][j])
-
-                key = "Collated_" + outfile + "_" + det + "_events_unsmeared_weighted.dat"
-                total_events[model][transformation][det + "unsmeared"] = 0
-                for j in range(1, len(tables[key]['header'].split())):
-                    total_events[model][transformation][det + "unsmeared"] += sum(tables[key]['data'][j])
-
-    os.chdir(home_directory)
-    np.save("SNEWS2.0_whitepaper_table_data.npy", total_events)
-else:
-    total_events = np.load("SNEWS2.0_whitepaper_table_data.npy", allow_pickle = True).tolist()
-
+home_directory = os.getcwd()
+os.chdir(home_directory)
+np.savez("SNEWS2.0_whitepaper_table_data.npz", total_events)
 
 # Now lets make the table:
 def round_to_2(x):
@@ -76,11 +69,11 @@ def round_to_2(x):
         return round(x, -int(np.floor(np.log10(np.abs(x)))) + 1)
 
 
-det_maps = {"Super-K": "wc100kt30prct", "Hyper-K": "wc100kt30prct", "IceCube": "icecube", "KM3NeT":"km3net",
-            "LVD": "scint20kt", "KamLAND": "scint20kt", "Borexino": "scint20kt", "JUNO": "scint20kt",
-            "SNO+": "scint20kt", "NO${\\nu}$A": "novaFD", "HALO": "halo1", "HALO-1kT": "halo2", "DUNE": "ar40kt",
-            "MicroBooNe": "ar40kt", "SBND": "ar40kt", "Baksan": "scint20kt", "DarkSide-20k": "ds20", "XENONnT": "xent",
-            "LZ": "lz", "PandaX-4T": "pandax"}
+detector_maps = {"Super-K": "wc100kt30prct", "Hyper-K": "wc100kt30prct", "IceCube": "icecube", "KM3NeT":"km3net",
+                 "LVD": "scint20kt", "KamLAND": "scint20kt", "Borexino": "scint20kt", "JUNO": "scint20kt",
+                 "SNO+": "scint20kt", "NO${\\nu}$A": "novaFD", "HALO": "halo1", "HALO-1kT": "halo2", "DUNE": "ar40kt",
+                 "MicroBooNe": "ar40kt", "SBND": "ar40kt", "Baksan": "scint20kt", "DarkSide-20k": "ds20", "XENONnT": "xent",
+                 "LZ": "lz", "PandaX-4T": "pandax"}
 
 data = {}
 data['Experiment'] = ['Super-K', 'Hyper-K', 'IceCube', 'KM3NeT', 'LVD', 'KamLAND', 'Borexino',
@@ -106,15 +99,15 @@ data['40.0 M$_\\odot$'] = []
 
 for experiment in range(len(data['Experiment'])):
     mass = data['Mass [kt]'][experiment]
-    dettype = det_maps[data['Experiment'][experiment]]
-    base_mass = ref_mass[dettype]
+    detector_type = detector_maps[data['Experiment'][experiment]]
+    base_mass = detector_masses[detector_type]
 
-    counts_LCN = int(total_events['s11.2']['AdiabaticMSW_NMO'][dettype + "smeared"] * mass / base_mass)
-    counts_LCI = int(total_events['s11.2']['AdiabaticMSW_IMO'][dettype + "smeared"] * mass / base_mass)
-    counts_MCN = int(total_events['s27.0']['AdiabaticMSW_NMO'][dettype + "smeared"] * mass / base_mass)
-    counts_MCI = int(total_events['s27.0']['AdiabaticMSW_IMO'][dettype + "smeared"] * mass / base_mass)
-    counts_HCN = int(total_events['s40']['AdiabaticMSW_NMO'][dettype + "smeared"] * mass / base_mass)
-    counts_HCI = int(total_events['s40']['AdiabaticMSW_IMO'][dettype + "smeared"] * mass / base_mass)
+    counts_LCN = int(total_events['smeared']['s11.2']['AdiabaticMSW_NMO'][detector_type] * mass / base_mass)
+    counts_LCI = int(total_events['smeared']['s11.2']['AdiabaticMSW_IMO'][detector_type] * mass / base_mass)
+    counts_MCN = int(total_events['smeared']['s27.0']['AdiabaticMSW_NMO'][detector_type] * mass / base_mass)
+    counts_MCI = int(total_events['smeared']['s27.0']['AdiabaticMSW_IMO'][detector_type] * mass / base_mass)
+    counts_HCN = int(total_events['smeared']['s40']['AdiabaticMSW_NMO'][detector_type] * mass / base_mass)
+    counts_HCI = int(total_events['smeared']['s40']['AdiabaticMSW_IMO'][detector_type] * mass / base_mass)
 
     post = ['', '', '', '', '', '']
     if counts_LCN > 10000:
@@ -149,15 +142,15 @@ for experiment in range(len(data['Experiment'])):
 # the unweighted mass (the entry in SNOwGLoBES), see below for details.  Here we take the
 # effective mass of the s27 normal scenario and discuss the range in the table caption.
 
-dettype = 'icecube'
+detector_type = 'icecube'
 mass = 51600
-data['Mass [kt]'][2] = "~"+str(int(round(mass*total_events['s27.0']['AdiabaticMSW_NMO'][dettype+"smeared"]/
-      total_events['s27.0']['AdiabaticMSW_NMO'][dettype+"unsmeared"], -2)))+"*"
+data['Mass [kt]'][2] = "~"+str(int(round(mass*total_events['smeared']['s27.0']['AdiabaticMSW_NMO'][detector_type]/
+      total_events['unsmeared']['s27.0']['AdiabaticMSW_NMO'][detector_type], -2)))+"*"
 
-dettype = 'km3net'
+detector_type = 'km3net'
 mass = 69366 * 3
-data['Mass [kt]'][3] = "~"+str(int(round(mass*total_events['s27.0']['AdiabaticMSW_NMO'][dettype+"smeared"]/
-      total_events['s27.0']['AdiabaticMSW_NMO'][dettype+"unsmeared"], -1)))+"*"
+data['Mass [kt]'][3] = "~"+str(int(round(mass*total_events['smeared']['s27.0']['AdiabaticMSW_NMO'][detector_type]/
+      total_events['unsmeared']['s27.0']['AdiabaticMSW_NMO'][detector_type], -1)))+"*"
 
 # Formatting the dictionary to be compatible with LaTeX & MathJax (useful for html)
 def dictArray(dictionary):

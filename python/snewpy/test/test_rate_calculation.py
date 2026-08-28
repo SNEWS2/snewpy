@@ -49,7 +49,7 @@ def test_rate_unsmeared(rc, fluence, detector, expected_total):
     #calculate the event rates
     rates = rc.run(fluence, detector, detector_effects=False)
     #calculate the total IBD event rate 
-    N_total = sum([r.integrate_or_sum('energy').array.value for r in rates.values()])
+    N_total = sum([r.integrate_or_sum('energy').array.squeeze().value for r in rates.values()])
     print(N_total)
     #check the final value
     assert N_total == pytest.approx(expected_total, 0.01)

@@ -510,7 +510,7 @@ class Container(_ContainerBase):
         plt.xlabel(f'{projection}, {x.unit._repr_latex_()}')
         plt.ylabel(f'{fP.__class__.__name__}, {x.unit._repr_latex_()}')
         return lines
-
+            
 #some standard container classes that can be used for 
 Flux = Container['1/(MeV*s*m**2)', "d2FdEdT"]
 Fluence = Container[Flux.unit*u.s, "dFdE"]
