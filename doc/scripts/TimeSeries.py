@@ -1,18 +1,28 @@
 #!/usr/bin/env python
 
-from snewpy import snowglobes
+from snewpy.models.ccsn import Nakazato_2013
+from snewpy.neutrino import MassHierarchy, MixingParameters
+from snewpy.flavor_transformation import AdiabaticMSW
+from snewpy.rate_calculator import RateCalculator
 
-SNOwGLoBES_path = None  # change to SNOwGLoBES directory if using a custom detector configuration
+import numpy as np
+import astropy.units as u
 
-# arguments for generate_time_series
-model_file = "/path/to/snewpy/models/Nakazato_2013/nakazato-LS220-BH-z0.004-s30.0.fits"
-modeltype = 'Nakazato_2013'
-transformation = 'AdiabaticMSW_NMO'
-d = 10  # Supernova distance in kpc
+model = Nakazato_2013(progenitor_mass=30*u.solMass, revival_time=0*u.ms, metallicity=0.004, eos='LS220')
 
-# Running the modules
-outfile = snowglobes.generate_time_series(model_file, modeltype, transformation, d)
-snowglobes.simulate(SNOwGLoBES_path, outfile, detector_input="icecube")
-snowglobes.collate(SNOwGLoBES_path, outfile)
+transformation = AdiabaticMSW(MixingParameters('NORMAL')) # Desired flavor transformation
+       
+times    = model.get_time()
+energies = np.linspace(0,100,501)<<u.MeV
+distance = 10*u.kpc
 
-# An additional, optional argument in simulate() is the detector name, if one wants to only run 1 detector, rather than all of them.
+flux = model.get_flux(t=times, E=energies, distance=distance, flavor_xform=transformation)
+fluence = flux.integrate('time')
+
+detector = "wc100kt30prct"
+rc = RateCalculator()
+events = rc.run(fluence, detector, detector_effects=True)
+
+filename = f"{model}.{transformation}.{times[0]:.3f}-{times[-1]:.3f},{energies[0]:.3f}-{energies[-1]:.3f},{distance:.3f}.{detector}.npz"
+np.savez(filename,**events)
+
