@@ -492,7 +492,8 @@ def aggregate(rates):
                 A dictionary with interaction rates (as instances of :class:`snewpy.flux.Container`) summed over all channels for a given detector.
     """    
     sumrates = sum([rates[channel].array for channel in rates])
-    return Container(sumrates,ThreeFlavor.take([0,-1]), rates[0].time, rates[0].energy)
+    anychannel = next(iter(rates))
+    return { "total" : Container(sumrates,ThreeFlavor.take([0,-1]), rates[anychannel].time, rates[anychannel].energy) }
 
 
 
