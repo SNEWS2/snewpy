@@ -44,25 +44,25 @@ from textwrap import dedent
 @RegistryModel(
     progenitor_mass= [11.2, 27.] * u.Msun,
     eos = ['SFHo'],
-    callibration = ['calI', 'calII'] 
+    calibration = ['calI', 'calII'] 
 )
 class Ebinger_2018(loaders.PUSHArchiveModel):
     """Model from the PUSH collaboration described in Ebinger et al.
     """
-    def __init__(self, progenitor_mass:u.Quantity, eos:str='SFHo', callibration:str='calI'):
-        filename = f's{progenitor_mass.value:2.1f}_{eos}_{callibration}_Ebinger_luminosity.h5'
+    def __init__(self, progenitor_mass:u.Quantity, eos:str='SFHo', calibration:str='calI'):
+        filename = f's{progenitor_mass.value:2.1f}_{eos}_{calibration}_Ebinger_luminosity.h5'
         return super().__init__(filename=filename, metadata=self.metadata)
 
 @RegistryModel(
     progenitor_mass= [11.2, 27.] * u.Msun,
     eos = ['SFHo'],
-    callibration = ['calI', 'calII'] 
+    calibration = ['calI', 'calII'] 
 )
 class Curtis_2019(loaders.PUSHArchiveModel):
     """Model from the PUSH collaboration described in Curtis et al.
     """
-    def __init__(self, progenitor_mass:u.Quantity, eos:str='SFHo', callibration:str='calI'):
-        filename = f's{progenitor_mass.value:2.1f}_{eos}_{callibration}_Curtis_luminosity.h5'
+    def __init__(self, progenitor_mass:u.Quantity, eos:str='SFHo', calibration:str='calI'):
+        filename = f's{progenitor_mass.value:2.1f}_{eos}_{calibration}_Curtis_luminosity.h5'
         return super().__init__(filename=filename, metadata=self.metadata)
 
 
@@ -70,13 +70,13 @@ class Curtis_2019(loaders.PUSHArchiveModel):
     #progenitor_mass = np.concat( (np.arange(10.8,28.2+0.01,0.2),np.arange(29,40+0.01,1)) ) * u.Msun,
     progenitor_mass = [ 10.8, 27.6, 28.2, 29, 40] * u.Msun,
     eos = ['SFHo', 'SFHx', 'DD2', 'BHB', 'TM1', 'NL3'],
-    callibration = ['calI'] 
+    calibration = ['calI'] 
 )
 class Wolfe_2023(loaders.PUSHArchiveModel):
     """Model from the PUSH collaboration described in Wolfe et al.
     """
-    def __init__(self, progenitor_mass:u.Quantity, eos:str='SFHo', callibration:str='calI'):
-        filename = f's{progenitor_mass.value:2.1f}_{eos}_{callibration}_Wolfe_luminosity.h5'
+    def __init__(self, progenitor_mass:u.Quantity, eos:str='SFHo', calibration:str='calI'):
+        filename = f's{progenitor_mass.value:2.1f}_{eos}_{calibration}_Wolfe_luminosity.h5'
         return super().__init__(filename=filename, metadata=self.metadata)
      
      
