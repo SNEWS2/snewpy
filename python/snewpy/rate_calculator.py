@@ -426,3 +426,61 @@ class RateCalculator(SnowglobesData):
                 A dictionary with interaction rates (as instances of :class:`snewpy.flux.Container`) for each channel.
         """
         return self.read_detector(detector,material).run(flux, detector_effects=detector_effects)
+
+def collate(rates):
+    """Collates the event rates / numbers table returned by RateCalculator.run 
+       into distinct channels e.g. add all electron elastic scattering and NC channels
+
+    Parameters
+    ----------
+    dict[str, Container]
+                A nested dictionary with interaction rates (as instances of :class:`snewpy.flux.Container`) for each channel.
+
+    Returns
+    -------
+    dict[str, Container]
+                A nested dictionary with interaction rates (as instances of :class:`snewpy.flux.Container`) for the collated channels.
+    """
+
+    def aggregate_channels(rates,patterns):
+        for aggname, pattern in patterns.items():
+            #get channels in rates with names that contain the pattern
+            matches = [channel for channel in rates.keys() if re.search(pattern,channel)]
+            #sum over the matches
+            sumrates = sum([rates[channel].array for channel in matches])
+            #make a new entry with the aggregate 
+            if len(matches) > 0:
+                rates[aggname] = Container(sumrates,ThreeFlavor.take([0,-1]), rates[matches[0]].time, rates[matches[0]].energy)
+            #remove matching channels from rates
+            for channel in matches:
+                del rates[channel]
+        return rates
+
+    # make collated rate table
+    patterns = {'nc':'nc_',
+                'eES':'_e', 
+                'coh_helm_Ar':r'coh_helm.*_Ar', 'coh_helm_Ge':r'coh_helm.*_Ge', 'coh_helm_Xe':r'coh_helm.*_Xe',
+                'coh_klein-nystrand_Ar':r'coh_klein.*_Ar', 'coh_klein-nystrand_Ge':r'coh_klein.*_Ge', 'coh_klein-nystrand_Xe':r'coh_klein.*_Xe'                
+               }
+
+    collated_rates = aggregate_channels(rates,patterns)
+
+    return collated_rates  
+
+
+def aggregate(rates):
+    """Sum all the channels in the event rates / numbers table returned by RateCalculator.run 
+
+    Parameters
+    ----------
+    dict[str, Container]
+                A nested dictionary with interaction rates (as instances of :class:`snewpy.flux.Container`) for each channel.
+
+    Returns
+    -------
+    dict[str, Container]
+                A dictionary with interaction rates (as instances of :class:`snewpy.flux.Container`) summed over all channels for a given detector.
+    """    
+    sumrates = sum([rates[channel].array for channel in rates])
+    anychannel = next(iter(rates))
+    return { "total" : Container(sumrates,ThreeFlavor.take([0,-1]), rates[anychannel].time, rates[anychannel].energy) }
