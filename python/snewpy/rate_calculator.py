@@ -6,6 +6,7 @@ Reference
 .. autoclass:: RateCalculator
     :members: run
 """
+import re
 import numpy as np
 from snewpy.snowglobes_interface import SnowglobesData, guess_material
 from snewpy.neutrino import Flavor
