@@ -9,7 +9,7 @@ Reference
 import re
 import numpy as np
 from snewpy.snowglobes_interface import SnowglobesData, guess_material
-from snewpy.neutrino import Flavor
+from snewpy.flavor import ThreeFlavor
 from snewpy.flux import Container
 from astropy import units as u
 from warnings import warn
