@@ -210,13 +210,19 @@ class _ContainerBase:
         ]
         return f"{self.__class__.__name__} {self.array.shape} [{self.array.unit}]: <{' x '.join(s)}>"
     
-    def sum(self, axis: Axes | str)->'Container':
+    def sum(self, axis: Axes | str, limits:np.ndarray=None)->'Container':
         """Sum along given axis, producing a Container with the summary quantity.
         
         Parameters
         -----------
             axis: :class:`Axes` or str
                 An axis to sum over. String should be one of ``"flavor"``, ``"time"`` or ``"energy"``  (check :meth:`Container.can_sum`)
+            limits: np.ndarray or None
+                A two-element sorted array (or `astropy.Quantity` consistent with the units of given axis) of bin limits
+                If limits are None (default), then sum over the the whole range of this axis
+                Otherwise limits are treated as bin edges - the sum happens within the bin limits
+                If the limits do not match the bin edges of the container, the nearest bin edge is found and used instead
+                
         Returns
         --------
             Container with summed value
@@ -247,13 +253,38 @@ class _ContainerBase:
             
         All the other axes and dimensions will be kept the same
         """
+        def closest_index(array,value):
+            idx = np.searchsorted(array,value)
+            idx = np.clip(idx, 1, len(array)-1)
+            is_left_closer = np.abs(array[idx-1]-value) < np.abs(array[idx]-value)
+            return np.where(is_left_closer,idx-1,idx)      
+            
         axis = Axes.get(axis)
         if axis not in self._sumable_axes:
             raise ValueError(f'Cannot sum over {axis.name}! Valid axes are {self._sumable_axes}')
-        array = np.sum(self.array, axis = axis, keepdims=True)
-        axes = list(self.axes)
-        axes[axis] = axes[axis].take([0,-1])
-        return Container(array,*axes, integrable_axes = self._integrable_axes.difference({axis}))
+
+        ax = self.axes[axis]
+        if ax.size==1:
+            #no need to integrate - there is only a single value
+            return self
+
+        if limits is None:
+            limits = u.Quantity([ax.min(), ax.max()])
+        if axis == Axes.flavor:
+            axis_indices = [ ax.index(limits[0]), ax.index(limits[-1]) ]        
+        else:
+             axis_indices = [ closest_index(ax,limits[0]), closest_index(ax,limits[-1]) ]
+
+        array_indices = [slice(None)] * self.array.ndim        
+        array_indices[axis] = slice(axis_indices[0],axis_indices[-1])
+        
+        new_array = self.array[tuple(array_indices)]
+        new_array = np.sum(new_array, axis=axis, keepdims=True)        
+
+        new_axes = list(self.axes)
+        new_axes[axis] = limits        
+        
+        return Container(new_array, *new_axes, integrable_axes = self._integrable_axes)
 
     def integrate(self, axis: Axes | str, limits:np.ndarray=None)->'Container':
         """Integrate along given axis, producing a Container with the integral quantity.
