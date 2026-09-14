@@ -34,14 +34,57 @@ import numpy as np
 from astropy import units as u
 from astropy.table import Table
 
+from snewpy.models import base
 from snewpy.models import ccsn_loaders as loaders
-from .base import PinchedModel
 
 from snewpy.models.registry_model import RegistryModel, Parameter
 from snewpy.models.registry_model import all_models
 from textwrap import dedent
 
+@RegistryModel(
+    progenitor_mass= [11.2, 27.] * u.Msun,
+    eos = ['SFHo'],
+    calibration = ['calI', 'calII'] 
+)
+class Ebinger_2018(loaders.PUSHArchiveModel):
+    """Model from the PUSH collaboration described in Ebinger et al.
+    """
+    def __init__(self, progenitor_mass:u.Quantity, eos:str='SFHo', calibration:str='calI'):
+        filename = f's{progenitor_mass.value:2.1f}_{eos}_{calibration}_Ebinger_luminosity.h5'
+        return super().__init__(filename=filename, metadata=self.metadata)
 
+@RegistryModel(
+    progenitor_mass= [11.2, 27.] * u.Msun,
+    eos = ['SFHo'],
+    calibration = ['calI', 'calII'] 
+)
+class Curtis_2019(loaders.PUSHArchiveModel):
+    """Model from the PUSH collaboration described in Curtis et al.
+    """
+    def __init__(self, progenitor_mass:u.Quantity, eos:str='SFHo', calibration:str='calI'):
+        filename = f's{progenitor_mass.value:2.1f}_{eos}_{calibration}_Curtis_luminosity.h5'
+        return super().__init__(filename=filename, metadata=self.metadata)
+
+
+@RegistryModel(
+    progenitor_mass = [ 10.8, 
+                        11.0, 11.2, 11.4, 11.6, 11.8, 12.0, 12.2, 12.4, 12.6, 12.8, 13.0, 13.2, 13.4, 13.6, 13.8, 14.0, 14.2, 14.4, 14.6, 14.8, 
+                        15.0, 15.2, 15.4, 15.6, 15.8, 16.0, 16.2, 16.4, 16.6, 16.8, 17.0, 17.2, 17.4, 17.6, 17.6, 18.0, 18.2, 18.4, 18.6, 18.8, 
+                        19.0, 19.2, 19.4, 19.6, 19.8, 20.0, 20.2, 20.4, 20.6, 20.8, 21.0, 21.2, 21.4, 21.6, 21.8, 22.0, 22.2, 22.4, 22.6, 22.8, 
+                        23.0, 23.2, 23.4, 23.6, 23.8, 24.0, 24.2, 24.4, 24.6, 24.8, 25.0, 25.2, 25.4, 25.6, 25.8, 26.0, 26.2, 26.4, 26.6, 26.8, 
+                        27.0, 27.2, 27.4, 27.6, 27.8, 28.0, 28.2,
+                        29.0, 30.0, 31.0, 32.0, 33.0, 34.0, 35.0, 36.0, 37.0, 38.0, 39.0, 40.0] * u.Msun,
+    eos = ['SFHo', 'SFHx', 'DD2', 'BHBlp', 'TM1', 'NL3'],
+    calibration = ['calI-4.30000'] 
+)
+class Wolfe_2023(loaders.PUSHArchiveModel):
+    """Model from the PUSH collaboration described in Wolfe et al.
+    """
+    def __init__(self, progenitor_mass:u.Quantity, eos:str='SFHo', calibration:str='calI'):
+        filename = f's{progenitor_mass.value:2.1f}_{eos}_{calibration}_Wolfe_luminosity.h5'
+        return super().__init__(filename=filename, metadata=self.metadata)
+     
+     
 @RegistryModel()
 class Fischer_2020(loaders.Fischer_2020):
     """Model based on simulations from `Fischer et al. (2020) <https://arxiv.org/abs/1804.10890>`
@@ -52,12 +95,12 @@ class Fischer_2020(loaders.Fischer_2020):
         filename='Fischer_2020.tar.gz'
         return super().__init__(filename, metadata=self.metadata)
 
+
 @RegistryModel(
     progenitor_mass = [13, 20, 30, 50] * u.Msun,
     revival_time = [0, 100, 200, 300] * u.ms,
     metallicity = [0.02, 0.004],
     eos = ['LS220', 'shen', 'togashi'],
-
     _param_validator = lambda p: (p['revival_time'] == 0 * u.ms and p['progenitor_mass'] == 30 * u.Msun
                                   and p['metallicity'] == 0.004) or \
                                  (p['revival_time'] != 0 * u.ms and p['eos'] == 'shen'
@@ -190,7 +233,7 @@ class OConnor_2015(loaders.OConnor_2015):
 @RegistryModel(
     progenitor_mass = Parameter(values=(list(range(16, 27)) + [19.89, 22.39, 30, 33]) * u.Msun,
                                 desc_values = '[16..26, 19.89, 22.39, 30, 33] solMass'
-                               ),
+                               )
 )
 class Zha_2021(loaders.Zha_2021):
     """Model based on the hadron-quark phse transition models from `Zha et al. 2021 <https://arxiv.org/abs/2103.02268>`_.
@@ -212,7 +255,7 @@ class Zha_2021(loaders.Zha_2021):
                               name='turbmixing_param',
                               label='Turb. mixing param.',
                               description='Turbulent mixing parameter alpha_lambda',
-                              ),
+                              )
 )
 class Warren_2020(loaders.Warren_2020):
     """Model based on simulations from Warren et al., ApJ 898:139, 2020.
@@ -535,9 +578,10 @@ class SNOwGLoBES:
 
         return fluence
 
-class Analytic3Species(PinchedModel):
-    """An analytical model calculating spectra given total luminosity,
-    average energy, and rms or pinch, for each species.
+class Analytic3Species(base.PinchedModel):
+    """This is the basically the loader version of base.PinchedModel i.e. it reads the data 
+    for the PinchedModel from a file. The format of the file is that made by 
+    the `doc/scripts/Analytic.py` script
     """
 
     param = "There are no input files available for this class. Use `doc/scripts/Analytic.py` in the SNEWPY GitHub repo to create a custom input file."
