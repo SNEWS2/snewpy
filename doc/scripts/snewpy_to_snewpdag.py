@@ -47,7 +47,7 @@ print("Done snowglobes...")
 
 #now collate results of output of SNOwGLoBES
 print("Collating...")
-tables = snowglobes.collate(SNOwGLoBES_path, tarredfile, skip_plots=True)
+tables = snowglobes.collate(tarredfile, skip_plots=True)
 
 #read results from SNOwGLoBES and put lightcurve in output file for snewpdag
 fout = open(output_path+"snewpy_output_"+detector+"_"+modeltype+"_"+filename+"_1msbin.txt", "a")
