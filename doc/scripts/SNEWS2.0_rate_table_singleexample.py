@@ -1,40 +1,32 @@
 #!/usr/bin/env python
-from snewpy import snowglobes
+from snewpy.models.ccsn import Bollig_2016
+from snewpy.neutrino import MassHierarchy, MixingParameters
+from snewpy.flavor_transformation import AdiabaticMSW
+from snewpy.rate_calculator import RateCalculator
 
-SNOwGLoBES_path = None  # change to SNOwGLoBES directory if using a custom detector configuration
-SNEWPY_model_dir = "/path/to/snewpy/models/"  # directory containing model input files
+import numpy as np
+import astropy.units as u
 
-distance = 10  # Supernova distance in kpc
-detector = "wc100kt30prct" #SNOwGLoBES detector for water Cerenkov
-modeltype = 'Bollig_2016' # Model type from snewpy.models
-model = 's11.2c' # Name of model
-transformation = 'AdiabaticMSW_NMO' # Desired flavor transformation
-
-# Construct file system path of model file and name of output file
-model_path = SNEWPY_model_dir + "/" + modeltype + "/" + model
-outfile = modeltype + "_" + model + "_" + transformation
-
+model = Bollig_2016(progenitor_mass=11.2<<u.Msun) # SN model
+transformation = AdiabaticMSW(MixingParameters('NORMAL')) # Desired flavor transformation
+       
 # Now, do the main work:
 print("Generating fluence files ...")
-tarredfile = snowglobes.generate_fluence(model_path, modeltype, transformation, distance, outfile)
+times    = model.get_time()
+energies = np.linspace(0,100,501)<<u.MeV
+distance = 10*u.kpc
 
-print("Simulating detector effects with SNOwGLoBES ...")
-snowglobes.simulate(SNOwGLoBES_path, tarredfile, detector_input=detector)
+#get the flux from the model
+flux = model.get_flux(t=times, E=energies, distance=distance, flavor_xform=transformation)
+fluence = flux.integrate('time')
 
-print("Collating results ...")
-tables = snowglobes.collate(tarredfile, skip_plots=True)
-
-
-# Use results to print the number of events in different interaction channels
-key = f"Collated_{outfile}_{detector}_events_smeared_weighted.dat"
-total_events = 0
-for i, channel in enumerate(tables[key]['header'].split()):
-    if i == 0:
-        continue
-    n_events = sum(tables[key]['data'][i])
-    total_events += n_events
-    print(f"{channel:10}: {n_events:.3f} events")
+print("Simulating detector effects ...")
+detector = "wc100kt30prct"
+rc = RateCalculator()
+events = rc.run(fluence, detector, detector_effects=True)
+        
+# Compute number of events in all interaction channels
+total_events  = sum([chan.integrate_or_sum('energy').array.squeeze().value for chan in events.values()])
 
 #Super-K has 32kT inner volume
-print("Total events in Super-K-like detector:",0.32*total_events)
-
+print("Total events in Super-K-like detector (with smearing):" , 0.32*total_events)
