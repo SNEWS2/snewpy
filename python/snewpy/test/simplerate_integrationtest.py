@@ -3,7 +3,6 @@
 """
 import unittest
 
-from snewpy import snowglobes
 from snewpy.models.ccsn import Bollig_2016
 from snewpy.neutrino import MassHierarchy, MixingParameters
 from snewpy.flavor_transformation import AdiabaticMSW
