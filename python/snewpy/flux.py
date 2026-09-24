@@ -253,12 +253,6 @@ class _ContainerBase:
             
         All the other axes and dimensions will be kept the same
         """
-        def closest_index(array,value):
-            idx = np.searchsorted(array,value)
-            idx = np.clip(idx, 1, len(array)-1)
-            is_left_closer = np.abs(array[idx-1]-value) < np.abs(array[idx]-value)
-            return np.where(is_left_closer,idx-1,idx)      
-            
         axis = Axes.get(axis)
         if axis not in self._sumable_axes:
             raise ValueError(f'Cannot sum over {axis.name}! Valid axes are {self._sumable_axes}')
@@ -270,17 +264,12 @@ class _ContainerBase:
 
         if limits is None:
             limits = u.Quantity([ax.min(), ax.max()])
-        if axis == Axes.flavor:
-            axis_indices = [ ax.index(limits[0]), ax.index(limits[-1]) ]        
-        else:
-             axis_indices = [ closest_index(ax,limits[0]), closest_index(ax,limits[-1]) ]
 
-        array_indices = [slice(None)] * self.array.ndim        
-        array_indices[axis] = slice(axis_indices[0],axis_indices[-1])
+        cdf = np.insert(np.cumsum(self.array,axis=axis),0,0)
+        new_cdf = np.interp(limits , self.axes[axis], cdf)    
+        # Difference of new CDF gives counts in new bins
+        new_array = np.diff(new_cdf,axis=axis)
         
-        new_array = self.array[tuple(array_indices)]
-        new_array = np.sum(new_array, axis=axis, keepdims=True)        
-
         new_axes = list(self.axes)
         new_axes[axis] = limits        
         
