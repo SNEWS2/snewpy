@@ -276,7 +276,7 @@ class _ContainerBase:
             else:
                 limits = np.array(limits)        
                 
-        cumsum = np.insert(np.cumsum(self.array,axis=axis),0,0)
+        cumsum = np.insert(np.cumsum(self.array,axis=axis),0,0,axis=axis)
         #get first and last value to use as the fill values in the interpolation
         cumsum_limits = (cumsum.take(0,axis=axis), cumsum.take(-1,axis=axis))  
 
