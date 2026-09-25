@@ -52,6 +52,8 @@ Reference
 
 """
 from typing import Union
+from bisect import bisect_left, bisect_right
+
 # from snewpy.neutrino import Flavor
 from snewpy.flavor import FlavorScheme, FlavorMatrix
 from astropy import units as u
@@ -275,10 +277,13 @@ class _ContainerBase:
                 limits = np.array(limits)        
                 
         cumsum = np.insert(np.cumsum(self.array,axis=axis),0,0)
-        new_cumsum = interp1d(limits, self.axes[axis], cumsum, axis=axis)    
+        #get first and last value to use as the fill values in the interpolation
+        cumsum_limits = (cumsum.take(0,axis=axis), cumsum.take(-1,axis=axis))  
+        
+        _interpolator = interp1d(x=ax, y=cumsum, fill_value=cumsum_limits, axis=axis, bounds_error=False)
 
-        # Difference of new cumulative sum gives the counts in the new bins
-        new_array = np.diff(new_cumsum,axis=axis) << self.array.unit      
+        # Evaluate interpolator at new bin limits, then difference to give the counts in the new bins
+        new_array = np.diff(_interpolator(limits),axis=axis) << self.array.unit      
         new_axes = list(self.axes)
         new_axes[axis] = limits           
         
