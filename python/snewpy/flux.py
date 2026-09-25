@@ -272,7 +272,7 @@ class _ContainerBase:
         else:
             if axis != Axes.flavor:
                 limits = u.Quantity(limits).to(ax.unit)
-                limits = np.concatenate(([axmin],limits[bisect.bisect_left(limits,axmin):bisect.bisect_right(limits,axmax)],[axmax]))
+                limits = np.concatenate(([axmin],limits[bisect_left(limits,axmin):bisect_right(limits,axmax)],[axmax]))
             else:
                 limits = np.array(limits)        
                 
@@ -340,17 +340,11 @@ class _ContainerBase:
             raise ValueError(f'Cannot integrate over {axis.name}! Valid axes are {self._integrable_axes}')
             
         #set the limits
-        ax = self.axes[axis]
-        if ax.size==1:
-            #no need to integrate - there is only a single value
-            return self
-            
-        xmin, xmax = ax.min(), ax.max()
+        axmin, axmax = ax.min(), ax.max()
         if limits is None:
-            limits = u.Quantity([xmin, xmax])
+            limits = u.Quantity([axmin, axmax])
         else:
-            limits = [xmin] + limits[bisect_left(limits,xmin):bisect_right(limits,xmax)] + [xmax]
-        limits = limits.to(ax.unit)
+            limits = u.Quantity(limits).to(ax.unit)            
 
         #compute the integral
         yc = cumulative_trapezoid(self.array, x=ax, axis=axis, initial=0)
