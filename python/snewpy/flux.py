@@ -272,7 +272,7 @@ class _ContainerBase:
         else:
             if axis != Axes.flavor:
                 limits = u.Quantity(limits).to(ax.unit)
-                limits = u.Quantity([xmin] + limits[bisect_left(limits,xmin):bisect_right(limits,xmax)] + [xmax])
+                limits = np.concatenate(([axmin],limits[bisect.bisect_left(limits,axmin):bisect.bisect_right(limits,axmax)],[axmax]))
             else:
                 limits = np.array(limits)        
                 
