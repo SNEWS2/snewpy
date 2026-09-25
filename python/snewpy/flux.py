@@ -244,13 +244,15 @@ class _ContainerBase:
             >>> a.sum('flavor').shape
             (1, 10, 20)
         
-        The axis in the class will also be modified, keeping only the first and last points of the summation::
+        The axis in the class will also be modified, keeping only the summation limits that are within the min and max of the axis:
         
-            >>> a.flavor
-            array([0, 1, 2, 3])
-            >>> a.sum('flavor').flavor
-            array([0, 3])
-            
+            >>> a.time
+            [0. 1. 2. 3.] s
+            >>> a.sum('time').time
+            [0., 3.] s
+            >>> a.sume('time', limits=[0, 1, 2, 5]<<u.s).time
+            [0., 1, 2, 3] s
+        
         All the other axes and dimensions will be kept the same
         """
         axis = Axes.get(axis)
@@ -261,17 +263,21 @@ class _ContainerBase:
         if ax.size==1:
             #no need to integrate - there is only a single value
             return self
-
+        xmin, xmax = ax.min(), ax.max()
         if limits is None:
-            limits = u.Quantity([ax.min(), ax.max()])
+            limits = u.Quantity([xmin, xmax])
+        else:
+            limits = [xmin] + limits[bisect_left(limits,xmin):bisect_right(limits,xmax)] + [xmax]
+        limits = limits.to(ax.unit)
+        
+        cumsum = np.insert(np.cumsum(self.array,axis=axis),0,0)
+        new_cumsum = interp1d(limits, self.axes[axis], cumsum, axis=axis)    
 
-        cdf = np.insert(np.cumsum(self.array,axis=axis),0,0)
-        new_cdf = np.interp(limits , self.axes[axis], cdf)    
         # Difference of new CDF gives counts in new bins
-        new_array = np.diff(new_cdf,axis=axis)
+        new_array = np.diff(new_cumsum,axis=axis)
         
         new_axes = list(self.axes)
-        new_axes[axis] = limits        
+        new_axes[axis] = limits           
         
         return Container(new_array, *new_axes, integrable_axes = self._integrable_axes)
 
@@ -331,8 +337,10 @@ class _ContainerBase:
         xmin, xmax = ax.min(), ax.max()
         if limits is None:
             limits = u.Quantity([xmin, xmax])
+        else:
+            limits = [xmin] + limits[bisect_left(limits,xmin):bisect_right(limits,xmax)] + [xmax]
         limits = limits.to(ax.unit)
-        #limits = limits.clip(xmin,xmax)
+
         #compute the integral
         yc = cumulative_trapezoid(self.array, x=ax, axis=axis, initial=0)
         #get first and last value to use as the fill values
