@@ -268,7 +268,7 @@ class _ContainerBase:
         if limits is None:
             limits = u.Quantity([xmin, xmax])
         else:
-            limits = [xmin] + limits[bisect_left(limits,xmin):bisect_right(limits,xmax)] + [xmax]
+            limits = u.Quantity([xmin] + limits[bisect_left(limits,xmin):bisect_right(limits,xmax)] + [xmax])
             
         if axis != 'flavor':
             limits = limits.to(ax.unit)
