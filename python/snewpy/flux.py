@@ -268,7 +268,9 @@ class _ContainerBase:
             limits = u.Quantity([xmin, xmax])
         else:
             limits = [xmin] + limits[bisect_left(limits,xmin):bisect_right(limits,xmax)] + [xmax]
-        limits = limits.to(ax.unit)
+            
+        if axis is not 'flavor':
+            limits = limits.to(ax.unit)
         
         cumsum = np.insert(np.cumsum(self.array,axis=axis),0,0)
         new_cumsum = interp1d(limits, self.axes[axis], cumsum, axis=axis)    
