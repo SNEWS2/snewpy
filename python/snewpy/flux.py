@@ -260,24 +260,25 @@ class _ContainerBase:
             raise ValueError(f'Cannot sum over {axis.name}! Valid axes are {self._sumable_axes}')
 
         ax = self.axes[axis]
-        if ax.size==1:
-            #no need to integrate - there is only a single value
+        if ax.size == 1:
+            # No need to sum - there is only a single value
             return self
-            
+
         xmin, xmax = ax.min(), ax.max()
         if limits is None:
-            limits = u.Quantity([xmin, xmax])
+            limits = u.Quantity([xmin, xmax]) if axis != Axes.flavor else np.array([xmin, xmax])
         else:
-            limits = u.Quantity([xmin] + limits[bisect_left(limits,xmin):bisect_right(limits,xmax)] + [xmax])
-            
-        if axis != 'flavor':
-            limits = limits.to(ax.unit)
-        
+            if axis != Axes.flavor:
+                limits = u.Quantity(limits).to(ax.unit)
+                limits = u.Quantity([xmin] + limits[bisect_left(limits,xmin):bisect_right(limits,xmax)] + [xmax])
+            else:
+                limits = np.array(limits)        
+                
         cumsum = np.insert(np.cumsum(self.array,axis=axis),0,0)
         new_cumsum = interp1d(limits, self.axes[axis], cumsum, axis=axis)    
 
         # Difference of new cumulative sum gives the counts in the new bins
-        new_array = np.diff(new_cumsum,axis=axis) << (self.array.unit*ax.unit)        
+        new_array = np.diff(new_cumsum,axis=axis) << self.array.unit      
         new_axes = list(self.axes)
         new_axes[axis] = limits           
         
