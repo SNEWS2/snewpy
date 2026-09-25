@@ -338,27 +338,26 @@ class _ContainerBase:
         axis = Axes.get(axis)
         if not axis in self._integrable_axes:
             raise ValueError(f'Cannot integrate over {axis.name}! Valid axes are {self._integrable_axes}')
-            
         #set the limits
-        axmin, axmax = ax.min(), ax.max()
+        ax = self.axes[axis]
+        if ax.size==1:
+            #no need to integrate - there is only a single value
+            return self
+        xmin, xmax = ax.min(), ax.max()
         if limits is None:
-            limits = u.Quantity([axmin, axmax])
-        else:
-            limits = u.Quantity(limits).to(ax.unit)            
-
+            limits = u.Quantity([xmin, xmax])
+        limits = limits.to(ax.unit)
+        #limits = limits.clip(xmin,xmax)
         #compute the integral
         yc = cumulative_trapezoid(self.array, x=ax, axis=axis, initial=0)
-        
         #get first and last value to use as the fill values
-        yc_limits = (yc.take(0,axis=axis), yc.take(-1,axis=axis))         
+        yc_limits = (yc.take(0,axis=axis), yc.take(-1,axis=axis)) 
         #this will make the _integral constant if it gets out of bounds,
         # i.e. effectively the flux outside of bounds is zero
         _integral = interp1d(x=ax, y=yc, fill_value=yc_limits, axis=axis, bounds_error=False)
-        
-        array = np.diff(_integral(limits),axis=axis) << (self.array.unit*ax.unit)        
+        array = np.diff(_integral(limits),axis=axis) << (self.array.unit*ax.unit)
         axes = list(self.axes)
         axes[axis] = limits
-        
         #choose the proper class
         return Container(array, *axes, integrable_axes=self._integrable_axes.difference({axis}))
 
