@@ -279,8 +279,9 @@ class _ContainerBase:
         cumsum = np.insert(np.cumsum(self.array,axis=axis),0,0)
         #get first and last value to use as the fill values in the interpolation
         cumsum_limits = (cumsum.take(0,axis=axis), cumsum.take(-1,axis=axis))  
-        
-        _interpolator = interp1d(x=ax, y=cumsum, fill_value=cumsum_limits, axis=axis, bounds_error=False)
+
+        # interpolate the cumulative sum on the right bin edges
+        _interpolator = interp1d(x=ax[1:], y=cumsum, fill_value=cumsum_limits, axis=axis, bounds_error=False)
 
         # Evaluate interpolator at new bin limits, then difference to give the counts in the new bins
         new_array = np.diff(_interpolator(limits),axis=axis) << self.array.unit      
