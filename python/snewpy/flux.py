@@ -266,9 +266,9 @@ class _ContainerBase:
             # No need to sum - there is only a single value
             return self
 
-        xmin, xmax = ax.min(), ax.max()
+        axmin, axmax = ax.min(), ax.max()
         if limits is None:
-            limits = u.Quantity([xmin, xmax]) if axis != Axes.flavor else np.array([xmin, xmax])
+            limits = u.Quantity([axmin, axmax]) if axis != Axes.flavor else np.array([axmin, axmax])
         else:
             if axis != Axes.flavor:
                 limits = u.Quantity(limits).to(ax.unit)
