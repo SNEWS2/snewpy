@@ -275,8 +275,12 @@ class _ContainerBase:
                 limits = np.concatenate(([axmin],limits[bisect_left(limits,axmin):bisect_right(limits,axmax)],[axmax]))
             else:
                 limits = np.array(limits)        
-                
-        cumsum = np.insert(np.cumsum(self.array,axis=axis),0,0,axis=axis)
+
+        if axis != Axes.flavor:        
+            cumsum = np.insert(np.cumsum(self.array,axis=axis),0,0,axis=axis)
+        else: 
+            cumsum = np.cumsum(self.array,axis=axis)
+            
         #get first and last value to use as the fill values in the interpolation
         cumsum_limits = (cumsum.take(0,axis=axis), cumsum.take(-1,axis=axis))  
 
@@ -361,11 +365,11 @@ class _ContainerBase:
         #choose the proper class
         return Container(array, *axes, integrable_axes=self._integrable_axes.difference({axis}))
 
-    def integrate_or_sum(self, axis: Axes | str)->'Container':
+    def integrate_or_sum(self, axis: Axes | str, limits:np.ndarray=None)->'Container':
         if self.can_integrate(axis):
-            return self.integrate(axis)
+            return self.integrate(axis,limits)
         else:
-            return self.sum(axis)
+            return self.sum(axis,limits)
             
     def can_integrate(self, axis):
         "return true if can be integrated along given axis"
