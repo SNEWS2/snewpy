@@ -252,38 +252,42 @@ class _ContainerBase:
             
         All the other axes and dimensions will be kept the same
         """
-        def closest_index(array,value):
-            idx = np.searchsorted(array,value)
-            idx = np.clip(idx, 1, len(array)-1)
-            is_left_closer = np.abs(array[idx-1]-value) < np.abs(array[idx]-value)
-            return np.where(is_left_closer,idx-1,idx)      
-            
         axis = Axes.get(axis)
         if axis not in self._sumable_axes:
             raise ValueError(f'Cannot sum over {axis.name}! Valid axes are {self._sumable_axes}')
 
         ax = self.axes[axis]
-        if ax.size==1:
-            #no need to integrate - there is only a single value
+        if ax.size == 1:
+            # No need to sum - there is only a single value
             return self
-
+            
+        axmin, axmax = ax.min(), ax.max()
         if limits is None:
-            limits = u.Quantity([ax.min(), ax.max()])
-        if axis == Axes.flavor:
-            axis_indices = [ ax.index(limits[0]), ax.index(limits[-1]) ]        
+            limits = u.Quantity([axmin, axmax]) if axis != Axes.flavor else ax.take([0,-1])
         else:
-             axis_indices = [ closest_index(ax,limits[0]), closest_index(ax,limits[-1]) ]
+            if axis != Axes.flavor:
+                limits = u.Quantity(limits).to(ax.unit)
+                limits = np.concatenate(([axmin],limits[bisect_left(limits,axmin):bisect_right(limits,axmax)],[axmax]))
+            
+        if axis == Axes.flavor:
+            new_array = self.array.sum(axis=axis,keepdims=True)            
+            new_axes = list(self.axes)
+            new_axes[axis] = limits                   
+            return Container(new_array, *new_axes, integrable_axes = self._integrable_axes)            
+        else:
+            cumsum = np.insert(np.cumsum(self.array,axis=axis),0,0,axis=axis)            
+            #get first and last value to use as the fill values in the interpolation
+            cumsum_limits = (cumsum.take(0,axis=axis), cumsum.take(-1,axis=axis))  
 
-        array_indices = [slice(None)] * self.array.ndim        
-        array_indices[axis] = slice(axis_indices[0],axis_indices[-1])
-        
-        new_array = self.array[tuple(array_indices)]
-        new_array = np.sum(new_array, axis=axis, keepdims=True)        
+            # interpolate the cumulative sum on the right bin edges
+            _interpolator = interp1d(x=ax, y=cumsum, fill_value=cumsum_limits, axis=axis, bounds_error=False)
 
-        new_axes = list(self.axes)
-        new_axes[axis] = limits        
+            # Evaluate interpolator at new bin limits, then difference to give the counts in the new bins
+            new_array = np.diff(_interpolator(limits),axis=axis) << self.array.unit      
+            new_axes = list(self.axes)
+            new_axes[axis] = limits           
         
-        return Container(new_array, *new_axes, integrable_axes = self._integrable_axes)
+            return Container(new_array, *new_axes, integrable_axes = self._integrable_axes)
 
     def integrate(self, axis: Axes | str, limits:np.ndarray=None)->'Container':
         """Integrate along given axis, producing a Container with the integral quantity.
