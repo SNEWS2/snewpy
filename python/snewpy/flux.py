@@ -52,6 +52,8 @@ Reference
 
 """
 from typing import Union
+from bisect import bisect_left, bisect_right
+
 # from snewpy.neutrino import Flavor
 from snewpy.flavor import FlavorScheme, FlavorMatrix
 from astropy import units as u
