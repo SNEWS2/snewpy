@@ -274,25 +274,22 @@ class _ContainerBase:
                 limits = u.Quantity(limits).to(ax.unit)
                 limits = np.concatenate(([axmin],limits[bisect_left(limits,axmin):bisect_right(limits,axmax)],[axmax]))
             
-        if axis == Axes.flavor:
-            new_array = self.array.sum(axis=axis,keepdims=True)            
-            new_axes = list(self.axes)
-            new_axes[axis] = limits                   
-            return Container(new_array, *new_axes, integrable_axes = self._integrable_axes)            
-        else:
-            cumsum = np.insert(np.cumsum(self.array,axis=axis),0,0,axis=axis)            
-            #get first and last value to use as the fill values in the interpolation
-            cumsum_limits = (cumsum.take(0,axis=axis), cumsum.take(-1,axis=axis))  
+        cumsum = np.insert(np.cumsum(self.array,axis=axis),0,0,axis=axis)            
+        #get first and last value to use as the fill values in the interpolation
+        cumsum_limits = (cumsum.take(0,axis=axis), cumsum.take(-1,axis=axis))  
 
-            # interpolate the cumulative sum on the right bin edges
-            _interpolator = interp1d(x=ax, y=cumsum, fill_value=cumsum_limits, axis=axis, bounds_error=False)
-
-            # Evaluate interpolator at new bin limits, then difference to give the counts in the new bins
+        # interpolate the cumulative sum on the right bin edges        
+        _interpolator = interp1d(x=ax, y=cumsum, fill_value=cumsum_limits, axis=axis, bounds_error=False)        
+        # Evaluate interpolator at new bin limits, then difference to give the counts in the new bins        
+        if axis != Axes.flavor:        
             new_array = np.diff(_interpolator(limits),axis=axis) << self.array.unit      
-            new_axes = list(self.axes)
-            new_axes[axis] = limits           
-        
-            return Container(new_array, *new_axes, integrable_axes = self._integrable_axes)
+        else:
+            new_array = np.diff(_interpolator(np.array(limits)),axis=axis) << self.array.unit                  
+            
+        new_axes = list(self.axes)
+        new_axes[axis] = limits
+            
+        return Container(new_array, *new_axes, integrable_axes = self._integrable_axes)
 
     def integrate(self, axis: Axes | str, limits:np.ndarray=None)->'Container':
         """Integrate along given axis, producing a Container with the integral quantity.
