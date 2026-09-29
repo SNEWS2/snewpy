@@ -274,7 +274,10 @@ class _ContainerBase:
                 limits = u.Quantity(limits).to(ax.unit)
                 limits = np.concatenate(([axmin],limits[bisect_left(limits,axmin):bisect_right(limits,axmax)],[axmax]))
             
-        cumsum = np.insert(np.cumsum(self.array,axis=axis),0,0,axis=axis)            
+        if axis != Axes.flavor:            
+            cumsum = np.insert(np.cumsum(self.array,axis=axis),0,0,axis=axis)            
+        else:
+            cumsum = np.cumsum(self.array,axis=axis)        
         #get first and last value to use as the fill values in the interpolation
         cumsum_limits = (cumsum.take(0,axis=axis), cumsum.take(-1,axis=axis))  
 
