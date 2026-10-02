@@ -12,6 +12,12 @@ models:
     ccsn:
         Bollig_2016:
             repository: *ccsn_repository
+
+        Bugli_2021:
+            repository: *ccsn_repository
+
+        Fischer_2020:
+            repository: *ccsn_repository
     
         Fornax_2019: 
             repository: *ccsn_repository
@@ -27,6 +33,9 @@ models:
     
         Kuroda_2020: 
             repository: *ccsn_repository
+
+        Mori_2023: 
+            repository: *ccsn_repository
     
         Nakazato_2013: 
             repository: *ccsn_repository
@@ -38,6 +47,9 @@ models:
             repository: *ccsn_repository
      
         Sukhbold_2015: 
+            repository: *ccsn_repository
+
+        Takata_2025:
             repository: *ccsn_repository
      
         Tamborra_2014: 
@@ -51,22 +63,14 @@ models:
     
         Warren_2020:
             repository: *ccsn_repository
-    
+
+        Wolfe_2023:
+            repository: *ccsn_repository
+   
         Zha_2021: 
             repository: *ccsn_repository
+
     
-        Mori_2023: 
-            repository: *ccsn_repository
-
-        Takata_2025:
-            repository: *ccsn_repository
-
-        Bugli_2021:
-            repository: *ccsn_repository
-
-        Fischer_2020:
-            repository: *ccsn_repository
-
     presn:
     
         Odrzywolek_2010:

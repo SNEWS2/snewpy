@@ -6,10 +6,14 @@ Reference
 .. autoclass:: RateCalculator
     :members: run
 """
+import re
+
 import numpy as np
+
 from snewpy.snowglobes_interface import SnowglobesData, guess_material
-from snewpy.neutrino import Flavor
+from snewpy.flavor import ThreeFlavor
 from snewpy.flux import Container
+
 from astropy import units as u
 from warnings import warn
 from typing import Callable
@@ -131,11 +135,13 @@ class FunctionOfEnergy:
             A function of one parameter (energy). This can be an analitical function, or an interpolation of a (E,value) dataset
         """
         self.value = callable
+
     def __mul__(self, f:Container)->Container:
         e = f.energy #Define sample points
         if not f.can_integrate('energy'): #we have bins, let's use central values for sampling
             e = center(f.energy)
         return f*self.value(e)
+
     def __rmul__(self, f:Container)->Container:
         #same as multiplication from the left
         return self.__mul__(f)
@@ -150,14 +156,14 @@ class FunctionOfEnergy:
 class DetectionChannel:
     """Description of a single detection channel in the detector"""
     
-    def __init__(self, flavor:Flavor, xsec:callable, smearing:SmearingMatrix=None,
+    def __init__(self, flavor:ThreeFlavor, xsec:callable, smearing:SmearingMatrix=None,
                  efficiency:FunctionOfEnergy=1., weight:float=1.):
         """
         Parameters
         ----------
         name:str
             channel name
-        flavor:Flavor
+        flavor:ThreeFlavor
             flavor of the interacting neutrino
         xsec:callable or FunctionOfEnergy
             crossection as a function of energy
@@ -184,7 +190,7 @@ class DetectionChannel:
         return self._flavor
     @flavor.setter
     def flavor(self, flavors):
-        if isinstance(flavors, Flavor):
+        if isinstance(flavors, ThreeFlavor):
             flavors = [flavors]
         self._flavor = flavors
     @property
@@ -208,6 +214,7 @@ class DetectionChannel:
     
     def __repr__(self):
         return f'{self.__class__.__name__} (flavor={",".join([f.name for f in self.flavor])}, smearing={self.smearing is not None}, weight={self.weight})'
+
     def calc_rate(self, flux:Container, apply_smearing=True, apply_efficiency=True)->Container:
         """Calculate the event rate in this channel
         
@@ -232,14 +239,15 @@ class DetectionChannel:
         """calculate interaction rate for given channel"""
         tgt_mass = 1<<u.kt
         Ntargets = tgt_mass.to_value(u.Dalton)
-        #sum flux over flavors
-        array_total = sum([flux[flv].array for flv in self.flavor])
-        #create a summary flux container
-        flux_total = Container(array_total, flavor=self.flavor, 
-                               time=flux.time, energy=flux.energy,
-                               integrable_axes=flux._integrable_axes)
-        rate = self.xsec*flux_total*self.weight*Ntargets
-        return rate
+        if len(self.flavor) > 1:
+           #sum flux over flavors
+           sumfluxarray = sum([flux[flv].array for flv in self.flavor])
+           #create a summary flux container
+           sumflux = Container(sumfluxarray, flavor=[self.flavor[0],self.flavor[-1]], 
+                               time=flux.time, energy=flux.energy)
+           return self.xsec*sumflux*self.weight*Ntargets
+        else:
+             return self.xsec*flux[self.flavor]*self.weight*Ntargets
 
 class Detector:
     """A detector configuration for the rate calculation. """
@@ -288,12 +296,12 @@ class Detector:
         return result
 
 def _get_flavor_index(channel):
-    _map = {'+e':Flavor.NU_E,
-            '-e':Flavor.NU_E_BAR,
-            '+m':Flavor.NU_MU,
-            '-m':Flavor.NU_MU_BAR,
-            '+t':Flavor.NU_TAU,
-            '-t':Flavor.NU_TAU_BAR
+    _map = {'+e':ThreeFlavor.NU_E,
+            '-e':ThreeFlavor.NU_E_BAR,
+            '+m':ThreeFlavor.NU_MU,
+            '-m':ThreeFlavor.NU_MU_BAR,
+            '+t':ThreeFlavor.NU_TAU,
+            '-t':ThreeFlavor.NU_TAU_BAR
             }
     return _map[channel.parity+channel.flavor]
 
@@ -303,7 +311,9 @@ def _bin_edges_from_centers(centers:np.ndarray)->np.ndarray:
     edges = centers-0.5*np.pad(binw,(0,1),mode='edge') #get lower edges
     edges = np.append(edges,edges[-1]+binw[-1])
     return edges
+
 #--------------------------------------
+
 class RateCalculator(SnowglobesData):
     r"""Simple rate calculation interface.
         Computes expected rate for a detector using SNOwGLoBES data. 
@@ -340,13 +350,13 @@ class RateCalculator(SnowglobesData):
         """
         super().__init__(base_dir=base_dir)
 
-    def load_xsec(self, channel_name:str, flavor:Flavor)->FunctionOfEnergy:
+    def load_xsec(self, channel_name:str, flavor:ThreeFlavor)->FunctionOfEnergy:
         """Load cross-section for a given channel, interpolated in the energies"""
         xsec = np.loadtxt(self.base_dir/f"xscns/xs_{channel_name}.dat")
         # Cross-section in 10^-38 cm^2
         xp = xsec[:,0]
         #get the column to read from the file
-        column = {Flavor.NU_E:1, Flavor.NU_MU:2, Flavor.NU_TAU:3, Flavor.NU_E_BAR:4, Flavor.NU_MU_BAR:5, Flavor.NU_TAU_BAR:6}[flavor]
+        column = {ThreeFlavor.NU_E:1, ThreeFlavor.NU_MU:2, ThreeFlavor.NU_TAU:3, ThreeFlavor.NU_E_BAR:4, ThreeFlavor.NU_MU_BAR:5, ThreeFlavor.NU_TAU_BAR:6}[flavor]
         yp = xsec[:, column]
         def xsec(energies):
             E = energies.to_value('GeV')
@@ -426,3 +436,64 @@ class RateCalculator(SnowglobesData):
                 A dictionary with interaction rates (as instances of :class:`snewpy.flux.Container`) for each channel.
         """
         return self.read_detector(detector,material).run(flux, detector_effects=detector_effects)
+
+def collate(rates):
+    """Collates the event rates / numbers table returned by RateCalculator.run 
+       into distinct channels e.g. add all electron elastic scattering and NC channels
+
+    Parameters
+    ----------
+    dict[str, Container]
+                A nested dictionary with interaction rates (as instances of :class:`snewpy.flux.Container`) for each channel.
+
+    Returns
+    -------
+    dict[str, Container]
+                A nested dictionary with interaction rates (as instances of :class:`snewpy.flux.Container`) for the collated channels.
+    """
+
+    def aggregate_channels(rates,patterns):
+        for aggname, pattern in patterns.items():
+            #get channels in rates with names that contain the pattern
+            matches = [channel for channel in rates.keys() if re.search(pattern,channel)]
+            #sum over the matches
+            sumrates = sum([rates[channel].array for channel in matches])
+            #make a new entry with the aggregate 
+            if len(matches) > 0:
+                rates[aggname] = Container(sumrates,ThreeFlavor.take([0,-1]), rates[matches[0]].time, rates[matches[0]].energy)
+            #remove matching channels from rates
+            for channel in matches:
+                del rates[channel]
+        return rates
+
+    # make collated rate table
+    patterns = {'nc':'nc_',
+                'eES':'_e', 
+                'coh_helm_Ar':r'coh_helm.*_Ar', 'coh_helm_Ge':r'coh_helm.*_Ge', 'coh_helm_Xe':r'coh_helm.*_Xe',
+                'coh_klein-nystrand_Ar':r'coh_klein.*_Ar', 'coh_klein-nystrand_Ge':r'coh_klein.*_Ge', 'coh_klein-nystrand_Xe':r'coh_klein.*_Xe'                
+               }
+
+    collated_rates = aggregate_channels(rates,patterns)
+
+    return collated_rates  
+
+
+def aggregate(rates):
+    """Sum all the channels in the event rates / numbers table returned by RateCalculator.run 
+
+    Parameters
+    ----------
+    dict[str, Container]
+                A nested dictionary with interaction rates (as instances of :class:`snewpy.flux.Container`) for each channel.
+
+    Returns
+    -------
+    dict[str, Container]
+                A dictionary with interaction rates (as instances of :class:`snewpy.flux.Container`) summed over all channels for a given detector.
+    """    
+    sumrates = sum([rates[channel].array for channel in rates])
+    anychannel = next(iter(rates))
+    return { "total" : Container(sumrates,ThreeFlavor.take([0,-1]), rates[anychannel].time, rates[anychannel].energy) }
+
+
+
