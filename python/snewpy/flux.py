@@ -512,18 +512,8 @@ class Container(_ContainerBase):
         plt.ylabel(f'{fP.__class__.__name__}, {x.unit._repr_latex_()}')
         return lines
 
-    @staticmethod
-    def _reconstruct(array, flavor, time, energy, integrable_axes, flavor_scheme):
-        return Container(array,
-                         flavor,
-                         time,
-                         energy,
-                         integrable_axes=integrable_axes,
-                         flavor_scheme=flavor_scheme,
-                         )
-
     def __reduce__(self):
-        return ( Container._reconstruct,
+        return ( Container.__init__,
                       ( self.array,
                         self.flavor,
                         self.time,
