@@ -46,7 +46,7 @@ class FlavorEnumMeta(enum.EnumMeta):
         return np.array(list(cls.__members__.values()),dtype=object)[key]
 
 class FlavorScheme(enum.IntEnum, metaclass=FlavorEnumMeta):
-    """Configurable enumeration for different flavor schems (1, 2, 3, 4, ... flavors).
+    """Configurable enumeration for different flavor schems (2, 3, 4, ... flavors).
     """
 
     def to_tex(self):
