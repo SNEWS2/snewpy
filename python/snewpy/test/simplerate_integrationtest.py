@@ -31,19 +31,25 @@ class TestSimpleRate(unittest.TestCase):
         print("Simulating detector effects ...")
         detector = "wc100kt30prct"
         rc = RateCalculator()
-        events = rc.run(fluence, detector, detector_effects=True)
+        
+        events = rc.run(fluence, detector, detector_effects=False)        
+        events_smeared = rc.run(fluence, detector, detector_effects=True)
         
         # Compute number of events in all interaction channels
-        total_events  = sum([chan.integrate_or_sum('energy').array.squeeze().value for chan in events.values()])
+        total_events  = sum([chan.integrate_or_sum('energy').array.squeeze().value for chan in events.values()])        
+        total_events_smeared  = sum([chan.integrate_or_sum('energy').array.squeeze().value for chan in events_smeared.values()])
 
-        #Super-K has 32kT inner volume
-        print("Total events in Super-K-like detector (with smearing):" , 0.32*total_events)
+        print("Total events in Super-K-like detector (with smearing):" , 0.32*total_events_smeared)
 
         # We do not use the SNOwGLoBES scaling factors but use other constants so we do not
         # expect the results to agree to 7 digits. Here sub-permille agreement is good enough.
-        sk_expected = 4065.662374
+        sk_expected = 4491.783259
+        sk_expected_smeared = 4065.662374
         sk_computed = 0.32 * total_events
+        sk_computed_smeared = 0.32 * total_events_smeared
         discrepancy = abs(sk_computed - sk_expected)/sk_expected
+        discrepancy_smeared = abs(sk_computed_smeared - sk_expected_smeared)/sk_expected_smeared
 
         assert discrepancy < 0.001, f"Number of unsmeared events computed for SK is {sk_computed}, should be {sk_expected}"
+        assert discrepancy_smeared < 0.001, f"Number of smeared events computed for SK is {sk_computed_smeared}, should be {sk_expected_smeared}"
 
