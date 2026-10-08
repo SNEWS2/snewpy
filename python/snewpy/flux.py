@@ -262,9 +262,10 @@ class _ContainerBase:
         ax = self.axes[axis]
         axmin, axmax = ax.min(), ax.max()        
                   
-        # If trying to sum over an axis that has already been summed, return self. The previous
-        # summation is identifiable because of the shape mismatch of the data array and the axis
-        if self.array.shape[axis] != len(ax): 
+        # If trying to sum over the flavor axis and that axis has already been summed, return self. 
+        # The previous summation is identifiable because of the shape mismatch of 
+        # the data array and the axis and the length of the summation axis is 2
+        if axis == Axes.flavor and self.array.shape[axis] != len(ax) and self.array.shape[axis] == 2: 
             return self
             
         # Change the name of the limits_or_flavors array to something more convenient
@@ -287,8 +288,9 @@ class _ContainerBase:
                 if len(limits) == 0:
                     raise ValueError(f'The limits are not within the min and max of the {axis.name} axis!')                      
                 limits = np.concatenate(([axmin],limits,[axmax]))   
-                # insert limts as the axis for the Container that will be returned
-                new_axes[axis] = limits                
+                
+            # insert limts as the axis for the Container that will be returned
+            new_axes[axis] = limits                
         else:
             if flavors is None:
                 # sum everything along the flavor axis
@@ -296,6 +298,7 @@ class _ContainerBase:
             else: 
                 if any(f in ax for f in flavors) == False:
                     raise ValueError(f'The list of flavors to sum are not components of the {axis.name} axis!')
+                    
             # insert first and last flavor from list as the axis for the Container that will be returned                
             new_axes[axis] = flavors.take([0,-1])
 
