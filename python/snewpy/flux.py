@@ -287,7 +287,7 @@ class _ContainerBase:
                 trimmed_limits = limits[bisect_left(limits,axmin):bisect_right(limits,axmax)] 
                 if len(trimmed_limits) == 0:
                     raise ValueError(f'The limits are not within the min and max of the {axis.name} axis!')
-                if len(trimmed_limits) ! = len(limits):
+                if len(trimmed_limits) != len(limits):
                     limits = np.concatenate(([axmin],trimmed_limits,[axmax]))  
                 
             # insert limts as the axis for the Container that will be returned
