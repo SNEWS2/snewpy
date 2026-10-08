@@ -284,7 +284,7 @@ class _ContainerBase:
                 # convert limits to same as axis - some later function calls strip the units
                 limits = u.Quantity(limits).to(ax.unit)
                 # trim limits to values that lie between min and max of axis
-                limits = limits[bisect_left(limits,axmin):bisect_right(limits,axmax)] * ax.unit
+                limits = limits[bisect_left(limits,axmin):bisect_right(limits,axmax)] 
                 if len(limits) == 0:
                     raise ValueError(f'The limits are not within the min and max of the {axis.name} axis!')                      
                 limits = np.concatenate(([axmin],limits,[axmax]))   
