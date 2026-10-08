@@ -52,6 +52,8 @@ Reference
 
 """
 from typing import Union
+from bisect import bisect_left, bisect_right
+
 # from snewpy.neutrino import Flavor
 from snewpy.flavor import FlavorScheme, FlavorMatrix
 from astropy import units as u
@@ -211,13 +213,19 @@ class _ContainerBase:
         ]
         return f"{self.__class__.__name__} {self.array.shape} [{self.array.unit}]: <{' x '.join(s)}>"
     
-    def sum(self, axis: Axes | str)->'Container':
+    def sum(self, axis: Axes | str, limits_or_flavors:np.ndarray=None)->'Container':
         """Sum along given axis, producing a Container with the summary quantity.
         
         Parameters
         -----------
             axis: :class:`Axes` or str
                 An axis to sum over. String should be one of ``"flavor"``, ``"time"`` or ``"energy"``  (check :meth:`Container.can_sum`)
+            limits_or_flavors: np.ndarray or None
+                If axis is 'time' or 'energy', a sorted array (or `astropy.Quantity` consistent with the units of given axis) 
+                   of bin edges - only sum within these bin limits
+                If the axis is 'flavor', the limits_or_flavors array is the set of flavors to sum
+                If limits are None (default), then sum over the the whole range of this axis
+                
         Returns
         --------
             Container with summed value
@@ -230,7 +238,7 @@ class _ContainerBase:
 
         Example
         -------
-        The resulting data array will be 3D array, but the dimension, corresponding to `axis` parameter will be reduced to 1. 
+        The resulting data array will be 3D array, but the dimension, corresponding to `axis` parameter will be reduced to number of limits-1. 
         
         For an examplar Container ``a`` of a given shape::
         
@@ -239,22 +247,87 @@ class _ContainerBase:
             >>> a.sum('flavor').shape
             (1, 10, 20)
         
-        The axis in the class will also be modified, keeping only the first and last points of the summation::
+        The axis in the class will also be modified, keeping only the summation limits that are within the min and max of the axis:        
+            >>> a.time
+            [0. 1. 2. 3.] s
+            >>> a.sum('time').time
+            [0., 3.] s
+            >>> a.sum('time', limits=[0, 1, 5]<<u.s).time
+            [0., 1, 3] s
         
-            >>> a.flavor
-            array([0, 1, 2, 3])
-            >>> a.sum('flavor').flavor
-            array([0, 3])
-            
         All the other axes and dimensions will be kept the same
         """
         axis = Axes.get(axis)
         if axis not in self._sumable_axes:
             raise ValueError(f'Cannot sum over {axis.name}! Valid axes are {self._sumable_axes}')
-        array = np.sum(self.array, axis = axis, keepdims=True)
-        axes = list(self.axes)
-        axes[axis] = axes[axis].take([0,-1])
-        return Container(array,*axes, integrable_axes = self._integrable_axes.difference({axis}))
+        ax = self.axes[axis]
+        axmin, axmax = ax.min(), ax.max()        
+                  
+        # If trying to sum over the flavor axis and that axis has already been summed, return self. 
+        # The previous summation is identifiable because of the shape mismatch of 
+        # the data array and the axis and the length of the summation axis is 2
+        if axis == Axes.flavor and self.array.shape[axis] != len(ax) and self.array.shape[axis] == 2: 
+            return self
+            
+        # Change the name of the limits_or_flavors array to something more convenient
+        if axis != Axes.flavor:
+            limits = limits_or_flavors
+        else: 
+            flavors = limits_or_flavors    
+            
+        new_axes = list(self.axes)                     
+
+        # Prepare limits or flavor arrays. Construct appropriate limits or flavors if none provided
+        if axis != Axes.flavor: 
+            if limits is None:
+                limits = u.Quantity([axmin, axmax])
+            else:
+                # convert limits to same as axis - some later function calls strip the units
+                limits = u.Quantity(limits).to(ax.unit)
+                # trim limits to values that lie between min and max of axis
+                trimmed_limits = limits[bisect_left(limits,axmin):bisect_right(limits,axmax)] 
+                if len(trimmed_limits) == 0:
+                    raise ValueError(f'The limits are not within the min and max of the {axis.name} axis!')
+                if len(trimmed_limits) != len(limits):
+                    limits = np.concatenate(([axmin],trimmed_limits,[axmax]))  
+                
+            # insert limts as the axis for the Container that will be returned
+            new_axes[axis] = limits                
+        else:
+            if flavors is None:
+                # sum everything along the flavor axis
+                flavors = ax
+            else: 
+                if any(f in ax for f in flavors) == False:
+                    raise ValueError(f'The list of flavors to sum are not components of the {axis.name} axis!')
+                    
+            # insert first and last flavor from list as the axis for the Container that will be returned                
+            new_axes[axis] = flavors.take([0,-1])
+
+        if ax.size == 1:
+            # No need to sum - there is only a single value
+            return self
+           
+        # In the case where we sum along the 'time' or 'energy' axis, the data lives 'between' the grid points 
+        # the summation into bins is accomplished by first computing the cumulative sum, interpolating it,
+        # then evaluating at the bin limits, and finally those evaluations are differenced
+        # If summing over flavor, just add the relevant entries 
+        if axis != Axes.flavor:
+            cumsum = np.insert(np.cumsum(self.array,axis=axis),0,0,axis=axis)           
+            #get first and last value to use as the fill values in the interpolation        
+            cumsum_limits = (cumsum.take(0,axis=axis), cumsum.take(-1,axis=axis))  
+            # interpolate the cumulative sum
+            _interpolator = interp1d(x=ax, y=cumsum, fill_value=cumsum_limits, axis=axis, bounds_error=False)                        
+            # Evaluate interpolator at new bin limits, then difference to give the counts in the new bins              
+            new_array = np.diff(_interpolator(limits),axis=axis) << self.array.unit      
+        else:
+            indices = []
+            for i, f in enumerate(ax):
+                if f in flavors:
+                    indices.append(i)
+            new_array = self.array[indices].sum(axis=0,keepdims=True)
+            
+        return Container(new_array, *new_axes, integrable_axes = self._integrable_axes)
 
     def integrate(self, axis: Axes | str, limits:np.ndarray=None)->'Container':
         """Integrate along given axis, producing a Container with the integral quantity.
@@ -327,11 +400,11 @@ class _ContainerBase:
         #choose the proper class
         return Container(array, *axes, integrable_axes=self._integrable_axes.difference({axis}))
 
-    def integrate_or_sum(self, axis: Axes | str)->'Container':
+    def integrate_or_sum(self, axis: Axes | str, limits_or_flavors:np.ndarray=None)->'Container':
         if self.can_integrate(axis):
-            return self.integrate(axis)
+            return self.integrate(axis,limits_or_flavors)
         else:
-            return self.sum(axis)
+            return self.sum(axis,limits_or_flavors)
             
     def can_integrate(self, axis):
         "return true if can be integrated along given axis"
