@@ -262,9 +262,10 @@ class _ContainerBase:
         ax = self.axes[axis]
         axmin, axmax = ax.min(), ax.max()        
                   
-        # If trying to sum over an axis that has already been summed, return self. The previous
-        # summation is identifiable because of the shape mismatch of the data array and the axis
-        if self.array.shape[axis] != len(ax): 
+        # If trying to sum over the flavor axis and that axis has already been summed, return self. 
+        # The previous summation is identifiable because of the shape mismatch of 
+        # the data array and the axis and the length of the summation axis is 2
+        if axis == Axes.flavor and self.array.shape[axis] != len(ax) and self.array.shape[axis] == 2: 
             return self
             
         # Change the name of the limits_or_flavors array to something more convenient
@@ -283,12 +284,14 @@ class _ContainerBase:
                 # convert limits to same as axis - some later function calls strip the units
                 limits = u.Quantity(limits).to(ax.unit)
                 # trim limits to values that lie between min and max of axis
-                limits = limits[bisect_left(limits,axmin):bisect_right(limits,axmax)] * ax.unit
-                if len(limits) == 0:
-                    raise ValueError(f'The limits are not within the min and max of the {axis.name} axis!')                      
-                limits = np.concatenate(([axmin],limits,[axmax]))   
-                # insert limts as the axis for the Container that will be returned
-                new_axes[axis] = limits                
+                trimmed_limits = limits[bisect_left(limits,axmin):bisect_right(limits,axmax)] 
+                if len(trimmed_limits) == 0:
+                    raise ValueError(f'The limits are not within the min and max of the {axis.name} axis!')
+                if len(trimmed_limits) != len(limits):
+                    limits = np.concatenate(([axmin],trimmed_limits,[axmax]))          
+                
+            # insert limts as the axis for the Container that will be returned
+            new_axes[axis] = limits                
         else:
             if flavors is None:
                 # sum everything along the flavor axis
