@@ -3,13 +3,20 @@ import os
 from abc import ABC, abstractmethod
 
 import numpy as np
+
 from astropy import units as u
 from astropy.table import Table
 from astropy.units import UnitTypeError, get_physical_type
 from astropy.units.quantity import Quantity
 from scipy.special import loggamma
-from snewpy._model_downloader import LocalFileLoader
 
+import tarfile
+
+from scipy import interpolate 
+
+import logging
+
+from snewpy._model_downloader import LocalFileLoader
 from snewpy.flavor import ThreeFlavor
 from snewpy.flavor_transformation import NoTransformation
 from functools import wraps
@@ -23,7 +30,7 @@ def _wrap_init(init, check):
         init(self, *arg, **kwargs)
         check(self)
     return _wrapper
-    
+   
 class SupernovaModel(ABC, LocalFileLoader):
     """Base class defining an interface to a supernova model."""
 
@@ -132,10 +139,10 @@ class SupernovaModel(ABC, LocalFileLoader):
             A container with the information about the initial neutrino spectra
         """
         spectra_dict = self._get_initial_spectra_dict(t, E, flavors=ThreeFlavor)
-        initial_spectra =  flux.Container['1/(MeV*s)'].from_dict(spectra_dict, 
-                                                                time=t,
-                                                                energy=E,
-                                                                flavor_scheme=ThreeFlavor)
+        initial_spectra =  flux.Spectrum.from_dict(spectra_dict, 
+                                                   time=t,
+                                                   energy=E,
+                                                   flavor_scheme=ThreeFlavor)
         return initial_spectra
 
     def get_transformed_spectra(self, t, E, flavor_xform):
@@ -155,8 +162,8 @@ class SupernovaModel(ABC, LocalFileLoader):
         flux.Container 
             A container with the information of the transformed neutrino spectra
         """
-        initialspectra = self.get_initial_spectra(t, E)
-        transformed_spectra = flavor_xform.apply_to(initialspectra)
+        initial_spectra = self.get_initial_spectra(t, E)
+        transformed_spectra = flavor_xform.apply_to(initial_spectra)
         return transformed_spectra
 
     def get_flux (self, t, E, distance, flavor_xform=NoTransformation()):
@@ -249,7 +256,7 @@ class PinchedModel(SupernovaModel):
         #Reshape the Energy array to shape [1,len(E)]
         E = np.expand_dims(E, axis=0)
 
-        initialspectra = {}
+        initial_spectra = {}
 
         # Estimate L(t), <E_nu(t)> and alpha(t). Express all energies in erg.
         E = E.to_value('erg')
@@ -283,6 +290,101 @@ class PinchedModel(SupernovaModel):
 
             #remove unnecessary dimensions, if E or t was scalar:
             result = np.squeeze(result)
-            initialspectra[flavor] = result
+            initial_spectra[flavor] = result
 
-        return initialspectra
+        return initial_spectra
+
+class SNOwGLoBES(SupernovaModel):
+    """Subclass for models whose input data is in SNOwBLoBES format"""
+    def  __init__(self, filename, metadata={}):
+        """
+        Parameters
+        ----------
+        tarfilename: str
+            Absolute or relative path to tar archive
+        """
+        # Open the requested filename using the model downloader.
+        datafile = self.request_file(filename)
+
+        tf = tarfile.open(datafile)
+        
+        # Find the "NoOsc" files.
+        datafiles = sorted([f.name for f in tf if '.dat' in f.name])
+        nooscfiles = [df for df in datafiles if 'NoOsc' in df]
+        nooscfiles.sort(key=len)
+
+        # Loop through the NoOsc files and pull out the number fluxes.
+        self.time = []
+        self.energy = None   
+        self.initial_spectra = {}
+        self.interpolation = {}         
+        
+        self._flavorkeys = {ThreeFlavor.NU_E: 'NuE',
+                            ThreeFlavor.NU_E_BAR: 'aNuE',
+                            ThreeFlavor.NU_MU: 'NuMu',
+                            ThreeFlavor.NU_MU_BAR: 'aNuMu',
+                            ThreeFlavor.NU_TAU: 'NuTau',
+                            ThreeFlavor.NU_TAU_BAR: 'aNuTau'}        
+
+        for nooscfile in nooscfiles:
+            with tf.extractfile(nooscfile) as f:
+                logging.debug('Reading {}'.format(nooscfile))
+                meta = f.readline()
+                metatext = meta.decode('utf-8')
+                t = float(metatext.split('TBinMid=')[-1].split('sec')[0]) 
+                dt = float(metatext.split('tBinWidth=')[-1].split('s')[0]) 
+                dE = float(metatext.split('eBinWidth=')[-1].split('MeV')[0])
+
+                data = Table.read(f, format='ascii.commented_header', header_start=-1)
+                data.meta['t'] = t
+                data.meta['dt'] = dt
+                data.meta['dE'] = dE
+
+                self.time.append(t)
+                
+                if self.energy is None:
+                    self.energy = (data['E(GeV)'].data*1000).tolist()
+
+            for flavor in ThreeFlavor:
+                key = self._flavorkeys[flavor]
+                # convert from flux back to initial spectra: number per /s/erg                
+                spectrum = (data[key].data * (4*np.pi*(u.kpc.to(u.cm,10))**2)/dt/(u.MeV.to(u.erg,dE)) ).tolist() 
+                if flavor in self.initial_spectra:
+                    self.initial_spectra[flavor].append(spectrum)
+                else:
+                    self.initial_spectra[flavor] = [spectrum]      
+
+        for flavor in ThreeFlavor:
+            self.interpolation[flavor] = interpolate.RegularGridInterpolator((self.time, self.energy), self.initial_spectra[flavor], method='cubic')
+            
+        self.time *= u.s
+        self.energy *= u.MeV
+                            
+        self.filename = os.path.basename(filename)            
+
+    def _get_initial_spectra_dict(self, t, E, flavors=ThreeFlavor):
+        """Get neutrino spectra/luminosity curves after oscillation.
+
+        Parameters
+        ----------
+        t : astropy.Quantity
+            Time to evaluate initial spectra.
+        E : astropy.Quantity or ndarray of astropy.Quantity
+            Energies to evaluate the initial spectra.
+        flavors: iterable of snewpy.neutrino.Flavor
+            Return spectra for these flavors only (default: all)
+
+        Returns
+        -------
+        spectra : dict
+            Dictionary of model spectra, keyed by neutrino flavor.
+        """   
+        t = u.Quantity(t, ndmin=1).to(u.s).value
+        E = u.Quantity(E, ndmin=1).to(u.MeV).value
+        tE_grid = np.stack(np.meshgrid(t, E, indexing='ij'), axis=-1)
+
+        initial_spectra = {}
+        for flavor in ThreeFlavor:
+            initial_spectra[flavor] = self.interpolation[flavor](tE_grid) / (u.erg * u.s)
+
+        return initial_spectra
