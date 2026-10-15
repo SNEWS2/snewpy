@@ -1,271 +1,179 @@
 """
 Tests for snewpy.dsnb
 
+The DSNB only uses the public interface of supernova models, so the tests
+use a small non-pinched toy model (Gaussian spectrum) and need no downloads.
+
 Run with:
-    ppytest python/snewpy/test/test_dsnb.py -v
+    pytest python/snewpy/test/test_dsnb.py -v
 """
 
 import numpy as np
 import pytest
-import astropy.units as u
+from astropy import units as u
 
-from snewpy.dsnb import (
-    CoreCollapseRate,
-    PinchedSpectrum,
-    IBDCrossSection,
-    DSNBFlux,
-)
+from snewpy.dsnb import CoreCollapseRate, DSNB, salpeter_imf
+from snewpy.flavor import ThreeFlavor
+from snewpy.flavor_transformation import AdiabaticMSW, NoTransformation
+from snewpy.models.base import SupernovaModel
+from snewpy.neutrino import MixingParameters
 
 
-# ===========================================================================
-# CoreCollapseRate
-# ===========================================================================
+class GaussianModel(SupernovaModel):
+    """Toy model with a Gaussian (non-pinched) NU_E_BAR spectrum, 1 s long."""
 
+    def __init__(self, n_nu=1e57, mean=15.0, sigma=4.0, mass=15.0, with_mass=True):
+        meta = {'Progenitor mass': mass * u.solMass} if with_mass else {}
+        super().__init__(np.linspace(0, 1, 11) << u.s, meta)
+        self.n_nu, self.mean, self.sigma = n_nu, mean, sigma
+
+    def _get_initial_spectra_dict(self, t, E, flavors=ThreeFlavor):
+        t = u.Quantity(t, ndmin=1)
+        E = u.Quantity(E, ndmin=1).to_value(u.MeV)
+        g = np.exp(-0.5 * ((E - self.mean) / self.sigma) ** 2)
+        g = g / np.trapezoid(g, E)                       # unit area, 1/MeV
+        spec = np.tile(g, (t.size, 1)) * self.n_nu       # 1/(MeV s)
+        unit = 1 / (u.MeV * u.s)
+        return {f: (spec if f == ThreeFlavor.NU_E_BAR else 0 * spec) << unit
+                for f in flavors}
+
+
+T = np.array([0.0, 1.0]) << u.yr
+E = np.linspace(2, 50, 120) << u.MeV
+I_NUEBAR = list(ThreeFlavor).index(ThreeFlavor.NU_E_BAR)
+
+
+def nuebar(flux):
+    return flux.array[I_NUEBAR, 0, :].to_value(1 / (u.cm**2 * u.s * u.MeV))
+
+
+# ---------------------------------------------------------------------------
 class TestCoreCollapseRate:
 
     def test_present_day_rate(self):
-        """R_CC(0) must equal the reference r0."""
-        r0  = 1e-4 * u.yr**-1 * u.Mpc**-3
-        rcc = CoreCollapseRate(r0=r0)
-        assert np.isclose(
-            rcc(0).to(u.yr**-1 * u.Mpc**-3).value, r0.value, rtol=1e-6
-        )
+        r0 = 1e-4 * u.yr**-1 * u.Mpc**-3
+        assert np.isclose(CoreCollapseRate(r0=r0)(0).value, r0.value)
 
-    def test_rate_peaks_around_z1(self):
-        """Star-formation history peaks near z ~ 1--2."""
-        rcc  = CoreCollapseRate()
-        z    = np.linspace(0, 5, 200)
-        vals = rcc(z).value
-        z_peak = z[np.argmax(vals)]
-        assert 1.0 < z_peak < 3.0, f"Peak at z={z_peak:.2f}, expected 1--3"
+    def test_rate_peaks_at_intermediate_redshift(self):
+        z = np.linspace(0, 5, 500)
+        assert 1.0 < z[np.argmax(CoreCollapseRate()(z).value)] < 3.0
 
-    def test_rate_positive_everywhere(self):
-        """Rate must be positive for all z >= 0."""
-        rcc  = CoreCollapseRate()
-        z    = np.linspace(0, 10, 500)
-        vals = rcc(z).value
-        assert np.all(vals > 0)
+    def test_rate_positive(self):
+        assert np.all(CoreCollapseRate()(np.linspace(0, 10, 200)).value > 0)
 
-    def test_custom_r0(self):
-        """Custom r0 scales the entire rate proportionally."""
-        rcc1 = CoreCollapseRate(r0=1e-4 * u.yr**-1 * u.Mpc**-3)
-        rcc2 = CoreCollapseRate(r0=2e-4 * u.yr**-1 * u.Mpc**-3)
-        z    = np.array([0.0, 0.5, 1.0, 2.0])
-        ratio = rcc2(z).value / rcc1(z).value
-        assert np.allclose(ratio, 2.0, rtol=1e-10)
+    def test_scales_with_r0(self):
+        z = np.array([0.0, 0.5, 1.0, 2.0])
+        r1 = CoreCollapseRate(1e-4 * u.yr**-1 * u.Mpc**-3)(z).value
+        r2 = CoreCollapseRate(2e-4 * u.yr**-1 * u.Mpc**-3)(z).value
+        assert np.allclose(r2 / r1, 2.0)
 
-    def test_wrong_units_raises(self):
-        """Passing r0 in wrong units should raise UnitsError."""
+    def test_wrong_units_raise(self):
         with pytest.raises(u.UnitsError):
             CoreCollapseRate(r0=1e-4 * u.s**-1)
 
 
-# ===========================================================================
-# PinchedSpectrum
-# ===========================================================================
+class TestIMF:
 
-class TestPinchedSpectrum:
+    def test_salpeter_decreasing(self):
+        w = salpeter_imf(np.array([10.0, 20.0, 40.0]))
+        assert np.all(np.diff(w) < 0)
 
-    def test_alpha_from_moments_failed_sn(self):
-        """Failed-SN alpha from the paper's moments should be ~1.91."""
-        spec = PinchedSpectrum.from_moments(
-            8.6e52 * u.erg, 18.72 * u.MeV, 470.76 * u.MeV**2
-        )
-        assert np.isclose(spec.pinching, 1.913, atol=0.01)
-
-    def test_spectrum_positive(self):
-        """Spectrum must be non-negative for E > 0."""
-        spec = PinchedSpectrum(5e52 * u.erg, 15 * u.MeV, 3.0)
-        E    = np.linspace(0.1, 100, 500) * u.MeV
-        assert np.all(spec(E).value >= 0)
-
-    def test_spectrum_units(self):
-        """Output must have units of MeV^{-1}."""
-        spec = PinchedSpectrum(5e52 * u.erg, 15 * u.MeV, 3.0)
-        E    = np.array([10.0, 20.0]) * u.MeV
-        assert spec(E).unit.is_equivalent(u.MeV**-1)
-
-    def test_spectrum_peaks_near_mean_energy(self):
-        """Peak should be near alpha/(1+alpha) * mean_E."""
-        alpha   = 3.0
-        mean_E  = 15.0   # MeV
-        spec    = PinchedSpectrum(5e52 * u.erg, mean_E * u.MeV, alpha)
-        E       = np.linspace(0.5, 60, 1000) * u.MeV
-        E_peak  = E[np.argmax(spec(E).value)].value
-        expected = alpha / (1.0 + alpha) * mean_E   # 11.25 MeV
-        assert np.isclose(E_peak, expected, rtol=0.05)
-
-    def test_harder_spectrum_with_higher_fbh(self):
-        """Higher BH fraction shifts combined spectrum to higher energies."""
-        spec_s = PinchedSpectrum(5.0e52 * u.erg, 15.0 * u.MeV, 3.0)
-        spec_f = PinchedSpectrum.from_moments(
-            8.6e52 * u.erg, 18.72 * u.MeV, 470.76 * u.MeV**2
-        )
-        E = np.linspace(0.5, 80, 500) * u.MeV
-
-        def combined(fbh):
-            return ((1 - fbh) * spec_s(E) + fbh * spec_f(E)).value
-
-        def mean_energy(fbh):
-            dNdE = combined(fbh)
-            Ev   = E.value
-            # FIX: np.trapz removed in NumPy 2.0; use np.trapezoid
-            return np.trapezoid(Ev * dNdE, Ev) / np.trapezoid(dNdE, Ev)
-
-        assert mean_energy(0.40) > mean_energy(0.00)
+    def test_weights_normalised_and_ordered(self):
+        w = DSNB._imf_weights(np.array([9.0, 15.0, 25.0, 40.0]))
+        assert np.isclose(w.sum(), 1.0)
+        assert np.all(np.diff(w) < 0)
 
 
-# ===========================================================================
-# IBDCrossSection
-# ===========================================================================
-
-class TestIBDCrossSection:
-
-    def test_zero_below_threshold(self):
-        """Cross section must be zero below the IBD threshold (~1.806 MeV)."""
-        xs = IBDCrossSection()
-        E  = np.array([0.5, 1.0, 1.5, 1.8]) * u.MeV
-        assert np.all(xs(E).value == 0.0)
-
-    def test_positive_above_threshold(self):
-        """Cross section must be positive above threshold."""
-        xs = IBDCrossSection()
-        E  = np.linspace(2, 50, 100) * u.MeV
-        assert np.all(xs(E).value > 0)
-
-    def test_units(self):
-        """Output must have units of cm^2."""
-        xs = IBDCrossSection()
-        E  = np.array([10.0, 20.0]) * u.MeV
-        assert xs(E).unit.is_equivalent(u.cm**2)
-
-    def test_full_less_than_zeroth(self):
-        """Full S&V cross section must be smaller than zeroth-order."""
-        xs_full   = IBDCrossSection(order='full')
-        xs_zeroth = IBDCrossSection(order='zeroth')
-        E         = np.linspace(5, 50, 100) * u.MeV
-        above_thr = E.value > (xs_full.threshold.to(u.MeV).value)
-        assert np.all(
-            xs_full(E[above_thr]).value < xs_zeroth(E[above_thr]).value
-        )
-
-    def test_sigma0_from_tau_n(self):
-        """Verify sigma_0 value from PDG 2022 tau_n = 878.4 s."""
-        xs = IBDCrossSection()
-        # Expected: ~9.57e-44 cm^2 MeV^{-2} (within 1%)
-        assert np.isclose(xs.sigma0, 9.57e-44, rtol=0.01)
-
-    def test_correction_at_20MeV(self):
-        """
-        Combined recoil + weak-magnetism suppression at 20 MeV.
-
-        The actual value is ~7.5% (recoil ~4.3% + WM ~3.4% on the product
-        E_e*p_e). The test checks that the suppression is in the physically
-        expected range of 4--9%.
-        """
-        xs_full   = IBDCrossSection(order='full')
-        xs_zeroth = IBDCrossSection(order='zeroth')
-        E         = np.array([20.0]) * u.MeV
-        ratio     = xs_full(E).value / xs_zeroth(E).value
-        suppression_pct = (1 - ratio[0]) * 100
-        # FIX: actual suppression is ~7.5%, so upper bound raised to 9.0
-        assert 4.0 < suppression_pct < 9.0, \
-            f"Suppression at 20 MeV: {suppression_pct:.1f}% (expected 4--9%)"
-
-    def test_invalid_order_raises(self):
-        with pytest.raises(ValueError):
-            IBDCrossSection(order='invalid')
-
-
-# ===========================================================================
-# DSNBFlux
-# ===========================================================================
-
-class TestDSNBFlux:
+# ---------------------------------------------------------------------------
+class TestDSNB:
 
     @pytest.fixture
-    def model(self):
-        return DSNBFlux(n_z=400)   # coarser grid for speed in tests
+    def dsnb(self):
+        return DSNB([GaussianModel()], n_z=300)
 
-    def test_flux_positive(self, model):
-        """Flux must be non-negative at all energies."""
-        E   = np.linspace(5, 50, 50) * u.MeV
-        phi = model.flux(E)
-        assert np.all(phi.value >= 0)
+    def test_works_for_non_pinched_model(self, dsnb):
+        assert nuebar(dsnb.get_flux(T, E)).max() > 0
 
-    def test_flux_units(self, model):
-        """Flux must have units of cm^{-2} s^{-1} MeV^{-1}."""
-        E   = np.array([15.0, 20.0]) * u.MeV
-        phi = model.flux(E)
-        assert phi.unit.is_equivalent(u.cm**-2 * u.s**-1 * u.MeV**-1)
+    def test_container_shape_and_unit(self, dsnb):
+        flux = dsnb.get_flux(T, E)
+        assert flux.array.shape == (len(ThreeFlavor), len(T), len(E))
+        assert flux.array.unit.is_equivalent(u.cm**-2 * u.s**-1 * u.MeV**-1)
 
-    def test_ibd_rate_peaks_between_5_and_25MeV(self, model):
-        """
-        The IBD event rate dR/dE (flux x cross section) peaks between
-        5 and 25 MeV.  Note: the raw DSNB *flux* dPhi/dE peaks at lower
-        energies due to high-z contributions; it is the *rate* (flux x sigma)
-        that peaks in the detection window, as shown in Fig. 1 of LVW 2022.
-        """
-        xs    = IBDCrossSection()
-        E     = np.linspace(2, 50, 300) * u.MeV
-        phi   = model.flux(E)
-        sigma = xs(E)
-        rate  = (phi * sigma).value
-        E_peak = E[np.argmax(rate)].value
-        assert 5.0 < E_peak < 25.0, \
-            f"IBD rate peaks at {E_peak:.1f} MeV, expected 5--25 MeV"
+    def test_only_nuebar_is_filled(self, dsnb):
+        arr = dsnb.get_flux(T, E).array.value
+        others = [i for i in range(arr.shape[0]) if i != I_NUEBAR]
+        assert np.all(arr[others] == 0)
 
-    def test_higher_fbh_increases_flux_in_window(self, model):
-        """Higher f_BH shifts more flux into the 12--30 MeV window."""
-        model_lo = DSNBFlux(f_bh=0.00, n_z=300)
-        model_hi = DSNBFlux(f_bh=0.40, n_z=300)
-        E        = np.linspace(12, 30, 80) * u.MeV
-        # FIX: np.trapz removed in NumPy 2.0; use np.trapezoid
-        flux_lo  = np.trapezoid(model_lo.flux(E).value, E.value)
-        flux_hi  = np.trapezoid(model_hi.flux(E).value, E.value)
-        assert flux_hi > flux_lo
+    def test_flux_is_steady(self, dsnb):
+        t = np.linspace(0, 1, 5) << u.yr
+        arr = dsnb.get_flux(t, E).array[I_NUEBAR].value
+        assert np.allclose(arr, arr[0])
 
-    def test_higher_r0_scales_flux_linearly(self):
-        """Flux scales linearly with R_CC(0)."""
-        model1 = DSNBFlux(rcc=CoreCollapseRate(1e-4 * u.yr**-1 * u.Mpc**-3), n_z=300)
-        model2 = DSNBFlux(rcc=CoreCollapseRate(2e-4 * u.yr**-1 * u.Mpc**-3), n_z=300)
-        E = np.array([15.0]) * u.MeV
-        # FIX: flux() returns a scalar when a single energy is given; use float()
-        r = float(model2.flux(E).value) / float(model1.flux(E).value)
-        assert np.isclose(r, 2.0, rtol=1e-3)
+    def test_fluence_is_flux_times_exposure(self, dsnb):
+        flux = dsnb.get_flux(T, E)
+        fluence = flux.integrate('time')
+        expected = nuebar(flux) * (1 * u.yr).to_value(u.s)
+        got = fluence.array[I_NUEBAR, 0, :].to_value(1 / (u.cm**2 * u.MeV))
+        assert np.allclose(got, expected, rtol=1e-6)
 
-    def test_integrated_juno_rate_ballpark(self, model):
-        """
-        JUNO integrated rate at 50% efficiency should be ~1.2 yr^{-1}.
-        (Paper Table II: 1.4 yr^{-1}; analytic result is ~14% lower due to
-        absence of detector energy-resolution smearing.)
-        """
-        Np   = 1.22e33
-        rate = model.integrated_ibd_rate(Np, efficiency=0.50, n_e=200)
-        assert 0.8 < rate.to(u.yr**-1).value < 2.0, \
-            f"JUNO rate = {rate:.3f}, expected 0.8--2.0 yr^{{-1}}"
+    def test_flux_non_negative(self, dsnb):
+        assert np.all(nuebar(dsnb.get_flux(T, E)) >= 0)
 
-    def test_integrated_skgd_rate_ballpark(self, model):
-        """SK-Gd T1 integrated rate at 50% efficiency should be ~1.5 yr^{-1}."""
-        Np   = 1.50e33
-        rate = model.integrated_ibd_rate(Np, efficiency=0.50, n_e=200)
-        assert 0.8 < rate.to(u.yr**-1).value < 2.5
+    def test_linear_in_number_of_neutrinos(self):
+        f1 = nuebar(DSNB([GaussianModel(n_nu=1e57)], n_z=200).get_flux(T, E))
+        f2 = nuebar(DSNB([GaussianModel(n_nu=3e57)], n_z=200).get_flux(T, E))
+        assert np.allclose(f2, 3 * f1)
 
-    def test_invalid_fbh_raises(self):
+    def test_linear_in_r0(self):
+        m = [GaussianModel()]
+        f1 = nuebar(DSNB(m, rcc=CoreCollapseRate(1e-4 * u.yr**-1 * u.Mpc**-3), n_z=200).get_flux(T, E))
+        f2 = nuebar(DSNB(m, rcc=CoreCollapseRate(2e-4 * u.yr**-1 * u.Mpc**-3), n_z=200).get_flux(T, E))
+        assert np.allclose(f2, 2 * f1)
+
+    def test_flavor_transformation_is_applied(self, dsnb):
+        none = nuebar(dsnb.get_flux(T, E, NoTransformation()))
+        nmo = nuebar(dsnb.get_flux(T, E, AdiabaticMSW(MixingParameters('NORMAL'))))
+        assert not np.allclose(none, nmo)
+
+    def test_none_equals_no_transformation(self, dsnb):
+        assert np.allclose(nuebar(dsnb.get_flux(T, E, None)),
+                           nuebar(dsnb.get_flux(T, E, NoTransformation())))
+
+    def test_high_energy_reaches_redshifted_spectrum(self):
+        """Emission grid must extend to E_max * (1 + z_max)."""
+        model = DSNB([GaussianModel(mean=150.0, sigma=20.0)], z_max=5.0, n_z=200)
+        flux = nuebar(model.get_flux(T, np.array([40.0, 50.0]) << u.MeV))
+        assert np.all(flux > 0)
+
+    def test_single_energy(self, dsnb):
+        assert dsnb.get_flux(T, 20 << u.MeV).array.shape == (len(ThreeFlavor), len(T), 1)
+
+    def test_two_models_are_weighted(self):
+        lo, hi = GaussianModel(mean=10.0, mass=10.0), GaussianModel(mean=25.0, mass=40.0)
+        f_lo = nuebar(DSNB([lo], n_z=200).get_flux(T, E))
+        f_hi = nuebar(DSNB([hi], n_z=200).get_flux(T, E))
+        both = DSNB([lo, hi], n_z=200)
+        w = both._weights
+        assert np.isclose(w.sum(), 1.0)
+        assert np.allclose(nuebar(both.get_flux(T, E)), w[0] * f_lo + w[1] * f_hi, rtol=1e-6)
+
+    def test_explicit_weights_allow_equal_masses(self):
+        models = [GaussianModel(mean=10.0), GaussianModel(mean=25.0)]
+        d = DSNB(models, weights=[1.0, 3.0], n_z=100)
+        assert np.allclose(d._weights, [0.25, 0.75])
+
+    def test_duplicate_masses_raise(self):
         with pytest.raises(ValueError):
-            DSNBFlux(f_bh=1.5)
+            DSNB([GaussianModel(), GaussianModel()])
 
-    def test_smeared_flux_shape(self, model):
-        """Smeared flux must have the same shape as the input energy array."""
-        E      = np.linspace(10, 40, 60) * u.MeV
-        phi_sm = model.smeared_flux(E, energy_resolution=0.03)
-        assert phi_sm.shape == E.shape
+    def test_missing_mass_metadata_raises(self):
+        with pytest.raises(ValueError):
+            DSNB([GaussianModel(with_mass=False)])
 
-    def test_smeared_flux_increases_near_threshold(self):
-        """Gaussian smearing should increase flux just above 12 MeV."""
-        model  = DSNBFlux(n_z=300)
-        E      = np.linspace(9, 20, 200) * u.MeV
-        phi    = model.flux(E).value
-        phi_sm = model.smeared_flux(E, energy_resolution=0.15).value
-        mask   = (E.value > 12.0) & (E.value < 14.0)
-        assert phi_sm[mask].mean() >= phi[mask].mean() * 0.95
+    def test_mass_tuple_is_accepted(self):
+        d = DSNB([(GaussianModel(with_mass=False), 20.0)], n_z=100)
+        assert np.isclose(d._masses[0], 20.0)
+
+    def test_bad_weights_raise(self):
+        with pytest.raises(ValueError):
+            DSNB([GaussianModel()], weights=[1.0, 2.0])
