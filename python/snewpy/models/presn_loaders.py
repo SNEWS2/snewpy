@@ -188,6 +188,9 @@ class Yoshida_2016(SupernovaModel):
 class Myers_2026(SupernovaModel):
     """Set up a presupernova model based on 
     [Myers et al. (2026) arxiv.org/abs/2604.22605]
+
+    The pair-annihilation files give the mu and tau (anti)neutrino spectra combined, nu_mu + nu_tau
+    (columns 4 and 5); they are split equally between the two flavors here.
     """
     _T_CC_RE = re.compile(r"t_cc\s*=\s*([-+0-9.eE]+)") # regex pattern to find t_cc in header of files
 
@@ -213,8 +216,9 @@ class Myers_2026(SupernovaModel):
 
         nu_e      = np.stack([beta[k][2][:, 0] + pair[k][2][:, 0] for k in profiles])  # (nT, nE)
         nu_e_bar  = np.stack([beta[k][2][:, 1] + pair[k][2][:, 1] for k in profiles])                                                                                                
-        nu_mu     = np.stack([pair[k][2][:, 2] for k in profiles])  # beta contributes 0
-        nu_mu_bar = np.stack([pair[k][2][:, 3] for k in profiles])                                                                                               
+        # pair columns 4 and 5 are nu_mu + nu_tau combined: split equally between the two flavors
+        nu_mu     = 0.5 * np.stack([pair[k][2][:, 2] for k in profiles])  # beta contributes 0
+        nu_mu_bar = 0.5 * np.stack([pair[k][2][:, 3] for k in profiles])
         nu_tau    = nu_mu                                           # mu = tau                                                                                                                  
         nu_tau_bar= nu_mu_bar
 
