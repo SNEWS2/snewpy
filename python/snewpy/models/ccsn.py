@@ -47,8 +47,8 @@ class Fischer_2020(loaders.Fischer_2020):
     """Model based on simulations from `Fischer et al. (2020) <https://arxiv.org/abs/1804.10890>`
     """
     def __init__(self):
-        self.metadata["EOS"] = "HS(DD2)"
-        self.metadata["Progenitor mass"] = 18 * u.Msun
+        self.metadata["eos"] = "HS(DD2)"
+        self.metadata["progenitor_mass"] = 18 * u.Msun
         filename='Fischer_2020.tar.gz'
         return super().__init__(filename, metadata=self.metadata)
 
@@ -182,7 +182,7 @@ class OConnor_2015(loaders.OConnor_2015):
     """Model based on the black hole formation simulation in `O'Connor (2015) <https://arxiv.org/abs/1411.7058>`_.
     """
     def __init__(self, progenitor_mass:u.Quantity):
-        self.metadata["EOS"] = "LS220"
+        self.metadata["eos"] = "LS220"
         # Filename is currently the same regardless of parameters
         filename = 'M1_neutrinos.dat'
         return super().__init__(filename, self.metadata)
@@ -196,7 +196,7 @@ class Zha_2021(loaders.Zha_2021):
     """Model based on the hadron-quark phse transition models from `Zha et al. 2021 <https://arxiv.org/abs/2103.02268>`_.
     """
     def __init__(self, *, progenitor_mass:u.Quantity):
-        self.metadata["EOS"] = "STOS_B145"
+        self.metadata["eos"] = "STOS_B145"
         filename = f's{progenitor_mass.value:g}.dat'
         return super().__init__(filename, self.metadata)
 
@@ -220,7 +220,7 @@ class Warren_2020(loaders.Warren_2020):
     # np.arange with decimal increments can produce floating point errors
     # Though it may be more intuitive to use np.arange, these fp-errors quickly become troublesome
     def __init__(self, *, progenitor_mass, turbmixing_param):
-        self.metadata["EOS"] = "SFHo"
+        self.metadata["eos"] = "SFHo"
         if progenitor_mass.value.is_integer() and progenitor_mass.value <= 30.:
             fname = f'stir_a{turbmixing_param:3.2f}/stir_multimessenger_a{turbmixing_param:3.2f}_m{progenitor_mass.value:.1f}.h5'
         else:
@@ -239,7 +239,7 @@ class Warren_2020(loaders.Warren_2020):
 class Kuroda_2020(loaders.Kuroda_2020):
     """Model based on simulations from `Kuroda et al. (2020) <https://arxiv.org/abs/2009.07733>`_."""
     def __init__(self, *, rotational_velocity, magnetic_field_exponent):
-        self.metadata["EOS"] = "LS220"
+        self.metadata["eos"] = "LS220"
         filename = f'LnuR{int(rotational_velocity.value):1d}0B{int(magnetic_field_exponent):02d}.dat'
         return super().__init__(filename, self.metadata)
 
@@ -449,8 +449,8 @@ class Bugli_2021(loaders.Bugli_2021):
     def __init__(self, *, Bfield:str, direction:str, rotation:int=None, grav:str=None):
 
         filename = f'{Bfield}_3d_snewpy_{direction}.dat'
-        self.metadata['Progenitor mass'] = 35*u.Msun
-        self.metadata['EOS'] = 'LS220'
+        self.metadata['progenitor_mass'] = 35*u.Msun
+        self.metadata['eos'] = 'LS220'
         if Bfield=='L2':
             filename = f'{Bfield}_b12_dipdecay_3d_grav{grav}_snewpy_{direction}.dat'
         if Bfield=='L1':
