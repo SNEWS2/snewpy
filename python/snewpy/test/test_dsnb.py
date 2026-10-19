@@ -38,6 +38,30 @@ class GaussianModel(SupernovaModel):
                 for f in flavors}
 
 
+class FlatModel(SupernovaModel):
+    """Toy model: dN/dE = k (constant) for all E, emitted over 1 s."""
+
+    def __init__(self, k=1e57):
+        super().__init__(np.linspace(0, 1, 5) << u.s, {'Progenitor mass': 15 * u.solMass})
+        self.k = k
+
+    def _get_initial_spectra_dict(self, t, E, flavors=ThreeFlavor):
+        t = u.Quantity(t, ndmin=1)
+        E = u.Quantity(E, ndmin=1)
+        spec = np.full((t.size, E.size), self.k) << (1 / (u.MeV * u.s))
+        return {f: (spec if f == ThreeFlavor.NU_E_BAR else 0 * spec) for f in flavors}
+
+
+class ConstantRate:
+    """R_CC(z) = r0, independent of z."""
+
+    def __init__(self, r0=1e-4 * u.yr**-1 * u.Mpc**-3):
+        self.r0 = r0
+
+    def __call__(self, z):
+        return np.ones_like(np.asarray(z, dtype=float)) * self.r0
+
+
 T = np.array([0.0, 1.0]) << u.yr
 E = np.linspace(2, 50, 120) << u.MeV
 I_NUEBAR = list(ThreeFlavor).index(ThreeFlavor.NU_E_BAR)
@@ -57,6 +81,11 @@ class TestCoreCollapseRate:
     def test_rate_peaks_at_intermediate_redshift(self):
         z = np.linspace(0, 5, 500)
         assert 1.0 < z[np.argmax(CoreCollapseRate()(z).value)] < 3.0
+
+    def test_rate_rises_by_factor_8_to_z1(self):
+        """Cole et al. form with multiplicative h: R(1)/R(0) = 8.6."""
+        rcc = CoreCollapseRate()
+        assert np.isclose(rcc(1.0).value / rcc(0.0).value, 8.63, rtol=0.01)
 
     def test_rate_positive(self):
         assert np.all(CoreCollapseRate()(np.linspace(0, 10, 200)).value > 0)
@@ -130,13 +159,30 @@ class TestDSNB:
         f2 = nuebar(DSNB(m, rcc=CoreCollapseRate(2e-4 * u.yr**-1 * u.Mpc**-3), n_z=200).get_flux(T, E))
         assert np.allclose(f2, 2 * f1)
 
+    def test_redshift_weight_is_one_over_H(self):
+        """
+        For constant R_CC and flat dN/dE = k the flux is analytic,
+            c/H0 * R * k * integral dz / E(z),
+        i.e. there is no extra factor (1+z) in the integrand.
+        """
+        from astropy import constants as const
+        from scipy.integrate import quad
+        k, r0 = 1e57, 1e-4 * u.yr**-1 * u.Mpc**-3
+        d = DSNB([FlatModel(k)], rcc=ConstantRate(r0), z_max=5.0, n_z=4000)
+        got = nuebar(d.get_flux(T, np.array([10.0, 20.0]) << u.MeV))
+        z_lo = 1e-4                       # first point of the redshift grid
+        integral = quad(lambda z: 1.0 / d.cosmology.efunc(z), z_lo, 5.0)[0]
+        expected = (const.c / d.cosmology.H(0) * r0 * k / u.MeV * integral)
+        expected = expected.to_value(1 / (u.cm**2 * u.s * u.MeV))
+        assert np.allclose(got, expected, rtol=2e-3)
+
     def test_flavor_transformation_is_applied(self, dsnb):
         none = nuebar(dsnb.get_flux(T, E, NoTransformation()))
         nmo = nuebar(dsnb.get_flux(T, E, AdiabaticMSW(MixingParameters('NORMAL'))))
         assert not np.allclose(none, nmo)
 
-    def test_none_equals_no_transformation(self, dsnb):
-        assert np.allclose(nuebar(dsnb.get_flux(T, E, None)),
+    def test_default_is_no_transformation(self, dsnb):
+        assert np.allclose(nuebar(dsnb.get_flux(T, E)),
                            nuebar(dsnb.get_flux(T, E, NoTransformation())))
 
     def test_high_energy_reaches_redshifted_spectrum(self):

@@ -44,8 +44,8 @@ from astropy.cosmology import FlatLambdaCDM
 from scipy.integrate import quad
 from snewpy.flavor import ThreeFlavor
 from snewpy.flux import Container
-from snewpy.flavor_transformation import NoTransformation
-from typing import Optional, List, Sequence, Union
+from snewpy.flavor_transformation import FlavorTransformation, NoTransformation
+from typing import Optional, Sequence
 
 __all__ = ["CoreCollapseRate", "salpeter_imf", "DSNB"]
 
@@ -58,8 +58,13 @@ class CoreCollapseRate:
     """
     Redshift-dependent core-collapse supernova rate.
 
-    Implements the parametrisation of Hopkins & Beacom (2006),
-    ApJ 651, 142, as used in Eq. (2) of Li, Vagins & Wurm (2022).
+    Implements the parametrisation of Hopkins & Beacom (2006), ApJ 651, 142,
+    which uses the functional form of Cole et al. (2001),
+
+        rho(z) = (a + b z) h / (1 + (z/c)^d),
+
+    with a=0.0170, b=0.13, c=3.3, d=5.3 and h=0.7.  The overall factor h
+    cancels here, because the rate is normalised to ``r0`` at z=0.
 
     Parameters
     ----------
@@ -100,8 +105,8 @@ class CoreCollapseRate:
             Rate in yr^{-1} Mpc^{-3}.
         """
         z   = np.asarray(z, dtype=float)
-        num = (self._a + self._b * z) ** self._h
-        den = self._a**self._h * (1.0 + (z / self._c)**self._d)
+        num = (self._a + self._b * z) * self._h
+        den = self._a * self._h * (1.0 + (z / self._c)**self._d)
         return self.r0 * num / den
 
 
@@ -247,7 +252,11 @@ class DSNB:
         return weights / weights.sum()
 
     # ------------------------------------------------------------------
-    def _dNdE_per_sn(self, E_emit: u.Quantity, flavor_xform=None) -> np.ndarray:
+    def _dNdE_per_sn(
+        self,
+        E_emit       : u.Quantity,
+        flavor_xform : FlavorTransformation = NoTransformation(),
+    ) -> np.ndarray:
         """
         Weighted, time-integrated NU_E_BAR spectrum of one core collapse.
 
@@ -261,8 +270,8 @@ class DSNB:
         ----------
         E_emit : astropy.units.Quantity
             Emitted-energy grid.
-        flavor_xform : FlavorTransformation or None
-            Transformation inside the supernova.  ``None`` means
+        flavor_xform : FlavorTransformation
+            Transformation inside the supernova.  Default:
             ``NoTransformation()``.
 
         Returns
@@ -270,9 +279,6 @@ class DSNB:
         numpy.ndarray, shape (len(E_emit),)
             dN/dE in MeV^-1.
         """
-        if flavor_xform is None:
-            flavor_xform = NoTransformation()
-
         dNdE = np.zeros(E_emit.size)
         for model, weight in zip(self._models, self._weights):
             spectra  = model.get_transformed_spectra(model.time, E_emit, flavor_xform)
@@ -286,7 +292,7 @@ class DSNB:
         self,
         t            : u.Quantity,
         E            : u.Quantity,
-        flavor_xform = None,
+        flavor_xform : FlavorTransformation = NoTransformation(),
     ) -> Container:
         """
         DSNB flux, same call signature as the supernova models' get_flux
@@ -303,10 +309,10 @@ class DSNB:
             At least 2 points are needed to integrate over time.
         E : astropy.units.Quantity
             Observed neutrino energies.
-        flavor_xform : FlavorTransformation or None
+        flavor_xform : FlavorTransformation
             Flavor transformation inside the source supernovae, e.g.
-            ``AdiabaticMSW(MixingParameters('NORMAL'))``.  ``None`` means
-            ``NoTransformation()``.
+            ``AdiabaticMSW(MixingParameters('NORMAL'))``.  Default:
+            ``NoTransformation()``, as for the supernova models.
 
         Returns
         -------
@@ -331,7 +337,7 @@ class DSNB:
         Hz  = self.cosmology.efunc(z)
         rcc = self.rcc(z).to_value(u.yr**-1 * u.Mpc**-3)
 
-        integrand = dNdE_grid * (rcc * (1.0 + z) / Hz)[np.newaxis, :]
+        integrand = dNdE_grid * (rcc / Hz)[np.newaxis, :]
         integral  = np.trapezoid(integrand, z, axis=1)
 
         H0_s      = self.cosmology.H(0).to_value(u.s**-1)
