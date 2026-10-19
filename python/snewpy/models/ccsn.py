@@ -452,7 +452,7 @@ class Takata_2025(loaders.Takata_2025):
     grav=['A','B',None],
     rotation=[0,90,None],
     progenitor_mass = [35] * u.Msun,
-    eos = ['SFHo'], 
+    eos = ['LS220'], 
     _param_validator = lambda p: (p['Bfield'] == 'hydro' and p['grav'] is None and p['rotation'] is None ) or
         (p['Bfield'] == 'L1' and p['grav'] is None and p['rotation'] in [0,90]) or
         (p['Bfield'] == 'L2' and p['rotation'] is None and p['grav'] in ['A','B'])
