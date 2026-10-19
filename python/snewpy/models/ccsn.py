@@ -42,15 +42,17 @@ from snewpy.models.registry_model import all_models
 from textwrap import dedent
 
 
-@RegistryModel()
+@RegistryModel(
+    progenitor_mass = [18] * u.Msun,
+    eos = ['HS(DD2)']
+)
 class Fischer_2020(loaders.Fischer_2020):
     """Model based on simulations from `Fischer et al. (2020) <https://arxiv.org/abs/1804.10890>`
     """
-    def __init__(self):
-        self.metadata["eos"] = "HS(DD2)"
-        self.metadata["progenitor_mass"] = 18 * u.Msun
+    def __init__(self, progenitor_mass:u.Quantity = 18 * u.Msun, eos:str = 'LS220'):
         filename='Fischer_2020.tar.gz'
-        return super().__init__(filename, metadata=self.metadata)
+        super().__init__(filename, metadata=self.metadata)
+
 
 @RegistryModel(
     progenitor_mass = [13, 20, 30, 50] * u.Msun,
@@ -78,7 +80,7 @@ class Nakazato_2013(loaders.Nakazato_2013):
             filename = f"nakazato-{eos}-BH-z{metallicity}-s{progenitor_mass:3.1f}.fits"
         #modify metadata if needed...
         #self.metadata['name']=value
-        return super().__init__(filename, self.metadata)
+        super().__init__(filename, self.metadata)
 
 
 @RegistryModel(
@@ -93,7 +95,7 @@ class Sukhbold_2015(loaders.Sukhbold_2015):
             filename = f'sukhbold-{eos}-z{progenitor_mass.value:3.1f}.fits'
         else:
             filename = f'sukhbold-{eos}-s{progenitor_mass.value:3.1f}.fits'
-        return super().__init__(filename, self.metadata)
+        super().__init__(filename, self.metadata)
 
 
 @RegistryModel(
@@ -111,7 +113,8 @@ class Tamborra_2014(loaders.Tamborra_2014):
     def __init__(self, *, progenitor_mass:u.Quantity, direction:int):
         filename = f's{progenitor_mass.value:3.1f}c_3D_dir{direction}'
         # Metadata is handled by __init__ in _GarchingArchiveModel
-        return super().__init__(filename=filename, metadata=self.metadata)
+        super().__init__(filename=filename, metadata=self.metadata)
+
 
 @RegistryModel(
     progenitor_mass= [11.2, 27.] * u.Msun,
@@ -123,7 +126,8 @@ class Bollig_2016(loaders.Bollig_2016):
     """
     def __init__(self, progenitor_mass:u.Quantity, eos:str='LS220'):
         filename = f's{progenitor_mass.value:3.1f}c'
-        return super().__init__(filename=filename, metadata=self.metadata)
+        super().__init__(filename=filename, metadata=self.metadata)
+
 
 @RegistryModel(
     progenitor_mass = [15.] * u.Msun,
@@ -136,10 +140,10 @@ class Walk_2018(loaders.Walk_2018):
     PRD 98:123001, 2018 <https://arxiv.org/abs/1807.02366>`_. Data files are from
     the `Garching Supernova Archive`_.
     """
-    def __init__(self, *, progenitor_mass:u.Quantity, rotation:str, direction:int):
+    def __init__(self, *, progenitor_mass:u.Quantity = 15*u.Msun, rotation:str, direction:int, eos:str='LS220'):
 
         filename = f's{progenitor_mass.value:3.1f}c_3D_{rotation}rot_dir{direction}'
-        return super().__init__(filename=filename, metadata=self.metadata)
+        super().__init__(filename=filename, metadata=self.metadata)
 
 
 @RegistryModel(
@@ -154,9 +158,9 @@ class Walk_2019(loaders.Walk_2019):
     PRD 101:123013, 2019 <https://arxiv.org/abs/1910.12971>`_. Data files are
     from the `Garching Supernova Archive`_.
     """
-    def __init__(self, * ,progenitor_mass:u.Quantity, direction:int):
+    def __init__(self, * ,progenitor_mass:u.Quantity, direction:int, eos:str='LS220'):
         filename = f's{progenitor_mass.value:3.1f}c_3DBH_dir{direction}'
-        return super().__init__(filename=filename, metadata=self.metadata)
+        super().__init__(filename=filename, metadata=self.metadata)
 
 
 @RegistryModel(
@@ -173,32 +177,35 @@ class OConnor_2013(loaders.OConnor_2013):
     def __init__(self, eos:str, progenitor_mass:u.Quantity):
         # Load from Parameters
         filename = f'{eos}_timeseries.tar.gz'
-        return super().__init__(filename=filename, metadata=self.metadata)
+        super().__init__(filename=filename, metadata=self.metadata)
+
 
 @RegistryModel(
-    progenitor_mass = [40 * u.Msun],
+    progenitor_mass = [40] * u.Msun,
+    eos = ['LS220'] 
 )
 class OConnor_2015(loaders.OConnor_2015):
     """Model based on the black hole formation simulation in `O'Connor (2015) <https://arxiv.org/abs/1411.7058>`_.
     """
-    def __init__(self, progenitor_mass:u.Quantity):
-        self.metadata["eos"] = "LS220"
+    def __init__(self, progenitor_mass:u.Quantity = 40 * u.Msun, eos:str='LS220'):
         # Filename is currently the same regardless of parameters
         filename = 'M1_neutrinos.dat'
-        return super().__init__(filename, self.metadata)
+        super().__init__(filename, self.metadata)
+
 
 @RegistryModel(
     progenitor_mass = Parameter(values=(list(range(16, 27)) + [19.89, 22.39, 30, 33]) * u.Msun,
                                 desc_values = '[16..26, 19.89, 22.39, 30, 33] solMass'
                                ),
+    eos = ['STOS_B145'], 
 )
 class Zha_2021(loaders.Zha_2021):
     """Model based on the hadron-quark phse transition models from `Zha et al. 2021 <https://arxiv.org/abs/2103.02268>`_.
     """
-    def __init__(self, *, progenitor_mass:u.Quantity):
-        self.metadata["eos"] = "STOS_B145"
+    def __init__(self, *, progenitor_mass:u.Quantity, eos:str='STOS_B145'):
         filename = f's{progenitor_mass.value:g}.dat'
-        return super().__init__(filename, self.metadata)
+        super().__init__(filename, self.metadata)
+
 
 @RegistryModel(
     progenitor_mass=Parameter(np.concatenate((np.linspace(9.0, 12.75, 16),
@@ -208,6 +215,7 @@ class Zha_2021(loaders.Zha_2021):
                                               np.linspace(60, 80, 3),
                                               np.linspace(100, 120, 2))) << u.Msun,
                               desc_values='[9..0.25..13, 13..0.1..30, 31..33, 35..5..60, 70, 80, 100, 120] solMass'),
+    eos = ['SFHo'],
     turbmixing_param= Parameter([1.23, 1.25, 1.27],
                               name='turbmixing_param',
                               label='Turb. mixing param.',
@@ -219,29 +227,30 @@ class Warren_2020(loaders.Warren_2020):
     Neutrino fluxes available at https://doi.org/10.5281/zenodo.3667908."""
     # np.arange with decimal increments can produce floating point errors
     # Though it may be more intuitive to use np.arange, these fp-errors quickly become troublesome
-    def __init__(self, *, progenitor_mass, turbmixing_param):
-        self.metadata["eos"] = "SFHo"
+    def __init__(self, *, progenitor_mass:u.Quantity, turbmixing_param, eos:str='SFHo'):
         if progenitor_mass.value.is_integer() and progenitor_mass.value <= 30.:
             fname = f'stir_a{turbmixing_param:3.2f}/stir_multimessenger_a{turbmixing_param:3.2f}_m{progenitor_mass.value:.1f}.h5'
         else:
             fname = f'stir_a{turbmixing_param:3.2f}/stir_multimessenger_a{turbmixing_param:3.2f}_m{progenitor_mass.value:g}.h5'
-        return super().__init__(fname, self.metadata)
+        super().__init__(fname, self.metadata)
+
 
 @RegistryModel(
     rotational_velocity= [0, 1] * u.rad / u.s,
     magnetic_field_exponent= Parameter([0, 12, 13],
                                       label='B_0 Exponent',
                                       description='Exponent of magnetic field (See Eq. 46)'),
-    progenitor_mass=[20*u.Msun],
+    progenitor_mass=[20] *u.Msun,
+     eos = ['LS220'],
     _param_validator = lambda p: (p['rotational_velocity'].value == 1 and p['magnetic_field_exponent'] in (12, 13)) or \
                                (p['rotational_velocity'].value == 0 and p['magnetic_field_exponent'] == 0)
 )
 class Kuroda_2020(loaders.Kuroda_2020):
     """Model based on simulations from `Kuroda et al. (2020) <https://arxiv.org/abs/2009.07733>`_."""
-    def __init__(self, *, rotational_velocity, magnetic_field_exponent):
-        self.metadata["eos"] = "LS220"
+    def __init__(self, *, rotational_velocity, magnetic_field_exponent, progenitor_mass:u.Quantity = 20*u.Msun, eos:str='LS220'):
         filename = f'LnuR{int(rotational_velocity.value):1d}0B{int(magnetic_field_exponent):02d}.dat'
-        return super().__init__(filename, self.metadata)
+        super().__init__(filename, self.metadata)
+
 
 @RegistryModel(
     progenitor_mass=[9, 10, 12, 13, 14, 15, 19, 25, 60] * u.Msun,
@@ -250,7 +259,7 @@ class Fornax_2019(loaders.Fornax_2019):
     """Model based on 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019.
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/
     """
-    def __init__(self, cache_flux=False, *, progenitor_mass):
+    def __init__(self, cache_flux=False, *, progenitor_mass:u.Quantity):
         """
         Parameters
         ----------
@@ -261,7 +270,8 @@ class Fornax_2019(loaders.Fornax_2019):
             filename = f'lum_spec_{int(progenitor_mass.value):d}M_r250.h5'
         else:
             filename = f'lum_spec_{int(progenitor_mass.value):d}M.h5'
-        return super().__init__(filename, self.metadata, cache_flux=cache_flux)
+        super().__init__(filename, self.metadata, cache_flux=cache_flux)
+
 
 @RegistryModel(
     progenitor_mass = Parameter((list(range(12, 24)) + [25, 26, 26.99]) * u.Msun,
@@ -277,7 +287,7 @@ class Fornax_2021(loaders.Fornax_2021):
             filename = f'lum_spec_{int(progenitor_mass.value):2d}M_r10000_dat.h5'
         else:
             filename = f'lum_spec_{progenitor_mass.value:.2f}M_r10000_dat.h5'
-        return super().__init__(filename, self.metadata)
+        super().__init__(filename, self.metadata)
 
 
 _fornax_2022_progenitors = [  '9.0',     '9.25',     '9.5',      '9.75',     '10.0',
@@ -310,13 +320,14 @@ class Fornax_2022(loaders.Fornax_2022):
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.2d.large/
         """
     #a mapping of mass to the progenitor
-    _mass_to_progenitor = dict(zip(_fornax_2022_masses,_fornax_2022_progenitors))
+    _mass_to_progenitor = dict(zip([m.value for m in _fornax_2022_masses], _fornax_2022_progenitors))
 
-    def __init__(self, progenitor_mass:u.Quantity):
-        progenitor = self._mass_to_progenitor[progenitor_mass]
-        self.metadata['Black hole'] = progenitor.endswith('.bh')
+    def __init__(self, progenitor_mass: u.Quantity):
+        mass_val = progenitor_mass.to_value(u.Msun) if isinstance(progenitor_mass, u.Quantity) else progenitor_mass
+        progenitor = self._mass_to_progenitor[mass_val]
         filename = f'lum_spec_{progenitor}_dat.h5'
-        return super().__init__(filename, self.metadata)
+        self.metadata['Black hole'] = progenitor.endswith('.bh')}
+        super().__init__(filename, self.metadata)
 
 
 _fornax_2024_progenitors = [
@@ -335,13 +346,14 @@ class Fornax_2024(loaders.Fornax_2024):
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d.update/
        """
     #a mapping of mass to the progenitor
-    _mass_to_progenitor = dict(zip(_fornax_2024_masses,_fornax_2024_progenitors))
+    _mass_to_progenitor = dict(zip([m.value for m in _fornax_2022_masses], _fornax_2022_progenitors))
 
-    def __init__(self, progenitor_mass:u.Quantity):
-        progenitor = self._mass_to_progenitor[progenitor_mass]
-        self.metadata['Black hole'] = progenitor == '12.25' or progenitor == '14' or progenitor == '19.56' or progenitor == '40'
-        filename = f'lum_spec_{progenitor}_dat.h5'
-        return super().__init__(filename, self.metadata)
+    def __init__(self, progenitor_mass: u.Quantity):
+        mass_val = progenitor_mass.to_value(u.Msun) if isinstance(progenitor_mass, u.Quantity) else progenitor_mass
+        progenitor = self._mass_to_progenitor[mass_val]
+        filename = f'lum_spec_{progenitor}_dat.h5'     
+        self.metadata['Black hole'] = progenitor == '12.25' or progenitor == '14' or progenitor == '19.56' or progenitor == '40'}
+        super().__init__(filename, self.metadata)
 
 
 @RegistryModel(
@@ -361,7 +373,7 @@ class Fornax_2024(loaders.Fornax_2024):
 class Mori_2023(loaders.Mori_2023):
     """Model based on 2D simulations with axionlike particles, K. Mori, T.  Takiwaki, K. Kotake and S. Horiuchi, Phys. Rev. D 108:063027, 2023. All models are based on the non-rotating 20 M_sun solar metallicity progenitor model from S.E. Woolsey and A. Heger, Phys. Rep. 442:269, 2007. Data from private communication.
         """
-    def __init__(self, axion_mass:u.Quantity, axion_coupling:u.Quantity):
+    def __init__(self, axion_mass:u.Quantity, axion_coupling:u.Quantity, progenitor_mass:u.Quantity = 20*u.Msun):
         # Make sure axion coupling is converted to units 1e-10/GeV:
         #axion_coupling = np.round(axion_coupling.to('1e-10/GeV'))
 
@@ -392,8 +404,8 @@ class Mori_2023(loaders.Mori_2023):
         pns_mass = mpns[(am,ac)]
 
         # Set the metadata.
-        self.metadata['PNS mass'] = pns_mass*u.Msun
-        return super().__init__(filename, self.metadata)
+        self.metadata['PNS mass'] = pns_mass*u.Msun }
+        super().__init__(filename, self.metadata)
 
 
 @RegistryModel(
@@ -431,7 +443,7 @@ class Takata_2025(loaders.Takata_2025):
         else:
             filename = f'{pmass}_{axion_mass.to_value("MeV"):03g}_{axion_coupling.to_value("1e-10/GeV"):02g}.dat'
 
-        return super().__init__(filename, self.metadata)
+        super().__init__(filename, self.metadata)
 
 
 @RegistryModel(
@@ -439,23 +451,24 @@ class Takata_2025(loaders.Takata_2025):
     direction = ['average','equator','north','south'],
     grav=['A','B',None],
     rotation=[0,90,None],
-    _param_validator = lambda p: (p['Bfield'] == 'hydro' and p['grav'] == None and p['rotation'] == None ) or
-        (p['Bfield'] == 'L1' and p['grav'] == None and p['rotation'] in [0,90]) or
-        (p['Bfield'] == 'L2' and p['rotation'] == None and p['grav'] in ['A','B'])
+    progenitor_mass = [35] * u.Msun,
+    eos = ['SFHo'], 
+    _param_validator = lambda p: (p['Bfield'] == 'hydro' and p['grav'] is None and p['rotation'] is None ) or
+        (p['Bfield'] == 'L1' and p['grav'] is None and p['rotation'] in [0,90]) or
+        (p['Bfield'] == 'L2' and p['rotation'] is None and p['grav'] in ['A','B'])
 )        
 class Bugli_2021(loaders.Bugli_2021):
     """Model based on `Buggli (2021) <https://arxiv.org/abs/2105.00665>`_.
     """
-    def __init__(self, *, Bfield:str, direction:str, rotation:int=None, grav:str=None):
+    def __init__(self, *, Bfield:str, direction:str, rotation:int=None, grav:str=None, progenitor_mass:u.Quantity = 35*u.Msun, eos:str='SFHo'):
 
         filename = f'{Bfield}_3d_snewpy_{direction}.dat'
-        self.metadata['progenitor_mass'] = 35*u.Msun
-        self.metadata['eos'] = 'LS220'
         if Bfield=='L2':
             filename = f'{Bfield}_b12_dipdecay_3d_grav{grav}_snewpy_{direction}.dat'
         if Bfield=='L1':
             filename = f'{Bfield}_b12_3d_{rotation}deg_snewpy_{direction}.dat'
-        return super().__init__(filename=filename, metadata=self.metadata)
+        super().__init__(filename=filename, metadata=self.metadata)
+
 
 class SNOwGLoBES:
     """A model that does not inherit from SupernovaModel (yet) and imports a group of SNOwGLoBES files."""
@@ -500,11 +513,11 @@ class SNOwGLoBES:
                 if self.energy is None:
                     self.energy = (data['E(GeV)'].data*1000).tolist()
 
-            for flavor in ['NuE', 'NuMu', 'NuTau', 'aNuE', 'aNuMu', 'aNuTau']:
-                if flavor in self.flux:
-                    self.flux[flavor].append(data[flavor].data.tolist())
-                else:
-                    self.flux[flavor] = [data[flavor].data.tolist()]
+                for flavor in ['NuE', 'NuMu', 'NuTau', 'aNuE', 'aNuMu', 'aNuTau']:
+                    if flavor in self.flux:
+                        self.flux[flavor].append(data[flavor].data.tolist())
+                    else:
+                        self.flux[flavor] = [data[flavor].data.tolist()]
 
         # We now have a table with rows=times and columns=energies. Transpose
         # so that rows=energy and cols=time.
@@ -542,6 +555,7 @@ class Analytic3Species(PinchedModel):
 
     param = "There are no input files available for this class. Use `doc/scripts/Analytic.py` in the SNEWPY GitHub repo to create a custom input file."
 
+    @classmethod
     def get_param_combinations(cls):
         print(cls.param)
         return []
@@ -556,4 +570,6 @@ class Analytic3Species(PinchedModel):
 
         simtab = Table.read(filename,format='ascii')
         self.filename = filename
+     
         super().__init__(simtab, metadata={})
+
