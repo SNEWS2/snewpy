@@ -369,7 +369,7 @@ class Mori_2022(loaders.Mori_2022):
         else:
             filename = f't-prof_{axion_mass.to_value("MeV"):g}_{axion_coupling.to_value("1e-10/GeV"):g}.dat'
 
-        # PNS mass table, from Mori et al., 2022. NR means the SN revival does not occur for those parameters and no neutron star is formed
+        # PNS mass table, from Mori et al., 2022 when the shockwave reaches r = 400 km. NR means the SN revival does not occur for those parameters and no proto-neutron star is formed.
         mpns = { (0, 0):    "NR",
                  (50, 4):  "NR",
                  (50, 10):  "NR",
