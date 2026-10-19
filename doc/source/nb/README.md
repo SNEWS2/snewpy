@@ -6,7 +6,7 @@ The Jupyter notebooks in this directory contain different examples for how to us
 
 These directories contain notebooks demonstrating how to use the core-collapse and pre-supernova models available through SNEWPY.
 
-## AnalyticFluence
+## Analytic3Species
 
 This notebook demonstrates how to use the `Analytic3Species` class from `snewpy.models` to create an analytic supernova model by specifying the luminosity, mean energy and mean squared energy for three neutrino flavors.
 
