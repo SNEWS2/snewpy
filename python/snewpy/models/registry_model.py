@@ -191,7 +191,8 @@ class Parameter:
         
     def set_description_and_label(self, name:str):
         """Generate the description and label from the parameter given name"""
-        self.label = self.label or _default_labels.get(name, name.replace('_',' ').capitalize())
+        #Commented out by JPK 10/19/26 so that the model's metadata keys match the paramater input variable names
+        #self.label = self.label or _default_labels.get(name, name.replace('_',' ').capitalize())
         self.description = self.description or _default_descriptions.get(name,self.label)
         
     def apply_precision(self, value):
