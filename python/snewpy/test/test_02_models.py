@@ -76,8 +76,8 @@ class TestModels(unittest.TestCase):
         Instantiate a set of 'Bugli 2021' models
         """
         metadata = {
-            'Progenitor mass': 35 * u.Msun,
-            'EOS': 'LS220',
+            'progenitor_mass': 35 * u.Msun,
+            'eos': 'LS220',
         }
         for Bfield in ['hydro', 'L1', 'L2']:
             for direction in ['average','equator','north','south']:
@@ -101,8 +101,8 @@ class TestModels(unittest.TestCase):
         Instantiate a set of 'Fischer 2020' models
         """
         metadata = {
-            'Progenitor mass': [18 * u.Msun],
-            'EOS': ['HS(DD2)'],
+            'progenitor_mass': [18 * u.Msun],
+            'eos': ['HS(DD2)'],
         }
         mfile = 'Fischer_2020/Fischer_2020.tar.gz'
         model = Fischer_2020(os.path.join(model_path, mfile), metadata=metadata)
@@ -120,14 +120,14 @@ class TestModels(unittest.TestCase):
         for mass in list(range(12, 34)) + list(range(35, 61, 5)) + [70, 80, 100, 120]:
             for eos in ['LS220', 'HShen']:
                 metadata = {
-                    'Progenitor mass': mass * u.Msun,
-                    'EOS': eos,
+                    'progenitor_mass': mass * u.Msun,
+                    'eos': eos,
                 }
                 mfile = f'OConnor_2013/{eos}_timeseries.tar.gz'
                 model = OConnor_2013(filename=os.path.join(model_path,mfile), metadata=metadata)
 
-                self.assertEqual(model.metadata['EOS'], eos)
-                self.assertEqual(model.metadata['Progenitor mass'].value, mass)
+                self.assertEqual(model.metadata['eos'], eos)
+                self.assertEqual(model.metadata['progenitor_mass'].value, mass)
 
                 # Check that times are in proper units.
                 t = model.get_time()
@@ -202,8 +202,8 @@ class TestModels(unittest.TestCase):
                 mfile = 'Walk_2019/s{:.1f}c_3DBH_dir{}'.format(mass,direction)
                 model = Walk_2019(os.path.join(model_path, mfile), eos='LS220')
 
-                self.assertEqual(model.metadata['EOS'], 'LS220')
-                self.assertEqual(model.metadata['Progenitor mass'], mass*u.Msun)
+                self.assertEqual(model.metadata['eos'], 'LS220')
+                self.assertEqual(model.metadata['progenitor_mass'], mass*u.Msun)
 
                 # Check that times are in proper units.
                 t = model.get_time()
@@ -218,9 +218,9 @@ class TestModels(unittest.TestCase):
         """
         for mass in [9, 10, 12, 13, 14, 15, 19, 25, 60]:
             mfile = 'Fornax_2019/lum_spec_{}M.h5'.format(mass)
-            model = Fornax_2019(os.path.join(model_path, mfile), metadata={'Progenitor mass': mass*u.Msun})
+            model = Fornax_2019(os.path.join(model_path, mfile), metadata={'progenitor_mass': mass*u.Msun})
 
-            self.assertEqual(model.metadata['Progenitor mass'], mass*u.Msun)
+            self.assertEqual(model.metadata['progenitor_mass'], mass*u.Msun)
 
             # Check that times are in proper units.
             t = model.get_time()
@@ -260,9 +260,9 @@ class TestModels(unittest.TestCase):
             for mass in masses:
                 mfile = f'Warren_2020/stir_a{mixing}/stir_multimessenger_a{mixing}_m{mass}.h5'
                 metadata = {
-                    'Progenitor mass': float(mass) * u.Msun,
+                    'progenitor_mass': float(mass) * u.Msun,
                     'Turb. mixing param.': mixing,
-                    'EOS': 'SFHo',
+                    'eos': 'SFHo',
                 }
                 model = Warren_2020(os.path.join(model_path, mfile), metadata)
 
@@ -292,9 +292,9 @@ class TestModels(unittest.TestCase):
         """
         for mass in ['12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '25', '26', '26.99']:
             mfile = 'Fornax_2021/lum_spec_{}M_r10000_dat.h5'.format(mass)
-            model = Fornax_2021(os.path.join(model_path, mfile), metadata={'Progenitor mass': float(mass)*u.Msun})
+            model = Fornax_2021(os.path.join(model_path, mfile), metadata={'progenitor_mass': float(mass)*u.Msun})
 
-            self.assertEqual(model.metadata['Progenitor mass'], float(mass)*u.Msun)
+            self.assertEqual(model.metadata['progenitor_mass'], float(mass)*u.Msun)
 
             # Check that times are in proper units.
             t = model.get_time()
@@ -328,9 +328,9 @@ class TestModels(unittest.TestCase):
 
         for mass in masses:
             mfile = f'Fornax_2024/lum_spec_{mass}_dat.h5'
-            model = Fornax_2024(os.path.join(model_path, mfile), metadata={'Progenitor mass': float(re.sub('[A-Za-z]', '', mass))*u.Msun})
+            model = Fornax_2024(os.path.join(model_path, mfile), metadata={'progenitor_mass': float(re.sub('[A-Za-z]', '', mass))*u.Msun})
 
-            self.assertEqual(model.metadata['Progenitor mass'], float(re.sub('[A-Za-z]', '', mass))*u.Msun)
+            self.assertEqual(model.metadata['progenitor_mass'], float(re.sub('[A-Za-z]', '', mass))*u.Msun)
 
             # Check that times are in proper units.
             t = model.get_time()
@@ -353,9 +353,9 @@ class TestModels(unittest.TestCase):
                         f'{amass.to_value("MeV"):03g}',
                         f'{ga.to_value("1e-10/GeV"):02g}.dat'])
 
-                    model = Takata_2025(os.path.join(model_path, 'Takata_2025', mfile), metadata={'Progenitor mass':pmass, 'Axion mass':amass, 'Axion coupling':ga})
+                    model = Takata_2025(os.path.join(model_path, 'Takata_2025', mfile), metadata={'progenitor_mass':pmass, 'Axion mass':amass, 'Axion coupling':ga})
 
-                    self.assertEqual(model.metadata['Progenitor mass'], pmass)
+                    self.assertEqual(model.metadata['progenitor_mass'], pmass)
                     self.assertEqual(model.metadata['Axion mass'], amass)
                     self.assertEqual(model.metadata['Axion coupling'], ga)
 
