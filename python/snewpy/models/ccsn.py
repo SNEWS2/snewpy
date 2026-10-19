@@ -326,7 +326,7 @@ class Fornax_2022(loaders.Fornax_2022):
         mass_val = progenitor_mass.to_value(u.Msun) if isinstance(progenitor_mass, u.Quantity) else progenitor_mass
         progenitor = self._mass_to_progenitor[mass_val]
         filename = f'lum_spec_{progenitor}_dat.h5'
-        self.metadata['Black hole'] = progenitor.endswith('.bh')}
+        self.metadata['Black hole'] = progenitor.endswith('.bh')
         super().__init__(filename, self.metadata)
 
 
@@ -352,7 +352,7 @@ class Fornax_2024(loaders.Fornax_2024):
         mass_val = progenitor_mass.to_value(u.Msun) if isinstance(progenitor_mass, u.Quantity) else progenitor_mass
         progenitor = self._mass_to_progenitor[mass_val]
         filename = f'lum_spec_{progenitor}_dat.h5'     
-        self.metadata['Black hole'] = progenitor == '12.25' or progenitor == '14' or progenitor == '19.56' or progenitor == '40'}
+        self.metadata['Black hole'] = progenitor == '12.25' or progenitor == '14' or progenitor == '19.56' or progenitor == '40'
         super().__init__(filename, self.metadata)
 
 
@@ -404,7 +404,7 @@ class Mori_2023(loaders.Mori_2023):
         pns_mass = mpns[(am,ac)]
 
         # Set the metadata.
-        self.metadata['PNS mass'] = pns_mass*u.Msun }
+        self.metadata['PNS mass'] = pns_mass * u.Msun 
         super().__init__(filename, self.metadata)
 
 
