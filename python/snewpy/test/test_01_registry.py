@@ -266,10 +266,10 @@ class TestModels(unittest.TestCase):
 
         for mixing in [1.23, 1.25, 1.27]:
             for mass in masses:
-                model = Warren_2020(progenitor_mass=mass * u.Msun, turbmixing_param=mixing)
+                model = Warren_2020(progenitor_mass=mass * u.Msun, turbmixing_=mixing)
 
                 self.assertEqual(model.metadata['Progenitor mass'], float(mass) * u.Msun)
-                self.assertEqual(model.metadata['Turb. mixing param.'], mixing)
+                self.assertEqual(model.metadata['Turb. mixing .'], mixing)
                 self.assertEqual(model.metadata['EOS'], 'SFHo')
 
                 # Check that times are in proper units.
@@ -353,7 +353,7 @@ class TestModels(unittest.TestCase):
         """
         Instantiate a set of 'Fornax 2022' models
         """
-        progenitors = Fornax_2022.param['Progenitor mass']
+        progenitors = Fornax_2022.param['progenitor_mass']
         bh_masses = [12.  , 12.03, 12.07, 12.1 , 12.18, 12.2 , 12.33, 12.4 , 12.45,
                       12.5 , 12.54, 12.6 , 12.72, 12.8 , 12.85, 12.9 , 12.97, 13.  ,
                       13.05, 13.25, 13.27, 13.32, 13.4 , 13.5 , 13.6 , 13.82, 13.9 ,
