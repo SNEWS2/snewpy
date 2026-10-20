@@ -23,10 +23,10 @@ fluence = flux.integrate('time')
 print("Simulating detector effects ...")
 detector = "wc100kt30prct"
 rc = RateCalculator()
-events = rc.run(fluence, detector, detector_effects=True)
+events_smeared = rc.run(fluence, detector, detector_effects=True)
         
 # Compute number of events in all interaction channels
-total_events  = sum([chan.integrate_or_sum('energy').array.squeeze().value for chan in events.values()])
+total_events_smeared  = sum([chan.integrate_or_sum('energy').array.squeeze().value for chan in events_smeared.values()])
 
 #Super-K has 32kT inner volume
-print("Total events in Super-K-like detector (with smearing):" , 0.32*total_events)
+print("Total events in Super-K-like detector (with smearing):" , 0.32*total_events_smeared)
