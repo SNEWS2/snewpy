@@ -259,7 +259,7 @@ class Fornax_2019(loaders.Fornax_2019):
     """Model based on 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019.
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/
     """
-    def __init__(self, cache_flux=False, *, progenitor_mass:u.Quantity):
+    def __init__(self, cache_flux=False, *, progenitor_mass):
         """
         Parameters
         ----------
@@ -320,13 +320,12 @@ class Fornax_2022(loaders.Fornax_2022):
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.2d.large/
         """
     #a mapping of mass to the progenitor
-    _mass_to_progenitor = dict(zip([m.value for m in _fornax_2022_masses], _fornax_2022_progenitors))
+    _mass_to_progenitor = dict(zip(_fornax_2022_masses,_fornax_2022_progenitors))
 
-    def __init__(self, progenitor_mass: u.Quantity):
-        mass_val = progenitor_mass.to_value(u.Msun) if isinstance(progenitor_mass, u.Quantity) else progenitor_mass
-        progenitor = self._mass_to_progenitor[mass_val]
-        filename = f'lum_spec_{progenitor}_dat.h5'
+    def __init__(self, progenitor_mass:u.Quantity):
+        progenitor = self._mass_to_progenitor[progenitor_mass]
         self.metadata['Black hole'] = progenitor.endswith('.bh')
+        filename = f'lum_spec_{progenitor}_dat.h5'
         super().__init__(filename, self.metadata)
 
 
@@ -346,13 +345,12 @@ class Fornax_2024(loaders.Fornax_2024):
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d.update/
        """
     #a mapping of mass to the progenitor
-    _mass_to_progenitor = dict(zip([m.value for m in _fornax_2022_masses], _fornax_2022_progenitors))
+    _mass_to_progenitor = dict(zip(_fornax_2024_masses,_fornax_2024_progenitors))
 
-    def __init__(self, progenitor_mass: u.Quantity):
-        mass_val = progenitor_mass.to_value(u.Msun) if isinstance(progenitor_mass, u.Quantity) else progenitor_mass
-        progenitor = self._mass_to_progenitor[mass_val]
-        filename = f'lum_spec_{progenitor}_dat.h5'     
+    def __init__(self, progenitor_mass:u.Quantity):
+        progenitor = self._mass_to_progenitor[progenitor_mass]
         self.metadata['Black hole'] = progenitor == '12.25' or progenitor == '14' or progenitor == '19.56' or progenitor == '40'
+        filename = f'lum_spec_{progenitor}_dat.h5'
         super().__init__(filename, self.metadata)
 
 
