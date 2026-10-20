@@ -151,7 +151,7 @@ class TestModels(unittest.TestCase):
         """
         Instantiate a set of "O'Connor 2015" models
         """
-        model = OConnor_2015(Progenitor mass=40*u.Msun)
+        model = OConnor_2015(progenitor_mass=40*u.Msun)
 
         self.assertEqual(model.metadata['EOS'], 'LS220')
         self.assertEqual(model.metadata['Progenitor mass'], 40*u.Msun)
@@ -169,7 +169,7 @@ class TestModels(unittest.TestCase):
         """
         for mass in [9.6, 27.]:
             for eos in ['LS220', 'SFHo']:
-                model = Sukhbold_2015(Progenitor mass=mass * u.Msun, eos=eos)
+                model = Sukhbold_2015(progenitor_mass=mass * u.Msun, eos=eos)
 
                 self.assertEqual(model.metadata['EOS'], eos)
                 self.assertEqual(model.metadata['Progenitor mass'].value, mass)
