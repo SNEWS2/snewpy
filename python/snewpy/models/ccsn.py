@@ -391,7 +391,10 @@ class Mori_2022(loaders.Mori_2022):
         am = int(axion_mass.to_value('MeV')) if isinstance(axion_mass, u.quantity.Quantity) else int(axion_mass)
         ac = int(axion_coupling.to_value('1e-10/GeV')) if isinstance(axion_coupling, u.quantity.Quantity) else int(axion_coupling)
 
-        pns_mass = mpns[(am,ac)]
+        if mpns[(am, ac)] == "NR":
+            pns_mass = 0.0
+        else:
+            pns_mass = mpns[(am,ac)]
 
         # Set the metadata.
         self.metadata['PNS mass'] = pns_mass*u.Msun
