@@ -191,6 +191,7 @@ class Parameter:
         
     def set_description_and_label(self, name:str):
         """Generate the description and label from the parameter given name"""
+        """JPK 10/20/2026. This next line means the keys in model.metadata are not the same as model.params"""
         self.label = self.label or _default_labels.get(name, name.replace('_',' ').capitalize())
         self.description = self.description or _default_descriptions.get(name,self.label)
         
