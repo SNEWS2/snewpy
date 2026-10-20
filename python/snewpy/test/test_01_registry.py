@@ -266,10 +266,10 @@ class TestModels(unittest.TestCase):
 
         for mixing in [1.23, 1.25, 1.27]:
             for mass in masses:
-                model = Warren_2020(progenitor_mass=mass * u.Msun, turbmixing_=mixing)
+                model = Warren_2020(progenitor_mass=mass * u.Msun, turbmixing_param=mixing)
 
                 self.assertEqual(model.metadata['Progenitor mass'], float(mass) * u.Msun)
-                self.assertEqual(model.metadata['Turb. mixing .'], mixing)
+                self.assertEqual(model.metadata['Turb. mixing param.'], mixing)
                 self.assertEqual(model.metadata['EOS'], 'SFHo')
 
                 # Check that times are in proper units.
