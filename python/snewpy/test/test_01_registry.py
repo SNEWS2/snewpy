@@ -71,8 +71,8 @@ class TestModels(unittest.TestCase):
                     model = Nakazato_2013(progenitor_mass=mass * u.Msun, metallicity=z, eos='shen',
                                           revival_time=trev * u.ms)
 
-                    self.assertEqual(model.metadata['eos'], 'shen')
-                    self.assertEqual(model.metadata['progenitor_mass'], mass*u.Msun)
+                    self.assertEqual(model.metadata['EOS'], 'shen')
+                    self.assertEqual(model.metadata['Progenitor mass'], mass*u.Msun)
                     self.assertEqual(model.metadata['Revival time'], trev*u.ms)
                     self.assertEqual(model.metadata['Metallicity'], z)
 
@@ -96,8 +96,8 @@ class TestModels(unittest.TestCase):
                 else:
                     model = Tamborra_2014(progenitor_mass=mass*u.Msun, eos='LS220',direction=angles)
 
-                    self.assertEqual(model.metadata['eos'], 'LS220')
-                    self.assertEqual(model.metadata['progenitor_mass'], mass*u.Msun)
+                    self.assertEqual(model.metadata['EOS'], 'LS220')
+                    self.assertEqual(model.metadata['Progenitor mass'], mass*u.Msun)
 
                     # Check that times are in proper units.
                     t = model.get_time()
@@ -120,8 +120,8 @@ class TestModels(unittest.TestCase):
                 if Bfield == 'hydro':
                     model = Bugli_2021(Bfield=Bfield, grav=None, rotation=None, direction=direction)
 
-                self.assertEqual(model.metadata['eos'], 'LS220')
-                self.assertEqual(model.metadata['progenitor_mass'], 35*u.Msun)
+                self.assertEqual(model.metadata['EOS'], 'LS220')
+                self.assertEqual(model.metadata['Progenitor mass'], 35*u.Msun)
 
                 # Check that times are in proper units.
                 t = model.get_time()
@@ -137,8 +137,8 @@ class TestModels(unittest.TestCase):
             for eos in ['LS220', 'HShen']:
                 model = OConnor_2013(progenitor_mass=mass*u.Msun, eos=eos)
 
-                self.assertEqual(model.metadata['eos'], eos)
-                self.assertEqual(model.metadata['progenitor_mass'].value, mass)
+                self.assertEqual(model.metadata['EOS'], eos)
+                self.assertEqual(model.metadata['Progenitor mass'].value, mass)
 
                 # Check that times are in proper units.
                 t = model.get_time()
@@ -151,10 +151,10 @@ class TestModels(unittest.TestCase):
         """
         Instantiate a set of "O'Connor 2015" models
         """
-        model = OConnor_2015(progenitor_mass=40*u.Msun)
+        model = OConnor_2015(Progenitor mass=40*u.Msun)
 
-        self.assertEqual(model.metadata['eos'], 'LS220')
-        self.assertEqual(model.metadata['progenitor_mass'], 40*u.Msun)
+        self.assertEqual(model.metadata['EOS'], 'LS220')
+        self.assertEqual(model.metadata['Progenitor mass'], 40*u.Msun)
 
         # Check that times are in proper units.
         t = model.get_time()
@@ -169,10 +169,10 @@ class TestModels(unittest.TestCase):
         """
         for mass in [9.6, 27.]:
             for eos in ['LS220', 'SFHo']:
-                model = Sukhbold_2015(progenitor_mass=mass * u.Msun, eos=eos)
+                model = Sukhbold_2015(Progenitor mass=mass * u.Msun, eos=eos)
 
-                self.assertEqual(model.metadata['eos'], eos)
-                self.assertEqual(model.metadata['progenitor_mass'].value, mass)
+                self.assertEqual(model.metadata['EOS'], eos)
+                self.assertEqual(model.metadata['Progenitor mass'].value, mass)
 
                 # Check that times are in proper units.
                 t = model.get_time()
@@ -188,8 +188,8 @@ class TestModels(unittest.TestCase):
         for mass in [11.2, 27.]:
             model = Bollig_2016(progenitor_mass=mass*u.Msun, eos='LS220')
 
-            self.assertEqual(model.metadata['eos'], 'LS220')
-            self.assertEqual(model.metadata['progenitor_mass'], mass*u.Msun)
+            self.assertEqual(model.metadata['EOS'], 'LS220')
+            self.assertEqual(model.metadata['Progenitor mass'], mass*u.Msun)
 
             # Check that times are in proper units.
             t = model.get_time()
@@ -207,8 +207,8 @@ class TestModels(unittest.TestCase):
             for rot in ['fast','slow','non']:
                 model = Walk_2018(progenitor_mass=mass*u.Msun, direction=angles, rotation=rot)
 
-                self.assertEqual(model.metadata['eos'], 'LS220')
-                self.assertEqual(model.metadata['progenitor_mass'], mass*u.Msun)
+                self.assertEqual(model.metadata['EOS'], 'LS220')
+                self.assertEqual(model.metadata['Progenitor mass'], mass*u.Msun)
 
                 # Check that times are in proper units.
                 t = model.get_time()
@@ -226,8 +226,8 @@ class TestModels(unittest.TestCase):
             for angles in [1,2]:
                 model = Walk_2019(progenitor_mass=mass*u.Msun, direction=angles)
 
-                self.assertEqual(model.metadata['eos'], 'LS220')
-                self.assertEqual(model.metadata['progenitor_mass'], mass*u.Msun)
+                self.assertEqual(model.metadata['EOS'], 'LS220')
+                self.assertEqual(model.metadata['Progenitor mass'], mass*u.Msun)
 
                 # Check that times are in proper units.
                 t = model.get_time()
@@ -244,7 +244,7 @@ class TestModels(unittest.TestCase):
         for mass in [9, 10, 12, 13, 14, 15, 19, 25, 60]:
             model = Fornax_2019(progenitor_mass=mass*u.Msun)
 
-            self.assertEqual(model.metadata['progenitor_mass'].value, mass)
+            self.assertEqual(model.metadata['Progenitor mass'].value, mass)
 
             # Check that times are in proper units.
             t = model.get_time()
@@ -268,9 +268,9 @@ class TestModels(unittest.TestCase):
             for mass in masses:
                 model = Warren_2020(progenitor_mass=mass * u.Msun, turbmixing_param=mixing)
 
-                self.assertEqual(model.metadata['progenitor_mass'], float(mass) * u.Msun)
+                self.assertEqual(model.metadata['Progenitor mass'], float(mass) * u.Msun)
                 self.assertEqual(model.metadata['Turb. mixing param.'], mixing)
-                self.assertEqual(model.metadata['eos'], 'SFHo')
+                self.assertEqual(model.metadata['EOS'], 'SFHo')
 
                 # Check that times are in proper units.
                 t = model.get_time()
@@ -290,8 +290,8 @@ class TestModels(unittest.TestCase):
                 model = Kuroda_2020(rotational_velocity=rot_vel * u.rad / u.s,
                                     magnetic_field_exponent=exponent)
 
-                self.assertEqual(model.metadata['eos'], 'LS220')
-                self.assertEqual(model.metadata['progenitor_mass'], 20*u.Msun)
+                self.assertEqual(model.metadata['EOS'], 'LS220')
+                self.assertEqual(model.metadata['Progenitor mass'], 20*u.Msun)
 
                 # Check that times are in proper units.
                 t = model.get_time()
@@ -307,7 +307,7 @@ class TestModels(unittest.TestCase):
         for mass in list(range(12, 24)) + [25, 26, 26.99]:
             model = Fornax_2021(progenitor_mass=mass*u.Msun)
 
-            self.assertEqual(model.metadata['progenitor_mass'], float(mass)*u.Msun)
+            self.assertEqual(model.metadata['Progenitor mass'], float(mass)*u.Msun)
 
             # Check that times are in proper units.
             t = model.get_time()
@@ -321,8 +321,8 @@ class TestModels(unittest.TestCase):
         Instantiate a set of 'Fischer 2020' models
         """
         model = Fischer_2020()
-        self.assertEqual(model.metadata['progenitor_mass'], [18 * u.Msun])
-        self.assertEqual(model.metadata['eos'], 'HS(DD2)')
+        self.assertEqual(model.metadata['Progenitor mass'], [18 * u.Msun])
+        self.assertEqual(model.metadata['EOS'], 'HS(DD2)')
 
         # Check that times are in proper units.
         t = model.get_time()
@@ -339,8 +339,8 @@ class TestModels(unittest.TestCase):
         for mass in list(range(16, 27)) + [19.89, 22.39, 30, 33]:
             model = Zha_2021(progenitor_mass=mass * u.Msun)
 
-            self.assertEqual(model.metadata['progenitor_mass'], float(mass)*u.Msun)
-            self.assertEqual(model.metadata['eos'], 'STOS_B145')
+            self.assertEqual(model.metadata['Progenitor mass'], float(mass)*u.Msun)
+            self.assertEqual(model.metadata['EOS'], 'STOS_B145')
 
             # Check that times are in proper units.
             t = model.get_time()
@@ -353,7 +353,7 @@ class TestModels(unittest.TestCase):
         """
         Instantiate a set of 'Fornax 2022' models
         """
-        progenitors = Fornax_2022.param['progenitor_mass']
+        progenitors = Fornax_2022.param['Progenitor mass']
         bh_masses = [12.  , 12.03, 12.07, 12.1 , 12.18, 12.2 , 12.33, 12.4 , 12.45,
                       12.5 , 12.54, 12.6 , 12.72, 12.8 , 12.85, 12.9 , 12.97, 13.  ,
                       13.05, 13.25, 13.27, 13.32, 13.4 , 13.5 , 13.6 , 13.82, 13.9 ,
@@ -384,7 +384,7 @@ class TestModels(unittest.TestCase):
         for progenitor, m_pns in zip(progenitors, pns_masses):
             model = Fornax_2022(progenitor_mass=progenitor)
 
-            self.assertEqual(model.metadata['progenitor_mass'], progenitor)
+            self.assertEqual(model.metadata['Progenitor mass'], progenitor)
             self.assertEqual(model.metadata['PNS mass'], m_pns)
             self.assertEqual(model.metadata['Black hole'], progenitor in bh_masses)
             # Check that times are in proper units.
@@ -415,7 +415,7 @@ class TestModels(unittest.TestCase):
             axion_coupling = np.round(axion_coupling.to('1e-10/GeV'))
             self.assertEqual(model.metadata['Axion coupling'], axion_coupling)
 
-            self.assertEqual(model.metadata['progenitor_mass'], 20*u.Msun)
+            self.assertEqual(model.metadata['Progenitor mass'], 20*u.Msun)
             self.assertEqual(model.metadata['PNS mass'], mpns)
 
             # Check that times are in proper units.
@@ -436,7 +436,7 @@ class TestModels(unittest.TestCase):
         for mass in masses:
             model = Fornax_2024(progenitor_mass=mass)
 
-            self.assertEqual(model.metadata['progenitor_mass'], mass)
+            self.assertEqual(model.metadata['Progenitor mass'], mass)
 
             # Check that times are in proper units.
             t = model.get_time()
@@ -457,7 +457,7 @@ class TestModels(unittest.TestCase):
 
                     model = Takata_2025(progenitor_mass=pmass, axion_mass=amass, axion_coupling=ga)
 
-                    self.assertEqual(model.metadata['progenitor_mass'], pmass)
+                    self.assertEqual(model.metadata['Progenitor mass'], pmass)
                     self.assertEqual(model.metadata['Axion mass'], amass)
                     self.assertEqual(model.metadata['Axion coupling'], ga)
 
