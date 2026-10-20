@@ -111,7 +111,7 @@ def map_arguments(**names_dict):
         return func_new
     return _wrapper
     
-def _expands(func, **defaults):
+def _expand_defaults(func, **defaults):
     """Update the signature of the given function with the parameters with default values.
     Examples
     --------
@@ -119,7 +119,7 @@ def _expands(func, **defaults):
     >>>     pass
     >>> foo?
     Signature: foo(x, y=1)
-    >>> _expands(foo, x=123, z=456)
+    >>> _expand_defaults(foo, x=123, z=456)
     >>> foo?
     Signature: foo(x=123, y=500, *, z=456)
     """
@@ -191,7 +191,7 @@ class Parameter:
         
     def set_description_and_label(self, name:str):
         """Generate the description and label from the parameter given name"""
-        # JPK 10/20/26. Should the keys in model.metadata match the keys in model.param 
+        """JPK 10/20/2026. This next line means the keys in model.metadata are not the same as model.params"""
         self.label = self.label or _default_labels.get(name, name.replace('_',' ').capitalize())
         self.description = self.description or _default_descriptions.get(name,self.label)
         
