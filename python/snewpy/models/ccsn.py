@@ -347,6 +347,63 @@ class Fornax_2024(loaders.Fornax_2024):
 @RegistryModel(
                _param_validator = lambda p: \
                (p['axion_mass'] == 0 and p['axion_coupling'] == 0) or \
+               (p['axion_mass'].to_value('MeV') in (50, 100, 200, 400) and p['axion_coupling'].to_value('1e-10/GeV') in (4, 10, 20, 40)),
+
+               axion_mass = Parameter(values=[0, 50, 100, 200, 400]<<u.MeV,
+                                      description='Axion mass in units of MeV'),
+               axion_coupling = Parameter(values=[0, 4, 10, 20, 40]<<(1e-10/u.GeV),
+                                          description='Axion-photon coupling, in units of 1e-10/GeV',
+                                          precision=2 #round to 1e-12/u.GeV
+                                         ),
+               progenitor_mass=[20]*u.Msun
+              )
+class Mori_2022(loaders.Mori_2022):
+    """Model based on 1D simulations with axionlike particles, K. Mori, T.  Takiwaki, K. Kotake and S. Horiuchi, Phys. Rev. D 105:063009, 2022. All models are based on the non-rotating 20 M_sun progenitor. Data from private communication.
+        """
+    def __init__(self, axion_mass:u.Quantity, axion_coupling:u.Quantity):
+        # Make sure axion coupling is converted to units 1e-10/GeV:
+        #axion_coupling = np.round(axion_coupling.to('1e-10/GeV'))
+
+        if axion_mass == 0:
+            filename = 't-prof_noaxion.dat'
+        else:
+            filename = f't-prof_{axion_mass.to_value("MeV"):g}_{axion_coupling.to_value("1e-10/GeV"):g}.dat'
+
+        # PNS mass table, from Mori et al., 2022 when the shockwave reaches r = 400 km. NR means the SN revival does not occur for those parameters and no proto-neutron star is formed.
+        mpns = { (0, 0):    "NR",
+                 (50, 4):  "NR",
+                 (50, 10):  "NR",
+                 (50, 20): "NR",
+                 (50, 40): 1.88,
+                 (100, 4): "NR",
+                 (100, 10): "NR",
+                 (100, 20): 1.85,
+                 (100, 40):  1.69,
+                 (200, 4):  "NR",
+                 (200, 10):  1.83,
+                 (200, 20):  1.71,
+                 (200, 40): 1.63,
+                 (400, 4): 1.90,
+                 (400, 10): 1.82,
+                 (400, 20): 1.78,
+                 (400, 40): 1.79 }
+
+        am = int(axion_mass.to_value('MeV')) if isinstance(axion_mass, u.quantity.Quantity) else int(axion_mass)
+        ac = int(axion_coupling.to_value('1e-10/GeV')) if isinstance(axion_coupling, u.quantity.Quantity) else int(axion_coupling)
+
+        if mpns[(am, ac)] == "NR":
+            pns_mass = 0.0
+        else:
+            pns_mass = mpns[(am,ac)]
+
+        # Set the metadata.
+        self.metadata['PNS mass'] = pns_mass*u.Msun
+        return super().__init__(filename, self.metadata)
+
+
+@RegistryModel(
+               _param_validator = lambda p: \
+               (p['axion_mass'] == 0 and p['axion_coupling'] == 0) or \
                (p['axion_mass'].to_value('MeV') == 100 and p['axion_coupling'].to_value('1e-10/GeV') in (2,4,10,12,14,16,20)) or \
                (p['axion_mass'].to_value('MeV') == 200 and p['axion_coupling'].to_value('1e-10/GeV') in (2,4,6,8,10,20)),
 
