@@ -83,8 +83,8 @@ class GarchingArchiveModel(PinchedModel):
         simtab = mergtab.filled()
         if not metadata:
             metadata = {
-                'progenitor_mass': float(os.path.basename(filename).split('s')[1].split('c')[0]) * u.Msun,
-                'eos': eos,
+                'Progenitor mass': float(os.path.basename(filename).split('s')[1].split('c')[0]) * u.Msun,
+                'EOS': eos,
             }
         super().__init__(simtab, metadata)
 
@@ -146,7 +146,7 @@ class OConnor_2013(PinchedModel):
         # Open luminosity file.
         with tarfile.open(datafile) as tf:
             # Extract luminosity data.
-            dataname = 's{:d}_{}_timeseries.dat'.format(int(metadata['progenitor_mass'].value), metadata['eos'])
+            dataname = 's{:d}_{}_timeseries.dat'.format(int(metadata['Progenitor mass'].value), metadata['EOS'])
             # Read FITS table using the astropy reader.
             simtab = ascii.read(tf.extractfile(dataname), names=['TIME', 'L_NU_E', 'L_NU_E_BAR', 'L_NU_X',
                                                                     'E_NU_E', 'E_NU_E_BAR', 'E_NU_X',
