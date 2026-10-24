@@ -10,9 +10,10 @@ Only public methods of the supernova models are used
 (``get_transformed_spectra`` and the ``time`` attribute), so any model class
 works, pinched or not.
 
-Physics follows Li, Vagins & Wurm (2022) [arXiv:2201.12920].
-Core-collapse rate: Hopkins & Beacom (2006), ApJ 651, 142.
-Cosmology: Planck 2018.
+The redshift integral is the standard one, e.g. Eq. (2.1) of Lunardini &
+Tamborra (2012) [arXiv:1205.6292] and Eq. (4) of Ekanger et al. (2023)
+[arXiv:2310.15254].  Core-collapse rate history: Hopkins & Beacom (2006),
+ApJ 651, 142.  Default cosmology: Planck 2018.
 
 Example
 -------
@@ -65,6 +66,12 @@ class CoreCollapseRate:
 
     with a=0.0170, b=0.13, c=3.3, d=5.3 and h=0.7.  The overall factor h
     cancels here, because the rate is normalised to ``r0`` at z=0.
+
+    The normalisation ``r0`` is an input, not a prediction.  Published values
+    differ by about a factor of two: direct supernova counts give
+    0.7e-4 yr^-1 Mpc^-3 (LOSS), star-formation-based estimates give
+    1.5e-4 yr^-1 Mpc^-3 (Lunardini & Tamborra 2012).  The DSNB flux is linear
+    in ``r0``, so results can be rescaled, but the choice should be stated.
 
     Parameters
     ----------
@@ -135,7 +142,7 @@ class DSNB:
 
     The observed flux is the redshift integral of the time-integrated
     emission spectrum of a single supernova, weighted by the cosmic
-    core-collapse rate (Eq. 1 of Li, Vagins & Wurm 2022):
+    core-collapse rate (cf. Eq. 2.1 of Lunardini & Tamborra 2012):
 
         dPhi/dE = c/H0 * integral_0^z_max R_CC(z) / E(z)
                          * dN/dE'[(1+z) E]  dz

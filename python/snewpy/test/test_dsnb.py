@@ -176,6 +176,28 @@ class TestDSNB:
         expected = expected.to_value(1 / (u.cm**2 * u.s * u.MeV))
         assert np.allclose(got, expected, rtol=2e-3)
 
+    def test_matches_first_principles_geometry(self):
+        """
+        Independent derivation without the c/H0/E(z) formula: supernovae per
+        observed time per dz = R/(1+z) * 4 pi dVc/dz (time dilation), number
+        fluence per supernova = dN/dE'(E') (1+z) / (4 pi d_C^2).  The product,
+        integrated over z, must equal DSNB.get_flux.
+        """
+        d = DSNB([GaussianModel()], z_max=5.0, n_z=1500)
+        Eo = np.array([10.0, 20.0, 30.0]) << u.MeV
+        got = nuebar(d.get_flux(T, Eo))
+        z = np.linspace(1e-4, 5.0, 20001)
+        cosmo = d.cosmology
+        dC, dVc = cosmo.comoving_distance(z), cosmo.differential_comoving_volume(z)
+        Rz = d.rcc(z)
+        Eg = np.geomspace(0.1, 300, 600) << u.MeV
+        dN = d._dNdE_per_sn(Eg)
+        for k, En in enumerate(Eo):
+            dNe = np.interp(En.value * (1 + z), Eg.value, dN, left=0, right=0) / u.MeV
+            integrand = (Rz / (1 + z) * 4 * np.pi * u.sr * dVc) * (dNe * (1 + z) / (4 * np.pi * dC**2))
+            expected = np.trapezoid(integrand.to_value(1 / (u.s * u.cm**2 * u.MeV)), z)
+            assert np.isclose(got[k], expected, rtol=3e-3)
+
     def test_flavor_transformation_is_applied(self, dsnb):
         none = nuebar(dsnb.get_flux(T, E, NoTransformation()))
         nmo = nuebar(dsnb.get_flux(T, E, AdiabaticMSW(MixingParameters('NORMAL'))))
