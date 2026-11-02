@@ -413,6 +413,7 @@ class Mori_2023(loaders.Mori_2023):
 
                progenitor_mass = Parameter(values=[11.2, 20, 25]<<u.Msun,
                                           description='Progenitor star mass in units of M☉'),
+               eos = ['LS220'],
                axion_mass = Parameter(values=[0, 40, 100, 150, 200, 300, 400, 600, 800]<<u.MeV,
                                       description='Axion mass in units of MeV'),
                axion_coupling = Parameter(values=[0, 4, 6, 8, 10]<<(1e-10/u.GeV),
@@ -426,7 +427,7 @@ class Takata_2025(loaders.Takata_2025):
     Data from private communication.
     """
 
-    def __init__(self, progenitor_mass:u.Quantity, axion_mass:u.Quantity, axion_coupling:u.Quantity):
+    def __init__(self, progenitor_mass:u.Quantity, axion_mass:u.Quantity, axion_coupling:u.Quantity, eos:str='LS220'):
         """ 
         This simulation is conducted for a progenitor_mass of 11.2, 20, and 25 M_sun.
         Each of these progenitors are simulated for a set of ALP parameters: ALP mass, m_a [MeV] = (0, 40, 100, 150, 300, 400, 600, 800), and
@@ -458,7 +459,7 @@ class Takata_2025(loaders.Takata_2025):
 class Bugli_2021(loaders.Bugli_2021):
     """Model based on `Buggli (2021) <https://arxiv.org/abs/2105.00665>`_.
     """
-    def __init__(self, *, Bfield:str, direction:str, rotation:int=None, grav:str=None, progenitor_mass:u.Quantity = 35*u.Msun, eos:str='SFHo'):
+    def __init__(self, *, Bfield:str, direction:str, rotation:int=None, grav:str=None, progenitor_mass:u.Quantity = 35*u.Msun, eos:str='LS220'):
 
         filename = f'{Bfield}_3d_snewpy_{direction}.dat'
         if Bfield=='L2':
