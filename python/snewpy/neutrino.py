@@ -228,7 +228,7 @@ class FourFlavorMixingParameters(ThreeFlavorMixingParameters):
     """A class for four flavor neutrino mixing. 
     ..Note: it is an extension of :class:`ThreeFlavorMixingParameters`, and can be constructed using it:
     
-        >>> pars_3f = ThreeFlavorMixingParameters() #standard 3flavor mixing # TODO: this fails with a TypeError!
+        >>> pars_3f = MixingParameters(mass_order='NORMAL') # standard three flavor mixing parameters
         >>> pars_4f = FourFlavorMixingParameters(**pars_3f, theta14=90<<u.deg, dm41_2=1<<u.GeV**2)
     """
     #sterile neutrino mixing angles. 
@@ -509,7 +509,7 @@ parameter_presets = {
         # Values from https://pdglive.lbl.gov/Particle.action?node=S067&init=0
         # Cite as F. Takahashi et al. (Particle Data Group), Int. J. Mod. Phys. A 41, 2630011 (2026)
         MassHierarchy.NORMAL:
-        ThreeFlavorMixingParameters(  # TODO: update all to PDG2026 values
+        ThreeFlavorMixingParameters(
             theta12 = 33.65 << u.deg,
             theta13 = 8.47 << u.deg,
             theta23 = 46.89 << u.deg,
@@ -518,7 +518,7 @@ parameter_presets = {
             dm32_2 = 2.445e-3 << u.eV**2
         ),
         MassHierarchy.INVERTED:
-        ThreeFlavorMixingParameters(  # TODO: update all to PDG2026 values
+        ThreeFlavorMixingParameters(
             theta12 = 33.65 << u.deg,
             theta13 = 8.47 << u.deg,
             theta23 = 46.32 << u.deg,
