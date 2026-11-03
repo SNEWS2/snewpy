@@ -173,7 +173,7 @@ class Walk_2019(loaders.Walk_2019):
 class OConnor_2013(loaders.OConnor_2013):
     """Model based on the black hole formation simulation in `O'Connor & Ott (2013) <https://arxiv.org/abs/1207.1100>`_.
     """
-    def __init__(sel, progenitor_mass:u.Quantityf, eos:str):
+    def __init__(self, progenitor_mass:u.Quantity, eos:str):
         # Load from Parameters
         filename = f'{eos}_timeseries.tar.gz'
         super().__init__(filename=filename, metadata=self.metadata)
