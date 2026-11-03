@@ -44,7 +44,7 @@ from textwrap import dedent
 
 @RegistryModel(
     progenitor_mass = [18] * u.Msun,
-    eos = ['HS(DD2)']
+    eos = ['HS(DD2)'],
 )
 class Fischer_2020(loaders.Fischer_2020):
     """Model based on simulations from `Fischer et al. (2020) <https://arxiv.org/abs/1804.10890>`
@@ -59,7 +59,6 @@ class Fischer_2020(loaders.Fischer_2020):
     revival_time = [0, 100, 200, 300] * u.ms,
     metallicity = [0.02, 0.004],
     eos = ['LS220', 'shen', 'togashi'],
-
     _param_validator = lambda p: (p['revival_time'] == 0 * u.ms and p['progenitor_mass'] == 30 * u.Msun
                                   and p['metallicity'] == 0.004) or \
                                  (p['revival_time'] != 0 * u.ms and p['eos'] == 'shen'
@@ -241,7 +240,7 @@ class Warren_2020(loaders.Warren_2020):
                                       label='B_0 Exponent',
                                       description='Exponent of magnetic field (See Eq. 46)'),
     progenitor_mass=[20] *u.Msun,
-     eos = ['LS220'],
+    eos = ['LS220'],
     _param_validator = lambda p: (p['rotational_velocity'].value == 1 and p['magnetic_field_exponent'] in (12, 13)) or \
                                (p['rotational_velocity'].value == 0 and p['magnetic_field_exponent'] == 0)
 )
@@ -254,12 +253,18 @@ class Kuroda_2020(loaders.Kuroda_2020):
 
 @RegistryModel(
     progenitor_mass=[9, 10, 12, 13, 14, 15, 19, 25, 60] * u.Msun,
+    eos = ['LS220'],    
 )
 class Fornax_2019(loaders.Fornax_2019):
-    """Model based on 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019.
+    """Model based on 3D simulations from:
+       D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1) 351, (2019).
+       A. Burrows, D. Radice, D. Vartanyan, MNRAS, 485(3) 3153 (2019)
+       D. Vartanyan, A. Burrows, D. Radice, 489(2) 2227 (2019)
+       H. Nagakura, A. Burrows, D. Radice, D. Vartanyan, MNRAS 490(4) 4622 (2019)
+       A. Burrows, D. Radice, D. Vartanyan, H. Nagakura, M. A. Skinner, J. Dolence MNRAS 491(2) 2715 (2020)
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/
     """
-    def __init__(self, cache_flux=False, *, progenitor_mass):
+    def __init__(self, cache_flux=False, *, progenitor_mass:u.Quantity):
         """
         Parameters
         ----------
@@ -275,11 +280,13 @@ class Fornax_2019(loaders.Fornax_2019):
 
 @RegistryModel(
     progenitor_mass = Parameter((list(range(12, 24)) + [25, 26, 26.99]) * u.Msun,
-                                desc_values='[12..23, 25, 26, 26.99] solMass')
+                                desc_values='[12..23, 25, 26, 26.99] solMass'),   
+    eos = ['SFHo'],                                                            
 )
 class Fornax_2021(loaders.Fornax_2021):
-    """Model based on 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019.
-       Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/
+    """Adam Burrows, David Vartanyan Nature, Volume 589, Issue 7840, p.29 (2021)
+       see also Hiroki Nagakura, Adam Burrows, David Vartanyan MNRAS 506(1) 1462 (2021)
+       Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.2d/
         """
     def __init__(self, progenitor_mass:u.Quantity):
         # Load from Parameters
@@ -313,19 +320,22 @@ _fornax_2022_progenitors = [  '9.0',     '9.25',     '9.5',      '9.75',     '10
 
 _fornax_2022_masses = [float(p.strip('.bh')) for p in _fornax_2022_progenitors] << u.Msun
 
-
-@RegistryModel(progenitor_mass = _fornax_2022_masses )
+@RegistryModel(
+    progenitor_mass = _fornax_2022_masses, 
+    eos = ['SFHo'],    
+ )
 class Fornax_2022(loaders.Fornax_2022):
     """Model based on 2D simulations of 100 progenitors from Tianshu Wang, David Vartanyan, Adam Burrows, and Matthew S.B. Coleman, MNRAS 517:543, 2022.
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.2d.large/
         """
     #a mapping of mass to the progenitor
-    _mass_to_progenitor = dict(zip(_fornax_2022_masses,_fornax_2022_progenitors))
+    _mass_to_progenitor = dict(zip([m.value for m in _fornax_2022_masses], _fornax_2022_progenitors))
 
-    def __init__(self, progenitor_mass:u.Quantity):
-        progenitor = self._mass_to_progenitor[progenitor_mass]
-        self.metadata['Black hole'] = progenitor.endswith('.bh')
+    def __init__(self, progenitor_mass: u.Quantity):
+        mass_val = progenitor_mass.to_value(u.Msun) if isinstance(progenitor_mass, u.Quantity) else progenitor_mass
+        progenitor = self._mass_to_progenitor[mass_val]
         filename = f'lum_spec_{progenitor}_dat.h5'
+        self.metadata['Black hole'] = progenitor.endswith('.bh')
         super().__init__(filename, self.metadata)
 
 
@@ -335,22 +345,24 @@ _fornax_2024_progenitors = [
                 '16.5',  '16',    '17',     '18',    '18.5',
                 '19',    '19.56', '20',     '21.68', '23',
                 '24',    '25',    '40',     '60',    '100']
-
 _fornax_2024_masses = [float(re.sub('[A-Za-z]', '', p)) for p in _fornax_2024_progenitors] << u.Msun
 
-
-@RegistryModel(progenitor_mass = _fornax_2024_masses )
+@RegistryModel(
+    progenitor_mass = _fornax_2024_masses,
+    eos = ['SFHo'],     
+)
 class Fornax_2024(loaders.Fornax_2024):
     """Model based on 3D simulations of 25 progenitors using the Fornax code.
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d.update/
        """
     #a mapping of mass to the progenitor
-    _mass_to_progenitor = dict(zip(_fornax_2024_masses,_fornax_2024_progenitors))
+    _mass_to_progenitor = dict(zip([m.value for m in _fornax_2022_masses], _fornax_2022_progenitors))
 
-    def __init__(self, progenitor_mass:u.Quantity):
-        progenitor = self._mass_to_progenitor[progenitor_mass]
+    def __init__(self, progenitor_mass: u.Quantity):
+        mass_val = progenitor_mass.to_value(u.Msun) if isinstance(progenitor_mass, u.Quantity) else progenitor_mass
+        progenitor = self._mass_to_progenitor[mass_val]
+        filename = f'lum_spec_{progenitor}_dat.h5'     
         self.metadata['Black hole'] = progenitor == '12.25' or progenitor == '14' or progenitor == '19.56' or progenitor == '40'
-        filename = f'lum_spec_{progenitor}_dat.h5'
         super().__init__(filename, self.metadata)
 
 
@@ -359,14 +371,14 @@ class Fornax_2024(loaders.Fornax_2024):
                (p['axion_mass'] == 0 and p['axion_coupling'] == 0) or \
                (p['axion_mass'].to_value('MeV') == 100 and p['axion_coupling'].to_value('1e-10/GeV') in (2,4,10,12,14,16,20)) or \
                (p['axion_mass'].to_value('MeV') == 200 and p['axion_coupling'].to_value('1e-10/GeV') in (2,4,6,8,10,20)),
-
                axion_mass = Parameter(values=[0, 100, 200]<<u.MeV,
                                       description='Axion mass in units of MeV'),
                axion_coupling = Parameter(values=[0, 2, 4, 6, 8, 10, 12, 14, 16, 20]<<(1e-10/u.GeV),
                                           description='Axion-photon coupling, in units of 1e-10/GeV',
                                           precision=2 #round to 1e-12/u.GeV
                                          ),
-               progenitor_mass=[20]*u.Msun
+               progenitor_mass=[20]*u.Msun,
+               eos = ['LS220'],
               )
 class Mori_2023(loaders.Mori_2023):
     """Model based on 2D simulations with axionlike particles, K. Mori, T.  Takiwaki, K. Kotake and S. Horiuchi, Phys. Rev. D 108:063027, 2023. All models are based on the non-rotating 20 M_sun solar metallicity progenitor model from S.E. Woolsey and A. Heger, Phys. Rep. 442:269, 2007. Data from private communication.
@@ -410,16 +422,15 @@ class Mori_2023(loaders.Mori_2023):
                _param_validator = lambda p: \
                (p['progenitor_mass'].to_value('Msun') in (11.2, 20, 25) and p['axion_mass'] == 0 and p['axion_coupling'] == 0) or \
                (p['progenitor_mass'].to_value('Msun') in (11.2, 20, 25) and p['axion_mass'].to_value('MeV') in (40, 100, 150, 200, 300, 600, 400, 800) and p['axion_coupling'].to_value('1e-10/GeV') in (4, 6, 8, 10)),
-
                progenitor_mass = Parameter(values=[11.2, 20, 25]<<u.Msun,
                                           description='Progenitor star mass in units of M☉'),
-               eos = ['LS220'],
+               eos = ['LS220'],                                          
                axion_mass = Parameter(values=[0, 40, 100, 150, 200, 300, 400, 600, 800]<<u.MeV,
                                       description='Axion mass in units of MeV'),
                axion_coupling = Parameter(values=[0, 4, 6, 8, 10]<<(1e-10/u.GeV),
                                           description='Axion-photon coupling, in units of 1e-10/GeV',
                                           precision=2 #round to 1e-12/u.GeV
-                                         )
+                                         ),
               )
 class Takata_2025(loaders.Takata_2025):
     """
@@ -512,11 +523,11 @@ class SNOwGLoBES:
                 if self.energy is None:
                     self.energy = (data['E(GeV)'].data*1000).tolist()
 
-                for flavor in ['NuE', 'NuMu', 'NuTau', 'aNuE', 'aNuMu', 'aNuTau']:
-                    if flavor in self.flux:
-                        self.flux[flavor].append(data[flavor].data.tolist())
-                    else:
-                        self.flux[flavor] = [data[flavor].data.tolist()]
+                    for flavor in ['NuE', 'NuMu', 'NuTau', 'aNuE', 'aNuMu', 'aNuTau']:
+                        if flavor in self.flux:
+                            self.flux[flavor].append(data[flavor].data.tolist())
+                        else:
+                            self.flux[flavor] = [data[flavor].data.tolist()]
 
         # We now have a table with rows=times and columns=energies. Transpose
         # so that rows=energy and cols=time.
@@ -571,4 +582,3 @@ class Analytic3Species(PinchedModel):
         self.filename = filename
      
         super().__init__(simtab, metadata={})
-
