@@ -877,6 +877,46 @@ class Fornax_2024(Fornax_2021):
             self.luminosity[flavor] = np.sum(dLdE*dE, axis=1) * factor * 1e50 * u.erg/u.s
 
 
+class Mori_2022(PinchedModel):
+    def __init__(self, filename, metadata={}):
+        """
+        Parameters
+        ----------
+        filename : str
+            Absolute or relative path to file prefix.
+        """
+        # Open the requested filename using the model downloader.
+        datafile = self.request_file(filename)
+
+        self.metadata = metadata
+
+        # Read ASCII data.
+        simtab = Table.read(datafile, format='ascii')
+
+        # Remove the first table row, which appears to have zero input.
+        simtab = simtab[simtab['1:t_sim[s]'] > 0]
+
+        # Get grid of model times.
+        simtab['TIME'] = simtab['2:t_pb[s]'] << u.s
+        for j, (f, fkey) in enumerate(zip(["NU_E", "NU_E_BAR", "NU_X"], 'ebx')):
+            simtab[f'L_{f}'] = simtab[f'{6+j}:Le{fkey}[e/s]'] << u.erg / u.s
+            # Compute the pinch parameter from E_rms and E_avg
+            # <E^2> / <E>^2 = (2+a)/(1+a), where
+            # E_rms^2 = <E^2> - <E>^2.
+            Eavg = simtab[f'{9+j}:Em{fkey}[MeV]']
+            Erms = simtab[f'{12+j}:Er{fkey}[MeV]']
+            x = Erms**2 / Eavg**2
+            alpha = (2-x) / (x-1)
+
+            simtab[f'E_{f}'] = Eavg << u.MeV
+            simtab[f'E2_{f}'] = Erms**2 << u.MeV**2
+            simtab[f'ALPHA_{f}'] = alpha
+
+        self.filename = os.path.basename(filename)
+
+        super().__init__(simtab, metadata)
+
+
 class Mori_2023(PinchedModel):
     def __init__(self, filename, metadata={}):
         """
