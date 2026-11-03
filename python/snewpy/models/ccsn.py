@@ -109,7 +109,7 @@ class Tamborra_2014(loaders.Tamborra_2014):
     """Model based on 3D simulations from `Tamborra et al., PRD 90:045032, 2014 <https://arxiv.org/abs/1406.0006>`_.
     Data files are from the `Garching Supernova Archive`_.
     """
-    def __init__(self, *, progenitor_mass:u.Quantity, direction:int):
+    def __init__(self, *, progenitor_mass:u.Quantity, direction:int, eos:str = 'LS220'):
         filename = f's{progenitor_mass.value:3.1f}c_3D_dir{direction}'
         # Metadata is handled by __init__ in _GarchingArchiveModel
         super().__init__(filename=filename, metadata=self.metadata)
@@ -139,7 +139,7 @@ class Walk_2018(loaders.Walk_2018):
     PRD 98:123001, 2018 <https://arxiv.org/abs/1807.02366>`_. Data files are from
     the `Garching Supernova Archive`_.
     """
-    def __init__(self, *, progenitor_mass:u.Quantity = 15*u.Msun, rotation:str, direction:int, eos:str='LS220'):
+    def __init__(self, *, rotation:str, direction:int, progenitor_mass:u.Quantity = 15*u.Msun, eos:str='LS220'):
 
         filename = f's{progenitor_mass.value:3.1f}c_3D_{rotation}rot_dir{direction}'
         super().__init__(filename=filename, metadata=self.metadata)
@@ -173,7 +173,7 @@ class Walk_2019(loaders.Walk_2019):
 class OConnor_2013(loaders.OConnor_2013):
     """Model based on the black hole formation simulation in `O'Connor & Ott (2013) <https://arxiv.org/abs/1207.1100>`_.
     """
-    def __init__(self, eos:str, progenitor_mass:u.Quantity):
+    def __init__(sel, progenitor_mass:u.Quantityf, eos:str):
         # Load from Parameters
         filename = f'{eos}_timeseries.tar.gz'
         super().__init__(filename=filename, metadata=self.metadata)
@@ -264,7 +264,7 @@ class Fornax_2019(loaders.Fornax_2019):
        A. Burrows, D. Radice, D. Vartanyan, H. Nagakura, M. A. Skinner, J. Dolence MNRAS 491(2) 2715 (2020)
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/
     """
-    def __init__(self, cache_flux=False, *, progenitor_mass:u.Quantity):
+    def __init__(self, cache_flux=False, *, progenitor_mass:u.Quantityf, eos:str='LS220'):
         """
         Parameters
         ----------
@@ -288,7 +288,7 @@ class Fornax_2021(loaders.Fornax_2021):
        see also Hiroki Nagakura, Adam Burrows, David Vartanyan MNRAS 506(1) 1462 (2021)
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.2d/
         """
-    def __init__(self, progenitor_mass:u.Quantity):
+    def __init__(self, progenitor_mass:u.Quantityf, eos:str='SFHo'):
         # Load from Parameters
         if progenitor_mass.value.is_integer():
             filename = f'lum_spec_{int(progenitor_mass.value):2d}M_r10000_dat.h5'
@@ -331,7 +331,7 @@ class Fornax_2022(loaders.Fornax_2022):
     #a mapping of mass to the progenitor
     _mass_to_progenitor = dict(zip([m.value for m in _fornax_2022_masses], _fornax_2022_progenitors))
 
-    def __init__(self, progenitor_mass: u.Quantity):
+    def __init__(self, progenitor_mass: u.Quantityf, eos:str='SFHo'):
         mass_val = progenitor_mass.to_value(u.Msun) if isinstance(progenitor_mass, u.Quantity) else progenitor_mass
         progenitor = self._mass_to_progenitor[mass_val]
         filename = f'lum_spec_{progenitor}_dat.h5'
@@ -356,14 +356,13 @@ class Fornax_2024(loaders.Fornax_2024):
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d.update/
        """
     #a mapping of mass to the progenitor
-    _mass_to_progenitor = dict(zip([m.value for m in _fornax_2022_masses], _fornax_2022_progenitors))
+    _mass_to_progenitor = dict(zip(_fornax_2024_masses,_fornax_2024_progenitors))
 
-    def __init__(self, progenitor_mass: u.Quantity):
-        mass_val = progenitor_mass.to_value(u.Msun) if isinstance(progenitor_mass, u.Quantity) else progenitor_mass
-        progenitor = self._mass_to_progenitor[mass_val]
-        filename = f'lum_spec_{progenitor}_dat.h5'     
+    def __init__(self, progenitor_mass:u.Quantityf, eos:str='SFHo'):
+        progenitor = self._mass_to_progenitor[progenitor_mass]
         self.metadata['Black hole'] = progenitor == '12.25' or progenitor == '14' or progenitor == '19.56' or progenitor == '40'
-        super().__init__(filename, self.metadata)
+        filename = f'lum_spec_{progenitor}_dat.h5'
+        return super().__init__(filename, self.metadata)
 
 
 @RegistryModel(
@@ -383,7 +382,7 @@ class Fornax_2024(loaders.Fornax_2024):
 class Mori_2023(loaders.Mori_2023):
     """Model based on 2D simulations with axionlike particles, K. Mori, T.  Takiwaki, K. Kotake and S. Horiuchi, Phys. Rev. D 108:063027, 2023. All models are based on the non-rotating 20 M_sun solar metallicity progenitor model from S.E. Woolsey and A. Heger, Phys. Rep. 442:269, 2007. Data from private communication.
         """
-    def __init__(self, axion_mass:u.Quantity, axion_coupling:u.Quantity, progenitor_mass:u.Quantity = 20*u.Msun):
+    def __init__(self, axion_mass:u.Quantity, axion_coupling:u.Quantity, progenitor_mass:u.Quantity = 20*u.Msunf, eos:str='LS220'):
         # Make sure axion coupling is converted to units 1e-10/GeV:
         #axion_coupling = np.round(axion_coupling.to('1e-10/GeV'))
 
