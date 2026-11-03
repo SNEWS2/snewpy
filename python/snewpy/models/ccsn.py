@@ -355,7 +355,8 @@ class Fornax_2024(loaders.Fornax_2024):
                                           description='Axion-photon coupling, in units of 1e-10/GeV',
                                           precision=2 #round to 1e-12/u.GeV
                                          ),
-               progenitor_mass=[20]*u.Msun
+               progenitor_mass=[20]*u.Msun,
+               eos=['LS220']
               )
 class Mori_2022(loaders.Mori_2022):
     """Model based on 1D simulations with axionlike particles, K. Mori, T.  Takiwaki, K. Kotake and S. Horiuchi, Phys. Rev. D 105:063009, 2022. All models are based on the non-rotating 20 M_sun progenitor. Data from private communication.
