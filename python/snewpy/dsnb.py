@@ -1,22 +1,56 @@
-"""
+r"""
 Diffuse Supernova Neutrino Background (DSNB) model for SNEWPY.
 
-The DSNB is built from ordinary SNEWPY supernova models and exposes the same
-interface as they do: ``get_flux(t, E, flavor_xform)`` returns a
-:class:`snewpy.flux.Container`, ``flux.integrate('time')`` gives the fluence
-over a detector exposure, and the fluence can be passed to ``RateCalculator``.
+Every core-collapse supernova in the history of the Universe released a burst
+of neutrinos. Added up over cosmic history, these bursts form a steady, faint,
+all-sky background: the diffuse supernova neutrino background (DSNB). This
+module computes the DSNB flux of electron antineutrinos, :math:`\bar\nu_e`,
+from a list of ordinary SNEWPY supernova models.
 
-Only public methods of the supernova models are used
-(``get_transformed_spectra`` and the ``time`` attribute), so any model class
-works, pinched or not.
+The :class:`DSNB` class has the same interface as the supernova models:
+``get_flux(t, E, flavor_xform)`` returns a :class:`snewpy.flux.Container`,
+``flux.integrate('time')`` gives the fluence over a detector exposure, and the
+fluence can be passed to :class:`snewpy.rate_calculator.RateCalculator`. Only
+public methods of the supernova models are used (``get_transformed_spectra``
+and the ``time`` attribute), so any model class works, whatever its spectral
+shape.
 
-The redshift integral is the standard one, e.g. Eq. (2.1) of Lunardini &
-Tamborra (2012) [arXiv:1205.6292] and Eq. (4) of Ekanger et al. (2023)
-[arXiv:2310.15254].  Core-collapse rate history: Hopkins & Beacom (2006),
-ApJ 651, 142.  Default cosmology: Planck 2018.
+Notes
+-----
+For every supernova model in the list, the flavor-transformed spectrum from
+``model.get_transformed_spectra`` is integrated over time with
+``.integrate('time')``. This gives the number of antineutrinos per MeV released
+by one supernova, :math:`dN/dE'`. The spectra of the models are averaged with
+weights from the Salpeter initial mass function, and the flux follows from an
+integral over redshift:
 
-Example
--------
+.. math::
+
+    \frac{d\Phi}{dE} = \frac{c}{H_0} \int_0^{z_\mathrm{max}}
+    \frac{R_\mathrm{CC}(z)}{\mathcal{E}(z)} \,
+    \frac{dN}{dE'} \bigg|_{E' = (1+z)E} \, dz ,
+    \qquad
+    \mathcal{E}(z) = \sqrt{\Omega_m (1+z)^3 + \Omega_\Lambda} .
+
+Here :math:`R_\mathrm{CC}(z)` is the core-collapse rate per comoving volume and
+:math:`E' = (1+z)E` is the energy at emission. This is the standard expression
+(Eq. 2.1 of Lunardini & Tamborra 2012, Eq. 4 of Ekanger et al. 2023). The DSNB
+is steady, so the flux is the same at every time; the time axis of
+:meth:`DSNB.get_flux` only defines the exposure window of a detector.
+
+The result carries the uncertainty of its inputs. In particular, the
+normalisation of the core-collapse rate (``r0`` of :class:`CoreCollapseRate`)
+is uncertain by about a factor of two, and the flux is proportional to it.
+
+Limitations of the current implementation:
+
+* Only electron antineutrinos are returned; all other flavors are zero.
+* No Earth-matter effects or collective oscillations are included beyond what
+  the chosen flavor transformation contains.
+* A simulation that ends early misses late-time emission, which lowers the flux.
+
+Examples
+--------
 >>> import numpy as np
 >>> import astropy.units as u
 >>> from snewpy.models.ccsn import Nakazato_2013
@@ -34,6 +68,12 @@ Example
 >>> flux     = model.get_flux(t=times, E=energies, flavor_xform=xform)
 >>> fluence  = flux.integrate('time')
 >>> events   = RateCalculator().run(fluence, "wc100kt30prct")
+
+References
+----------
+* Lunardini & Tamborra (2012), https://arxiv.org/abs/1205.6292
+* Ekanger, Horiuchi, Nagakura & Reitz (2023), https://arxiv.org/abs/2310.15254
+* Hopkins & Beacom (2006), ApJ 651, 142, https://arxiv.org/abs/astro-ph/0601463
 """
 
 from __future__ import annotations
@@ -56,36 +96,45 @@ _PLANCK18   = FlatLambdaCDM(H0=67.4, Om0=0.315)
 
 
 class CoreCollapseRate:
-    """
+    r"""
     Redshift-dependent core-collapse supernova rate.
 
-    Implements the parametrisation of Hopkins & Beacom (2006), ApJ 651, 142,
-    which uses the functional form of Cole et al. (2001),
+    The shape follows the parametrisation of Hopkins & Beacom (2006), which uses
+    the functional form of Cole et al. (2001) for the star-formation history,
 
-        rho(z) = (a + b z) h / (1 + (z/c)^d),
+    .. math::
 
-    with a=0.0170, b=0.13, c=3.3, d=5.3 and h=0.7.  The overall factor h
-    cancels here, because the rate is normalised to ``r0`` at z=0.
+        R_\mathrm{CC}(z) = r_0 \, \frac{1 + (b/a)\,z}{1 + (z/c)^d} ,
+        \qquad a = 0.0170, \; b = 0.13, \; c = 3.3, \; d = 5.3 ,
 
-    The normalisation ``r0`` is an input, not a prediction.  Published values
+    normalised so that :math:`R_\mathrm{CC}(0) = r_0`. (The factor
+    :math:`h = 0.7` of the original expression multiplies numerator and
+    denominator and cancels.) The rate rises by a factor of about 8.6 from
+    :math:`z = 0` to :math:`z = 1` and peaks near :math:`z = 2.5`.
+
+    The normalisation ``r0`` is an input, not a prediction. Published values
     differ by about a factor of two: direct supernova counts give
-    0.7e-4 yr^-1 Mpc^-3 (LOSS), star-formation-based estimates give
-    1.5e-4 yr^-1 Mpc^-3 (Lunardini & Tamborra 2012).  The DSNB flux is linear
-    in ``r0``, so results can be rescaled, but the choice should be stated.
+    :math:`0.7 \times 10^{-4}` yr\ :sup:`-1` Mpc\ :sup:`-3` (LOSS), estimates
+    based on star formation give :math:`1.5 \times 10^{-4}` yr\ :sup:`-1`
+    Mpc\ :sup:`-3` (Lunardini & Tamborra 2012). The DSNB flux is proportional
+    to ``r0``, so results can be rescaled, but the choice should be stated.
 
     Parameters
     ----------
     r0 : astropy.units.Quantity
-        Present-day rate.  Default: 1e-4 yr^{-1} Mpc^{-3}.
+        Present-day rate per comoving volume. Default: 1e-4 yr\ :sup:`-1`
+        Mpc\ :sup:`-3`.
+
+    Raises
+    ------
+    astropy.units.UnitsError
+        If ``r0`` does not have units of yr\ :sup:`-1` Mpc\ :sup:`-3`.
 
     Examples
     --------
-    >>> import astropy.units as u
     >>> rcc = CoreCollapseRate()
-    >>> rcc(0)
-    <Quantity 1.e-4 1 / (Mpc3 yr)>
-    >>> rcc(1) > rcc(0)
-    True
+    >>> round(float(rcc(1) / rcc(0)), 1)
+    8.6
     """
 
     _a, _b, _c, _d, _h = 0.0170, 0.13, 3.3, 5.3, 0.7
@@ -137,41 +186,47 @@ def salpeter_imf(masses: np.ndarray) -> np.ndarray:
 
 
 class DSNB:
-    """
-    Diffuse Supernova Neutrino Background model.
+    r"""
+    Diffuse supernova neutrino background (DSNB) model.
 
-    The observed flux is the redshift integral of the time-integrated
-    emission spectrum of a single supernova, weighted by the cosmic
-    core-collapse rate (cf. Eq. 2.1 of Lunardini & Tamborra 2012):
-
-        dPhi/dE = c/H0 * integral_0^z_max R_CC(z) / E(z)
-                         * dN/dE'[(1+z) E]  dz
-
-    where dN/dE' is the IMF-weighted, time-integrated, flavor-transformed
-    NU_E_BAR spectrum emitted by one supernova.  That spectrum is taken from
-    ``model.get_transformed_spectra(t, E, flavor_xform)`` followed by
-    ``.integrate('time')``, for every supernova model in the list.
+    Builds the DSNB flux of electron antineutrinos from a list of SNEWPY
+    supernova models. See the module documentation for the formula.
 
     Parameters
     ----------
-    sn_models : list
-        Supernova model instances (any SNEWPY ``SupernovaModel``).  The
-        progenitor mass used for the IMF weight is read from
-        ``model.metadata['Progenitor mass']``.  A ``(model, mass)`` tuple
-        can be given instead for models without that metadata entry
-        (``mass`` in solar masses, or a Quantity).
+    sn_models : list of SupernovaModel or tuple
+        Supernova model instances (any SNEWPY model). The progenitor mass used
+        for the IMF weight is read from ``model.metadata['Progenitor mass']``.
+        A tuple ``(model, mass)`` can be given instead for models without that
+        metadata entry, with ``mass`` in solar masses or as a Quantity.
     weights : array_like, optional
-        Explicit weight of each model (normalised internally).  When given,
-        the IMF weighting is skipped, and models with equal progenitor
-        masses are allowed.
+        Explicit weight of each model, normalised internally. If given, the IMF
+        weighting is skipped, and models with equal progenitor masses are
+        allowed.
     rcc : CoreCollapseRate, optional
-        Default: Hopkins & Beacom (2006), R_CC(0) = 1e-4 yr^-1 Mpc^-3.
-    cosmology : astropy cosmology instance, optional
-        Default: Planck 2018 (H0=67.4, Om0=0.315).
+        Core-collapse rate. Default: :class:`CoreCollapseRate` with
+        :math:`R_\mathrm{CC}(0) = 10^{-4}` yr\ :sup:`-1` Mpc\ :sup:`-3`.
+    cosmology : astropy.cosmology.Cosmology, optional
+        Cosmology. Default: Planck 2018 (:math:`H_0 = 67.4`,
+        :math:`\Omega_m = 0.315`).
     z_max : float, optional
-        Upper redshift limit.  Default: 5.0.
+        Upper redshift limit. Default: 5.
     n_z : int, optional
-        Number of redshift grid points.  Default: 800.
+        Number of redshift grid points. Default: 800.
+
+    Raises
+    ------
+    ValueError
+        If a progenitor mass cannot be determined, if ``weights`` is invalid,
+        or if two models have the same mass and no ``weights`` are given.
+
+    Notes
+    -----
+    Without explicit ``weights``, each model stands for an interval of
+    progenitor masses. The interval boundaries lie halfway between neighbouring
+    masses, with outer limits of 8 and 100 solar masses, and the weight of a
+    model is the integral of the Salpeter initial mass function,
+    :math:`\propto M^{-2.35}`, over its interval.
     """
 
     #: lowest emitted energy, MeV, and number of points of the emission grid
@@ -302,12 +357,12 @@ class DSNB:
         flavor_xform : FlavorTransformation = NoTransformation(),
     ) -> Container:
         """
-        DSNB flux, same call signature as the supernova models' get_flux
-        (without the distance).
+        DSNB flux of electron antineutrinos.
 
-        The DSNB is steady-state: the returned flux has the same value at
-        every time in ``t``.  ``flux.integrate('time')`` gives the fluence
-        over the exposure ``[t[0], t[-1]]``.
+        The call is the same as for the supernova models, except that there is
+        no distance. The DSNB is steady-state: the returned flux has the same
+        value at every time in ``t``, and ``flux.integrate('time')`` gives the
+        fluence over the exposure ``[t[0], t[-1]]``.
 
         Parameters
         ----------
