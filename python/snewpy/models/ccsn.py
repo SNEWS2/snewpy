@@ -52,8 +52,8 @@ class Fischer_2020(loaders.Fischer_2020):
     def __init__(self):
         filename='Fischer_2020.tar.gz'
      
-        self.metadata['Progenitor mass'] = 18. * u.Msun
-        self.metadata['EOS'] = "HS(DD2)"     
+        self.metadata['progenitor_mass'] = 18. * u.Msun
+        self.metadata['eos'] = "HS(DD2)"     
      
         super().__init__(filename, metadata=self.metadata)
 
@@ -118,7 +118,7 @@ class Tamborra_2014(loaders.Tamborra_2014):
     def __init__(self, *, progenitor_mass:u.Quantity, direction:int):
         filename = f's{progenitor_mass.value:3.1f}c_3D_dir{direction}'
 
-        self.metadata['EOS'] = 'LS220'
+        self.metadata['eos'] = 'LS220'
      
         # rest of metadata is handled by __init__ in _GarchingArchiveModel
         super().__init__(filename=filename, metadata=self.metadata)
@@ -135,7 +135,7 @@ class Bollig_2016(loaders.Bollig_2016):
     def __init__(self, progenitor_mass:u.Quantity):
         filename = f's{progenitor_mass.value:3.1f}c'
 
-        self.metadata['EOS'] = 'LS220'    
+        self.metadata['eos'] = 'LS220'    
      
         super().__init__(filename=filename, metadata=self.metadata)
 
@@ -154,8 +154,8 @@ class Walk_2018(loaders.Walk_2018):
     def __init__(self, *, progenitor_mass:u.Quantity, rotation:str, direction:int):
         filename = f's{progenitor_mass.value:3.1f}c_3D_{rotation}rot_dir{direction}'
 
-        self.metadata['Progenitor mass'] = 15. * u.Msun     
-        self.metadata['EOS'] = 'LS220'
+        self.metadata['progenitor_mass'] = 15. * u.Msun     
+        self.metadata['eos'] = 'LS220'
      
         super().__init__(filename=filename, metadata=self.metadata)
 
@@ -175,7 +175,7 @@ class Walk_2019(loaders.Walk_2019):
     def __init__(self, * ,progenitor_mass:u.Quantity, direction:int):
         filename = f's{progenitor_mass.value:3.1f}c_3DBH_dir{direction}'
 
-        self.metadata['EOS'] = 'LS220'    
+        self.metadata['eos'] = 'LS220'    
      
         super().__init__(filename=filename, metadata=self.metadata)
 
@@ -208,8 +208,8 @@ class OConnor_2015(loaders.OConnor_2015):
     def __init__(self):
         filename = 'M1_neutrinos.dat'
 
-        self.metadata['Progenitor mass'] = 40. * u.Msun
-        self.metadata['EOS'] = 'LS220'     
+        self.metadata['progenitor_mass'] = 40. * u.Msun
+        self.metadata['eos'] = 'LS220'     
      
         super().__init__(filename, self.metadata)
 
@@ -226,7 +226,7 @@ class Zha_2021(loaders.Zha_2021):
     def __init__(self, *, progenitor_mass:u.Quantity):
         filename = f's{progenitor_mass.value:g}.dat'
 
-        self.metadata['EOS'] = 'STOS_B145'     
+        self.metadata['eos'] = 'STOS_B145'     
      
         super().__init__(filename, self.metadata)
 
@@ -257,7 +257,7 @@ class Warren_2020(loaders.Warren_2020):
         else:
             fname = f'stir_a{turbmixing_param:3.2f}/stir_multimessenger_a{turbmixing_param:3.2f}_m{progenitor_mass.value:g}.h5'
 
-        self.metadata['EOS'] = 'SFHo'
+        self.metadata['eos'] = 'SFHo'
      
         super().__init__(fname, self.metadata)
 
@@ -277,8 +277,8 @@ class Kuroda_2020(loaders.Kuroda_2020):
     def __init__(self, *, rotational_velocity, magnetic_field_exponent):
         filename = f'LnuR{int(rotational_velocity.value):1d}0B{int(magnetic_field_exponent):02d}.dat'
 
-        self.metadata['Progenitor mass'] = 20. * u.Msun
-        self.metadata['EOS'] = 'LS220'     
+        self.metadata['progenitor_mass'] = 20. * u.Msun
+        self.metadata['eos'] = 'LS220'     
      
         super().__init__(filename, self.metadata)
 
@@ -308,7 +308,7 @@ class Fornax_2019(loaders.Fornax_2019):
         else:
             filename = f'lum_spec_{int(progenitor_mass.value):d}M.h5'
 
-        self.metadata['EOS'] = 'LS220'    
+        self.metadata['eos'] = 'LS220'    
      
         super().__init__(filename, self.metadata, cache_flux=cache_flux)
 
@@ -330,7 +330,7 @@ class Fornax_2021(loaders.Fornax_2021):
         else:
             filename = f'lum_spec_{progenitor_mass.value:.2f}M_r10000_dat.h5'
 
-        self.metadata['EOS'] = 'SFHo'    
+        self.metadata['eos'] = 'SFHo'    
      
         super().__init__(filename, self.metadata)
 
@@ -374,7 +374,7 @@ class Fornax_2022(loaders.Fornax_2022):
         progenitor = self._mass_to_progenitor[mass_val]
         filename = f'lum_spec_{progenitor}_dat.h5'
 
-        self.metadata['EOS'] = 'SFHo'          
+        self.metadata['eos'] = 'SFHo'          
         self.metadata['Black hole'] = progenitor.endswith('.bh')
      
         super().__init__(filename, self.metadata)
@@ -403,7 +403,7 @@ class Fornax_2024(loaders.Fornax_2024):
         progenitor = self._mass_to_progenitor[progenitor_mass]
         filename = f'lum_spec_{progenitor}_dat.h5'
 
-        self.metadata['EOS'] = 'SFHo'        
+        self.metadata['eos'] = 'SFHo'        
         self.metadata['Black hole'] = progenitor == '12.25' or progenitor == '14' or progenitor == '19.56' or progenitor == '40'
      
         super().__init__(filename, self.metadata)
@@ -456,8 +456,8 @@ class Mori_2023(loaders.Mori_2023):
         pns_mass = mpns[(am,ac)]
 
         # Set the metadata.
-        self.metadata['Progenitor mass'] = 20. * u.Msun     
-        self.metadata['EOS'] = 'LS220'       
+        self.metadata['progenitor_mass'] = 20. * u.Msun     
+        self.metadata['eos'] = 'LS220'       
         self.metadata['PNS mass'] = pns_mass * u.Msun 
      
         super().__init__(filename, self.metadata)
@@ -497,7 +497,7 @@ class Takata_2025(loaders.Takata_2025):
         else:
             filename = f'{pmass}_{axion_mass.to_value("MeV"):03g}_{axion_coupling.to_value("1e-10/GeV"):02g}.dat'
 
-        self.metadata['EOS'] = 'LS220'   
+        self.metadata['eos'] = 'LS220'   
      
         super().__init__(filename, self.metadata)
 
@@ -523,8 +523,8 @@ class Bugli_2021(loaders.Bugli_2021):
         if Bfield=='L1':
             filename = f'{Bfield}_b12_3d_{rotation}deg_snewpy_{direction}.dat'
 
-        self.metadata['Progenitor mass'] = 35. * u.Msun
-        self.metadata['EOS'] = 'LS220'
+        self.metadata['progenitor_mass'] = 35. * u.Msun
+        self.metadata['eos'] = 'LS220'
 
         super().__init__(filename=filename, metadata=self.metadata)
 
