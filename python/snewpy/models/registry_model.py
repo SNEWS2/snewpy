@@ -394,9 +394,7 @@ def RegistryModel(_param_validator=None, **params):
                     A tuple of all valid parameter combinations stored as Dictionaries"""
                 return cls.parameters.valid_combinations_dict
 
-            """JPK: 11/6/2026 fixed"""
-            #param = {name: p.values for name, p in parameters.items()}
-            param = {name: p.values for name, p in pset.param}
+            param = {name: p.values for name, p in parameters.items()}
 
         #fill the constructor signature
         c.__init__.__signature__ = inspect.signature(base_class.__init__)
