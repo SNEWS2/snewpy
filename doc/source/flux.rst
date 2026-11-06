@@ -9,6 +9,6 @@ Flux containers
 ---------------
 .. automodule:: snewpy.flux
 
-Rate calcuation
----------------
+Rate calculation
+----------------
 .. automodule:: snewpy.rate_calculator

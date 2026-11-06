@@ -63,7 +63,7 @@ def _get_transformation(flavor_transformation: str):
         print(f"Using default parameters for {flavor_transformation} transformation. Use a `FlavorTransformation` instance to specify custom parameters.")
 
     # Choose flavor transformation. Use dict to associate the transformation name with its class.
-    # The default mixing paramaters are the normal hierarchy values
+    # The default mixing parameters are the normal hierarchy values
     flavor_transformation_dict = {'NoTransformation': NoTransformation(), 
                                   'CompleteExchange': CompleteExchange(),                                
                                   'AdiabaticMSW_NMO': AdiabaticMSW(NMO_mix_params), 
@@ -397,7 +397,7 @@ def collate(tarball_path, skip_plots=False, *, smearing=True):
     #This output is similar to what produced by:
     #tables = simulate(SNOwGLoBESdir, tarball_path,detector_input)
 
-    #dict for old-style results, for backward compatibiity
+    #dict for old-style results, for backward compatibility
     results = {}
     smearing_options = ['smeared','unsmeared'] if smearing else ['unsmeared']
     #save collated files:
