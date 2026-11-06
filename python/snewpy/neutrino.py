@@ -133,7 +133,7 @@ class ThreeFlavorMixingParameters(Mapping):
 
 
     def VacuumMixingMatrix(self):
-        """The vacuum mixing matrix given the mixing paramters
+        """The vacuum mixing matrix given the mixing parameters
            N.B. This is a 6 x 6 matrix
         """
 

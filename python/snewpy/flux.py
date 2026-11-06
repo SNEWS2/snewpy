@@ -7,7 +7,7 @@ Usage
 -----
 The flux container will be produced by the :meth:`SupernovaModel.get_flux`, and consumed by the :meth:`RateCalculator.run`
 
-A example of usage:
+An example of usage:
 
 .. code-block:: python
 
@@ -16,7 +16,7 @@ A example of usage:
     from snewpy.models import ccsn
     from snewpy.flavor_transformation import AdiabaticMSW
     
-    #get the suernova model
+    #get the supernova model
     model = ccsn.Bollig_2016(progenitor_mass=27<<u.Msun)
     #define the sampling points
     energy = np.linspace(0,100,51)<<u.MeV
@@ -133,7 +133,7 @@ class _ContainerBase:
             
         flavor_scheme: a subclass of :class:`snewpy.flavor.FlavorSchemes` or None
             A class which lists all the allowed flavors. 
-            If None (default) this value will be retrieved from the ``flavor`` arguemnt.
+            If None (default) this value will be retrieved from the ``flavor`` argument.
         """
         if self.unit is not None:
             #try to convert to the unit
@@ -232,7 +232,7 @@ class _ContainerBase:
         -------
         The resulting data array will be 3D array, but the dimension, corresponding to `axis` parameter will be reduced to 1. 
         
-        For an examplar Container ``a`` of a given shape::
+        For an example Container ``a`` of a given shape::
         
             >>> a.shape
             (4, 10, 20)
@@ -281,7 +281,7 @@ class _ContainerBase:
         -------
         The resulting data array will be 3D array, but the dimension, corresponding to `axis` parameter will be reduced to ``len(limits)-1``. 
         
-        For an examplar Container ``a`` of a given shape::
+        For an example Container ``a`` of a given shape::
         
             >>> a.shape
             (4, 10, 20)

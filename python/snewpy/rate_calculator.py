@@ -132,7 +132,7 @@ class FunctionOfEnergy:
         Parameters
         ----------
         callable: Callable
-            A function of one parameter (energy). This can be an analitical function, or an interpolation of a (E,value) dataset
+            A function of one parameter (energy). This can be an analytical function, or an interpolation of a (E,value) dataset
         """
         self.value = callable
 

@@ -40,7 +40,7 @@ class SupernovaModel(ABC, LocalFileLoader):
         ----------
         time : ndarray of astropy.Quantity
             Time points where the model flux is defined.
-            Must be array of :class:`Quantity`, with units convertable to "second".
+            Must be array of :class:`Quantity`, with units convertible to "second".
         metadata : dict
             Dict of model parameters <name>:<value>,
             to be used for printing table in :meth:`__repr__` and :meth:`_repr_markdown_`
