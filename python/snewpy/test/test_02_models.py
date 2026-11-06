@@ -261,7 +261,7 @@ class TestModels(unittest.TestCase):
                 mfile = f'Warren_2020/stir_a{mixing}/stir_multimessenger_a{mixing}_m{mass}.h5'
                 metadata = {
                     'progenitor_mass': float(mass) * u.Msun,
-                    'Turb. mixing param.': mixing,
+                    'turbmixing_param.': mixing,
                     'eos': 'SFHo',
                 }
                 model = Warren_2020(os.path.join(model_path, mfile), metadata)
