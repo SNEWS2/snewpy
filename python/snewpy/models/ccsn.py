@@ -43,22 +43,6 @@ from textwrap import dedent
 
 
 @RegistryModel(
-    progenitor_mass = [18.] * u.Msun,
-    eos = ['HS(DD2)'],
-)
-class Fischer_2020(loaders.Fischer_2020):
-    """Model based on simulations from `Fischer et al. (2020) <https://arxiv.org/abs/1804.10890>`
-    """
-    def __init__(self):
-        filename='Fischer_2020.tar.gz'
-     
-        self.metadata['progenitor_mass'] = 18. * u.Msun
-        self.metadata['eos'] = "HS(DD2)"     
-     
-        super().__init__(filename, metadata=self.metadata)
-
-
-@RegistryModel(
     progenitor_mass = [13, 20, 30, 50] * u.Msun,
     revival_time = [0, 100, 200, 300] * u.ms,
     metallicity = [0.02, 0.004],
@@ -88,19 +72,21 @@ class Nakazato_2013(loaders.Nakazato_2013):
 
 
 @RegistryModel(
-    progenitor_mass = [27., 9.6] * u.Msun,
-    eos = ['LS220', 'SFHo'],
+    progenitor_mass = Parameter(values=(list(range(12, 34)) +
+                                 list(range(35, 61, 5)) +
+                                 [70, 80, 100, 120]) * u.Msun,
+                                desc_values='[12..33, 35..5..60, 70, 80, 100, 120] solMass'
+                               ),
+    eos = ['HShen', 'LS220']
 )
-class Sukhbold_2015(loaders.Sukhbold_2015):
-    """Model based on simulations from Sukhbold et al., ApJ 821:38,2016. Models were shared privately by email.
+class OConnor_2013(loaders.OConnor_2013):
+    """Model based on the black hole formation simulation in `O'Connor & Ott (2013) <https://arxiv.org/abs/1207.1100>`_.
     """
     def __init__(self, progenitor_mass:u.Quantity, eos:str):
-        if progenitor_mass.value == 9.6:
-            filename = f'sukhbold-{eos}-z{progenitor_mass.value:3.1f}.fits'
-        else:
-            filename = f'sukhbold-{eos}-s{progenitor_mass.value:3.1f}.fits'
-         
-        super().__init__(filename, self.metadata)
+        # Load from Parameters
+        filename = f'{eos}_timeseries.tar.gz'
+     
+        super().__init__(filename=filename, metadata=self.metadata)
 
 
 @RegistryModel(
@@ -122,6 +108,38 @@ class Tamborra_2014(loaders.Tamborra_2014):
      
         # rest of metadata is handled by __init__ in _GarchingArchiveModel
         super().__init__(filename=filename, metadata=self.metadata)
+
+
+@RegistryModel(
+    progenitor_mass = [40.] * u.Msun,
+    eos = ['LS220'] 
+)
+class OConnor_2015(loaders.OConnor_2015):
+    """Model based on the black hole formation simulation in `O'Connor (2015) <https://arxiv.org/abs/1411.7058>`_.
+    """
+    def __init__(self):
+        filename = 'M1_neutrinos.dat'
+
+        self.metadata['progenitor_mass'] = 40. * u.Msun
+        self.metadata['eos'] = 'LS220'     
+     
+        super().__init__(filename, self.metadata)
+
+
+@RegistryModel(
+    progenitor_mass = [27., 9.6] * u.Msun,
+    eos = ['LS220', 'SFHo'],
+)
+class Sukhbold_2015(loaders.Sukhbold_2015):
+    """Model based on simulations from Sukhbold et al., ApJ 821:38,2016. Models were shared privately by email.
+    """
+    def __init__(self, progenitor_mass:u.Quantity, eos:str):
+        if progenitor_mass.value == 9.6:
+            filename = f'sukhbold-{eos}-z{progenitor_mass.value:3.1f}.fits'
+        else:
+            filename = f'sukhbold-{eos}-s{progenitor_mass.value:3.1f}.fits'
+         
+        super().__init__(filename, self.metadata)
 
 
 @RegistryModel(
@@ -180,53 +198,24 @@ class Walk_2019(loaders.Walk_2019):
         super().__init__(filename=filename, metadata=self.metadata)
 
 
-@RegistryModel(
-    progenitor_mass = Parameter(values=(list(range(12, 34)) +
-                                 list(range(35, 61, 5)) +
-                                 [70, 80, 100, 120]) * u.Msun,
-                                desc_values='[12..33, 35..5..60, 70, 80, 100, 120] solMass'
-                               ),
-    eos = ['HShen', 'LS220']
-)
-class OConnor_2013(loaders.OConnor_2013):
-    """Model based on the black hole formation simulation in `O'Connor & Ott (2013) <https://arxiv.org/abs/1207.1100>`_.
-    """
-    def __init__(self, progenitor_mass:u.Quantity, eos:str):
-        # Load from Parameters
-        filename = f'{eos}_timeseries.tar.gz'
-     
-        super().__init__(filename=filename, metadata=self.metadata)
-
 
 @RegistryModel(
-    progenitor_mass = [40.] * u.Msun,
-    eos = ['LS220'] 
+    rotational_velocity= [0, 1] * u.rad / u.s,
+    magnetic_field_exponent= Parameter([0, 12, 13],
+                                      label='B_0 Exponent',
+                                      description='Exponent of magnetic field (See Eq. 46)'),
+    progenitor_mass=[20.] *u.Msun,
+    eos = ['LS220'],
+    _param_validator = lambda p: (p['rotational_velocity'].value == 1 and p['magnetic_field_exponent'] in (12, 13)) or \
+                               (p['rotational_velocity'].value == 0 and p['magnetic_field_exponent'] == 0)
 )
-class OConnor_2015(loaders.OConnor_2015):
-    """Model based on the black hole formation simulation in `O'Connor (2015) <https://arxiv.org/abs/1411.7058>`_.
-    """
-    def __init__(self):
-        filename = 'M1_neutrinos.dat'
+class Kuroda_2020(loaders.Kuroda_2020):
+    """Model based on simulations from `Kuroda et al. (2020) <https://arxiv.org/abs/2009.07733>`_."""
+    def __init__(self, *, rotational_velocity, magnetic_field_exponent):
+        filename = f'LnuR{int(rotational_velocity.value):1d}0B{int(magnetic_field_exponent):02d}.dat'
 
-        self.metadata['progenitor_mass'] = 40. * u.Msun
+        self.metadata['progenitor_mass'] = 20. * u.Msun
         self.metadata['eos'] = 'LS220'     
-     
-        super().__init__(filename, self.metadata)
-
-
-@RegistryModel(
-    progenitor_mass = Parameter(values=(list(range(16, 27)) + [19.89, 22.39, 30, 33]) * u.Msun,
-                                desc_values = '[16..26, 19.89, 22.39, 30, 33] solMass'
-                               ),
-    eos = ['STOS_B145'], 
-)
-class Zha_2021(loaders.Zha_2021):
-    """Model based on the hadron-quark phse transition models from `Zha et al. 2021 <https://arxiv.org/abs/2103.02268>`_.
-    """
-    def __init__(self, *, progenitor_mass:u.Quantity):
-        filename = f's{progenitor_mass.value:g}.dat'
-
-        self.metadata['eos'] = 'STOS_B145'     
      
         super().__init__(filename, self.metadata)
 
@@ -242,7 +231,7 @@ class Zha_2021(loaders.Zha_2021):
     eos = ['SFHo'],
     turbmixing_param= Parameter([1.23, 1.25, 1.27],
                               name='turbmixing_param',
-                              label='Turb. mixing param.',
+                              #label='Turb. mixing param.',
                               description='Turbulent mixing parameter alpha_lambda',
                               ),
 )
@@ -263,22 +252,34 @@ class Warren_2020(loaders.Warren_2020):
 
 
 @RegistryModel(
-    rotational_velocity= [0, 1] * u.rad / u.s,
-    magnetic_field_exponent= Parameter([0, 12, 13],
-                                      label='B_0 Exponent',
-                                      description='Exponent of magnetic field (See Eq. 46)'),
-    progenitor_mass=[20.] *u.Msun,
-    eos = ['LS220'],
-    _param_validator = lambda p: (p['rotational_velocity'].value == 1 and p['magnetic_field_exponent'] in (12, 13)) or \
-                               (p['rotational_velocity'].value == 0 and p['magnetic_field_exponent'] == 0)
+    progenitor_mass = [18.] * u.Msun,
+    eos = ['HS(DD2)'],
 )
-class Kuroda_2020(loaders.Kuroda_2020):
-    """Model based on simulations from `Kuroda et al. (2020) <https://arxiv.org/abs/2009.07733>`_."""
-    def __init__(self, *, rotational_velocity, magnetic_field_exponent):
-        filename = f'LnuR{int(rotational_velocity.value):1d}0B{int(magnetic_field_exponent):02d}.dat'
+class Fischer_2020(loaders.Fischer_2020):
+    """Model based on simulations from `Fischer et al. (2020) <https://arxiv.org/abs/1804.10890>`
+    """
+    def __init__(self):
+        filename='Fischer_2020.tar.gz'
+     
+        self.metadata['progenitor_mass'] = 18. * u.Msun
+        self.metadata['eos'] = "HS(DD2)"     
+     
+        super().__init__(filename, metadata=self.metadata)
+     
 
-        self.metadata['progenitor_mass'] = 20. * u.Msun
-        self.metadata['eos'] = 'LS220'     
+@RegistryModel(
+    progenitor_mass = Parameter(values=(list(range(16, 27)) + [19.89, 22.39, 30, 33]) * u.Msun,
+                                desc_values = '[16..26, 19.89, 22.39, 30, 33] solMass'
+                               ),
+    eos = ['STOS_B145'], 
+)
+class Zha_2021(loaders.Zha_2021):
+    """Model based on the hadron-quark phse transition models from `Zha et al. 2021 <https://arxiv.org/abs/2103.02268>`_.
+    """
+    def __init__(self, *, progenitor_mass:u.Quantity):
+        filename = f's{progenitor_mass.value:g}.dat'
+
+        self.metadata['eos'] = 'STOS_B145'     
      
         super().__init__(filename, self.metadata)
 
