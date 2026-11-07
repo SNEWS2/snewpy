@@ -191,7 +191,10 @@ class Parameter:
         
     def set_description_and_label(self, name:str):
         """Generate the description and label from the parameter given name"""
-        self.label = self.label or _default_labels.get(name, name.replace('_',' ').capitalize())
+        """JPK This next line means the keys in model.metadata are not the same as model.params"""
+        #self.label = self.label or _default_labels.get(name, name.replace('_',' ').capitalize())
+        """JPK Changed so that label is the same as the parameter name"""        
+        self.label = name
         self.description = self.description or _default_descriptions.get(name,self.label)
         
     def apply_precision(self, value):
@@ -357,6 +360,7 @@ def RegistryModel(_param_validator=None, **params):
     def _wrap(base_class):
         class c(base_class, RegistryFileLoader):
             parameters:ParameterSet = pset
+            
             @classmethod
             def _generate_docstring(cls)->str:
                 docstring = dedent(base_class.__init__.__doc__ or '')
@@ -390,8 +394,9 @@ def RegistryModel(_param_validator=None, **params):
                 valid_combinations: tuple[dict]
                     A tuple of all valid parameter combinations stored as Dictionaries"""
                 return cls.parameters.valid_combinations_dict
-            
+
             param = {name: p.values for name, p in parameters.items()}
+
         #fill the constructor signature
         c.__init__.__signature__ = inspect.signature(base_class.__init__)
         #If we have "fixed" parameters in ParameterSet, add them to the signature as keyword arguments
