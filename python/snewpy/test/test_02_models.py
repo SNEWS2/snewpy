@@ -353,7 +353,7 @@ class TestModels(unittest.TestCase):
                         f'{amass.to_value("MeV"):03g}',
                         f'{ga.to_value("1e-10/GeV"):02g}.dat'])
 
-                    model = Takata_2025(os.path.join(model_path, 'Takata_2025', mfile), metadata={'progenitor_mass':pmass, 'Axion mass':amass, 'Axion coupling':ga})
+                    model = Takata_2025(os.path.join(model_path, 'Takata_2025', mfile), metadata={'progenitor_mass':pmass, 'axion_mass':amass, 'axion_coupling':ga})
 
                     self.assertEqual(model.metadata['progenitor_mass'], pmass)
                     self.assertEqual(model.metadata['axion_mass'], amass)
