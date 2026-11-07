@@ -10,6 +10,10 @@ These directories contain notebooks demonstrating how to use the core-collapse a
 
 This notebook demonstrates how to use the `Analytic3Species` class from `snewpy.models` to create an analytic supernova model by specifying the luminosity, mean energy and mean squared energy for three neutrino flavors.
 
+## DSNB
+
+This notebook demonstrates how to use the `DSNB` class from `snewpy.dsnb` to compute the diffuse supernova neutrino background flux, and the resulting event rates, from a list of supernova models.
+
 ## FlavorTransformation
 
 This notebook demonstrates the flavor transformations available in `snewpy.flavor_transformation`. It was used to produce many of the figures in the SNEWPY ApJ paper.
