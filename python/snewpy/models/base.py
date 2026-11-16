@@ -40,7 +40,7 @@ class SupernovaModel(ABC, LocalFileLoader):
         ----------
         time : ndarray of astropy.Quantity
             Time points where the model flux is defined.
-            Must be array of :class:`Quantity`, with units convertible to "second".
+            Must be array of :class:`Quantity`, with units convertable to "second".
         metadata : dict
             Dict of model parameters <name>:<value>,
             to be used for printing table in :meth:`__repr__` and :meth:`_repr_markdown_`
@@ -102,6 +102,9 @@ class SupernovaModel(ABC, LocalFileLoader):
     def _get_initial_spectra_dict(t, E, flavors=ThreeFlavor)->dict:
         """Get neutrino spectra at the source.
 
+        1D subclasses implement ``(self, t, E, flavors=ThreeFlavor)``.
+        3D subclasses implement ``(self, t, E, theta, phi, flavors=ThreeFlavor)``.        
+
         Parameters
         ----------
         t : astropy.Quantity
@@ -116,7 +119,7 @@ class SupernovaModel(ABC, LocalFileLoader):
         """
         pass
         
-    def get_initial_spectra(self, t, E):
+    def get_initial_spectra(self, t, E, theta=None, phi=None):
         """Get neutrino spectra at the source.
 
         Parameters
@@ -125,20 +128,30 @@ class SupernovaModel(ABC, LocalFileLoader):
             Time to evaluate initial spectra.
         E : astropy.Quantity 
             Energies to evaluate the initial spectra.
+        theta : astropy.Quantity
+            Zenith angle of the spectral emission.
+        phi : astropy.Quantity
+            Azimuth angle of the spectral emission.            
 
         Returns
         -------
         flux.Container 
             A container with the information about the initial neutrino spectra
         """
-        spectra_dict = self._get_initial_spectra_dict(t, E, flavors=ThreeFlavor)
+        angles = {}
+        if theta is not None:
+            angles["theta"] = theta
+        if phi is not None:
+            angles["phi"] = phi
+            
+        spectra_dict = self._get_initial_spectra_dict(t, E, flavors=ThreeFlavor, **angles)
         initial_spectra =  flux.Container['1/(MeV*s)'].from_dict(spectra_dict, 
                                                                 time=t,
                                                                 energy=E,
                                                                 flavor_scheme=ThreeFlavor)
         return initial_spectra
 
-    def get_transformed_spectra(self, t, E, flavor_xform):
+    def get_transformed_spectra(self, t, E, theta=None, phi=None, flavor_xform=NoTransformation()):
         """Get neutrino spectra after applying the flavor transformation.
 
         Parameters
@@ -147,6 +160,10 @@ class SupernovaModel(ABC, LocalFileLoader):
             Time to evaluate the neutrino spectra.
         E : astropy.Quantity
             Energies to evaluate the neutrino spectra.
+        theta : astropy.Quantity
+            Zenith angle of the spectral emission.
+        phi : astropy.Quantity
+            Azimuth angle of the spectral emission.                        
         flavor_xform : FlavorTransformation
             An instance from the flavor_transformation module.
 
@@ -159,7 +176,7 @@ class SupernovaModel(ABC, LocalFileLoader):
         transformed_spectra = flavor_xform.apply_to(initialspectra)
         return transformed_spectra
 
-    def get_flux (self, t, E, distance, flavor_xform=NoTransformation()):
+    def get_flux (self, t, E, distance, theta=None, phi=None, flavor_xform=NoTransformation()):
         """Get neutrino flux through 1cm^2 surface at the given distance
 
         Parameters
@@ -167,9 +184,13 @@ class SupernovaModel(ABC, LocalFileLoader):
         t : astropy.Quantity
             Time to evaluate the neutrino spectra.
         E : astropy.Quantity or ndarray of astropy.Quantity
-            Energies to evaluate the the neutrino spectra.
+            Energies to evaluate the the neutrino spectra.            
         distance : astropy.Quantity or float (in kpc)
             Distance from supernova.
+        theta : astropy.Quantity
+            Zenith angle of the spectral emission.
+        phi : astropy.Quantity
+            Azimuth angle of the spectral emission.                        
         flavor_xform : FlavorTransformation
             An instance from the flavor_transformation module.
 
@@ -178,7 +199,7 @@ class SupernovaModel(ABC, LocalFileLoader):
         flux.Container 
             A container with the information about the neutrino flux
         """
-        transformed_spectra = self.get_transformed_spectra(t, E, flavor_xform)
+        transformed_spectra = self.get_transformed_spectra(t, E, theta, phi, flavor_xform)
         distance = distance << u.kpc #assume that provided distance is in kpc, or convert
         factor = 1/(4*np.pi*(distance.to('cm'))**2)
         
