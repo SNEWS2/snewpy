@@ -50,7 +50,7 @@ class Fischer_2020(loaders.Fischer_2020):
         self.metadata["EOS"] = "HS(DD2)"
         self.metadata["Progenitor mass"] = 18 * u.Msun
         filename='Fischer_2020.tar.gz'
-        return super().__init__(filename, metadata=self.metadata)
+        super().__init__(filename, metadata=self.metadata)
 
 @RegistryModel(
     progenitor_mass = [13, 20, 30, 50] * u.Msun,
@@ -78,7 +78,7 @@ class Nakazato_2013(loaders.Nakazato_2013):
             filename = f"nakazato-{eos}-BH-z{metallicity}-s{progenitor_mass:3.1f}.fits"
         #modify metadata if needed...
         #self.metadata['name']=value
-        return super().__init__(filename, self.metadata)
+        super().__init__(filename, self.metadata)
 
 
 @RegistryModel(
@@ -93,7 +93,7 @@ class Sukhbold_2015(loaders.Sukhbold_2015):
             filename = f'sukhbold-{eos}-z{progenitor_mass.value:3.1f}.fits'
         else:
             filename = f'sukhbold-{eos}-s{progenitor_mass.value:3.1f}.fits'
-        return super().__init__(filename, self.metadata)
+        super().__init__(filename, self.metadata)
 
 
 @RegistryModel(
@@ -111,7 +111,7 @@ class Tamborra_2014(loaders.Tamborra_2014):
     def __init__(self, *, progenitor_mass:u.Quantity, direction:int):
         filename = f's{progenitor_mass.value:3.1f}c_3D_dir{direction}'
         # Metadata is handled by __init__ in _GarchingArchiveModel
-        return super().__init__(filename=filename, metadata=self.metadata)
+        super().__init__(filename=filename, metadata=self.metadata)
 
 @RegistryModel(
     progenitor_mass= [11.2, 27.] * u.Msun,
@@ -123,7 +123,7 @@ class Bollig_2016(loaders.Bollig_2016):
     """
     def __init__(self, progenitor_mass:u.Quantity, eos:str='LS220'):
         filename = f's{progenitor_mass.value:3.1f}c'
-        return super().__init__(filename=filename, metadata=self.metadata)
+        super().__init__(filename=filename, metadata=self.metadata)
 
 @RegistryModel(
     progenitor_mass = [15.] * u.Msun,
@@ -139,7 +139,7 @@ class Walk_2018(loaders.Walk_2018):
     def __init__(self, *, progenitor_mass:u.Quantity, rotation:str, direction:int):
 
         filename = f's{progenitor_mass.value:3.1f}c_3D_{rotation}rot_dir{direction}'
-        return super().__init__(filename=filename, metadata=self.metadata)
+        super().__init__(filename=filename, metadata=self.metadata)
 
 
 @RegistryModel(
@@ -156,7 +156,7 @@ class Walk_2019(loaders.Walk_2019):
     """
     def __init__(self, * ,progenitor_mass:u.Quantity, direction:int):
         filename = f's{progenitor_mass.value:3.1f}c_3DBH_dir{direction}'
-        return super().__init__(filename=filename, metadata=self.metadata)
+        super().__init__(filename=filename, metadata=self.metadata)
 
 
 @RegistryModel(
@@ -173,7 +173,7 @@ class OConnor_2013(loaders.OConnor_2013):
     def __init__(self, eos:str, progenitor_mass:u.Quantity):
         # Load from Parameters
         filename = f'{eos}_timeseries.tar.gz'
-        return super().__init__(filename=filename, metadata=self.metadata)
+        super().__init__(filename=filename, metadata=self.metadata)
 
 @RegistryModel(
     progenitor_mass = [40 * u.Msun],
@@ -185,7 +185,7 @@ class OConnor_2015(loaders.OConnor_2015):
         self.metadata["EOS"] = "LS220"
         # Filename is currently the same regardless of parameters
         filename = 'M1_neutrinos.dat'
-        return super().__init__(filename, self.metadata)
+        super().__init__(filename, self.metadata)
 
 @RegistryModel(
     progenitor_mass = Parameter(values=(list(range(16, 27)) + [19.89, 22.39, 30, 33]) * u.Msun,
@@ -198,7 +198,7 @@ class Zha_2021(loaders.Zha_2021):
     def __init__(self, *, progenitor_mass:u.Quantity):
         self.metadata["EOS"] = "STOS_B145"
         filename = f's{progenitor_mass.value:g}.dat'
-        return super().__init__(filename, self.metadata)
+        super().__init__(filename, self.metadata)
 
 @RegistryModel(
     progenitor_mass=Parameter(np.concatenate((np.linspace(9.0, 12.75, 16),
@@ -225,7 +225,7 @@ class Warren_2020(loaders.Warren_2020):
             fname = f'stir_a{turbmixing_param:3.2f}/stir_multimessenger_a{turbmixing_param:3.2f}_m{progenitor_mass.value:.1f}.h5'
         else:
             fname = f'stir_a{turbmixing_param:3.2f}/stir_multimessenger_a{turbmixing_param:3.2f}_m{progenitor_mass.value:g}.h5'
-        return super().__init__(fname, self.metadata)
+        super().__init__(fname, self.metadata)
 
 @RegistryModel(
     rotational_velocity= [0, 1] * u.rad / u.s,
@@ -241,7 +241,7 @@ class Kuroda_2020(loaders.Kuroda_2020):
     def __init__(self, *, rotational_velocity, magnetic_field_exponent):
         self.metadata["EOS"] = "LS220"
         filename = f'LnuR{int(rotational_velocity.value):1d}0B{int(magnetic_field_exponent):02d}.dat'
-        return super().__init__(filename, self.metadata)
+        super().__init__(filename, self.metadata)
 
 @RegistryModel(
     progenitor_mass=[9, 10, 12, 13, 14, 15, 19, 25, 60] * u.Msun,
@@ -261,7 +261,7 @@ class Fornax_2019(loaders.Fornax_2019):
             filename = f'lum_spec_{int(progenitor_mass.value):d}M_r250.h5'
         else:
             filename = f'lum_spec_{int(progenitor_mass.value):d}M.h5'
-        return super().__init__(filename, self.metadata, cache_flux=cache_flux)
+        super().__init__(filename, self.metadata, cache_flux=cache_flux)
 
 @RegistryModel(
     progenitor_mass = Parameter((list(range(12, 24)) + [25, 26, 26.99]) * u.Msun,
@@ -277,7 +277,7 @@ class Fornax_2021(loaders.Fornax_2021):
             filename = f'lum_spec_{int(progenitor_mass.value):2d}M_r10000_dat.h5'
         else:
             filename = f'lum_spec_{progenitor_mass.value:.2f}M_r10000_dat.h5'
-        return super().__init__(filename, self.metadata)
+        super().__init__(filename, self.metadata)
 
 
 _fornax_2022_progenitors = [  '9.0',     '9.25',     '9.5',      '9.75',     '10.0',
@@ -316,7 +316,7 @@ class Fornax_2022(loaders.Fornax_2022):
         progenitor = self._mass_to_progenitor[progenitor_mass]
         self.metadata['Black hole'] = progenitor.endswith('.bh')
         filename = f'lum_spec_{progenitor}_dat.h5'
-        return super().__init__(filename, self.metadata)
+        super().__init__(filename, self.metadata)
 
 
 _fornax_2024_progenitors = [
@@ -341,7 +341,7 @@ class Fornax_2024(loaders.Fornax_2024):
         progenitor = self._mass_to_progenitor[progenitor_mass]
         self.metadata['Black hole'] = progenitor == '12.25' or progenitor == '14' or progenitor == '19.56' or progenitor == '40'
         filename = f'lum_spec_{progenitor}_dat.h5'
-        return super().__init__(filename, self.metadata)
+        super().__init__(filename, self.metadata)
 
 
 @RegistryModel(
@@ -399,7 +399,7 @@ class Mori_2022(loaders.Mori_2022):
 
         # Set the metadata.
         self.metadata['PNS mass'] = pns_mass*u.Msun
-        return super().__init__(filename, self.metadata)
+        super().__init__(filename, self.metadata)
 
 
 @RegistryModel(
@@ -451,7 +451,7 @@ class Mori_2023(loaders.Mori_2023):
 
         # Set the metadata.
         self.metadata['PNS mass'] = pns_mass*u.Msun
-        return super().__init__(filename, self.metadata)
+        super().__init__(filename, self.metadata)
 
 
 @RegistryModel(
@@ -489,7 +489,7 @@ class Takata_2025(loaders.Takata_2025):
         else:
             filename = f'{pmass}_{axion_mass.to_value("MeV"):03g}_{axion_coupling.to_value("1e-10/GeV"):02g}.dat'
 
-        return super().__init__(filename, self.metadata)
+        super().__init__(filename, self.metadata)
 
 
 @RegistryModel(
@@ -513,7 +513,7 @@ class Bugli_2021(loaders.Bugli_2021):
             filename = f'{Bfield}_b12_dipdecay_3d_grav{grav}_snewpy_{direction}.dat'
         if Bfield=='L1':
             filename = f'{Bfield}_b12_3d_{rotation}deg_snewpy_{direction}.dat'
-        return super().__init__(filename=filename, metadata=self.metadata)
+        super().__init__(filename=filename, metadata=self.metadata)
 
 class SNOwGLoBES:
     """A model that does not inherit from SupernovaModel (yet) and imports a group of SNOwGLoBES files."""
