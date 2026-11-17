@@ -151,7 +151,7 @@ class SupernovaModel(ABC, LocalFileLoader):
                                                                 flavor_scheme=ThreeFlavor)
         return initial_spectra
 
-    def get_transformed_spectra(self, t, E, theta=None, phi=None, flavor_xform):
+    def get_transformed_spectra(self, t, E, flavor_xform, theta=None, phi=None):
         """Get neutrino spectra after applying the flavor transformation.
 
         Parameters
@@ -160,12 +160,12 @@ class SupernovaModel(ABC, LocalFileLoader):
             Time to evaluate the neutrino spectra.
         E : astropy.Quantity
             Energies to evaluate the neutrino spectra.
+        flavor_xform : FlavorTransformation
+            An instance from the flavor_transformation module.            
         theta : astropy.Quantity
             Zenith angle of the spectral emission.
         phi : astropy.Quantity
             Azimuth angle of the spectral emission.                        
-        flavor_xform : FlavorTransformation
-            An instance from the flavor_transformation module.
 
         Returns
         -------
@@ -176,7 +176,7 @@ class SupernovaModel(ABC, LocalFileLoader):
         transformed_spectra = flavor_xform.apply_to(initialspectra)
         return transformed_spectra
 
-    def get_flux (self, t, E, distance, theta=None, phi=None, flavor_xform=NoTransformation()):
+    def get_flux (self, t, E, distance, flavor_xform=NoTransformation(), theta=None, phi=None):
         """Get neutrino flux through 1cm^2 surface at the given distance
 
         Parameters
@@ -187,19 +187,19 @@ class SupernovaModel(ABC, LocalFileLoader):
             Energies to evaluate the the neutrino spectra.            
         distance : astropy.Quantity or float (in kpc)
             Distance from supernova.
+        flavor_xform : FlavorTransformation
+            An instance from the flavor_transformation module.            
         theta : astropy.Quantity
             Zenith angle of the spectral emission.
         phi : astropy.Quantity
             Azimuth angle of the spectral emission.                        
-        flavor_xform : FlavorTransformation
-            An instance from the flavor_transformation module.
 
         Returns
         -------
         flux.Container 
             A container with the information about the neutrino flux
         """
-        transformed_spectra = self.get_transformed_spectra(t, E, theta, phi, flavor_xform)
+        transformed_spectra = self.get_transformed_spectra(t, E, flavor_xform, theta, phi)
         distance = distance << u.kpc #assume that provided distance is in kpc, or convert
         factor = 1/(4*np.pi*(distance.to('cm'))**2)
         
