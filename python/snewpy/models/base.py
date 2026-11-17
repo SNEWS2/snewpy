@@ -151,7 +151,7 @@ class SupernovaModel(ABC, LocalFileLoader):
                                                                 flavor_scheme=ThreeFlavor)
         return initial_spectra
 
-    def get_transformed_spectra(self, t, E, theta=None, phi=None, flavor_xform=NoTransformation()):
+    def get_transformed_spectra(self, t, E, theta=None, phi=None, flavor_xform):
         """Get neutrino spectra after applying the flavor transformation.
 
         Parameters
@@ -172,7 +172,7 @@ class SupernovaModel(ABC, LocalFileLoader):
         flux.Container 
             A container with the information of the transformed neutrino spectra
         """
-        initialspectra = self.get_initial_spectra(t, E)
+        initialspectra = self.get_initial_spectra(t, E, theta, phi)
         transformed_spectra = flavor_xform.apply_to(initialspectra)
         return transformed_spectra
 
