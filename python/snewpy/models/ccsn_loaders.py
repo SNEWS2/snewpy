@@ -568,14 +568,7 @@ class Fornax_2019(SupernovaModel):
 
         return E, dE, binspec
         
-    def get_initial_spectra(self, t, E, theta, phi, flavors=ThreeFlavor, interpolation='linear'):
-        spectra_dict = self._get_initial_spectra_dict(t, E, theta, phi, flavors, interpolation)
-        return Spectrum.from_dict(spectra_dict,
-                                  time=t,
-                                  energy=E,
-                                  flavor_scheme=ThreeFlavor)
-
-    def _get_initial_spectra_dict(self, t, E, theta, phi, flavors=ThreeFlavor, interpolation='linear'):
+    def _get_initial_spectra_dict(self, t, E, theta=None, phi=None, flavors=ThreeFlavor, interpolation='linear'):
         """Get neutrino spectra/luminosity curves before flavor transformation.
 
         Parameters
@@ -598,6 +591,18 @@ class Fornax_2019(SupernovaModel):
         initial_spectra : dict
             Dictionary of model spectra, keyed by neutrino flavor.
         """
+        if theta == None:
+            theta = self.theta
+        else: 
+            self.theta = theta
+        if phi == None:
+            phi = self.phi
+        else: 
+            self.phi = phi
+
+        if theta == None or phi == None:
+            raise ValueError('Must provide a valid viewing angle(s) for Fornax_2019 model either when initializing a model or through the get_* methods')
+            
         initial_spectra = {}
 
         # Extract the binned spectra for the input t, theta, phi:
