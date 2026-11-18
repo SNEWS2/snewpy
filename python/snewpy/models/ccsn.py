@@ -250,17 +250,23 @@ class Fornax_2019(loaders.Fornax_2019):
     """Model based on 3D simulations from D. Vartanyan, A. Burrows, D. Radice, M.  A. Skinner and J. Dolence, MNRAS 482(1):351, 2019.
        Data available at https://www.astro.princeton.edu/~burrows/nu-emissions.3d/
     """
-    def __init__(self, cache_flux=False, *, progenitor_mass):
+    def __init__(self, cache_flux=False, *, progenitor_mass:u.Quantity, theta:u.Quantity = None, phi:u.Quantity = None):
         """
         Parameters
         ----------
         cache_flux : bool
             If true, pre-compute the flux on a fixed angular grid and store the values in a FITS file.
+        theta : astropy.Quantity
+            Zenith angle of the spectral emission.
+        phi : astropy.Quantity
+            Azimuth angle of the spectral emission.            
         """
         if progenitor_mass.value == 16:
             filename = f'lum_spec_{int(progenitor_mass.value):d}M_r250.h5'
         else:
             filename = f'lum_spec_{int(progenitor_mass.value):d}M.h5'
+        self.theta = theta
+        self.phi = phi
         super().__init__(filename, self.metadata, cache_flux=cache_flux)
 
 @RegistryModel(
