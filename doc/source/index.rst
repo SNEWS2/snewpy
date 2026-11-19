@@ -26,6 +26,7 @@ Table of Contents
    snowglobes
    models
    transformations
+   dsnb
    neutrino
    flux
    contributing
