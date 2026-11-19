@@ -1,5 +1,5 @@
 """
-Tests for snewpy.dsnb
+Tests for snewpy.models.dsnb
 
 The DSNB only uses the public interface of supernova models, so the tests
 use a small non-pinched toy model (Gaussian spectrum) and need no downloads.
@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 from astropy import units as u
 
-from snewpy.dsnb import CoreCollapseRate, DSNB, salpeter_imf
+from snewpy.models.dsnb import CoreCollapseRate, DSNB, salpeter_imf
 from snewpy.flavor import ThreeFlavor
 from snewpy.flavor_transformation import AdiabaticMSW, NoTransformation
 from snewpy.models.base import SupernovaModel

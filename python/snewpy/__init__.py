@@ -90,4 +90,3 @@ def get_models(models=None, download_dir=None):
         exit(1)
     pool.shutdown(wait=False)
 
-from . import dsnb
