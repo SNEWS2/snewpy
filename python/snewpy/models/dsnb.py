@@ -82,7 +82,7 @@ import numpy as np
 from astropy import units as u
 from astropy import constants as const
 from astropy.cosmology import FlatLambdaCDM
-from scipy.integrate import quad
+from scipy.integrate import quad, trapezoid
 from snewpy.flavor import ThreeFlavor
 from snewpy.flux import Container
 from snewpy.flavor_transformation import FlavorTransformation, NoTransformation
@@ -224,7 +224,7 @@ class DSNB:
     -----
     Without explicit ``weights``, each model stands for an interval of
     progenitor masses. The interval boundaries lie halfway between neighbouring
-    masses, with outer limits of 8 and 100 solar masses, and the weight of a
+    masses, with outer limits of 8 and 100 solar masses (widened if a model lies outside), and the weight of a
     model is the integral of the Salpeter initial mass function,
     :math:`\propto M^{-2.35}`, over its interval.
     """
@@ -299,12 +299,12 @@ class DSNB:
 
         Weight for progenitor i = integral of M^{-2.35} dM over its mass
         interval, where intervals are defined by midpoints between adjacent
-        masses (8 and 100 Msun as outer limits).
+        masses (outer limits 8 and 100 Msun, widened if a model lies outside).
         """
         n          = len(sorted_masses)
         edges      = np.empty(n + 1)
-        edges[0]   = 8.0
-        edges[-1]  = 100.0
+        edges[0]   = min(8.0, sorted_masses[0])
+        edges[-1]  = max(100.0, sorted_masses[-1])
         for i in range(1, n):
             edges[i] = 0.5 * (sorted_masses[i - 1] + sorted_masses[i])
         weights = np.array([
@@ -400,7 +400,7 @@ class DSNB:
         rcc = self.rcc(z).to_value(u.yr**-1 * u.Mpc**-3)
 
         integrand = dNdE_grid * (rcc / Hz)[np.newaxis, :]
-        integral  = np.trapezoid(integrand, z, axis=1)
+        integral  = trapezoid(integrand, z, axis=1)
 
         H0_s      = self.cosmology.H(0).to_value(u.s**-1)
         c_cm_s    = const.c.to_value(u.cm / u.s)

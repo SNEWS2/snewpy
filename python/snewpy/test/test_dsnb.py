@@ -245,3 +245,8 @@ class TestDSNB:
     def test_bad_weights_raise(self):
         with pytest.raises(ValueError):
             DSNB([GaussianModel()], weights=[1.0, 2.0])
+
+
+def test_imf_weights_for_masses_above_100():
+    w = DSNB._imf_weights(np.array([9.0, 20.0, 100.0, 120.0]))
+    assert np.all(w > 0) and np.isclose(w.sum(), 1.0)
