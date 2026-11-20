@@ -289,80 +289,81 @@ class PinchedModel(SupernovaModel):
             result[:, E[0]==0] = 0
 
             #remove unnecessary dimensions, if E or t was scalar:
-            result = np.squeeze(result)
-            initial_spectra[flavor] = result
+            initial_spectra[flavor] = np.squeeze(result)
 
         return initial_spectra
 
 class SNOwGLoBES(SupernovaModel):
     """Subclass for models whose input data is in SNOwBLoBES format"""
-    def  __init__(self, filename, metadata={}):
+    def  __init__(self, filename, metadata=None):
         """
         Parameters
         ----------
-        tarfilename: str
+        filename: str
             Absolute or relative path to tar archive
         """
         # Open the requested filename using the model downloader.
         datafile = self.request_file(filename)
 
-        tf = tarfile.open(datafile)
-        
-        # Find the "NoOsc" files.
-        datafiles = sorted([f.name for f in tf if '.dat' in f.name])
-        nooscfiles = [df for df in datafiles if 'NoOsc' in df]
-        nooscfiles.sort(key=len)
-
-        # Loop through the NoOsc files and pull out the number fluxes.
-        self.time = []
-        self.energy = None   
-        self.initial_spectra = {}
-        self.interpolation = {}         
-        
         self._flavorkeys = {ThreeFlavor.NU_E: 'NuE',
                             ThreeFlavor.NU_E_BAR: 'aNuE',
                             ThreeFlavor.NU_MU: 'NuMu',
                             ThreeFlavor.NU_MU_BAR: 'aNuMu',
                             ThreeFlavor.NU_TAU: 'NuTau',
                             ThreeFlavor.NU_TAU_BAR: 'aNuTau'}        
+                            
+        # Loop through the raw data files and pull out the number fluxes.
+        self.time = []
+        self.energy = None   
+        self.initial_spectra = {}
+        self.interpolation = {}                                             
+        
+        # Find the "NoOsc" files.
+        with tarfile.open(datafile) as tf:
+            datafiles = sorted([f.name for f in tf if '.dat' in f.name])
+            nooscdatafiles = [df for df in datafiles if 'NoOsc' in df]
+            nooscdatafiles.sort(key=len)
 
-        for nooscfile in nooscfiles:
-            with tf.extractfile(nooscfile) as f:
-                logging.debug('Reading {}'.format(nooscfile))
-                meta = f.readline()
-                metatext = meta.decode('utf-8')
-                t = float(metatext.split('TBinMid=')[-1].split('sec')[0]) 
-                dt = float(metatext.split('tBinWidth=')[-1].split('s')[0]) 
-                dE = float(metatext.split('eBinWidth=')[-1].split('MeV')[0])
 
-                data = Table.read(f, format='ascii.commented_header', header_start=-1)
-                data.meta['t'] = t
-                data.meta['dt'] = dt
-                data.meta['dE'] = dE
+            for nooscdatafile in nooscdatafiles:
+                with tf.extractfile(nooscdatafile) as f:
+                    logging.debug('Reading {}'.format(nooscdatafile))
+                    meta = f.readline()
+                    metatext = meta.decode('utf-8')
+                    t = float(metatext.split('TBinMid=')[-1].split('sec')[0])
+                    dt = float(metatext.split('tBinWidth=')[-1].split('s')[0])
+                    dE = float(metatext.split('eBinWidth=')[-1].split('MeV')[0])
+
+                    data = Table.read(f, format='ascii.commented_header', header_start=-1)                
 
                 self.time.append(t)
                 
-                if self.energy is None:
+                if self.energy is None: # do this once for the first datafile
                     self.energy = (data['E(GeV)'].data*1000).tolist()
 
-            for flavor in ThreeFlavor:
-                key = self._flavorkeys[flavor]
-                # convert from flux back to initial spectra: number per /s/erg                
-                spectrum = (data[key].data * (4*np.pi*(u.kpc.to(u.cm,10))**2)/dt/(u.MeV.to(u.erg,dE)) ).tolist() 
-                if flavor in self.initial_spectra:
-                    self.initial_spectra[flavor].append(spectrum)
-                else:
-                    self.initial_spectra[flavor] = [spectrum]      
+                for flavor in ThreeFlavor:
+                    key = self._flavorkeys[flavor]
+                    # convert from flux back to initial spectra: number per /s/erg                
+                    factor = (4 * np.pi * (10 * u.kpc)**2 /(dt*u.s) /(dE*u.MeV) ).to_value(u.cm**2/u.s/u.erg) 
+                    spectrum = (data[key].data * factor).tolist()                
 
+                    if flavor in self.initial_spectra:
+                        self.initial_spectra[flavor].append(spectrum)
+                    else:
+                        self.initial_spectra[flavor] = [spectrum]                
+       
         for flavor in ThreeFlavor:
-            self.interpolation[flavor] = interpolate.RegularGridInterpolator((self.time, self.energy), self.initial_spectra[flavor], method='cubic')
+            self.interpolation[flavor] = RegularGridInterpolator((self.time, self.energy), self.initial_spectra[flavor], method='cubic')
             
-        self.time *= u.s
-        self.energy *= u.MeV
-                            
-        self.filename = os.path.basename(filename)            
+        # Attach units
+        self.time = self.time * u.s
+        self.energy = self.energy * u.MeV            
+                       
+        self.filename = os.path.basename(filename)                            
+        super().__init__(self.time, metadata or {})         
+        
 
-    def _get_initial_spectra_dict(self, t, E, flavors=ThreeFlavor):
+    def _get_initial_spectra_dict(self, t, E, flavors=ThreeFlavor, **kwargs):
         """Get neutrino spectra/luminosity curves after oscillation.
 
         Parameters
@@ -372,11 +373,11 @@ class SNOwGLoBES(SupernovaModel):
         E : astropy.Quantity or ndarray of astropy.Quantity
             Energies to evaluate the initial spectra.
         flavors: iterable of snewpy.neutrino.Flavor
-            Return spectra for these flavors only (default: all)
+            Return initial_spectra for these flavors only (default: all)
 
         Returns
         -------
-        spectra : dict
+        initial_spectra : dict
             Dictionary of model spectra, keyed by neutrino flavor.
         """   
         t = u.Quantity(t, ndmin=1).to(u.s).value
@@ -384,7 +385,15 @@ class SNOwGLoBES(SupernovaModel):
         tE_grid = np.stack(np.meshgrid(t, E, indexing='ij'), axis=-1)
 
         initial_spectra = {}
-        for flavor in ThreeFlavor:
-            initial_spectra[flavor] = self.interpolation[flavor](tE_grid) / (u.erg * u.s)
+        for flavor in flavors:
+            result = self.interpolation[flavor](tE_grid) / (u.erg * u.s)
+            
+            #remove bad values
+            result[np.isnan(result)] = 0
+            result[:, E==0] = 0
+                        
+            #remove unnecessary dimensions, if E or t was scalar:
+            initial_spectra[flavor] = np.squeeze(result)
 
         return initial_spectra
+
