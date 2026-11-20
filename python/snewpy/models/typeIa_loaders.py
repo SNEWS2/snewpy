@@ -26,4 +26,3 @@ class Wright_2016(SNOwGLoBES):
 
 
 
-
