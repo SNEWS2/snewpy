@@ -24,14 +24,7 @@ class Wright_2016(loaders.Wright_2016):
     [Phys. Rev. D95 (2017) 043006](https://journals.aps.org/prd/abstract/10.1103/PhysRevD.95.043006), [arXiv:1609.07403](https://arxiv.org/abs/1609.07403).  
     There are 64 snapshots in time and the format of each data file is the SNOwGLoBES format.
     """
-    def _metadata_from_filename(self, filename:str):
-        metadata = {
-            'mechanism': filename.split('_')[0]
-        }
-        return metadata    
-        
     def __init__(self, mechanism:str):
         filename = f"{mechanism}_NeutrinoFlux.tar.bz2"
         super().__init__(filename)        
     
-
