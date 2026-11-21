@@ -353,7 +353,7 @@ class SNOwGLoBES(SupernovaModel):
                         self.initial_spectra[flavor] = [spectrum]                
        
         for flavor in ThreeFlavor:
-            self.interpolation[flavor] = RegularGridInterpolator((self.time, self.energy), self.initial_spectra[flavor], method='cubic')
+            self.interpolation[flavor] = interpolate.RegularGridInterpolator((self.time, self.energy), self.initial_spectra[flavor], method='cubic')
             
         # Attach units
         self.time = self.time * u.s
